@@ -1,0 +1,48 @@
+version: "3.8"
+services:
+  zaproxy:
+    image: owasp/zap2docker-stable
+    tty: true
+    stdin_open: true
+    container_name: zaproxy
+    user: zap
+    ports:
+      - "8091:8090"
+    volumes:
+      - type: bind
+        source: "./scripts"
+        target: "/zap/scripts"
+      - type: bind
+        source: "./config"
+        target: "/zap/config"
+      - type: bind
+        source: "./results"
+        target: "/zap/results"
+      - type: bind
+        source: "./policies"
+        target: "/zap/policies"
+    command: /bin/bash -c "pip install jinja2 && zap.sh -cmd -addoninstall ascanrulesBeta -addonupdate && zap.sh -daemon -port 8090 -config api.key=cnmeemn7jp7ijd8rl5u14q40v8"
+
+  zaproxy_ui:
+    image: owasp/zap2docker-stable
+    tty: true
+    stdin_open: true
+    container_name: zaproxy
+    user: zap
+    ports:
+      - "127.0.0.1:8091:8090"
+      - "127.0.0.1:8081:8080"
+    volumes:
+      - type: bind
+        source: "./config"
+        target: "/zap/config"
+      - type: bind
+        source: "./scripts"
+        target: "/zap/scripts"
+      - type: bind
+        source: "./results"
+        target: "/zap/results"
+      - type: bind
+        source: "./policies"
+        target: "/zap/policies"
+    command: /bin/bash -c "pip install jinja2 && zap.sh -cmd -config api.key=cnmeemn7jp7ijd8rl5u14q40v8 -config database.newsession=3 -config database.newsessionprompt=false -addoninstall ascanrulesBeta && zap.sh -cmd -addonupdate && zap-webswing.sh"

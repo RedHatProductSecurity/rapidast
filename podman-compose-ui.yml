@@ -1,0 +1,21 @@
+version: "3"
+services:
+  zaproxy_ui:
+    image: docker.io/owasp/zap2docker-stable
+    tty: true
+    stdin_open: true
+    container_name: zaproxy
+    user: zap
+    ports:
+      - "127.0.0.1:8091:8090"
+      - "127.0.0.1:8081:8080"
+    volumes:
+      - ./scripts:/zap/scripts:Z
+      - ./config:/zap/config:Z
+      - ./results:/zap/results:Z
+      - ./policies:/zap/policies:Z
+      - ./webswing:/zap/webswing_custom:Z
+    command:
+      - /bin/bash
+      - -c
+      - pip install jinja2 && cp /zap/webswing_custom/webswing.config /zap/webswing/ && zap.sh -cmd -config api.key=cnmeemn7jp7ijd8rl5u14q40v8 -config database.newsession=3 -config database.newsessionprompt=false -addoninstall ascanrulesBeta && zap.sh -cmd -addonupdate && zap-webswing.sh

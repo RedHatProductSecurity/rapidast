@@ -1,0 +1,10 @@
+script_type: passive
+script_description: Script Description
+finding_title: Finding Title
+finding_description: Finding Description
+finding_risk: 1
+finding_confidence: 1
+search_in: response.header
+regex:
+  - 'Server: .*'
+  - 'X-Frame-Options: .*'

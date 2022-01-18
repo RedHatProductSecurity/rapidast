@@ -1,11 +1,10 @@
 import yaml
-from pprint import pprint
 
-with open("./config/config.yaml", "r") as stream:
+with open('./config/config.yaml', 'r') as stream:
     try:
         config = yaml.safe_load(stream)
     except yaml.YAMLError as exc:
-        pprint('Something went wrong parsing the config.yaml file: ' + str(exc))
+        raise RuntimeError('Something went wrong parsing the config.yaml file: ' + str(exc))
 
 serviceName = config['general']['serviceName']
 apiKey = config['general']['apiKey']
@@ -35,7 +34,7 @@ contextName = config['scan']['contextName']
 target = config['scan']['target']
 applicationURL = config['scan']['applicationURL']
 
-# globalExcludeUrl is generated from 'target', which excludes every single URL that doesn't belong to the target domain, to avoid accidentaly hitting production
+# globalExcludeUrl is generated from 'target', which excludes every single URL that doesn't belong to the target domain, to avoid accidentally hitting production
 # example: ['^(?:(?!https:\/\/www.target.com).*).$']
 globalExcludeUrl = ['^(?:(?!' + target + ').*).$']
 

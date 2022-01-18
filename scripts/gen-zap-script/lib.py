@@ -41,7 +41,7 @@ class Script(object):
         self.type = type
         self.engine = engine
         self.description = description
-        self.templateEnv = jinja2.sandbox.SandboxedEnvironment(loader=jinja2.ChoiceLoader([
+        self.template_env = jinja2.sandbox.SandboxedEnvironment(loader=jinja2.ChoiceLoader([
             jinja2.FileSystemLoader(searchpath='./'),
             jinja2.FileSystemLoader(searchpath=str(Path(__file__).parent))
         ]))
@@ -67,13 +67,13 @@ class Script(object):
 class PassiveScript(Script):
     def __init__(self, template_filename='template_script_passive.js', **kwargs):
         super().__init__(type='passive', **kwargs)
-        self.template = self.templateEnv.get_template(template_filename)
+        self.template = self.template_env.get_template(template_filename)
 
 
 class ActiveScript(Script):
     def __init__(self, template_filename='template_script_active.js', **kwargs):
         super().__init__(type='active', **kwargs)
-        self.template = self.templateEnv.get_template(template_filename)
+        self.template = self.template_env.get_template(template_filename)
 
 
 #

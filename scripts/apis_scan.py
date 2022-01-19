@@ -8,17 +8,17 @@ from zapv2 import ZAPv2
 
 from config import *
 
-context_id = ''
+context_id = ""
 
 
 def create_session(session_name):
     # Start the ZAP session
-    logging.info('Creating session in: ' + session_name)
+    logging.info("Creating session in: " + session_name)
     zap.core.new_session(name=session_name, overwrite=True)
 
     # Configure ZAP global Exclude URL option
     for excludeUrl in globalExcludeUrl:
-        logging.info('Excluded URLs: ' + excludeUrl)
+        logging.info("Excluded URLs: " + excludeUrl)
         zap.core.exclude_from_proxy(regex=excludeUrl)
 
     # Configure ZAP outgoing proxy server connection option
@@ -27,67 +27,98 @@ def create_session(session_name):
         zap.core.set_option_proxy_chain_port(integer=proxyPort)
         zap.core.set_option_proxy_chain_skip_name(string=skipProxyAddresses)
 
-        logging.info('Setting Upstream Proxy to: ' + proxyAddress + ':' + proxyPort)
+        logging.info("Setting Upstream Proxy to: " + proxyAddress + ":" + proxyPort)
         zap.core.set_option_use_proxy_chain(boolean=useProxyChain)
 
 
 def enable_httpsender_script():
     script = zap.script
     script.remove(scriptname=HttpSenderScriptName)
-    logging.info('Load httpsender script: ' + HttpSenderScriptName + ' -> ' +
-                 script.load(scriptname=HttpSenderScriptName, scripttype='httpsender',
-                             scriptengine=HttpSenderScriptEngine,
-                             filename=HttpSenderScriptFilePath,
-                             scriptdescription=HttpSenderScriptDescription))
-    logging.info('Enable httpsender script: ' + HttpSenderScriptName + ' -> ' +
-                 script.enable(scriptname=HttpSenderScriptName))
+    logging.info(
+        "Load httpsender script: "
+        + HttpSenderScriptName
+        + " -> "
+        + script.load(
+            scriptname=HttpSenderScriptName,
+            scripttype="httpsender",
+            scriptengine=HttpSenderScriptEngine,
+            filename=HttpSenderScriptFilePath,
+            scriptdescription=HttpSenderScriptDescription,
+        )
+    )
+    logging.info(
+        "Enable httpsender script: "
+        + HttpSenderScriptName
+        + " -> "
+        + script.enable(scriptname=HttpSenderScriptName)
+    )
 
 
 def create_context():
     global context_id
     context = zap.context
-    context.remove_context('Default Context')
+    context.remove_context("Default Context")
     context_id = context.new_context(contextname=contextName)
 
     # Include URL in the context
     for includeUrl in contextIncludeURL:
-        logging.info('Include URL in context: ' + includeUrl)
-        context.include_in_context(contextname=contextName,
-                                   regex=includeUrl)
+        logging.info("Include URL in context: " + includeUrl)
+        context.include_in_context(contextname=contextName, regex=includeUrl)
 
     # Exclude URL in the context
     for excludeUrl in contextExcludeURL:
-        logging.info('Exclude URL from context: ' + excludeUrl)
-        context.exclude_from_context(contextname=contextName,
-                                     regex=excludeUrl)
+        logging.info("Exclude URL from context: " + excludeUrl)
+        context.exclude_from_context(contextname=contextName, regex=excludeUrl)
 
     # In case we use the scriptBasedAuthentication method, load the script
-    if authMethod == 'scriptBasedAuthentication':
+    if authMethod == "scriptBasedAuthentication":
         script = zap.script
         script.remove(scriptname=authScriptName)
-        logging.info('Load script: ' + authScriptName + ' -> ' +
-                     script.load(scriptname=authScriptName,
-                                 scripttype='authentication',
-                                 scriptengine=authScriptEngine,
-                                 filename=authScriptFilePath,
-                                 scriptdescription=authScriptDescription))
+        logging.info(
+            "Load script: "
+            + authScriptName
+            + " -> "
+            + script.load(
+                scriptname=authScriptName,
+                scripttype="authentication",
+                scriptengine=authScriptEngine,
+                filename=authScriptFilePath,
+                scriptdescription=authScriptDescription,
+            )
+        )
 
         # Define an authentication method with parameters for the context
         auth = zap.authentication
-        logging.info('Set authentication method: ' + authMethod + ' -> ' +
-                     auth.set_authentication_method(contextid=context_id,
-                                                    authmethodname=authMethod,
-                                                    authmethodconfigparams=authParams))
+        logging.info(
+            "Set authentication method: "
+            + authMethod
+            + " -> "
+            + auth.set_authentication_method(
+                contextid=context_id,
+                authmethodname=authMethod,
+                authmethodconfigparams=authParams,
+            )
+        )
         # Define either a loggedin indicator or a loggedout indicator regexp
         # It allows ZAP to see if the user is always authenticated during scans
         if authIsLoggedInIndicator:
-            logging.info('Define Loggedin indicator: ' + authIndicatorRegex + ' -> ' +
-                         auth.set_logged_in_indicator(contextid=context_id,
-                                                      loggedinindicatorregex=authIndicatorRegex))
+            logging.info(
+                "Define Loggedin indicator: "
+                + authIndicatorRegex
+                + " -> "
+                + auth.set_logged_in_indicator(
+                    contextid=context_id, loggedinindicatorregex=authIndicatorRegex
+                )
+            )
         else:
-            logging.info('Define Loggedout indicator: ' + authIndicatorRegex + ' -> ' +
-                         auth.set_logged_out_indicator(contextid=context_id,
-                                                       loggedoutindicatorregex=authIndicatorRegex))
+            logging.info(
+                "Define Loggedout indicator: "
+                + authIndicatorRegex
+                + " -> "
+                + auth.set_logged_out_indicator(
+                    contextid=context_id, loggedoutindicatorregex=authIndicatorRegex
+                )
+            )
 
         # Create a testuser for script authentication.
         if authCreateUser:
@@ -95,24 +126,31 @@ def create_context():
 
             user_id_list = []
 
-            rtoken = os.getenv('RTOKEN')
-            user_list = [
-                {'name': 'test1', 'credentials': 'refresh_token=' + rtoken}
-            ]
+            rtoken = os.getenv("RTOKEN")
+            user_list = [{"name": "test1", "credentials": "refresh_token=" + rtoken}]
             for user in user_list:
-                user_name = user.get('name')
-                logging.info('Create user ' + user_name + ':')
+                user_name = user.get("name")
+                logging.info("Create user " + user_name + ":")
                 user_id = users.new_user(contextid=context_id, name=user_name)
                 user_id_list.append(user_id)
-                logging.info('User ID: ' + user_id + '; username -> ' +
-                             users.set_user_name(contextid=context_id, userid=user_id, name=user_name) +
-                             '; credentials -> ' +
-                             users.set_authentication_credentials(contextid=context_id,
-                                                                  userid=user_id,
-                                                                  authcredentialsconfigparams=user.get('credentials')) +
-                             '; enabled -> ' +
-                             users.set_user_enabled(contextid=context_id, userid=user_id,
-                                                    enabled=True))
+                logging.info(
+                    "User ID: "
+                    + user_id
+                    + "; username -> "
+                    + users.set_user_name(
+                        contextid=context_id, userid=user_id, name=user_name
+                    )
+                    + "; credentials -> "
+                    + users.set_authentication_credentials(
+                        contextid=context_id,
+                        userid=user_id,
+                        authcredentialsconfigparams=user.get("credentials"),
+                    )
+                    + "; enabled -> "
+                    + users.set_user_enabled(
+                        contextid=context_id, userid=user_id, enabled=True
+                    )
+                )
 
                 zap.forcedUser.set_forced_user(context_id, user_id)
 
@@ -126,12 +164,14 @@ def enable_passive_scanner():
 
 def get_APIs():
     if oasImportFromUrl:
-        logging.info('Importing API from URL: ' + oasUrl)
+        logging.info("Importing API from URL: " + oasUrl)
 
         try:
             zap.openapi.import_url(oasUrl, target)
         except Exception as e:
-            raise RuntimeError('Something went wrong while importing OpenAPI: ' + str(e))
+            raise RuntimeError(
+                "Something went wrong while importing OpenAPI: " + str(e)
+            )
 
         # for easier debugging
         time.sleep(1)
@@ -140,36 +180,39 @@ def get_APIs():
 
         if len(apis) > 0:
             found_oas_file = False
-            oas_file_suffixes = ('.json', '.yaml', '.yml')
+            oas_file_suffixes = (".json", ".yaml", ".yml")
 
             for api in apis:
 
                 if not api.lower().endswith(oas_file_suffixes):
-                    logging.warn('unsupported file is in the OpenAPI definition directory: ' + api)
+                    logging.warn(
+                        "unsupported file is in the OpenAPI definition directory: "
+                        + api
+                    )
                     continue
 
                 found_oas_file = True
 
-                with open(oasDir + '/' + api) as f:
-                    logging.info('Importing API: ' + oasDir + '/' + api)
+                with open(oasDir + "/" + api) as f:
+                    logging.info("Importing API: " + oasDir + "/" + api)
 
-                    logging.info('>> Target Url: ' + target)
-                    zap.openapi.import_file(oasDir + '/' + api, target)
+                    logging.info(">> Target Url: " + target)
+                    zap.openapi.import_file(oasDir + "/" + api, target)
 
                     # for easier debugging
                     time.sleep(1)
             if not found_oas_file:
-                raise RuntimeError('Missing .json or .yaml or .yml OpenAPI definitions')
+                raise RuntimeError("Missing .json or .yaml or .yml OpenAPI definitions")
         else:
-            raise RuntimeError('No files in the specified OAS directory')
+            raise RuntimeError("No files in the specified OAS directory")
 
 
 def start_active_scanner():
-    policies = os.listdir(appDir + '/policies')
+    policies = os.listdir(appDir + "/policies")
     if len(policies) > 0:
         # add policies
         for policy in policies:
-            zap.ascan.import_scan_policy(path=appDir + '/policies/' + policy)
+            zap.ascan.import_scan_policy(path=appDir + "/policies/" + policy)
 
         # remove other policies
         for existing_policy in zap.ascan.scan_policy_names:
@@ -177,74 +220,90 @@ def start_active_scanner():
                 zap.ascan.remove_scan_policy(scanpolicyname=existing_policy)
 
     else:
-        raise RuntimeError('Missing Scan Policies. Add them to policies folder')
+        raise RuntimeError("Missing Scan Policies. Add them to policies folder")
 
     # configure active scan options
     zap.ascan.set_option_host_per_scan(3)
     zap.ascan.set_option_thread_per_host(20)
     # Launch Active scan with the configured policy on the target url and
     # recursively scan every site node
-    scan_id = zap.ascan.scan(url=target, recurse=True, inscopeonly=True,
-                             scanpolicyname=scanPolicyName, method=None, postdata=True, contextid=context_id)
+    scan_id = zap.ascan.scan(
+        url=target,
+        recurse=True,
+        inscopeonly=True,
+        scanpolicyname=scanPolicyName,
+        method=None,
+        postdata=True,
+        contextid=context_id,
+    )
 
-    logging.info('Start Active scan. Scan ID equals ' + scan_id)
-    logging.info('Scan Policies: ' + str(zap.ascan.scan_policy_names))
+    logging.info("Start Active scan. Scan ID equals " + scan_id)
+    logging.info("Scan Policies: " + str(zap.ascan.scan_policy_names))
     while int(zap.ascan.status(scan_id)) < 100:
-        logging.info('Active Scan progress: ' + zap.ascan.status(scan_id) + '%')
+        logging.info("Active Scan progress: " + zap.ascan.status(scan_id) + "%")
         time.sleep(10)
-    logging.info('Active Scan completed')
+    logging.info("Active Scan completed")
 
 
 def start_spider():
-    logging.info('Access target URL: ' + target)
+    logging.info("Access target URL: " + target)
     zap.core.access_url(url=applicationURL, followredirects=True)
     time.sleep(2)
 
-    logging.info('Starting Spider on target: ' + applicationURL)
-    scan_id = zap.spider.scan(contextname=contextName, url=applicationURL, maxchildren=None,
-                              recurse=True, subtreeonly=None)
+    logging.info("Starting Spider on target: " + applicationURL)
+    scan_id = zap.spider.scan(
+        contextname=contextName,
+        url=applicationURL,
+        maxchildren=None,
+        recurse=True,
+        subtreeonly=None,
+    )
     time.sleep(2)
 
     while int(zap.spider.status(scan_id)) < 100:
-        logging.info('Spider progress ' + zap.spider.status(scan_id) + '%')
+        logging.info("Spider progress " + zap.spider.status(scan_id) + "%")
         time.sleep(2)
-    logging.info('Spider scan completed')
+    logging.info("Spider scan completed")
 
 
 def wait_for_passive_scanner():
-    logging.info('Waiting for Passive Scan to complete')
+    logging.info("Waiting for Passive Scan to complete")
 
     while int(zap.pscan.records_to_scan) > 0:
-        logging.debug('Remaining records to passive scan: ' + zap.pscan.records_to_scan)
+        logging.debug("Remaining records to passive scan: " + zap.pscan.records_to_scan)
         time.sleep(2)
 
-    logging.info('Passive Scan completed')
+    logging.info("Passive Scan completed")
 
 
 def generate_report(scan_timestamp):
-    report = appDir + workDir + serviceName + '-report-' + scan_timestamp + '.xml'
-    f = open(report, 'w')
+    report = appDir + workDir + serviceName + "-report-" + scan_timestamp + ".xml"
+    f = open(report, "w")
     f.write(zap.core.xmlreport())
 
     f.close()
-    logging.info('XML report saved in: ' + report)
+    logging.info("XML report saved in: " + report)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    workDir = resultDir + sys.argv[1] + '/'
+    workDir = resultDir + sys.argv[1] + "/"
 
     try:
         zap = ZAPv2(proxies=localProxy, apikey=apiKey)
     except Exception:
-        raise RuntimeError('Can\'t connect to ZAP. Is it running and proxying on localhost:8090?')
+        raise RuntimeError(
+            "Can't connect to ZAP. Is it running and proxying on localhost:8090?"
+        )
 
-    scan_time_str = datetime.now().strftime('%Y%m%d-%H%M%S')
-    session_fullpath_name = appDir + workDir + 'sessions/' + scan_time_str + '/' + sessionName
+    scan_time_str = datetime.now().strftime("%Y%m%d-%H%M%S")
+    session_fullpath_name = (
+        appDir + workDir + "sessions/" + scan_time_str + "/" + sessionName
+    )
 
     create_session(session_fullpath_name)
 
-    if authMethod == 'scriptBasedAuthentication':
+    if authMethod == "scriptBasedAuthentication":
         enable_httpsender_script()
 
     create_context()
@@ -262,4 +321,4 @@ if __name__ == '__main__':
 
     if shutdownOnceFinished:
         # Shutdown ZAP once finished
-        logging.info('Shutdown ZAP -> ' + zap.core.shutdown())
+        logging.info("Shutdown ZAP -> " + zap.core.shutdown())

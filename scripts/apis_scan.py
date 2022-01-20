@@ -185,7 +185,7 @@ def get_APIs():
             for api in apis:
 
                 if not api.lower().endswith(oas_file_suffixes):
-                    logging.warn(
+                    logging.warning(
                         "unsupported file is in the OpenAPI definition directory: "
                         + api
                     )
@@ -236,6 +236,15 @@ def start_active_scanner():
         postdata=True,
         contextid=context_id,
     )
+
+    try:
+        int(scan_id)
+    except ValueError:
+        raise RuntimeError(
+            "Could not create scan for target {}, ZAP returned: {}".format(
+                target, scan_id
+            )
+        )
 
     logging.info("Start Active scan. Scan ID equals " + scan_id)
     logging.info("Scan Policies: " + str(zap.ascan.scan_policy_names))

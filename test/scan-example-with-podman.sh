@@ -4,7 +4,7 @@
 # 1. Get a URL for the OAS3 definition file
 # 2. Get a URL for the target API
 # 3. Create config.yaml with the URLs and place it in config/
-# 4. zaproxy container must be running (either runenv.sh or runenv-debug.sh)
+# 4. zaproxy container must be running (either runenv.sh or runenv-ui.sh)
 # 
 # Run in the project root directory,
 # $ test/scan-example-with-podman.sh <dir_to_store_results>

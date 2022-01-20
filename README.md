@@ -104,12 +104,12 @@ Apply custom rules to the running ZAP instance before launching a scan.
 
 ##### Example: Load and enable custom rule
 ```
-$ podman exec zaproxy python scripts/gen-zap-script/cli.py --from-yaml scripts/gen-zap-script/rules/software_version_revealed.yaml --api-key=<api-key> --load-and-enable 
+$ podman exec zaproxy python scripts/gen-zap-script/cli.py --from-yaml scripts/gen-zap-script/rules/software_version_revealed.yaml --rapidast-config=<config-file> --load-and-enable
 ```
 
 ##### Example: Delete existing custom rules
 ```
-$ podman exec zaproxy python scripts/gen-zap-script/cli.py --api-key=<api-key> --delete
+$ podman exec zaproxy python scripts/gen-zap-script/cli.py --rapidast-config=<config-file> --delete
 ```
 
 #### Launch a scan

@@ -28,8 +28,8 @@ RUNDIR=$RESULT_DIR/$1
 mkdir $RUNDIR
 
 # Load custom rules
-docker-compose exec zaproxy python scripts/gen-zap-script/cli.py --api-key=cnmeemn7jp7ijd8rl5u14q40v8 --delete
-docker-compose exec zaproxy python scripts/gen-zap-script/cli.py --from-yaml scripts/gen-zap-script/rules/software_version_revealed.yaml --api-key=cnmeemn7jp7ijd8rl5u14q40v8 --load-and-enable
+docker-compose exec zaproxy python scripts/gen-zap-script/cli.py --rapidast-config=./config/config.yaml --delete
+docker-compose exec zaproxy python scripts/gen-zap-script/cli.py --rapidast-config=./config/config.yaml --from-yaml scripts/gen-zap-script/rules/software_version_revealed.yaml --load-and-enable
 
 # Run scan
 docker-compose exec zaproxy python scripts/apis_scan.py $1

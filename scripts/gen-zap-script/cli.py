@@ -22,6 +22,12 @@ if __name__ == "__main__":
         description="Generate active and passive ZAP scripts"
     )
     parser.add_argument(
+        "--rapidast-config",
+        type=argparse.FileType("r"),
+        default=None,
+        help="RapiDAST configuration file, required for --delete-existing and --load-and-enable",
+    )
+    parser.add_argument(
         "--delete-existing",
         action="store_true",
         help="Delete previously generated ZAP scripts (active+passive)",
@@ -44,12 +50,6 @@ if __name__ == "__main__":
         help="Script description in ZAP",
     )
     parser.add_argument("--debug", action="store_true", help="Print debug messages")
-    parser.add_argument(
-        "--api-key",
-        type=str,
-        default="",
-        help="ZAP API key, used for --delete-existing and --load-and-enable",
-    )
     parser.add_argument(
         "--from-yaml",
         type=argparse.FileType("r"),
@@ -237,16 +237,19 @@ if __name__ == "__main__":
             }
         )
 
-    # Zap options, proxies are plucked from environment
-    zap_options = {
-        "proxies": {
-            k.split("_")[0].lower(): os.environ.get(k)
-            for k in ["HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy"]
-            if os.environ.get(k)
-        },
-        # 'proxies': {'http': 'http://127.0.0.1:8090', 'https': 'http://127.0.0.1:8090'},
-        "apikey": args.api_key,
-    }
+    zap_options = {}
+
+    if args.rapidast_config:
+        try:
+            rapidast_config = yaml.safe_load(args.rapidast_config)
+        except yaml.YAMLError as e:
+            raise RuntimeError(
+                "Something went wrong parsing the {} file: {}".format(
+                    args.rapidast_config.name, str(e)
+                )
+            )
+        zap_options["proxies"] = rapidast_config["general"]["localProxy"]
+        zap_options["apikey"] = rapidast_config["general"]["apiKey"]
 
     if args.delete_existing:
         logger.info("Deleting previously generated scripts")

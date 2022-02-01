@@ -17,7 +17,7 @@ openapi:
 scan:
   contextName: 'context1'
 
-  target: 'http://localhost:9000'
+  target: 'http://localhost:9000/api/'
   contextIncludeURL: ['http://localhost:9000/api/.*']
 
   # applicationURL is used for a starting point when crawling is required

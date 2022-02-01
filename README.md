@@ -22,7 +22,7 @@ $ podman pull docker.io/owasp/zap2docker-stable
 1. Get a URL for the OAS3 definition file
 2. Get a URL for the target API
 3. Create config.yaml with the URLs and place it in config/
-4. zaproxy container must be running (either runenv.sh or runenv-debug.sh)
+4. zaproxy container must be running (either runenv.sh or runenv-ui.sh)
 ```
 $ ./runenv.sh
 ```
@@ -72,7 +72,7 @@ drwxr-xr-x. 7 fedora fedora  140 Dec 13 08:11 sessions
 #### Run a container
 
 ```
-$ podman-compose -f podman-compose.yml up <br>
+$ podman-compose -f podman-compose.yml up
 $ podman unshare chown 1000 ./results (podman bind volumes as container root while the app runs as container zap user)
 ```
 
@@ -91,7 +91,7 @@ This is taking advantage of ZAP's webswing feature. See https://www.zaproxy.org/
 
 #### Run a container
 ```
-$ podman-compose -f podman-compose-ui.yml up <br>
+$ podman-compose -f podman-compose-ui.yml up
 $ podman unshare chown 1000 ./results (podman bind volumes as container root while the app runs as container zap user)
 ```
 After the step, it is necessary to navigate to the GUI via http://127.0.0.1:8081/zap to start an actual ZAP instance. 
@@ -104,12 +104,12 @@ Apply custom rules to the running ZAP instance before launching a scan.
 
 ##### Example: Load and enable custom rule
 ```
-$ podman exec zaproxy python scripts/gen-zap-script/cli.py --from-yaml scripts/gen-zap-script/rules/software_version_revealed.yaml --api-key=<api-key> --load-and-enable 
+$ podman exec zaproxy python scripts/gen-zap-script/cli.py --from-yaml scripts/gen-zap-script/rules/software_version_revealed.yaml --rapidast-config=<config-file> --load-and-enable
 ```
 
 ##### Example: Delete existing custom rules
 ```
-$ podman exec zaproxy python scripts/gen-zap-script/cli.py --api-key=<api-key> --delete
+$ podman exec zaproxy python scripts/gen-zap-script/cli.py --rapidast-config=<config-file> --delete
 ```
 
 #### Launch a scan

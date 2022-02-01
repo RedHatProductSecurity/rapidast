@@ -23,7 +23,7 @@ See `rules/` for rule definition and `python ./cli.py` for help.
 Generate a script from a YAML rule and load it in a running ZAP instance:
 
 ```
-python ./cli.py --load-and-enable --from-yaml ./rules/software_version_revealed.yaml --api-key=$API_KEY
+python ./cli.py --load-and-enable --from-yaml ./rules/software_version_revealed.yaml --rapidast-config=<config-file>
 ```
 
 ## Rule files

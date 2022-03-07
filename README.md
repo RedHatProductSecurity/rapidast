@@ -1,6 +1,6 @@
 # RapiDAST
 
-RapiDAST provides a framework for continuous, proactive and fully automated dynamic scanning against web apps/API. 
+RapiDAST provides a framework for continuous, proactive and fully automated dynamic scanning against web apps/API. test
 
 Its core engine is OWASP ZAP Proxy (https://owasp.org/www-project-zap/). Taking advantage of the ZAP container, this project provides value as follows:
  - Easy automation(via fully working in CLI with yaml configuration) of API scanning based on OAS definition

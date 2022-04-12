@@ -9,7 +9,7 @@ general:
 
 openapi:
   importFromUrl: True
-  url: "http://localhost:5002/openapi.json"
+  url: "http://localhost:9001/openapi.yaml"
 
   # if import_from_url is False, set a directory to contain OAS definition files
   directory: "/zap/config/oas"
@@ -17,13 +17,11 @@ openapi:
 scan:
   contextName: 'context1'
 
-  target: 'http://localhost:5002'
-  contextIncludeURL: ['http://localhost:5002/.*']
+  target: 'http://localhost:9000/api/'
+  contextIncludeURL: ['http://localhost:9000/api/.*']
 
   # applicationURL is used for a starting point when crawling is required
   applicationURL: ''
-
-
 
   # Define Context Exclude URL regular expressions.
   # The UI uses dynamic hashes in the filename to avoid being cached.
@@ -32,7 +30,6 @@ scan:
 
 
   #### SCAN POLICIES ####
-
   policies:
     # active scan
     scanPoliciesDir: '/zap/policies'

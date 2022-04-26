@@ -1,7 +1,6 @@
 general:
   serviceName: 'demo1'
   resultDir: '/results/'
-  apiKey: 'cnmeemn7jp7ijd8rl5u14q40v8'
   appDir: '/zap'
   localProxy: {"http": "http://127.0.0.1:8090", "https": "http://127.0.0.1:8090"}
   sessionName: 'session1'
@@ -23,7 +22,7 @@ scan:
   # applicationURL is used for a starting point when crawling is required
   applicationURL: ''
 
-  
+
 
   # Define Context Exclude URL regular expressions.
   # The UI uses dynamic hashes in the filename to avoid being cached.
@@ -45,7 +44,7 @@ scan:
     # 10015: Incomplete or No Cache-control Header Set
     # 10027: Information Disclosure - Suspicious Comments
     # 10096: Timestamp Disclosure
-    # 10024: sensitive info in URL 
+    # 10024: sensitive info in URL
 
   ################# AUTHENTICATION #########################
   # Define authentication method for the context. Possible values are:

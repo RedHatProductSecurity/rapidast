@@ -1,6 +1,6 @@
 # RapiDAST
 
-RapiDAST provides a framework for continuous, proactive and fully automated dynamic scanning against web apps/API. 
+RapiDAST provides a framework for continuous, proactive and fully automated dynamic scanning against web apps/API.
 
 Its core engine is OWASP ZAP Proxy (https://owasp.org/www-project-zap/). Taking advantage of the ZAP container, this project provides value as follows:
  - Easy automation(via fully working in CLI with yaml configuration) of API scanning based on OAS definition
@@ -22,7 +22,8 @@ $ podman pull docker.io/owasp/zap2docker-stable
 1. Get a URL for the OAS3 definition file
 2. Get a URL for the target API
 3. Create config.yaml with the URLs and place it in config/
-4. zaproxy container must be running (either runenv.sh or runenv-ui.sh)
+4. Set the API_KEY value in .env file
+5. zaproxy container must be running (either runenv.sh or runenv-ui.sh)
 ```
 $ ./runenv.sh
 ```
@@ -94,7 +95,7 @@ This is taking advantage of ZAP's webswing feature. See https://www.zaproxy.org/
 $ podman-compose -f podman-compose-ui.yml up
 $ podman unshare chown 1000 ./results (podman bind volumes as container root while the app runs as container zap user)
 ```
-After the step, it is necessary to navigate to the GUI via http://127.0.0.1:8081/zap to start an actual ZAP instance. 
+After the step, it is necessary to navigate to the GUI via http://127.0.0.1:8081/zap to start an actual ZAP instance.
 
 #### Create a custom rule
 
@@ -130,7 +131,7 @@ $ podman-compose -f podman-compose-ui.yml down
 #### Run a container
 
 ```
-$ docker-compose up zaproxy 
+$ docker-compose up zaproxy
 
 ```
 
@@ -151,7 +152,7 @@ This is taking advantage of ZAP's webswing feature. See https://www.zaproxy.org/
 ```
 $ docker-compose up zaproxy_ui
 ```
-After the step, it is necessary to navigate to the GUI via http://127.0.0.1:8081/zap to start an actual ZAP instance. 
+After the step, it is necessary to navigate to the GUI via http://127.0.0.1:8081/zap to start an actual ZAP instance.
 
 #### Launch a scan
 ```
@@ -162,4 +163,3 @@ $ docker-compose exec zaproxy_ui python /zap/scripts/apis_scan.py <dirname_to_be
 ```
 $ docker-compose down
 ```
-

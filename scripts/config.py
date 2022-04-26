@@ -1,4 +1,5 @@
 import yaml
+import os
 
 with open("./config/config.yaml", "r") as stream:
     try:
@@ -9,7 +10,7 @@ with open("./config/config.yaml", "r") as stream:
         )
 
 serviceName = config["general"]["serviceName"]
-apiKey = config["general"]["apiKey"]
+apiKey = os.getenv('API_KEY')
 appDir = config["general"]["appDir"]
 localProxy = config["general"]["localProxy"]
 sessionName = config["general"]["sessionName"]

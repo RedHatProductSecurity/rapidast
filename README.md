@@ -11,7 +11,12 @@ Its core engine is OWASP ZAP Proxy (https://owasp.org/www-project-zap/). Taking 
 
 podman or docker is required.
 
-## For podman
+1. Get a URL for the OAS3 definition file
+2. Get a URL for the target API
+3. Create config.yaml with the URLs and place it in config/
+4. Set the API_KEY value in .env file
+
+## Installing podman
 ```
 $ pip3 install podman-compose
 $ podman pull docker.io/owasp/zap2docker-stable
@@ -19,11 +24,7 @@ $ podman pull docker.io/owasp/zap2docker-stable
 
 # Quick Scan Example(using podman)
 
-1. Get a URL for the OAS3 definition file
-2. Get a URL for the target API
-3. Create config.yaml with the URLs and place it in config/
-4. Set the API_KEY value in .env file
-5. zaproxy container must be running (either runenv.sh or runenv-ui.sh)
+zaproxy container must be running (either runenv.sh or runenv-ui.sh)
 ```
 $ ./runenv.sh
 ```
@@ -163,3 +164,16 @@ $ docker-compose exec zaproxy_ui python /zap/scripts/apis_scan.py <dirname_to_be
 ```
 $ docker-compose down
 ```
+
+## Run RapiDast as a GitHub action for CI
+
+You can find an example of an action in .github/workflows/rapidast-scan.yml.
+This action will run using docker. To config this follow this steps:
+
+1. Follow the "Prerequisites" section
+2. Set GitHub secret named "AUTH_CRED" with the base64 basic authentication credentials for the API to scan. For example:
+```
+dGVzdC11c2VyOnRlc3QtcGFzc3dvcmQ=
+```
+**IMPORTANT**: this action will upload the scan results as action artifacts. This 
+contains info about the intercepted HTTP requests by ZAP which will contain your AUTH_CRED secret value in the Authorization header

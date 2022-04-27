@@ -22,6 +22,29 @@ services:
         target: "/zap/policies"
     entrypoint: /zap/scripts/entrypoint.sh
 
+  zaproxy_action:
+    env_file: .env
+    image: owasp/zap2docker-stable
+    container_name: zaproxy
+    #needs to run as root to be able to write to mounted volumes
+    user: root
+    ports:
+      - "8091:8090"
+    volumes:
+      - type: bind
+        source: "./scripts"
+        target: "/zap/scripts"
+      - type: bind
+        source: "./config"
+        target: "/zap/config"
+      - type: bind
+        source: "./results"
+        target: "/zap/results"
+      - type: bind
+        source: "./policies"
+        target: "/zap/policies"
+    entrypoint: /zap/scripts/entrypoint.sh
+
 
   zaproxy_ui:
     env_file: .env

@@ -73,11 +73,11 @@ scan:
   #  authClientID: [oauth_client_id]
   #  authCreateUser: True
 
-    # to use Logged out authIndicatorRegex
+  # to use Logged out authIndicatorRegex
   #  authIsLoggedInIndicator: False
 
-    # regex expression that indicates the user is logged out and triggers the
-    # token refresh process
+  # regex expression that indicates the user is logged out and triggers the
+  # token refresh process
   #  authIndicatorRegex: '\QHTTP/1.1 401 Unauthorized\E'
 
     ## adds the bearer token header auth to each request

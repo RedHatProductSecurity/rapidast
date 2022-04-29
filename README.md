@@ -11,6 +11,22 @@ Its core engine is OWASP ZAP Proxy (https://owasp.org/www-project-zap/). Taking 
 
 podman or docker is required.
 
+## .env file example
+
+```
+# This file will set environment variables inside zaproxy container
+
+# API KEY should be set to ensure that public instances of ZAP can only be
+# accessed by the intended clients
+API_KEY=[GENERATE_RANDOM_STRING]
+
+# oauth2 refresh_token used in authMethod: 'scriptBasedAuthentication' in config.yaml
+#RTOKEN=[oauth_refresh_token]
+
+# set this to handle basic auth when authMethod: null in config.yaml
+# ZAP_AUTH_HEADER_VALUE=Basic [base64_encoded_creds]
+```
+
 ## For podman
 ```
 $ pip3 install podman-compose

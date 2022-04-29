@@ -2,9 +2,7 @@ name: scan-api-action
 
 # Controls when the workflow will run
 on:
-  push:
-    branches:
-      - master 
+  workflow_dispatch:
 
 # this is a ZAP pre defined env var that, if defined, ZAP automatically uses for basic auth
 env:

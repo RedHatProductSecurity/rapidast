@@ -14,7 +14,7 @@ podman or docker is required.
 1. Get a URL for the OAS3 definition file
 2. Get a URL for the target API
 3. Create config.yaml with the URLs and place it in config/
-4. Set the API_KEY value in .env file
+4. Create an .env file in the project root and set the API_KEY and other values in it
 
 ## Installing podman
 ```

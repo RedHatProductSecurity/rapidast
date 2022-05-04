@@ -90,7 +90,10 @@ drwxr-xr-x. 7 fedora fedora  140 Dec 13 08:11 sessions
 
 ```
 $ podman-compose -f podman-compose.yml up
-$ podman unshare chown 1000 ./results (podman bind volumes as container root while the app runs as container zap user)
+```
+On older podman versions (before 3.1.0), you will need to manually make the `./result` directory writable to the `zap` user. This can be done with the following command :
+```
+$ podman unshare chown 1000 ./results
 ```
 
 #### Launch a scan
@@ -109,7 +112,10 @@ This is taking advantage of ZAP's webswing feature. See https://www.zaproxy.org/
 #### Run a container
 ```
 $ podman-compose -f podman-compose-ui.yml up
-$ podman unshare chown 1000 ./results (podman bind volumes as container root while the app runs as container zap user)
+```
+On older podman versions (before 3.1.0), you will need to manually make the `./result` directory writable to the `zap` user. This can be done with the following command :
+```
+$ podman unshare chown 1000 ./results
 ```
 After the step, it is necessary to navigate to the GUI via http://127.0.0.1:8081/zap to start an actual ZAP instance.
 

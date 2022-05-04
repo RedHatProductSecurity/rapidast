@@ -1,0 +1,39 @@
+name: scan-api-action
+
+# Controls when the workflow will run
+on:
+  workflow_dispatch:
+
+# this is a ZAP pre defined env var that, if defined, ZAP automatically uses for basic auth
+env:
+  ZAP_AUTH_HEADER_VALUE: Basic ${{ secrets.AUTH_CRED }}
+
+jobs:
+  rapidast:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      # add env variable into container env file so they are available in zap2docker
+      - run: echo ZAP_AUTH_HEADER_VALUE=$ZAP_AUTH_HEADER_VALUE >> .env
+
+      - name: start the container
+        run: docker-compose up -d zaproxy_action
+
+      - name: Sleep for 60 seconds
+        run: sleep 60s
+        shell: bash
+
+      - name: get logs
+        run: docker-compose logs zaproxy
+
+      - name: scan the api
+        run: docker-compose exec -T zaproxy_action python /zap/scripts/apis_scan.py .
+
+      - name: Archive scan results as artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: rapidast-report
+          path: ${{ github.workspace }}/results

@@ -212,7 +212,9 @@ def start_active_scanner():
     if len(policies) > 0:
         # add policies
         for policy in policies:
-            zap.ascan.import_scan_policy(path=appDir + "/policies/" + policy)
+            if ( zap.ascan.import_scan_policy(path=appDir + "/policies/" + policy) == 'already_exists' ):
+                logging.warning(f"The policy {policy} was already in ZAP. No modification were applied to the existing policy")
+
 
         # remove other policies
         for existing_policy in zap.ascan.scan_policy_names:

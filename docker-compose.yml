@@ -45,7 +45,6 @@ services:
         target: "/zap/policies"
     entrypoint: /zap/scripts/entrypoint.sh
 
-
   zaproxy_ui:
     env_file: .env
     image: owasp/zap2docker-stable

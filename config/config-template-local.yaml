@@ -25,8 +25,6 @@ scan:
   # applicationURL is used for a starting point when crawling is required
   applicationURL: ''
 
-
-
   # Define Context Exclude URL regular expressions.
   # The UI uses dynamic hashes in the filename to avoid being cached.
   # Exclude this to avoid the spider getting trap endessly in the UI site tree
@@ -49,7 +47,7 @@ scan:
     # 10096: Timestamp Disclosure
     # 10024: sensitive info in URL
 
-  ################# AUTHENTICATION #########################
+  #### AUTHENTICATION ####
   # Define authentication method for the context. Possible values are:
   # "null", "scriptBasedAuthentication"
   # if set to null basic auth can be handled by setting the
@@ -86,3 +84,11 @@ scan:
   #  HttpSenderScriptEngine: 'Oracle Nashorn'
   #  HttpSenderScriptFilePath: 'scripts/add-bearer-token.js'
   #  HttpSenderScriptDescription: 'add bearer token to each HTTP request'
+
+
+  #### UPSTREAM PROXY ####
+  proxy:
+    useProxyChain: False
+    proxyAddress: ''
+    proxyPort: ''
+    skipProxyAddresses: ('127.0.0.1;', 'localhost')

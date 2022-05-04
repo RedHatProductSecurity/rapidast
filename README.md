@@ -9,7 +9,14 @@ Its core engine is OWASP ZAP Proxy (https://owasp.org/www-project-zap/). Taking 
 
 # Prerequisites
 
-podman or docker is required.
+* podman or docker is required.
+
+1. Create config.yaml, place it in config/ and set the config values
+for your API. You can use config/config-template-local.yaml as an example
+2. Get a URL for the OAS3 definition (will only work if auth is not required to access the OpenAPI definition) or import the definition file (json|yaml) into the directory specified in config[openapi][directory] in the config.yaml file
+3. Define the URL for the target API (local, stage, prod, etc) in config.yaml
+4. Set the zap API_KEY value in the .env file and, if required, set
+the values for the authentication type selected
 
 1. Get a URL for the OAS3 definition file
 2. Get a URL for the target API
@@ -40,6 +47,7 @@ $ podman pull docker.io/owasp/zap2docker-stable
 
 # Quick Scan Example(using podman)
 
+zaproxy container must be running (either runenv.sh or runenv-ui.sh)
 1. Get a URL for the OAS3 definition file
 2. Get a URL for the target API
 3. Create config.yaml with the URLs and place it in config/
@@ -203,5 +211,4 @@ This action will run using docker. To config this follow this steps:
 ```
 dGVzdC11c2VyOnRlc3QtcGFzc3dvcmQ=
 ```
-**IMPORTANT**: this action will upload the scan results as action artifacts. This 
-contains info about the intercepted HTTP requests by ZAP which will contain your AUTH_CRED secret value in the Authorization header
+**IMPORTANT**: this action will upload the scan results as action artifacts. This contains info about the intercepted HTTP requests by ZAP which will contain your AUTH_CRED secret value in the Authorization header

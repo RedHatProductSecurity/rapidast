@@ -7,6 +7,9 @@ general:
   shutdownOnceFinished: False
 
 openapi:
+  # import the OpenAPI definitions from an url will only work for public API
+  # definitions. If not public you have to import the OPENAPI definition
+  # file (json or yaml) into the "directory" and set importFromUrl to false
   importFromUrl: True
   url: "http://localhost:9001/openapi.yaml"
 
@@ -29,6 +32,7 @@ scan:
 
 
   #### SCAN POLICIES ####
+  # scan policies in this folder will be imported and use in the scan
   policies:
     # active scan
     scanPoliciesDir: '/zap/policies'
@@ -45,9 +49,42 @@ scan:
 
   #### AUTHENTICATION ####
   # Define authentication method for the context. Possible values are:
-  # "null", "manualAuthentication"; "scriptBasedAuthentication"; "httpAuthentication";
-  # "formBasedAuthentication"
-  authMethod: null
+  # "null", "scriptBasedAuthentication"
+  # if set to null basic auth can be handled by setting the
+  # ZAP_AUTH_HEADER_VALUE=Basic [base64_encoded_creds] enviromental variable
+  # in /.env file
+
+   authMethod: null
+
+  # there are 2 parts to script based auth:
+  ## oauth access token that needs to be refreshed on expiration.
+  ## This auth method will work on OAuth2 workflows only if offline_token is
+  ## available
+
+  #authMethod: 'scriptBasedAuthentication'
+  #scriptAuth:
+  #  authScriptName: 'offline-token'
+  #  authScriptEngine: 'Oracle Nashorn'
+  #  authScriptFilePath: 'scripts/offline-token.js'
+  #  authScriptDescription: 'will automatically fetch the new access token for every unauthorized request'
+  #  authTokenEndpoint: [oauth_realm_token_endpoint]
+  #  authClientID: [oauth_client_id]
+  #  authCreateUser: True
+
+  # to use Logged out authIndicatorRegex
+  #  authIsLoggedInIndicator: False
+
+  # regex expression that indicates the user is logged out and triggers the
+  # token refresh process
+  #  authIndicatorRegex: '\QHTTP/1.1 401 Unauthorized\E'
+
+    ## adds the bearer token header auth to each request
+  #  useHttpSenderScript: True
+  #  HttpSenderScriptName: 'add-bearer-token'
+  #  HttpSenderScriptEngine: 'Oracle Nashorn'
+  #  HttpSenderScriptFilePath: 'scripts/add-bearer-token.js'
+  #  HttpSenderScriptDescription: 'add bearer token to each HTTP request'
+
 
   #### UPSTREAM PROXY ####
   proxy:

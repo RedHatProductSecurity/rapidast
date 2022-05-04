@@ -1,9 +1,8 @@
 version: "3"
 services:
   zaproxy:
+    env_file: .env
     image: docker.io/owasp/zap2docker-stable
-    tty: true
-    stdin_open: true
     container_name: zaproxy
     user: zap
     ports:
@@ -13,7 +12,4 @@ services:
       - ./config:/zap/config:Z
       - ./results:/zap/results:Z,U
       - ./policies:/zap/policies:Z
-    command:
-      - /bin/bash
-      - -c
-      - pip install jinja2 && zap.sh -cmd -addonupdate && zap.sh -daemon -port 8090 -config api.key=cnmeemn7jp7ijd8rl5u14q40v8 -config database.newsession=3 -config database.newsessionprompt=false -addoninstall ascanrulesBeta 
+    entrypoint: /zap/scripts/entrypoint.sh

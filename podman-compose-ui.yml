@@ -12,7 +12,7 @@ services:
     volumes:
       - ./scripts:/zap/scripts:Z
       - ./config:/zap/config:Z
-      - ./results:/zap/results:Z
+      - ./results:/zap/results:Z,U
       - ./policies:/zap/policies:Z
       - ./webswing:/zap/webswing_custom:Z
     command:

@@ -1,7 +1,6 @@
 general:
   serviceName: 'demo1'
   resultDir: '/results/'
-  apiKey: 'cnmeemn7jp7ijd8rl5u14q40v8'
   appDir: '/zap'
   localProxy: {"http": "http://127.0.0.1:8090", "https": "http://127.0.0.1:8090"}
   sessionName: 'session1'

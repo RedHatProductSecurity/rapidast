@@ -16,7 +16,23 @@ podman or docker is required.
 3. Create config.yaml with the URLs and place it in config/
 4. Create an .env file in the project root and set the API_KEY and other values in it
 
-## Installing podman
+## .env file example
+
+```
+# This file will set environment variables inside zaproxy container
+
+# API KEY should be set to ensure that public instances of ZAP can only be
+# accessed by the intended clients
+API_KEY=[GENERATE_RANDOM_STRING]
+
+# oauth2 refresh_token used in authMethod: 'scriptBasedAuthentication' in config.yaml
+#RTOKEN=[oauth_refresh_token]
+
+# set this to handle basic auth when authMethod: null in config.yaml
+# ZAP_AUTH_HEADER_VALUE=Basic [base64_encoded_creds]
+```
+
+## For podman
 ```
 $ pip3 install podman-compose
 $ podman pull docker.io/owasp/zap2docker-stable
@@ -24,7 +40,12 @@ $ podman pull docker.io/owasp/zap2docker-stable
 
 # Quick Scan Example(using podman)
 
-zaproxy container must be running (either runenv.sh or runenv-ui.sh)
+1. Get a URL for the OAS3 definition file
+2. Get a URL for the target API
+3. Create config.yaml with the URLs and place it in config/
+4. Set the API_KEY value in .env file
+5. zaproxy container must be running (either runenv.sh or runenv-ui.sh)
+
 ```
 $ ./runenv.sh
 ```
@@ -75,7 +96,10 @@ drwxr-xr-x. 7 fedora fedora  140 Dec 13 08:11 sessions
 
 ```
 $ podman-compose -f podman-compose.yml up
-$ podman unshare chown 1000 ./results (podman bind volumes as container root while the app runs as container zap user)
+```
+On older podman versions (before 3.1.0), you will need to manually make the `./result` directory writable to the `zap` user. This can be done with the following command :
+```
+$ podman unshare chown 1000 ./results
 ```
 
 #### Launch a scan
@@ -94,7 +118,11 @@ This is taking advantage of ZAP's webswing feature. See https://www.zaproxy.org/
 #### Run a container
 ```
 $ podman-compose -f podman-compose-ui.yml up
-$ podman unshare chown 1000 ./results (podman bind volumes as container root while the app runs as container zap user)
+```
+
+On older podman versions (before 3.1.0), you will need to manually make the `./result` directory writable to the `zap` user. This can be done with the following command :
+```
+$ podman unshare chown 1000 ./results
 ```
 After the step, it is necessary to navigate to the GUI via http://127.0.0.1:8081/zap to start an actual ZAP instance.
 

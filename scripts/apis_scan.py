@@ -5,6 +5,7 @@ import time
 import logging
 from datetime import datetime
 from zapv2 import ZAPv2
+import argparse
 
 from config import *
 
@@ -298,7 +299,14 @@ def generate_report(scan_timestamp):
 
 if __name__ == "__main__":
 
-    workDir = resultDir + sys.argv[1] + "/"
+    parser = argparse.ArgumentParser(description='Connect to ZAP and launch a scan based on config.yaml')
+    parser.add_argument('--debug', action='count', default=0, help='Show debugging output')
+    parser.add_argument('destination', metavar='N',
+                                help=f"Directory of the report, relative to {resultDir}")
+
+    logging.basicConfig(level=logging.DEBUG if parser.parse_args().debug else logging.INFO)
+
+    workDir = resultDir + parser.parse_args().destination + "/"
 
     try:
         zap = ZAPv2(proxies=localProxy, apikey=apiKey)

@@ -26,6 +26,8 @@ else:
     useProxyChain = False
 
 if "openapi" in config:
+    urlScanDir = config['openapi']['urlScanDir']
+    urlScan = config['openapi']['urlScan']
     oasImportFromUrl = config["openapi"]["importFromUrl"]
     if oasImportFromUrl:
         oasUrl = config["openapi"]["url"]

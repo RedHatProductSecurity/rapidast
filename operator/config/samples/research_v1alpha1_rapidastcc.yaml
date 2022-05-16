@@ -1,0 +1,12 @@
+apiVersion: research.psse/v1alpha1
+kind: RapiDastCC
+metadata:
+  name: rapidastcc-sample
+spec:
+  # Default values copied from <project_dir>/helm-charts/rapidast-control-center/values.yaml
+  image:
+    pullPolicy: Always
+    repository: registry.access.redhat.com/ubi8/ubi-micro
+    tag: latest
+  
+  

@@ -1,0 +1,75 @@
+apiVersion: research.psse/v1alpha1
+kind: RapiDast
+metadata:
+  name: rapidast-sample
+spec:
+  # Default values copied from <project_dir>/helm-charts/rapidast-chart/values.yaml
+  apiKeyRequired: false
+  config: |-
+    general:
+      serviceName: 'demo1'
+      resultDir: '/results/'
+      appDir: '/zap'
+      localProxy: {"http": "http://127.0.0.1:8090", "https": "http://127.0.0.1:8090"}
+      sessionName: 'session1'
+      shutdownOnceFinished: False
+  
+    openapi:
+      importFromUrl: True
+      url: "http://localhost:9001/openapi.yaml"
+  
+      # if import_from_url is False, set a directory to contain OAS definition files
+      directory: "/zap/config/oas"
+  
+    scan:
+      contextName: 'context1'
+  
+      target: 'http://localhost:9000/api/'
+      contextIncludeURL: ['http://localhost:9000/api/.*']
+  
+      # applicationURL is used for a starting point when crawling is required
+      applicationURL: ''
+  
+      # Define Context Exclude URL regular expressions.
+      # The UI uses dynamic hashes in the filename to avoid being cached.
+      # Exclude this to avoid the spider getting trap endessly in the UI site tree
+      contextExcludeURL: ['']
+  
+  
+      #### SCAN POLICIES ####
+      policies:
+        # active scan
+        scanPoliciesDir: '/zap/policies'
+        scanPolicyName: 'API-minimal-example'
+  
+        # passive scan
+        disabledPassiveScan: "2,10015,10027,10096,10024"
+        # https://www.zaproxy.org/docs/alerts/
+        # 2: Private IP Disclosure
+        # 10015: Incomplete or No Cache-control Header Set
+        # 10027: Information Disclosure - Suspicious Comments
+        # 10096: Timestamp Disclosure
+        # 10024: sensitive info in URL
+  
+      #### AUTHENTICATION ####
+      # Define authentication method for the context. Possible values are:
+      # "null", "manualAuthentication"; "scriptBasedAuthentication"; "httpAuthentication";
+      # "formBasedAuthentication"
+      authMethod: null
+  
+      #### UPSTREAM PROXY ####
+      proxy:
+        useProxyChain: False
+        proxyAddress: ''
+        proxyPort: ''
+        skipProxyAddresses: ('127.0.0.1;', 'localhost')
+  image:
+    pullPolicy: Always
+    repository: quay.io/rhproductsecurity/rapidast
+    tag: latest
+  job:
+    cron: false
+    schedule: '* * * * *'
+  pvc: rapidast-pvc
+  
+  

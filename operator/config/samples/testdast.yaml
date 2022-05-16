@@ -1,0 +1,36 @@
+apiVersion: research.psse/v1alpha1
+kind: RapiDast
+metadata:
+  name: rapidast-sample
+spec:
+  # Default values copied from <project_dir>/helm-charts/rapidast-chart/values.yaml
+  config: "general:\n  serviceName: 'demo1'\n  resultDir: '/results/'\n  apiKey: 'cnmeemn7jp7ijd8rl5u14q40v8'\n
+    \ appDir: '/zap'\n  localProxy: {\"http\": \"http://127.0.0.1:8090\", \"https\":
+    \"http://127.0.0.1:8090\"}\n  sessionName: 'session1'\n  shutdownOnceFinished: False\n\nopenapi:\n
+    \ importFromUrl: True\n  url: \"http://10.217.0.120:9999/swagger.yaml\"\n\n  # if
+    import_from_url is False, set a directory to contain OAS definition files\n  directory:
+    \"/zap/config/oas\"\n\nscan:\n  contextName: 'context1'\n\n  target: 'http://10.217.0.14:9999/'\n
+    \ contextIncludeURL: ['http://10.217.0.14:9999/.*']\n\n  # applicationURL is used
+    for a starting point when crawling is required\n  applicationURL: ''\n\n  \n\n  #
+    Define Context Exclude URL regular expressions.\n  # The UI uses dynamic hashes
+    in the filename to avoid being cached.\n  # Exclude this to avoid the spider getting
+    trap endessly in the UI site tree\n  contextExcludeURL: ['']\n\n\n  #### SCAN POLICIES
+    ####\n\n  policies:\n    # active scan\n    scanPoliciesDir: '/zap/policies'\n    scanPolicyName:
+    'API-minimal-example'\n\n    # passive scan\n    disabledPassiveScan: \"2,10015,10027,10096,10024\"\n
+    \   # https://www.zaproxy.org/docs/alerts/\n    # 2: Private IP Disclosure\n    #
+    10015: Incomplete or No Cache-control Header Set\n    # 10027: Information Disclosure
+    - Suspicious Comments\n    # 10096: Timestamp Disclosure\n    # 10024: sensitive
+    info in URL \n\n  ################# AUTHENTICATION #########################\n  #
+    Define authentication method for the context. Possible values are:\n  # \"null\",
+    \"manualAuthentication\"; \"scriptBasedAuthentication\"; \"httpAuthentication\";\n
+    \ # \"formBasedAuthentication\"\n  authMethod: null\n"
+  image:
+    pullPolicy: Always
+    repository: quay.io/jweiser/rapitest
+    tag: latest
+  job:
+    cron: false
+    schedule: '* * * * *'
+  pvc: rapidast-test-pvc
+  
+  

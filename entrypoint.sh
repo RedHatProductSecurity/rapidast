@@ -14,8 +14,8 @@ zap.sh -cmd -addonupdate && zap.sh -daemon -port 8090 -config api.key=cnmeemn7jp
 # sleep to give ZAP a chance to get set up
 sleep 45
 
-python scripts/gen-zap-script/cli.py --rapidast-config=./config/config.yaml --delete
-python scripts/gen-zap-script/cli.py --rapidast-config=./config/config.yaml --from-yaml scripts/gen-zap-script/rules/software_version_revealed.yaml --load-and-enable
+python scripts/gen_zap_script/cli.py --rapidast-config=./config/config.yaml --delete
+python scripts/gen_zap_script/cli.py --rapidast-config=./config/config.yaml --from-yaml scripts/gen_zap_script/rules/software_version_revealed.yaml --load-and-enable
 
 
 # Run scan

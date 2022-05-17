@@ -1,0 +1,58 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.2.0
+    hooks:
+      - id: trailing-whitespace
+        language_version: python3
+      - id: end-of-file-fixer
+        language_version: python3
+      - id: debug-statements
+        language_version: python3
+
+  - repo: https://github.com/asottile/reorder_python_imports
+    rev: v3.0.1
+    hooks:
+      - id: reorder-python-imports
+        language_version: python3
+  - repo: https://github.com/psf/black
+    rev: 22.3.0
+    hooks:
+      - id: black
+        args: [--safe, --quiet, --line-length, "120"]
+        language_version: python3
+        require_serial: true
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v2.32.0
+    hooks:
+      - id: pyupgrade
+        language_version: python3
+  - repo: https://github.com/PyCQA/pylint
+    rev: v2.13.5
+    hooks:
+      - id: pylint
+        args: [--max-line-length, "120"]
+        language_version: python3
+
+  # D101 - allows missing docstring in public classes
+  # D102 - allows missing docstring in docstring in public methods
+  # D104 - allows missing docstring in __init__.py
+  # D107 - allows missing docstring in __init__ magic
+  - repo: https://github.com/PyCQA/pydocstyle
+    rev: 6.1.1
+    hooks:
+      - id: pydocstyle
+        args: [--convention, "google", --add-ignore, "D101,D102,D104,D107"]
+
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v2.6.2
+    hooks:
+      - id: prettier
+        exclude: ".*template_.*"
+  - repo: https://github.com/thibaudcolas/curlylint
+    rev: v0.13.1
+    hooks:
+      - id: curlylint
+        files: ".*template_.*"
+
+ci:
+  autofix_prs: false

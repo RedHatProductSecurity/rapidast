@@ -300,11 +300,13 @@ def generate_report(scan_timestamp):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Connect to ZAP and launch a scan based on config.yaml')
-    parser.add_argument('--debug', action='count', default=0, help='Show debugging output')
-    parser.add_argument('destination', metavar='N',
-                                help=f"Directory of the report, relative to {resultDir}")
+    parser.add_argument('--log-level', dest='loglevel', 
+            choices=["debug","info","warning","error","critical"], 
+            default="info", help='Level of verbosity')
+    parser.add_argument('destination', metavar='NAME',
+            help=f"Directory of the report, relative to {resultDir}")
 
-    logging.basicConfig(level=logging.DEBUG if parser.parse_args().debug else logging.INFO)
+    logging.basicConfig(level=parser.parse_args().loglevel.upper())
 
     workDir = resultDir + parser.parse_args().destination + "/"
 

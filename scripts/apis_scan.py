@@ -4,6 +4,8 @@ import sys
 import time
 import logging
 from datetime import datetime
+
+import six
 from zapv2 import ZAPv2
 import argparse
 
@@ -162,8 +164,19 @@ def enable_passive_scanner():
     zap.pscan.enable_all_scanners()
     zap.pscan.disable_scanners(disabledPassiveScan)
 
+def importurls(filepath):
+    """
+    Imports URLs (one per line) from the file with the given file system path.
+    This component is optional and therefore the API will only work if it is installed
+    """
+    return six.next(six.itervalues(zap._request(zap.base + 'exim/action/importUrls',
+                                                         {'filePath': filepath})))
 
 def get_APIs():
+    if urlScan:
+        url_list_path = "/zap" + urlScanDir + "/" + "urlScan.config"
+        print ("Scanning from URL List")
+        importurls(url_list_path)
     if oasImportFromUrl:
         logging.info("Importing API from URL: " + oasUrl)
 
@@ -230,16 +243,29 @@ def start_active_scanner():
     zap.ascan.set_option_thread_per_host(20)
     # Launch Active scan with the configured policy on the target url and
     # recursively scan every site node
-    scan_id = zap.ascan.scan(
-        url=target,
-        recurse=True,
-        inscopeonly=True,
-        scanpolicyname=scanPolicyName,
-        method=None,
-        postdata=True,
-        contextid=context_id,
-    )
-
+    scan_id = None
+    if urlScan:
+        urls = zap.core.urls()
+        print(urls)
+        for u in urls:
+            scan_id = zap.ascan.scan(
+                url=u,
+                recurse=True,
+                inscopeonly=True,
+                scanpolicyname=scanPolicyName,
+                method=None,
+                postdata=True,
+                contextid=context_id)
+    else:
+        scan_id = zap.ascan.scan(
+            url=target,
+            recurse=True,
+            inscopeonly=True,
+            scanpolicyname=scanPolicyName,
+            method=None,
+            postdata=True,
+            contextid=context_id,
+        )
     try:
         int(scan_id)
     except ValueError:

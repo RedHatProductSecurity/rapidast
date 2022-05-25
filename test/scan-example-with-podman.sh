@@ -28,8 +28,8 @@ mkdir $RUNDIR
 podman unshare chown 1000 $RUNDIR
 
 # Load custom rules
-podman exec zaproxy python scripts/gen-zap-script/cli.py --rapidast-config=./config/config.yaml --delete
-podman exec zaproxy python scripts/gen-zap-script/cli.py --rapidast-config=./config/config.yaml --from-yaml scripts/gen-zap-script/rules/software_version_revealed.yaml --load-and-enable
+podman exec zaproxy python scripts/gen_zap_script/cli.py --rapidast-config=./config/config.yaml --delete
+podman exec zaproxy python scripts/gen_zap_script/cli.py --rapidast-config=./config/config.yaml --from-yaml scripts/gen_zap_script/rules/software_version_revealed.yaml --load-and-enable
 
 # Run scan
 podman exec zaproxy python scripts/apis_scan.py $1

@@ -13,8 +13,6 @@ job:
 
 pvc: rapidast-pvc
 
-apiKeyRequired: false
-
 # config is (currently) same as config file -- must be multiline string
 config: |
   general:

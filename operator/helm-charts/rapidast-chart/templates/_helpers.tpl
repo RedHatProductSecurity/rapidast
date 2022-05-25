@@ -48,14 +48,12 @@ template:
         mountPath: /zap/config
       - name: results-volume
         mountPath: /zap/results/
-{{- if .Values.apiKeyRequired }}
       env:
         - name: API_KEY
           valueFrom:
             secretKeyRef:
               name: {{ .Release.Name}}-apikey
               key: apiKey
-{{- end}}
     volumes:
       - name: config-volume
         configMap:

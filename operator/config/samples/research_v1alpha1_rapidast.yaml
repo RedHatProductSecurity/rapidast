@@ -4,7 +4,6 @@ metadata:
   name: rapidast-sample
 spec:
   # Default values copied from <project_dir>/helm-charts/rapidast-chart/values.yaml
-  apiKeyRequired: false
   config: |-
     general:
       serviceName: 'demo1'

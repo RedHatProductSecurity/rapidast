@@ -9,7 +9,7 @@ mkdir $RUNDIR
 
 
 # Run in backgound to make sure we move on to following instructions
-zap.sh -cmd -addonupdate && zap.sh -daemon -port 8090 -config api.key=cnmeemn7jp7ijd8rl5u14q40v8 -config database.newsession=3 -config database.newsessionprompt=false -addoninstall ascanrulesBeta &
+zap.sh -cmd -addonupdate && zap.sh -daemon -port 8090 -config api.key=$API_KEY -config database.newsession=3 -config database.newsessionprompt=false -addoninstall ascanrulesBeta &
 
 # sleep to give ZAP a chance to get set up
 sleep 45

@@ -121,18 +121,18 @@ After the step, it is necessary to navigate to the GUI via http://127.0.0.1:8081
 
 #### Create a custom rule
 
-It is possible to create a custom rule yaml file and apply to the ZAP instance. Refer to a few examples of the yaml rule files in the scripts/gen-zap-script/rules directory.
+It is possible to create a custom rule yaml file and apply to the ZAP instance. Refer to a few examples of the yaml rule files in the scripts/gen_zap_script/rules directory.
 
 Apply custom rules to the running ZAP instance before launching a scan.
 
 ##### Example: Load and enable custom rule
 ```
-$ podman exec zaproxy python scripts/gen-zap-script/cli.py --from-yaml scripts/gen-zap-script/rules/software_version_revealed.yaml --rapidast-config=<config-file> --load-and-enable
+$ podman exec zaproxy python scripts/gen_zap_script/cli.py --from-yaml scripts/gen_zap_script/rules/software_version_revealed.yaml --rapidast-config=<config-file> --load-and-enable
 ```
 
 ##### Example: Delete existing custom rules
 ```
-$ podman exec zaproxy python scripts/gen-zap-script/cli.py --rapidast-config=<config-file> --delete
+$ podman exec zaproxy python scripts/gen_zap_script/cli.py --rapidast-config=<config-file> --delete
 ```
 
 #### Launch a scan

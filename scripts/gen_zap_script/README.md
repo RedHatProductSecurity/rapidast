@@ -2,7 +2,7 @@
 
 This script assists users in generating and loading ZAP scripts to improve and
 tailor scanning capabilities. Two types of scripts can be generated: active and
-passive. YAML files, called rules, are fed to gen-zap-script to generate and
+passive. YAML files, called rules, are fed to gen_zap_script to generate and
 load ZAP scripts.
 
 Passive rules evaluate regexps in request/response and raise findings in ZAP.

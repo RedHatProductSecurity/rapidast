@@ -65,7 +65,7 @@ spec:
         skipProxyAddresses: ('127.0.0.1;', 'localhost')
   image:
     pullPolicy: Always
-    repository: quay.io/rhproductsecurity/rapidast
+    repository: quay.io/redhatproductsecurity/rapidast
     tag: latest
   job:
     cron: false

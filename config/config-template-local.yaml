@@ -54,7 +54,7 @@ scan:
   # ZAP_AUTH_HEADER_VALUE=Basic [base64_encoded_creds] enviromental variable
   # in /.env file
 
-   authMethod: null
+  authMethod: null
 
   # there are 2 parts to script based auth:
   ## oauth access token that needs to be refreshed on expiration.
@@ -86,9 +86,9 @@ scan:
   #  HttpSenderScriptDescription: 'add bearer token to each HTTP request'
 
 
-  #### UPSTREAM PROXY ####
-  proxy:
-    useProxyChain: False
-    proxyAddress: ''
-    proxyPort: ''
-    skipProxyAddresses: ('127.0.0.1;', 'localhost')
+#### UPSTREAM PROXY ####
+proxy:
+  useProxyChain: True
+  proxyAddress: ''
+  proxyPort: ''
+  skipProxyAddresses: '127.0.0.1;localhost'

@@ -9,7 +9,19 @@ Its core engine is OWASP ZAP Proxy (https://owasp.org/www-project-zap/). Taking 
 
 # Prerequisites
 
-podman or docker is required.
+* podman or docker is required.
+
+1. Create config.yaml, place it in config/ and set the config values
+for your API. You can use config/config-template-local.yaml as an example
+2. Get a URL for the OAS3 definition (will only work if auth is not required to access the OpenAPI definition) or import the definition file (json|yaml) into the directory specified in config[openapi][directory] in the config.yaml file
+3. Define the URL for the target API (local, stage, prod, etc) in config.yaml
+4. Set the zap API_KEY value in the .env file and, if required, set
+the values for the authentication type selected
+
+1. Get a URL for the OAS3 definition file
+2. Get a URL for the target API
+3. Create config.yaml with the URLs and place it in config/
+4. Create an .env file in the project root and set the API_KEY and other values in it
 
 ## .env file example
 
@@ -35,11 +47,13 @@ $ podman pull docker.io/owasp/zap2docker-stable
 
 # Quick Scan Example(using podman)
 
+zaproxy container must be running (either runenv.sh or runenv-ui.sh)
 1. Get a URL for the OAS3 definition file
 2. Get a URL for the target API
 3. Create config.yaml with the URLs and place it in config/
 4. Set the API_KEY value in .env file
 5. zaproxy container must be running (either runenv.sh or runenv-ui.sh)
+
 ```
 $ ./runenv.sh
 ```
@@ -113,6 +127,7 @@ This is taking advantage of ZAP's webswing feature. See https://www.zaproxy.org/
 ```
 $ podman-compose -f podman-compose-ui.yml up
 ```
+
 On older podman versions (before 3.1.0), you will need to manually make the `./result` directory writable to the `zap` user. This can be done with the following command :
 ```
 $ podman unshare chown 1000 ./results
@@ -185,3 +200,15 @@ $ docker-compose exec zaproxy_ui python /zap/scripts/apis_scan.py <dirname_to_be
 ```
 $ docker-compose down
 ```
+
+## Run RapiDast as a GitHub action for CI
+
+You can find an example of an action in .github/workflows/rapidast-scan.yml.
+This action will run using docker. To config this follow this steps:
+
+1. Follow the "Prerequisites" section
+2. Set GitHub secret named "AUTH_CRED" with the base64 basic authentication credentials for the API to scan. For example:
+```
+dGVzdC11c2VyOnRlc3QtcGFzc3dvcmQ=
+```
+**IMPORTANT**: this action will upload the scan results as action artifacts. This contains info about the intercepted HTTP requests by ZAP which will contain your AUTH_CRED secret value in the Authorization header

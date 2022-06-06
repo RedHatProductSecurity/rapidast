@@ -1,4 +1,0 @@
-image:
-  repository: registry.access.redhat.com/ubi8/ubi-micro
-  pullPolicy: Always
-  tag: "latest"

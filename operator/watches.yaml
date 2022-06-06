@@ -3,8 +3,4 @@
   version: v1alpha1
   kind: RapiDast
   chart: helm-charts/rapidast-chart
-- group: research.psse
-  version: v1alpha1
-  kind: RapiDastCC
-  chart: helm-charts/rapidast-control-center
 #+kubebuilder:scaffold:watch

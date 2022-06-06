@@ -11,13 +11,6 @@ resources:
     namespaced: true
   domain: psse
   group: research
-  kind: RapiDastCC
-  version: v1alpha1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: psse
-  group: research
   kind: RapiDast
   version: v1alpha1
 version: "3"

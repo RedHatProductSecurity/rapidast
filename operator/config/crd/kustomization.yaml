@@ -3,5 +3,4 @@
 # It should be run by config/default
 resources:
 - bases/research.psse_rapidasts.yaml
-- bases/research.psse_rapidastccs.yaml
 #+kubebuilder:scaffold:crdkustomizeresource

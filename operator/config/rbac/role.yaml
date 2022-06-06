@@ -59,31 +59,6 @@ rules:
   - "jobs"
 
 ##
-## Rules for research.psse/v1alpha1, Kind: RapiDastCC
-##
-- apiGroups:
-  - research.psse
-  resources:
-  - rapidastccs
-  - rapidastccs/status
-  - rapidastccs/finalizers
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- verbs:
-  - "*"
-  apiGroups:
-  - ""
-  resources:
-  - "persistentvolumeclaims"
-  - "pods"
-
-##
 ## Rules for research.psse/v1alpha1, Kind: RapiDast
 ##
 - apiGroups:

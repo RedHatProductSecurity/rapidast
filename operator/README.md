@@ -1,92 +1,201 @@
 # rapidast-operator
+The RapiDAST operator makes it possible to configure RapiDAST scans from your OpenShift or Kubernetes cluster. This allows you to scan your APIs from both inside and outside of your cluster.
 
+## Custom Resource Definitions
+The RapiDAST operator extends the RapiDAST custom resource definition (CRD) 
 
+## Installing the Operator
 
-## Getting started
+There are multiple ways to install the operator onto your cluster. Read through, and select the method that best suits your situation.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+### Install via Operator Lifecycle Manager (OLM)
+If your cluster has OLM installed, you can use it to install and manage the RapiDAST operator. You can follow the installation instructions [here](https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/install/install.md). If you're running on an OpenShift cluster, you likely have this installed by default.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
-
+#### Add CatalogSource
+```yaml
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: rapidast-catalog
+  namespace: rapidast
+spec:
+  sourceType: grpc
+  image: quay.io/redhatproductsecurity/rapidast-operator-catalog:v0.0.1
 ```
-cd existing_repo
-git remote add origin https://git.prodsec.redhat.com/jweiser/rapidast-operator.git
-git branch -M main
-git push -uf origin main
+
+#### Add Subscription
+
+```yaml
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: rapidast-operator
+spec:
+  channel: alpha
+  installPlanApproval: Automatic
+  name: rapidast-operator
+  source: rapidast-catalog
+  sourceNamespace: rapidast
+```
+### Install with operator-sdk
+
+You can install the operator using the Operator SDK CLI. Installation instructions are available [here](https://sdk.operatorframework.io/docs/installation/)
+
+```bash
+operator-sdk run bundle quay.io/redhatproductsecurity/rapidast-operator-bundle:v0.0.1
 ```
 
-## Integrate with your tools
+You can uninstall with
+```bash
+operator-sdk cleanup --delete-all rapidast-operator
+```
 
-- [ ] [Set up project integrations](https://git.prodsec.redhat.com/jweiser/rapidast-operator/-/settings/integrations)
+### Install with Makefile
 
-## Collaborate with your team
+There is a target in the included Makefile that allows for simple deployment. This will deploy the version and image specified in the Makefile.
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+Note: While this method will deploy everything you need to the cluster, it will not automatically update.
 
-## Test and Deploy
+```bash
+make deploy
+```
 
-Use the built-in continuous integration in GitLab.
+To clean up, you can similarly use the target to undeploy
+```bash
+make undeploy
+```
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+### Helm
+As an alternative, it is possible to install the helm chart
+```bash
+helm install rapidast-operator ./helm-charts/rapidast-chart
+```
 
-***
+## Setting Up for a Scan
 
-# Editing this README
+Setting up for a scan involves creating a YAML file to define the RapiDAST custom resource. The example shown here is also available in config/samples/research_v1alpha1_rapidast.yaml
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!).  Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
+You should change the name of the resource (`metadata.name`) something that best reflects the application being scanned.
 
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+```yaml
+apiVersion: research.psse/v1alpha1
+kind: RapiDast
+metadata:
+  name: rapidast-sample
+spec:
+  # Default values copied from <project_dir>/helm-charts/rapidast-chart/values.yaml
+  config: |-
+    general:
+      serviceName: 'demo1'
+      resultDir: '/results/'
+      appDir: '/zap'
+      localProxy: {"http": "http://127.0.0.1:8090", "https": "http://127.0.0.1:8090"}
+      sessionName: 'session1'
+      shutdownOnceFinished: False
+  
+    openapi:
+      importFromUrl: True
+      url: "http://localhost:9001/openapi.yaml"
+  
+      # if import_from_url is False, set a directory to contain OAS definition files
+      directory: "/zap/config/oas"
+  
+    scan:
+      contextName: 'context1'
+  
+      target: 'http://localhost:9000/api/'
+      contextIncludeURL: ['http://localhost:9000/api/.*']
+  
+      # applicationURL is used for a starting point when crawling is required
+      applicationURL: ''
+  
+      # Define Context Exclude URL regular expressions.
+      # The UI uses dynamic hashes in the filename to avoid being cached.
+      # Exclude this to avoid the spider getting trap endessly in the UI site tree
+      contextExcludeURL: ['']
+  
+  
+      #### SCAN POLICIES ####
+      policies:
+        # active scan
+        scanPoliciesDir: '/zap/policies'
+        scanPolicyName: 'API-minimal-example'
+  
+        # passive scan
+        disabledPassiveScan: "2,10015,10027,10096,10024"
+        # https://www.zaproxy.org/docs/alerts/
+        # 2: Private IP Disclosure
+        # 10015: Incomplete or No Cache-control Header Set
+        # 10027: Information Disclosure - Suspicious Comments
+        # 10096: Timestamp Disclosure
+        # 10024: sensitive info in URL
+  
+      #### AUTHENTICATION ####
+      # Define authentication method for the context. Possible values are:
+      # "null", "manualAuthentication"; "scriptBasedAuthentication"; "httpAuthentication";
+      # "formBasedAuthentication"
+      authMethod: null
+  
+      #### UPSTREAM PROXY ####
+      proxy:
+        useProxyChain: False
+        proxyAddress: ''
+        proxyPort: ''
+        skipProxyAddresses: ('127.0.0.1;', 'localhost')
+  image:
+    pullPolicy: Always
+    repository: quay.io/redhatproductsecurity/rapidast
+    tag: latest
+  job:
+    cron: false
+    schedule: '* * * * *'
+  pvc: rapidast-pvc
+```
 
-## Name
-Choose a self-explaining name for your project.
+### RapiDAST Config
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+Most of the application specific scan configuration exists under `spec.config`. This is itself YAML syntax included here as a multiline string. This is the same configuration used in the core RapiDAST project [here](https://github.com/RedHatProductSecurity/rapidast/blob/development/config/config-template-local.yaml)
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+#### Operator Config Options
+There are additional config options specific to the operator.
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+##### image
+Under image, you can change the pull policy, repository, and tag for the rapidast image. Unless testing changes, these are best left to their default values.
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+##### job
+Under job, there are two options. 
+- cron: This is a boolean value. If true, will run RapiDAST scans on the specified schedule
+- schedule: Defines the schedule used if cron is set to true. This uses 
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+##### pvc
+The `pvc` specifies the persistent volume claim to use. This is used by the operator to store results. If the specified PVC does not exist, it will be created. Note that this will not be uninstalled should you delete the RapiDAST resource, and will need to be explicitly deleted by itself when you are sure you don't need any of the data contained on the bound volume.
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+### Apply RapiDAST Resource
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+To apply the RapiDAST resource to the cluster you are already logged into, run
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+`oc apply -f rapidast.yaml`
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+where `rapidast.yaml` is modified to the filename used for your RapiDAST CR.
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+#### Demo application
+An application for demonstration purposes is available [here](https://github.com/jpweiser/rapitester). You can use this application, and the provided configuration to see the RapiDAST operator at work.
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+## Getting Results
 
-## License
-For open source projects, say how it is licensed.
+The easiest way to get results is to use a pod that mounts the same PVC used to store the results, and use `oc rsync POD:/results_dir local_dir` to copy an entire directory, or `oc cp POD:/path/to/file /local/path`
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+For convenience, a script `results.sh` is provided. It will create a pod mounting the specified PVC, then use `oc rsync` to sync results to your specified local directory before deleting the pod.
+
+Run this script with
+```bash
+bash results.sh <PVC> <LOCAL_RESULTS_DIR>
+```
+
+## Development
+
+### Building Bundle and Catalog
+The following one-liner will both build and push the bundle and catalog images.
+```bash
+make bundle bundle-build bundle-push catalog-build catalog-push
+```

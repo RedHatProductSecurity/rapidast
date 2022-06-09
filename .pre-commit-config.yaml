@@ -56,11 +56,6 @@ repos:
     hooks:
       - id: prettier
         exclude: ".*template_.*"
-  - repo: https://github.com/thibaudcolas/curlylint
-    rev: v0.13.1
-    hooks:
-      - id: curlylint
-        files: ".*template_.*"
 
 ci:
   autofix_prs: false

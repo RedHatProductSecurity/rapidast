@@ -168,7 +168,14 @@ def get_APIs():
         logging.info("Importing API from URL: " + oasUrl)
 
         try:
-            zap.openapi.import_url(oasUrl, target)
+            count = 1
+            while count <= 3:
+                ret = zap.openapi.import_url(oasUrl, target)
+                if ret == []:
+                    break
+                logging.warning(f"ZAP import OpenAPI {oasUrl} failed (returned '{ret}'). It may be due to bad authentication. Attempt {count}/3")
+                count = count + 1
+                time.sleep(3)
         except Exception as e:
             raise RuntimeError(
                 "Something went wrong while importing OpenAPI: " + str(e)

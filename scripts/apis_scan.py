@@ -334,7 +334,7 @@ def wait_for_passive_scanner():
 
 def generate_report(scan_timestamp):
     report = appDir + workDir + serviceName + "-report-" + scan_timestamp + ".xml"
-    f = open(report, "w+")
+    f = open(report, "w")
     f.write(zap.core.xmlreport())
 
     f.close()

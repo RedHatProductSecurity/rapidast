@@ -162,9 +162,21 @@ def enable_passive_scanner():
     zap.pscan.enable_all_scanners()
     zap.pscan.disable_scanners(disabledPassiveScan)
 
+def importurls(filepath):
+    """
+    Imports URLs (one per line) from the file with the given file system path.
+    This component is optional and therefore the API will only work if it is installed
+    """
+    return zap._request(zap.base + 'exim/action/importUrls',
+                                                         {'filePath': filepath})
 
 def get_APIs():
-    if oasImportFromUrl:
+    if urlScan:
+        url_list_path = f"/zap{urlScanDir}/urlScan.config"
+        print(url_list_path)
+        logging.info("Scanning from URL List")
+        importurls(url_list_path)
+    elif oasImportFromUrl:
         logging.info("Importing API from URL: " + oasUrl)
 
         try:
@@ -214,6 +226,15 @@ def get_APIs():
         else:
             raise RuntimeError("No files in the specified OAS directory")
 
+def check_scan_id(scan_id):
+    try:
+        int(scan_id)
+    except ValueError:
+        raise RuntimeError(
+            "Could not create scan for target {}, ZAP returned: {}".format(
+                target, scan_id
+            )
+        )
 
 def start_active_scanner():
     policies = os.listdir(appDir + "/policies")
@@ -237,15 +258,33 @@ def start_active_scanner():
     zap.ascan.set_option_thread_per_host(20)
     # Launch Active scan with the configured policy on the target url and
     # recursively scan every site node
-    scan_id = zap.ascan.scan(
-        url=target,
-        recurse=True,
-        inscopeonly=True,
-        scanpolicyname=scanPolicyName,
-        method=None,
-        postdata=True,
-        contextid=context_id,
-    )
+    scan_id = None
+    if urlScan:
+        urls = zap.core.urls()
+        url_list_path = f"/zap{urlScanDir}/urlScan.config"
+        print(urls)
+        with open(url_list_path, 'r', encoding='UTF-8') as file:
+            while (line := file.readline().rstrip()):
+                scan_id = zap.ascan.scan(
+                    url=line,
+                    recurse=True,
+                    inscopeonly=True,
+                    scanpolicyname=scanPolicyName,
+                    method=None,
+                    postdata=True,
+                    contextid=context_id)
+                check_scan_id(scan_id)
+    else:
+        scan_id = zap.ascan.scan(
+            url=target,
+            recurse=True,
+            inscopeonly=True,
+            scanpolicyname=scanPolicyName,
+            method=None,
+            postdata=True,
+            contextid=context_id,
+        )
+        check_scan_id(scan_id)
 
     try:
         int(scan_id)
@@ -297,7 +336,7 @@ def wait_for_passive_scanner():
 
 def generate_report(scan_timestamp):
     report = appDir + workDir + serviceName + "-report-" + scan_timestamp + ".xml"
-    f = open(report, "w")
+    f = open(report, "w+")
     f.write(zap.core.xmlreport())
 
     f.close()

@@ -173,7 +173,6 @@ def importurls(filepath):
 def get_APIs():
     if urlScan:
         url_list_path = f"/zap{urlScanDir}/urlScan.config"
-        print(url_list_path)
         logging.info("Scanning from URL List")
         importurls(url_list_path)
     elif oasImportFromUrl:
@@ -262,7 +261,6 @@ def start_active_scanner():
     if urlScan:
         urls = zap.core.urls()
         url_list_path = f"/zap{urlScanDir}/urlScan.config"
-        print(urls)
         with open(url_list_path, 'r', encoding='UTF-8') as file:
             while (line := file.readline().rstrip()):
                 scan_id = zap.ascan.scan(

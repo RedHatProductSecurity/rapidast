@@ -11,7 +11,10 @@ There are multiple ways to install the operator onto your cluster. Read through,
 ### Install via Operator Lifecycle Manager (OLM)
 If your cluster has OLM installed, you can use it to install and manage the RapiDAST operator. You can follow the installation instructions [here](https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/install/install.md). If you're running on an OpenShift cluster, you likely have this installed by default.
 
+Install the operator by adding the following CatalogSource and Subscription resources to your cluster.
 #### Add CatalogSource
+Create a catalog source in a file `catalogsource.yaml` with the following contents. Update the value for namespace as required.
+
 ```yaml
 apiVersion: operators.coreos.com/v1alpha1
 kind: CatalogSource
@@ -22,9 +25,13 @@ spec:
   sourceType: grpc
   image: quay.io/redhatproductsecurity/rapidast-operator-catalog:v0.0.1
 ```
+Apply the resource to your cluster
+```bash
+kubectl apply -f catalogsource.yaml
+```
 
 #### Add Subscription
-
+Create a subscription in a file `subscription.yaml` with the following contents, updating the namespace to match the configuration of your cluster.
 ```yaml
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
@@ -37,9 +44,20 @@ spec:
   source: rapidast-catalog
   sourceNamespace: rapidast
 ```
+Now apply the subscription to your cluster 
+```bash
+kubectl apply -f subscription.yaml
+```
+
 ### Install with operator-sdk
 
 You can install the operator using the Operator SDK CLI. Installation instructions are available [here](https://sdk.operatorframework.io/docs/installation/)
+
+If not already installed, install OLM
+
+```bash
+operator-sdk olm install
+```
 
 ```bash
 operator-sdk run bundle quay.io/redhatproductsecurity/rapidast-operator-bundle:v0.0.1
@@ -66,14 +84,15 @@ make undeploy
 ```
 
 ### Helm
-As an alternative, it is possible to install the helm chart
+As an alternative to the operator, it is possible to set up a scan by installing the included helm chart
 ```bash
-helm install rapidast-operator ./helm-charts/rapidast-chart
+helm install -f overrides.yaml rapidast-operator ./helm-charts/rapidast-chart
 ```
+Where `overrides.yaml` should hold the configuration for your scan based on the values as described in the following section.
 
 ## Setting Up for a Scan
 
-Setting up for a scan involves creating a YAML file to define the RapiDAST custom resource. The example shown here is also available in config/samples/research_v1alpha1_rapidast.yaml
+Setting up for a scan involves creating a YAML file to define the RapiDAST custom resource. The example shown here is also available in `config/samples/research_v1alpha1_rapidast.yaml`
 
 You should change the name of the resource (`metadata.name`) something that best reflects the application being scanned.
 
@@ -174,7 +193,7 @@ The `pvc` specifies the persistent volume claim to use. This is used by the oper
 
 To apply the RapiDAST resource to the cluster you are already logged into, run
 
-`oc apply -f rapidast.yaml`
+`kubectl apply -f rapidast.yaml`
 
 where `rapidast.yaml` is modified to the filename used for your RapiDAST CR.
 

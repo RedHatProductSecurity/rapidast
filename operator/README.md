@@ -202,9 +202,9 @@ An application for demonstration purposes is available [here](https://github.com
 
 ## Getting Results
 
-The easiest way to get results is to use a pod that mounts the same PVC used to store the results, and use `oc rsync POD:/results_dir local_dir` to copy an entire directory, or `oc cp POD:/path/to/file /local/path`
+The easiest way to get results is to use a pod that mounts the same PVC used to store the results, and use `kubectl cp POD:/results_dir local_dir` to copy an entire directory, or `kubectl cp POD:/path/to/file /local/path` for a single file.
 
-For convenience, a script `results.sh` is provided. It will create a pod mounting the specified PVC, then use `oc rsync` to sync results to your specified local directory before deleting the pod.
+For convenience, a script `results.sh` is provided. It will create a pod mounting the specified PVC, then use `kubectl cp` to copy the entire results directory to your specified local directory before deleting the pod.
 
 Run this script with
 ```bash

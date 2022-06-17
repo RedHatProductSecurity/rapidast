@@ -30,15 +30,22 @@ spec:
       volumeMounts:
         - name: results-volume
           mountPath: /zap/results/
+      resources:
+        limits:
+          cpu: 100m
+          memory: 500Mi
+        requests:
+          cpu: 50m
+          memory: 100Mi
   volumes:
     - name: results-volume
       persistentVolumeClaim:
         claimName: $PVC
 EOF
 
-oc apply -f $TMP_DIR/$RANDOM_NAME
+kubectl apply -f $TMP_DIR/$RANDOM_NAME
 rm $TMP_DIR/$RANDOM_NAME
-oc wait --for=condition=Ready pod/$RANDOM_NAME
-oc rsync $RANDOM_NAME:/zap/results $RESULTS_DIR
-oc delete pod $RANDOM_NAME
+kubectl wait --for=condition=Ready pod/$RANDOM_NAME
+kubectl cp $RANDOM_NAME:/zap/results $RESULTS_DIR
+kubectl delete pod $RANDOM_NAME
 

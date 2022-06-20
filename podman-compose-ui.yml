@@ -11,7 +11,7 @@ services:
     volumes:
       - ./scripts:/zap/scripts:Z
       - ./config:/zap/config:Z
-      - ./results:/zap/results:Z,U
+      - ./results:/zap/results:Z
       - ./policies:/zap/policies:Z
       - ./webswing:/zap/webswing_custom:Z
     entrypoint: /zap/scripts/entrypoint_ui.sh

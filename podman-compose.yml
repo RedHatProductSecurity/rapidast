@@ -10,6 +10,6 @@ services:
     volumes:
       - ./scripts:/zap/scripts:Z
       - ./config:/zap/config:Z
-      - ./results:/zap/results:Z,U
+      - ./results:/zap/results:Z
       - ./policies:/zap/policies:Z
     entrypoint: /zap/scripts/entrypoint.sh

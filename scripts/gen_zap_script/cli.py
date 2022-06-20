@@ -249,7 +249,7 @@ if __name__ == "__main__":
                 )
             )
         zap_options["proxies"] = rapidast_config["general"]["localProxy"]
-        zap_options["apikey"] = rapidast_config["general"]["apiKey"]
+        zap_options["apikey"] = os.getenv("API_KEY")
 
     if args.delete_existing:
         logger.info("Deleting previously generated scripts")

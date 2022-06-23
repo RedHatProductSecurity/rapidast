@@ -32,6 +32,13 @@ if "openapi" in config:
     else:
         oasDir = config["openapi"]["directory"]
 
+if "urlscan" in config:
+    urlScanDir = config['urlscan']['urlScanDir']
+    urlScan = config['urlscan']['urlScan']
+else:
+    urlScanDir = None
+    UrlScan = False
+
 
 contextName = config["scan"]["contextName"]
 target = config["scan"]["target"]

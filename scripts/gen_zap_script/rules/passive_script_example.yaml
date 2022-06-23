@@ -6,5 +6,5 @@ finding_risk: 1
 finding_confidence: 1
 search_in: response.header
 regex:
-  - 'Server: .*'
-  - 'X-Frame-Options: .*'
+  - "Server: .*"
+  - "X-Frame-Options: .*"

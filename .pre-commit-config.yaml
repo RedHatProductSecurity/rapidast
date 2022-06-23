@@ -51,8 +51,8 @@ repos:
         files: ^scripts/
 
   # This hook below will be enabled later
-  # 
-  # 
+  #
+  #
   # # D101 - allows missing docstring in public classes
   # # D102 - allows missing docstring in docstring in public methods
   # # D104 - allows missing docstring in __init__.py

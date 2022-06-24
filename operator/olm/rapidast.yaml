@@ -1,0 +1,27 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: rapidast-catalog
+  namespace: rapidast
+spec:
+  sourceType: grpc
+  image: quay.io/redhatproductsecurity/rapidast-operator-catalog:v0.0.1
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: rapidast-operator
+  namespace: rapidast
+spec:
+  channel: alpha
+  installPlanApproval: Automatic
+  name: rapidast-operator
+  source: rapidast-catalog
+  sourceNamespace: rapidast
+---
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: rapidast-operator
+  namespace: rapidast
+spec:

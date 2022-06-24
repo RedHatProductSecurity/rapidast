@@ -13,7 +13,13 @@ If your cluster has OLM installed, you can use it to install and manage the Rapi
 
 For the example outlined here, a namespace `rapidast` has already been created on the cluster. Should you desire to install the operator to another namespace, update the YAML accordingly.
 
-Install the operator by adding the following CatalogSource and Subscription resources to your cluster.
+Install the operator by adding the following CatalogSource, Subscription, and OperatorGroup resources to your cluster.
+
+As a convenience, you may use the file olm/rapidast.yaml to apply all three resources to the `rapidast` namespace at once with
+`kubectl apply -f olm/rapidast.yaml`
+
+If you prefer to add resources individually, follow instructions below.
+
 #### Add CatalogSource
 Create a catalog source in a file `catalogsource.yaml` with the following contents. Update the value for namespace as required.
 
@@ -49,6 +55,23 @@ spec:
 Now apply the subscription to your cluster 
 ```bash
 kubectl apply -f subscription.yaml
+```
+
+#### Add OperatorGroup
+Create a file `operatorgroup.yaml` with the following contents, updating the namespace as necessary to match the configuration of your cluster.
+
+```yaml
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: rapidast-operator
+  namespace: rapidast
+spec:
+```
+
+Apply the OperatorGroup to your cluster with
+```bash
+kubectl apply -f operatorgroup.yaml
 ```
 
 ### Helm

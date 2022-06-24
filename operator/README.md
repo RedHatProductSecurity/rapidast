@@ -11,6 +11,8 @@ There are multiple ways to install the operator onto your cluster. Read through,
 ### Install via Operator Lifecycle Manager (OLM)
 If your cluster has OLM installed, you can use it to install and manage the RapiDAST operator. You can follow the installation instructions [here](https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/install/install.md). If you're running on an OpenShift cluster, you likely have this installed by default.
 
+For the example outlined here, a namespace `rapidast` has already been created on the cluster. Should you desire to install the operator to another namespace, update the YAML accordingly.
+
 Install the operator by adding the following CatalogSource and Subscription resources to your cluster.
 #### Add CatalogSource
 Create a catalog source in a file `catalogsource.yaml` with the following contents. Update the value for namespace as required.
@@ -47,40 +49,6 @@ spec:
 Now apply the subscription to your cluster 
 ```bash
 kubectl apply -f subscription.yaml
-```
-
-### Install with operator-sdk
-
-You can install the operator using the Operator SDK CLI. Installation instructions are available [here](https://sdk.operatorframework.io/docs/installation/)
-
-If not already installed, install OLM
-
-```bash
-operator-sdk olm install
-```
-
-```bash
-operator-sdk run bundle quay.io/redhatproductsecurity/rapidast-operator-bundle:v0.0.1
-```
-
-You can uninstall with
-```bash
-operator-sdk cleanup --delete-all rapidast-operator
-```
-
-### Install with Makefile
-
-There is a target in the included Makefile that allows for simple deployment. This will deploy the version and image specified in the Makefile.
-
-Note: While this method will deploy everything you need to the cluster, it will not automatically update.
-
-```bash
-make deploy
-```
-
-To clean up, you can similarly use the target to undeploy
-```bash
-make undeploy
 ```
 
 ### Helm

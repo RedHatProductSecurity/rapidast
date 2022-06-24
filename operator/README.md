@@ -45,6 +45,7 @@ apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
   name: rapidast-operator
+  namespace: rapidast
 spec:
   channel: alpha
   installPlanApproval: Automatic

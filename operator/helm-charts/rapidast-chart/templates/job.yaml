@@ -1,0 +1,17 @@
+apiVersion: batch/v1
+{{ if .Values.job.cron }}
+kind: CronJob
+{{ else }}
+kind: Job
+{{ end }}
+metadata:
+  name: {{ .Release.Name }}-job
+spec:
+{{ if .Values.job.cron }}
+  schedule: "{{ .Values.job.schedule }}"
+  jobTemplate:
+    spec:
+{{- include "rapidast-chart.job" . | nindent 6}}
+{{ else }}
+{{- include "rapidast-chart.job" . | nindent 2}}
+{{ end }}

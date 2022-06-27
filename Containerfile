@@ -1,6 +1,7 @@
 FROM owasp/zap2docker-stable:latest
+COPY config/requirements.txt requirements.txt
 USER root
-RUN pip install jinja2
+RUN pip install -r requirements.txt
 
 RUN chgrp -R 0 /zap && \
     chmod -R g=u /zap

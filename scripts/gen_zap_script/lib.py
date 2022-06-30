@@ -4,9 +4,7 @@ import uuid
 from dataclasses import dataclass
 from pathlib import Path
 
-import jinja2
 import jinja2.sandbox
-
 from zapv2 import ZAPv2
 
 
@@ -28,7 +26,7 @@ class Finding:
 #
 
 
-class Script(object):
+class Script:
     """
     Parent class of ZAP script.
     Currently we only consider Graal.js/JS. Doing the same for Zest is possible but would require some additional coding
@@ -37,9 +35,9 @@ class Script(object):
 
     name_prefix = "Rule_Gen_"
 
-    def __init__(self, type=None, engine="Graal.js", description="Empty Description"):
+    def __init__(self, script_type=None, engine="Graal.js", description="Empty Description"):
         self._name = None
-        self.type = type
+        self.type = script_type
         self.engine = engine
         self.description = description
         self.template_env = jinja2.sandbox.SandboxedEnvironment(
@@ -71,13 +69,13 @@ class Script(object):
 
 class PassiveScript(Script):
     def __init__(self, template_filename="template_script_passive.js", **kwargs):
-        super().__init__(type="passive", **kwargs)
+        super().__init__(script_type="passive", **kwargs)
         self.template = self.template_env.get_template(template_filename)
 
 
 class ActiveScript(Script):
     def __init__(self, template_filename="template_script_active.js", **kwargs):
-        super().__init__(type="active", **kwargs)
+        super().__init__(script_type="active", **kwargs)
         self.template = self.template_env.get_template(template_filename)
 
 
@@ -115,11 +113,7 @@ def add_and_load_script(script: Script, **kwargs):
 
 def delete_all_loaded_scripts(**kwargs):
     zap = ZAPv2(**kwargs)
-    for name in [
-        s["name"]
-        for s in zap.script.list_scripts
-        if s.get("name", "").startswith(Script.name_prefix)
-    ]:
+    for name in [s["name"] for s in zap.script.list_scripts if s.get("name", "").startswith(Script.name_prefix)]:
         logger.info(f"Removing script {name}")
         zap.script.remove(name, apikey=kwargs["apikey"])
 

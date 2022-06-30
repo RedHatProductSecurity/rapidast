@@ -6,11 +6,10 @@ import sys
 
 import yaml
 
-# TODO: Possibly something to solve here
 try:
-    from .lib import *
+    from . import lib
 except ImportError:
-    from lib import *
+    import lib
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.Logger("GenZAPScriptMain")
@@ -18,9 +17,7 @@ logger.addHandler(logging.StreamHandler())
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Generate active and passive ZAP scripts"
-    )
+    parser = argparse.ArgumentParser(description="Generate active and passive ZAP scripts")
     parser.add_argument(
         "--rapidast-config",
         type=argparse.FileType("r"),
@@ -57,33 +54,25 @@ if __name__ == "__main__":
     )
 
     # Finding
-    def add_finding_group(parser):
-        finding_group = parser.add_argument_group(title="Finding definition")
+    def add_finding_group(arg_parser):
+        finding_group = arg_parser.add_argument_group(title="Finding definition")
         finding_group.add_argument("--finding-title", type=str, required=True)
         finding_group.add_argument("--finding-description", type=str, default="")
-        finding_group.add_argument(
-            "--finding-confidence", type=int, choices=list(range(1, 4)), default=1
-        )
-        finding_group.add_argument(
-            "--finding-risk", type=int, choices=list(range(0, 4)), default=1
-        )
+        finding_group.add_argument("--finding-confidence", type=int, choices=list(range(1, 4)), default=1)
+        finding_group.add_argument("--finding-risk", type=int, choices=list(range(0, 4)), default=1)
 
     # Active or Passive
     script_type = parser.add_subparsers(title="Script type", dest="script_type")
 
     # Active
-    script_type_active = script_type.add_parser(
-        "active", help="Script for ZAP active scanner"
-    )
+    script_type_active = script_type.add_parser("active", help="Script for ZAP active scanner")
     add_finding_group(script_type_active)
     # Payloads
     payloads_group = script_type_active.add_argument_group(
         title="Payloads definition",
         description="Payloads are literals inserted or appended to URL/body parameters scanned by ZAP.",
     )
-    payload_definition_group = payloads_group.add_mutually_exclusive_group(
-        required=True
-    )
+    payload_definition_group = payloads_group.add_mutually_exclusive_group(required=True)
     payload_definition_group.add_argument(
         "--payload",
         type=str,
@@ -109,20 +98,18 @@ if __name__ == "__main__":
         help="Append Payloads to the parameter",
     )
 
-    def msCheck(x):
+    def ms_check(time_ms):
         try:
-            x = int(x)
-            if x < 0:
+            time_ms = int(time_ms)
+            if time_ms < 0:
                 raise ValueError()
-        except ValueError:
-            raise argparse.ArgumentTypeError(
-                "Positive integer expected for milliseconds count"
-            )
-        return x
+        except ValueError as error:
+            raise argparse.ArgumentTypeError("Positive integer expected for milliseconds count") from error
+        return time_ms
 
     payloads_group.add_argument(
         "--time-between-requests",
-        type=msCheck,
+        type=ms_check,
         default=500,
         help="Time between requests, in milliseconds",
     )
@@ -140,12 +127,8 @@ if __name__ == "__main__":
         help="Where should the regexp be matched",
     )
     regexp_group = response_processing_group.add_mutually_exclusive_group(required=True)
-    regexp_group.add_argument(
-        "--regex", type=str, nargs="+", help="Regular Expression to evaluate"
-    )
-    regexp_group.add_argument(
-        "--regex-file", type=str, help="Regular Expressions to evaluate, one per line"
-    )
+    regexp_group.add_argument("--regex", type=str, nargs="+", help="Regular Expression to evaluate")
+    regexp_group.add_argument("--regex-file", type=str, help="Regular Expressions to evaluate, one per line")
 
     # Passive
     script_type_passive = script_type.add_parser(
@@ -155,8 +138,7 @@ if __name__ == "__main__":
     # Request/Response search definition
     search_group = script_type_passive.add_argument_group(title="Search definition")
     search_in_choices = ["request.method", "request.url"] + [
-        ".".join(a)
-        for a in itertools.product(*[["request", "response"], ["header", "body"]])
+        ".".join(a) for a in itertools.product(*[["request", "response"], ["header", "body"]])
     ]
     search_group.add_argument(
         "--search-in",
@@ -166,12 +148,8 @@ if __name__ == "__main__":
         help="Where should the regexp be matched",
     )
     regexp_group = search_group.add_mutually_exclusive_group(required=True)
-    regexp_group.add_argument(
-        "--regex", type=str, nargs="+", help="Regular Expression to evaluate"
-    )
-    regexp_group.add_argument(
-        "--regex-file", type=str, help="Regular Expressions to evaluate, one per line"
-    )
+    regexp_group.add_argument("--regex", type=str, nargs="+", help="Regular Expression to evaluate")
+    regexp_group.add_argument("--regex-file", type=str, help="Regular Expressions to evaluate, one per line")
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -183,7 +161,7 @@ if __name__ == "__main__":
         logging.basicConfig(level=logging.DEBUG)
 
     def file_lines_or_default(fp, default_value):
-        return ([x.rstrip() for x in fp.readlines()] if fp else default_value) or list()
+        return ([x.rstrip() for x in fp.readlines()] if fp else default_value) or []
 
     if args.from_yaml:
         yamlConf = yaml.safe_load(args.from_yaml)
@@ -192,7 +170,7 @@ if __name__ == "__main__":
         for k, v in yamlConf.items():
             if isinstance(v, list):
                 if not hasattr(args, k):
-                    setattr(args, k, list())
+                    setattr(args, k, [])
                 for val in v:
                     getattr(args, k).append(val)
             else:
@@ -202,16 +180,14 @@ if __name__ == "__main__":
         for a in filter(lambda b: not hasattr(args, f"{b}_file"), ["payload", "regex"]):
             setattr(args, f"{a}_file", None)
 
-    s = None
-
     if args.script_type == "active":
         default = {"only_param": ".*", "time_between_requests": 500}
 
         for k, v in default.items():
-            setattr(args, k, getattr(args, k, default[k]))
+            setattr(args, k, getattr(args, k, v))
 
-        s = ActiveScript(description=args.script_description)
-        s.params = {
+        SCRIPT = lib.ActiveScript(description=args.script_description)
+        SCRIPT.params = {
             "onlyParamNameRegExp": args.only_param,
             "appendPayloadToParam": args.append_payload,
             "timeBetweenRequests": args.time_between_requests,
@@ -219,17 +195,19 @@ if __name__ == "__main__":
         }
 
     elif args.script_type == "passive":
-        s = PassiveScript(description=args.script_description)
+        SCRIPT = lib.PassiveScript(description=args.script_description)
+    else:
+        SCRIPT = None
 
-    if s:  # Active and passive scripts
-        finding = Finding(
+    if SCRIPT:  # Active and passive scripts
+        finding = lib.Finding(
             name=args.finding_title,
             description=args.finding_description,
             risk=args.finding_risk,
             confidence=args.finding_confidence,
         )
 
-        s.params.update(
+        SCRIPT.params.update(
             {
                 "finding": finding.__dict__,
                 "searchIn": args.search_in,
@@ -243,21 +221,17 @@ if __name__ == "__main__":
         try:
             rapidast_config = yaml.safe_load(args.rapidast_config)
         except yaml.YAMLError as e:
-            raise RuntimeError(
-                "Something went wrong parsing the {} file: {}".format(
-                    args.rapidast_config.name, str(e)
-                )
-            )
+            raise RuntimeError(f"Something went wrong parsing the {args.rapidast_config.name} file: {e}") from e
         zap_options["proxies"] = rapidast_config["general"]["localProxy"]
         zap_options["apikey"] = os.getenv("API_KEY")
 
     if args.delete_existing:
         logger.info("Deleting previously generated scripts")
-        delete_all_loaded_scripts(**zap_options)
+        lib.delete_all_loaded_scripts(**zap_options)
 
-    if s and args.output:
-        print(s.code, file=args.output)
+    if SCRIPT and args.output:
+        print(SCRIPT.code, file=args.output)
 
-    if s and args.load_and_enable:
+    if SCRIPT and args.load_and_enable:
         logger.info("Loading the script to ZAP")
-        add_and_load_script(s, **zap_options)
+        lib.add_and_load_script(SCRIPT, **zap_options)

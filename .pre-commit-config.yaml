@@ -4,58 +4,78 @@ repos:
     hooks:
       - id: trailing-whitespace
         language_version: python3
+        files: ^scripts/
       - id: end-of-file-fixer
-        language_version: python3
       - id: debug-statements
         language_version: python3
+        files: ^scripts/
 
   - repo: https://github.com/asottile/reorder_python_imports
     rev: v3.0.1
     hooks:
       - id: reorder-python-imports
         language_version: python3
+        files: ^scripts/
   - repo: https://github.com/psf/black
     rev: 22.3.0
     hooks:
       - id: black
-        args: [--safe, --quiet, --line-length, "120"]
+        args:
+          - --safe
+          - --quiet
+          - --line-length=120
         language_version: python3
         require_serial: true
+        files: ^scripts/
   - repo: https://github.com/asottile/pyupgrade
     rev: v2.32.0
     hooks:
       - id: pyupgrade
         language_version: python3
+        files: ^scripts/
+
+  # E0401 - import errors (Used when pylint has been unable to import a module.)
+  # W1203, W1201 - Use %s formatting in logging functions (Read more: https://github.com/PyCQA/pylint/issues/2354)
+  # W0603 - Using the global statement
+  # C0114,C0115,C0116 - docstring checks. Disabled because of pydocstyle checks
   - repo: https://github.com/PyCQA/pylint
     rev: v2.13.5
     hooks:
       - id: pylint
         args:
-          [
-            --max-line-length,
-            "120",
-            "--min-public-methods",
-            "0",
-            "--good-names",
-            "q",
-          ]
+          - --max-line-length=120
+          - --min-public-methods=0
+          - --good-names=q,f,fp,i,e
+          - --disable=E0401,W1201,W1203,W0603,C0114,C0115,C0116
         language_version: python3
+        files: ^scripts/
 
-  # D101 - allows missing docstring in public classes
-  # D102 - allows missing docstring in docstring in public methods
-  # D104 - allows missing docstring in __init__.py
-  # D107 - allows missing docstring in __init__ magic
-  - repo: https://github.com/PyCQA/pydocstyle
-    rev: 6.1.1
-    hooks:
-      - id: pydocstyle
-        args: [--convention, "google", --add-ignore, "D101,D102,D104,D107"]
+  # This hook below will be enabled later
+  #
+  #
+  # # D101 - allows missing docstring in public classes
+  # # D102 - allows missing docstring in docstring in public methods
+  # # D104 - allows missing docstring in __init__.py
+  # # D107 - allows missing docstring in __init__ magic
+  # - repo: https://github.com/PyCQA/pydocstyle
+  #   rev: 6.1.1
+  #   hooks:
+  #     - id: pydocstyle
+  #       args:
+  #         - --convention=google
+  #         - --add-ignore=D101,D102,D104,D107
+  #       files: ^scripts/
 
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v2.6.2
     hooks:
       - id: prettier
-        exclude: ".*template_.*"
+        exclude: (?x)(
+          .*template_.*|
+          .*\.md
+          )
+        args:
+          - --print-width=120
 
 ci:
   autofix_prs: false

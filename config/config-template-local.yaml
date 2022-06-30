@@ -1,14 +1,14 @@
 general:
-  serviceName: 'demo1'
-  resultDir: '/results'
-  appDir: '/zap'
-  localProxy: {"http": "http://127.0.0.1:8090", "https": "http://127.0.0.1:8090"}
-  sessionName: 'session1'
+  serviceName: "demo1"
+  resultDir: "/results"
+  appDir: "/zap"
+  localProxy: { "http": "http://127.0.0.1:8090", "https": "http://127.0.0.1:8090" }
+  sessionName: "session1"
   shutdownOnceFinished: False
 
 urlscan:
   urlScan: True
-  urlScanDir: '/scripts'
+  urlScanDir: "/scripts"
 
 openapi:
   # import the OpenAPI definitions from an url will only work for public API
@@ -21,26 +21,25 @@ openapi:
   directory: "/zap/config/oas"
 
 scan:
-  contextName: 'context1'
+  contextName: "context1"
 
-  target: 'http://localhost:9000/api/'
-  contextIncludeURL: ['http://localhost:9000/api/.*']
+  target: "http://localhost:9000/api/"
+  contextIncludeURL: ["http://localhost:9000/api/.*"]
 
   # applicationURL is used for a starting point when crawling is required
-  applicationURL: ''
+  applicationURL: ""
 
   # Define Context Exclude URL regular expressions.
   # The UI uses dynamic hashes in the filename to avoid being cached.
   # Exclude this to avoid the spider getting trap endessly in the UI site tree
-  contextExcludeURL: ['']
-
+  contextExcludeURL: [""]
 
   #### SCAN POLICIES ####
   # scan policies in this folder will be imported and use in the scan
   policies:
     # active scan
-    scanPoliciesDir: '/zap/policies'
-    scanPolicyName: 'API-minimal-example'
+    scanPoliciesDir: "/zap/policies"
+    scanPolicyName: "API-minimal-example"
 
     # passive scan
     disabledPassiveScan: "2,10015,10027,10096,10024"
@@ -82,17 +81,16 @@ scan:
   # token refresh process
   #  authIndicatorRegex: '\QHTTP/1.1 401 Unauthorized\E'
 
-    ## adds the bearer token header auth to each request
+  ## adds the bearer token header auth to each request
   #  useHttpSenderScript: True
   #  HttpSenderScriptName: 'add-bearer-token'
   #  HttpSenderScriptEngine: 'Oracle Nashorn'
   #  HttpSenderScriptFilePath: 'scripts/add-bearer-token.js'
   #  HttpSenderScriptDescription: 'add bearer token to each HTTP request'
 
-
 #### UPSTREAM PROXY ####
 proxy:
   useProxyChain: True
-  proxyAddress: ''
-  proxyPort: ''
-  skipProxyAddresses: '127.0.0.1;localhost'
+  proxyAddress: ""
+  proxyPort: ""
+  skipProxyAddresses: "127.0.0.1;localhost"

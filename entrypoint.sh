@@ -16,6 +16,8 @@ while curl localhost:8090 >>/dev/null 2>&1; [ $? -ne 0 ]; do
   sleep 30
 done
 
+sleep 30 # add a little more room until the instance is completely up
+
 #python scripts/gen_zap_script/cli.py --delete
 #python scripts/gen_zap_script/cli.py --from-yaml scripts/gen_zap_script/rules/software_version_revealed.yaml --load-and-enable
 

@@ -7,15 +7,17 @@ RESULT_DIR=results
 RUNDIR=$RESULT_DIR/$1
 mkdir $RUNDIR
 
-
 # Run in backgound to make sure we move on to following instructions
-zap.sh -cmd -addonupdate && zap.sh -daemon -port 8090 -config api.key=$API_KEY -config database.newsession=3 -config database.newsessionprompt=false -addoninstall ascanrulesBeta &
+zap.sh -daemon -port 8090 -config api.key=$API_KEY -config database.newsession=3 -config database.newsessionprompt=false -addoninstall ascanrulesBeta &
 
 # sleep to give ZAP a chance to get set up
-sleep 45
+while curl localhost:8090 >>/dev/null 2>&1; [ $? -ne 0 ]; do
+  echo "[entrypoint] Waiting another 30s until ZAP is running up"
+  sleep 30
+done
 
-python scripts/gen_zap_script/cli.py --rapidast-config=./config/config.yaml --delete
-python scripts/gen_zap_script/cli.py --rapidast-config=./config/config.yaml --from-yaml scripts/gen_zap_script/rules/software_version_revealed.yaml --load-and-enable
+#python scripts/gen_zap_script/cli.py --delete
+#python scripts/gen_zap_script/cli.py --from-yaml scripts/gen_zap_script/rules/software_version_revealed.yaml --load-and-enable
 
 
 # Run scan

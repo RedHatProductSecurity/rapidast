@@ -42,7 +42,11 @@ else:
 
 CONTEXT_NAME = config["scan"]["contextName"]
 TARGET = config["scan"]["target"]
-APPLICATION_URL = config["scan"]["applicationURL"]
+
+if "applicationURL" in config["scan"]:
+    APPLICATION_URL = config["scan"]["applicationURL"]
+else:
+    APPLICATION_URL = ""
 
 # globalExcludeUrl is generated from 'target', which excludes every single URL that doesn't belong to the target domain,
 # to avoid accidentally hitting production
@@ -50,7 +54,12 @@ APPLICATION_URL = config["scan"]["applicationURL"]
 GLOBAL_EXCLUDE_URL = [f"^(?:(?!{TARGET}).*).$"]
 
 CONTEXT_INCLUDE_URL = config["scan"]["contextIncludeURL"]
-CONTEXT_EXCLUDE_URL = config["scan"]["contextExcludeURL"]
+
+if "contextExcludeURL" in config["scan"]:
+    CONTEXT_EXCLUDE_URL = config["scan"]["contextExcludeURL"]
+else:
+    CONTEXT_EXCLUDE_URL = ""
+
 SCAN_POLICIES_DIR = f"{APP_DIR}{config['scan']['policies']['scanPoliciesDir']}"
 SCAN_POLICY_NAME = config["scan"]["policies"]["scanPolicyName"]
 DISABLED_PASSIVE_SCAN = config["scan"]["policies"]["disabledPassiveScan"]

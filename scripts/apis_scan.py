@@ -324,10 +324,15 @@ def wait_for_passive_scanner():
 
 
 def generate_report(scan_timestamp):
-    report = f"{config.APP_DIR}{work_dir}/{config.SERVICE_NAME}-report-{scan_timestamp}.xml"
+    report = f"{config.APP_DIR}{work_dir}/{config.SERVICE_NAME}-report-{scan_timestamp}.json"
     with open(report, "w", encoding="utf-8") as f:
-        f.write(zap.core.xmlreport())
-        logging.info(f"XML report saved in: {report}")
+        f.write(zap.core.jsonreport())
+        logging.info(f"JSON report saved in: {report}")
+
+    report = f"{config.APP_DIR}{work_dir}/{config.SERVICE_NAME}-report-{scan_timestamp}.html"
+    with open(report, "w", encoding="utf-8") as f:
+        f.write(zap.core.htmlreport())
+        logging.info(f"HTML report saved in: {report}")
 
 
 if __name__ == "__main__":

@@ -3,7 +3,6 @@ kind: RapiDast
 metadata:
   name: rapidast-sample
 spec:
-  # Default values copied from <project_dir>/helm-charts/rapidast-chart/values.yaml
   config: |-
     general:
       serviceName: 'demo1'
@@ -12,6 +11,10 @@ spec:
       localProxy: {"http": "http://127.0.0.1:8090", "https": "http://127.0.0.1:8090"}
       sessionName: 'session1'
       shutdownOnceFinished: False
+
+    urlscan:
+      urlScan: False
+      urlScanDir: "/scripts"
   
     openapi:
       importFromUrl: True
@@ -66,9 +69,11 @@ spec:
     pullPolicy: Always
     repository: quay.io/redhatproductsecurity/rapidast
     tag: latest
+
   job:
     cron: false
     schedule: '* * * * *'
+
   pvc: rapidast-pvc
   
   

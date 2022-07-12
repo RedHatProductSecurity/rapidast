@@ -11,6 +11,18 @@ job:
   cron: false
   schedule: "* * * * *"
 
+resources: {}
+  # It is recommended not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 200m
+  #   memory: 1Gi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
 pvc: rapidast-pvc
 
 # config is (currently) same as config file -- must be multiline string
@@ -22,6 +34,10 @@ config: |
     localProxy: {"http": "http://127.0.0.1:8090", "https": "http://127.0.0.1:8090"}
     sessionName: 'session1'
     shutdownOnceFinished: False
+
+  urlscan:
+    urlScan: False
+    urlScanDir: "/scripts"
 
   openapi:
     importFromUrl: True

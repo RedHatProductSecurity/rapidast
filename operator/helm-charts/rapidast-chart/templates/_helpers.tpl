@@ -43,6 +43,8 @@ template:
       image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
       command: ["bash", "entrypoint.sh", "{{ .Release.Name }}"]
       imagePullPolicy: {{ .Values.image.pullPolicy }}
+      resources:
+        {{- toYaml .Values.resources | nindent 8 }}
       volumeMounts:
       - name: config-volume
         mountPath: /zap/config

@@ -1,14 +1,17 @@
 # rapidast-operator
+
 The RapiDAST operator makes it possible to configure RapiDAST scans from your OpenShift or Kubernetes cluster. This allows you to scan your APIs from both inside and outside of your cluster.
 
 ## Custom Resource Definitions
-The RapiDAST operator extends the RapiDAST custom resource definition (CRD) 
+
+The RapiDAST operator extends the RapiDAST custom resource definition (CRD)
 
 ## Installing the Operator
 
 There are multiple ways to install the operator onto your cluster. Read through, and select the method that best suits your situation.
 
 ### Install via Operator Lifecycle Manager (OLM)
+
 If your cluster has OLM installed, you can use it to install and manage the RapiDAST operator. You can follow the installation instructions [here](https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/install/install.md). If you're running on an OpenShift cluster, you likely have this installed by default.
 
 For the example outlined here, a namespace `rapidast` has already been created on the cluster. Should you desire to install the operator to another namespace, update the YAML accordingly.
@@ -21,6 +24,7 @@ As a convenience, you may use the file olm/rapidast.yaml to apply all three reso
 If you prefer to add resources individually, follow instructions below.
 
 #### Add CatalogSource
+
 Create a catalog source in a file `catalogsource.yaml` with the following contents. Update the value for namespace as required.
 
 ```yaml
@@ -33,13 +37,17 @@ spec:
   sourceType: grpc
   image: quay.io/redhatproductsecurity/rapidast-operator-catalog:v0.0.1
 ```
+
 Apply the resource to your cluster
+
 ```bash
 kubectl apply -f catalogsource.yaml
 ```
 
 #### Add Subscription
+
 Create a subscription in a file `subscription.yaml` with the following contents, updating the namespace to match the configuration of your cluster.
+
 ```yaml
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
@@ -53,12 +61,15 @@ spec:
   source: rapidast-catalog
   sourceNamespace: rapidast
 ```
-Now apply the subscription to your cluster 
+
+Now apply the subscription to your cluster
+
 ```bash
 kubectl apply -f subscription.yaml
 ```
 
 #### Add OperatorGroup
+
 Create a file `operatorgroup.yaml` with the following contents, updating the namespace as necessary to match the configuration of your cluster.
 
 ```yaml
@@ -71,15 +82,19 @@ spec:
 ```
 
 Apply the OperatorGroup to your cluster with
+
 ```bash
 kubectl apply -f operatorgroup.yaml
 ```
 
 ### Helm
+
 As an alternative to the operator, it is possible to set up a scan by installing the included helm chart
+
 ```bash
 helm install -f overrides.yaml rapidast-operator ./helm-charts/rapidast-chart
 ```
+
 Where `overrides.yaml` should hold the configuration for your scan based on the values as described in the following section.
 
 ## Setting Up for a Scan
@@ -168,17 +183,38 @@ spec:
 Most of the application specific scan configuration exists under `spec.config`. This is itself YAML syntax included here as a multiline string. This is the same configuration used in the core RapiDAST project [here](https://github.com/RedHatProductSecurity/rapidast/blob/development/config/config-template-local.yaml)
 
 #### Operator Config Options
+
 There are additional config options specific to the operator.
 
 ##### image
+
 Under image, you can change the pull policy, repository, and tag for the rapidast image. Unless testing changes, these are best left to their default values.
 
 ##### job
-Under job, there are two options. 
+
+Under job, there are two options.
+
 - cron: This is a boolean value. If true, will run RapiDAST scans on the specified schedule
-- schedule: Defines the schedule used if cron is set to true. This uses 
+- schedule: Defines the schedule used if cron is set to true. This uses cron notation.
+
+##### resources
+
+If required, resource limits may be specified in the config. Unless you are seeing OOMKilled errors, this can be skipped.
+
+Add the following to your RapiDAST config, with the values:
+
+```yaml
+resources:
+  limits:
+    cpu: 200m
+    memory: 1Gi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+```
 
 ##### pvc
+
 The `pvc` specifies the persistent volume claim to use. This is used by the operator to store results. If the specified PVC does not exist, it will be created. Note that this will not be uninstalled should you delete the RapiDAST resource, and will need to be explicitly deleted by itself when you are sure you don't need any of the data contained on the bound volume.
 
 ### Apply RapiDAST Resource
@@ -190,6 +226,7 @@ To apply the RapiDAST resource to the cluster you are already logged into, run
 where `rapidast.yaml` is modified to the filename used for your RapiDAST CR.
 
 #### Demo application
+
 An application for demonstration purposes is available [here](https://github.com/jpweiser/rapitester). You can use this application, and the provided configuration to see the RapiDAST operator at work.
 
 ## Getting Results
@@ -199,6 +236,7 @@ The easiest way to get results is to use a pod that mounts the same PVC used to 
 For convenience, a script `results.sh` is provided. It will create a pod mounting the specified PVC, then use `kubectl cp` to copy the entire results directory to your specified local directory before deleting the pod.
 
 Run this script with
+
 ```bash
 bash results.sh <PVC> <LOCAL_RESULTS_DIR>
 ```
@@ -206,7 +244,9 @@ bash results.sh <PVC> <LOCAL_RESULTS_DIR>
 ## Development
 
 ### Building Bundle and Catalog
+
 The following one-liner will both build and push the bundle and catalog images.
+
 ```bash
 make bundle bundle-build bundle-push catalog-build catalog-push
 ```

@@ -57,6 +57,7 @@ rules:
   - "batch"
   resources:
   - "jobs"
+  - "cronjobs"
 
 ##
 ## Rules for research.psse/v1alpha1, Kind: RapiDast

@@ -156,6 +156,7 @@ def create_context():
 
 
 def enable_passive_scanner():
+    zap.pscan.set_scan_only_in_scope(True)
     zap.pscan.enable_all_scanners()
     zap.pscan.disable_scanners(config.DISABLED_PASSIVE_SCAN)
 
@@ -365,7 +366,8 @@ if __name__ == "__main__":
 
     create_session(session_fullpath_name)
 
-    if config.AUTH_METHOD == "scriptBasedAuthentication":
+    if config.USE_HTTP_SENDER_SCRIPT:
+        logging.info("use_http_sender")
         enable_httpsender_script()
 
     create_context()

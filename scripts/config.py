@@ -89,9 +89,10 @@ if AUTH_METHOD == "scriptBasedAuthentication":
     AUTH_IS_LOGGED_IN_INDICATOR = config["scan"]["scriptAuth"]["authIsLoggedInIndicator"]
     AUTH_INDICATOR_REGEX = config["scan"]["scriptAuth"]["authIndicatorRegex"]
 
-    # HTTP Sender script
-    USE_HTTP_SENDER_SCRIPT = config["scan"]["scriptAuth"]["useHttpSenderScript"]
-    HTTP_SENDER_SCRIPT_NAME = config["scan"]["scriptAuth"]["HttpSenderScriptName"]
-    HTTP_SENDER_SCRIPT_ENGINE = config["scan"]["scriptAuth"]["HttpSenderScriptEngine"]
-    HTTP_SENDER_SCRIPT_FILE_PATH = config["scan"]["scriptAuth"]["HttpSenderScriptFilePath"]
-    HTTP_SENDER_SCRIPT_DESCRIPTION = config["scan"]["scriptAuth"]["HttpSenderScriptDescription"]
+
+# HTTP Sender script
+USE_HTTP_SENDER_SCRIPT = config["scan"]["useHttpSenderScript"]
+HTTP_SENDER_SCRIPT_NAME = config["scan"]["HttpSenderScriptName"]
+HTTP_SENDER_SCRIPT_ENGINE = config["scan"]["HttpSenderScriptEngine"]
+HTTP_SENDER_SCRIPT_FILE_PATH = config["scan"]["HttpSenderScriptFilePath"]
+HTTP_SENDER_SCRIPT_DESCRIPTION = config["scan"]["HttpSenderScriptDescription"]

@@ -40,59 +40,69 @@ else:
     URL_SCAN = False
 
 
-CONTEXT_NAME = config["scan"]["contextName"]
-TARGET = config["scan"]["target"]
+if "scan" in config:
+    CONTEXT_NAME = config["scan"]["contextName"]
+    TARGET = config["scan"]["target"]
 
-if "applicationURL" in config["scan"]:
-    APPLICATION_URL = config["scan"]["applicationURL"]
-else:
-    APPLICATION_URL = ""
+    if "applicationURL" in config["scan"]:
+        APPLICATION_URL = config["scan"]["applicationURL"]
+    else:
+        APPLICATION_URL = ""
 
-# globalExcludeUrl is generated from 'target', which excludes every single URL that doesn't belong to the target domain,
-# to avoid accidentally hitting production
-# example: ['^(?:(?!https:\/\/www.target.com).*).$']
-GLOBAL_EXCLUDE_URL = [f"^(?:(?!{TARGET}).*).$"]
+    # globalExcludeUrl is generated from 'target', which excludes every single URL that doesn't belong to the target domain,
+    # to avoid accidentally hitting production
+    # example: ['^(?:(?!https:\/\/www.target.com).*).$']
+    GLOBAL_EXCLUDE_URL = [f"^(?:(?!{TARGET}).*).$"]
 
-CONTEXT_INCLUDE_URL = config["scan"]["contextIncludeURL"]
+    CONTEXT_INCLUDE_URL = config["scan"]["contextIncludeURL"]
 
-if "contextExcludeURL" in config["scan"]:
-    CONTEXT_EXCLUDE_URL = config["scan"]["contextExcludeURL"]
-else:
-    CONTEXT_EXCLUDE_URL = ""
+    if "contextExcludeURL" in config["scan"]:
+        CONTEXT_EXCLUDE_URL = config["scan"]["contextExcludeURL"]
+    else:
+        CONTEXT_EXCLUDE_URL = ""
 
-SCAN_POLICIES_DIR = f"{APP_DIR}{config['scan']['policies']['scanPoliciesDir']}"
-SCAN_POLICY_NAME = config["scan"]["policies"]["scanPolicyName"]
-DISABLED_PASSIVE_SCAN = config["scan"]["policies"]["disabledPassiveScan"]
+    SCAN_POLICIES_DIR = f"{APP_DIR}{config['scan']['policies']['scanPoliciesDir']}"
+    SCAN_POLICY_NAME = config["scan"]["policies"]["scanPolicyName"]
+    DISABLED_PASSIVE_SCAN = config["scan"]["policies"]["disabledPassiveScan"]
 
-################# AUTHENTICATION ######
-AUTH_METHOD = config["scan"]["authMethod"]
+    ################# AUTHENTICATION ######
+    if "authMethod" in config["scan"]:
+        AUTH_METHOD = config["scan"]["authMethod"]
+    else:
+        AUTH_METHOD = False
 
-if AUTH_METHOD == "scriptBasedAuthentication":
-    # MANDATORY only if authMethod is set to scriptBasedAuthentication.
-    AUTH_SCRIPT_NAME = config["scan"]["scriptAuth"]["authScriptName"]
-    # Script engine values: Oracle Nashorn for Javascript
-    # jython for python, JSR 223 JRuby Engine for ruby
-    AUTH_SCRIPT_ENGINE = config["scan"]["scriptAuth"]["authScriptEngine"]
-    # Absolute local path
-    AUTH_SCRIPT_FILE_PATH = config["scan"]["scriptAuth"]["authScriptFilePath"]
-    AUTH_SCRIPT_DESCRIPTION = config["scan"]["scriptAuth"]["authScriptDescription"]
+    if AUTH_METHOD == "scriptBasedAuthentication":
+        # MANDATORY only if authMethod is set to scriptBasedAuthentication.
+        AUTH_SCRIPT_NAME = config["scan"]["scriptAuth"]["authScriptName"]
+        # Script engine values: Oracle Nashorn for Javascript
+        # jython for python, JSR 223 JRuby Engine for ruby
+        AUTH_SCRIPT_ENGINE = config["scan"]["scriptAuth"]["authScriptEngine"]
+        # Absolute local path
+        AUTH_SCRIPT_FILE_PATH = config["scan"]["scriptAuth"]["authScriptFilePath"]
+        AUTH_SCRIPT_DESCRIPTION = config["scan"]["scriptAuth"]["authScriptDescription"]
 
-    # Each name/value pair of authParams are expected to be "x-www-form-urlencoded"
-    # Here is an example for scriptBasedAuthentication method:
+        # Each name/value pair of authParams are expected to be "x-www-form-urlencoded"
+        # Here is an example for scriptBasedAuthentication method:
 
-    AUTH_TOKEN_ENDPOINT = config["scan"]["scriptAuth"]["authTokenEndpoint"]
-    AUTH_CLIENT_ID = config["scan"]["scriptAuth"]["authClientID"]
-    AUTH_PARAMS = f"scriptName={AUTH_SCRIPT_NAME}&token_endpoint={AUTH_TOKEN_ENDPOINT}&client_id={AUTH_CLIENT_ID}"
+        AUTH_TOKEN_ENDPOINT = config["scan"]["scriptAuth"]["authTokenEndpoint"]
+        AUTH_CLIENT_ID = config["scan"]["scriptAuth"]["authClientID"]
+        AUTH_PARAMS = f"scriptName={AUTH_SCRIPT_NAME}&token_endpoint={AUTH_TOKEN_ENDPOINT}&client_id={AUTH_CLIENT_ID}"
 
-    AUTH_CREATE_USER = config["scan"]["scriptAuth"]["authCreateUser"]
+        AUTH_CREATE_USER = config["scan"]["scriptAuth"]["authCreateUser"]
 
-    AUTH_IS_LOGGED_IN_INDICATOR = config["scan"]["scriptAuth"]["authIsLoggedInIndicator"]
-    AUTH_INDICATOR_REGEX = config["scan"]["scriptAuth"]["authIndicatorRegex"]
+        AUTH_IS_LOGGED_IN_INDICATOR = config["scan"]["scriptAuth"]["authIsLoggedInIndicator"]
+        AUTH_INDICATOR_REGEX = config["scan"]["scriptAuth"]["authIndicatorRegex"]
 
 
-# HTTP Sender script
-USE_HTTP_SENDER_SCRIPT = config["scan"]["useHttpSenderScript"]
-HTTP_SENDER_SCRIPT_NAME = config["scan"]["HttpSenderScriptName"]
-HTTP_SENDER_SCRIPT_ENGINE = config["scan"]["HttpSenderScriptEngine"]
-HTTP_SENDER_SCRIPT_FILE_PATH = config["scan"]["HttpSenderScriptFilePath"]
-HTTP_SENDER_SCRIPT_DESCRIPTION = config["scan"]["HttpSenderScriptDescription"]
+    ################## additional scripts ####
+    ## e.g. HTTP Sender script
+
+    if "useHttpSenderScript" in config["scan"]:
+        USE_HTTP_SENDER_SCRIPT = config["scan"]["useHttpSenderScript"]
+        HTTP_SENDER_SCRIPT_NAME = config["scan"]["HttpSenderScriptName"]
+        HTTP_SENDER_SCRIPT_ENGINE = config["scan"]["HttpSenderScriptEngine"]
+        HTTP_SENDER_SCRIPT_FILE_PATH = config["scan"]["HttpSenderScriptFilePath"]
+        HTTP_SENDER_SCRIPT_DESCRIPTION = config["scan"]["HttpSenderScriptDescription"]
+    else:
+        USE_HTTP_SENDER_SCRIPT = False
+

@@ -82,11 +82,11 @@ scan:
   #  authIndicatorRegex: '\QHTTP/1.1 401 Unauthorized\E'
 
   ## adds the bearer token header auth to each request
-  #  useHttpSenderScript: True
-  #  HttpSenderScriptName: 'add-bearer-token'
-  #  HttpSenderScriptEngine: 'Oracle Nashorn'
-  #  HttpSenderScriptFilePath: 'scripts/add-bearer-token.js'
-  #  HttpSenderScriptDescription: 'add bearer token to each HTTP request'
+  #useHttpSenderScript: True
+  #HttpSenderScriptName: 'add-bearer-token'
+  #HttpSenderScriptEngine: 'Oracle Nashorn'
+  #HttpSenderScriptFilePath: 'scripts/add-bearer-token.js'
+  #HttpSenderScriptDescription: 'add bearer token to each HTTP request'
 
 #### UPSTREAM PROXY ####
 proxy:

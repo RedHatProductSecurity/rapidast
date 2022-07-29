@@ -1,4 +1,4 @@
-FROM owasp/zap2docker-stable:latest
+FROM quay.io/redhatproductsecurity/rapidast-base-zap:2.11.1a
 COPY config/requirements.txt requirements.txt
 USER root
 RUN pip install -r requirements.txt

@@ -2,7 +2,7 @@ version: "3"
 services:
   zaproxy:
     env_file: .env
-    image: docker.io/owasp/zap2docker-stable
+    image: quay.io/redhatproductsecurity/rapidast-base-zap
     container_name: zaproxy
     user: zap
     ports:

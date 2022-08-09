@@ -14,6 +14,7 @@ except ImportError:
 
 CONTEXT_ID = ""
 
+logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
 def create_session(session_name):
     # Start the ZAP session
@@ -236,7 +237,7 @@ def start_active_scanner():
         # add policies
         for policy in policies:
             if zap.ascan.import_scan_policy(path=f"{config.APP_DIR}/policies/{policy}") == "already_exists":
-                logging.warning(
+                logging.debug(
                     f"The policy {policy} was already in ZAP. No modification were applied to the existing policy"
                 )
 

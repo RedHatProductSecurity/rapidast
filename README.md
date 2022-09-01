@@ -122,7 +122,7 @@ $ podman-compose -f podman-compose.yml down
 ```
 
 ## Run with GUI (useful for debugging)
-This is taking advantage of ZAP's webswing feature. See https://www.zaproxy.org/docs/docker/webswing/.
+This is taking advantage of ZAP's webswing feature. See https://www.zaproxy.org/docs/docker/webswing/. Note that any commercial organization that uses Webswing for non-evaluation purposes needs to have a valid commercial license of Webswing. See https://www.webswing.org/licensing for licensing information. 
 
 ### Run a container
 ```

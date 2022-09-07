@@ -182,6 +182,21 @@ spec:
 
 Most of the application specific scan configuration exists under `spec.config`. This is itself YAML syntax included here as a multiline string. This is the same configuration used in the core RapiDAST project [here](https://github.com/RedHatProductSecurity/rapidast/blob/development/config/config-template-local.yaml)
 
+#### Authentication Config Options
+
+For authentication from within an OpenShift cluster, use below as your authentication type/configuration 
+Add your specific token as the cookieVal that can be obtained via 'Copy login command' menu in the console
+
+```
+authMethod: null
+useHttpSenderScript: True
+HttpSenderScriptName: 'add-cookie'
+HttpSenderScriptEngine: 'Oracle Nashorn'
+HttpSenderScriptFilePath: 'scripts/add-token-cookie-param.js'
+HttpSenderScriptDescription: 'add a cookie to each HTTP request'
+HTTPParams: {"cookieName": 'openshift-session-token', "cookieVal": 'sha256~***'}
+```
+
 #### Operator Config Options
 
 There are additional config options specific to the operator.

@@ -103,6 +103,7 @@ if "scan" in config:
         HTTP_SENDER_SCRIPT_ENGINE = config["scan"]["HttpSenderScriptEngine"]
         HTTP_SENDER_SCRIPT_FILE_PATH = config["scan"]["HttpSenderScriptFilePath"]
         HTTP_SENDER_SCRIPT_DESCRIPTION = config["scan"]["HttpSenderScriptDescription"]
+        HTTP_SENDER_SCRIPT_PARAMS = config["scan"].get("HTTPParams","")
     else:
         USE_HTTP_SENDER_SCRIPT = False
 

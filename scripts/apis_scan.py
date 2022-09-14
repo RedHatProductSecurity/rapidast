@@ -288,9 +288,28 @@ def start_active_scanner():
 
     logging.info("Start Active scan. Scan ID equals " + scan_id)
     logging.info("Scan Policies: " + str(zap.ascan.scan_policy_names))
-    while int(zap.ascan.status(scan_id)) < 100:
-        logging.info("Active Scan progress: " + zap.ascan.status(scan_id) + "%")
+
+    # status update : loop until the scan is finished
+    pc = int(zap.ascan.status(scan_id))
+    while (pc) < 100:
+        # Get detailed status, but we really don't want to crash in that
+        try:
+            msg = 0    # number of requests sent
+            progress = zap.ascan.scan_progress(scan_id)
+            for x in progress:
+                if x is dict and "HostProcess" in x and type(x["HostProcess"]) == list:
+                    for plugin in x["HostProcess"]:
+                        if type(plugin) == list:
+                            # indexes: [name, id, {release,beta}, {<percent-complete>%,Pending,Complete},time-running,messages-sent,alerts-detected]
+                            msg += int(plugin[5])
+        except ValueError as e:
+            logging.warning(f"Error while getting progress status)")
+            logging.debug(f"scan_progress returned: {progress}")
+
+        logging.info(f"Active Scan progress: {pc}%, total message sent: {msg}")
         time.sleep(10)
+        pc = int(zap.ascan.status(scan_id))
+
     logging.info("Active Scan completed")
 
 

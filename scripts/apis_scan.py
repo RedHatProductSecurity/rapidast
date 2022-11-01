@@ -297,16 +297,16 @@ def start_active_scanner():
             msg = 0    # number of requests sent
             progress = zap.ascan.scan_progress(scan_id)
             for x in progress:
-                if x is dict and "HostProcess" in x and type(x["HostProcess"]) == list:
-                    for plugin in x["HostProcess"]:
-                        if type(plugin) == list:
+                if type(x) == dict and "HostProcess" in x and type(x["HostProcess"]) == list:
+                    for y in x["HostProcess"]:
+                        if type(y) == dict and "Plugin" in y and type(y["Plugin"]) == list:
                             # indexes: [name, id, {release,beta}, {<percent-complete>%,Pending,Complete},time-running,messages-sent,alerts-detected]
-                            msg += int(plugin[5])
+                            msg += int(y["Plugin"][5])
         except ValueError as e:
             logging.warning(f"Error while getting progress status)")
             logging.debug(f"scan_progress returned: {progress}")
 
-        logging.info(f"Active Scan progress: {pc}%, total message sent: {msg}")
+        logging.info(f"Active Scan progress: {pc}%, plugin progression: {msg}")
         time.sleep(10)
         pc = int(zap.ascan.status(scan_id))
 

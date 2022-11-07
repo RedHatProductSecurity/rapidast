@@ -185,8 +185,7 @@ def get_apis():
                 if ret == []:
                     break
                 logging.warning(
-                    f"ZAP import OpenAPI {config.OAS_URL} failed (returned '{ret}'). "
-                    "It may be due to bad authentication. Attempt {count}/3"
+                    f"ZAP import OpenAPI {config.OAS_URL} failed (returned '{ret}'). Trying again in case it is caused by missing authentication. Attempt {count}/3"
                 )
                 count += 1
                 time.sleep(3)

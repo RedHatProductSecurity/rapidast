@@ -13,3 +13,9 @@ services:
       - ./results:/zap/results:Z
       - ./policies:/zap/policies:Z
     entrypoint: /zap/scripts/entrypoint.sh
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

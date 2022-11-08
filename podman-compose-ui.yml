@@ -15,3 +15,9 @@ services:
       - ./policies:/zap/policies:Z
       - ./webswing:/zap/webswing_custom:Z
     entrypoint: /zap/scripts/entrypoint_ui.sh
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

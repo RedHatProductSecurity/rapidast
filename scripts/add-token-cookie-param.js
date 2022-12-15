@@ -38,7 +38,6 @@ function sendingRequest(msg, initiator, helper) {
 
 var COOKIE_TYPE   = org.parosproxy.paros.network.HtmlParameter.Type.cookie;
 // cookieVal will be replaced with a token that can be obtained via 'Copy login command' menu in the console
-// cookieVal will be replaced with a token that can be obtained via 'Copy login command' menu in the console
 var params = {
     cookieName: org.zaproxy.zap.extension.script.ScriptVars.getScriptVar(this.context, "cookieName"),
     cookieVal: org.zaproxy.zap.extension.script.ScriptVars.getScriptVar(this.context, "cookieVal")
@@ -47,7 +46,7 @@ var params = {
 function modifyCookies(cookies) {
     var hasAccessToken = 0
     var iterator = cookies.iterator();
-    while(iterator.hasNext() || hasAccessToken == 0) {
+    while(iterator.hasNext() && hasAccessToken == 0) {
         var cookie = iterator.next();
         if(params.cookieName && params.cookieVal) {
             // print('cookie name: ' + str(params.cookieName))

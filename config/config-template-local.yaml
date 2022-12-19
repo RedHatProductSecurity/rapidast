@@ -87,6 +87,10 @@ scan:
   #HttpSenderScriptEngine: 'Oracle Nashorn'
   #HttpSenderScriptFilePath: 'scripts/add-bearer-token.js'
   #HttpSenderScriptDescription: 'add bearer token to each HTTP request'
+  #HTTPParams: {} # Any parameters you want to use in your authentication script, use in script with key, values that change at runtime 
+  ## For OpenShift: {"cookieName": 'openshift-session-token', "cookieVal": 'sha256~**'}
+  ## See [example](../scripts/add-token-cookie-param.js) of how to obtain these values in script
+
 
 #### UPSTREAM PROXY ####
 proxy:

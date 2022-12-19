@@ -4,7 +4,6 @@ import logging
 import os
 import time
 from datetime import datetime
-
 from zapv2 import ZAPv2
 
 try:
@@ -37,6 +36,7 @@ def create_session(session_name):
 
 
 def enable_httpsender_script():
+        
     script = zap.script
     script.remove(scriptname=config.HTTP_SENDER_SCRIPT_NAME)
     logging.info(
@@ -51,6 +51,13 @@ def enable_httpsender_script():
             scriptdescription=config.HTTP_SENDER_SCRIPT_DESCRIPTION,
         )
     )
+
+     # If the script requires cookie parameter
+    if config.HTTP_SENDER_SCRIPT_PARAMS != "":
+        for k, v in config.HTTP_SENDER_SCRIPT_PARAMS.items():
+            ret = script.set_script_var(config.HTTP_SENDER_SCRIPT_NAME, k, v)
+            logging.info(f"httpsenderscript: set Variable '{k}' to value '{v}', returned: {ret}")
+
     logging.info(
         "Enable httpsender script: "
         + config.HTTP_SENDER_SCRIPT_NAME

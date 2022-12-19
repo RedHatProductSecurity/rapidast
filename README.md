@@ -15,7 +15,10 @@ Its core engine is OWASP ZAP Proxy (https://owasp.org/www-project-zap/). Taking 
 * Pull the OWASP ZAP docker image
 ```
 $ podman pull docker.io/owasp/zap2docker-stable
+$ docker pull docker.io/owasp/zap2docker-stable
 ```
+
+If you're wanting to run on kubernetes or OpenShift cluster you can also install using OLM or helm, see more information on this [README.md](operator/README.md)
 
 # Basic workflow for a scan
 1. Create config.yaml, place it in config/ and set the config values for your API. You can use config/config-template-local.yaml as an example
@@ -39,6 +42,57 @@ API_KEY=[GENERATE_RANDOM_STRING]
 # ZAP_AUTH_HEADER_VALUE=Basic [base64_encoded_creds]
 ```
 
+## Authentication Config Options
+
+Define authentication method for the context. Possible values are:
+"null", "scriptBasedAuthentication"
+
+if set to null basic auth can be handled by setting the
+ZAP_AUTH_HEADER_VALUE=Basic [base64_encoded_creds] enviromental variable
+in /.env file
+
+authMethod: null
+
+There are 2 parts to script based auth:
+oauth access token that needs to be refreshed on expiration.
+This auth method will work on OAuth2 workflows only if offline_token is available
+
+```
+authMethod: 'scriptBasedAuthentication'
+scriptAuth:
+    authScriptName: 'offline-token'
+    authScriptEngine: 'Oracle Nashorn'
+    authScriptFilePath: 'scripts/offline-token.js'
+    authScriptDescription: 'will automatically fetch the new access token for every unauthorized request'
+    authTokenEndpoint: [oauth_realm_token_endpoint]
+    authClientID: [oauth_client_id]
+    authCreateUser: True
+```
+
+To use Logged out authIndicatorRegex
+authIsLoggedInIndicator: False
+
+regex expression that indicates the user is logged out and triggers the
+token refresh process
+authIndicatorRegex: '\QHTTP/1.1 401 Unauthorized\E'
+
+Another authentication type is using HTTP sender script with a bearer token. 
+These variables and script adds the bearer token header auth to each request
+```
+authMethod: null
+useHttpSenderScript: True
+HttpSenderScriptName: 'add-bearer-token'
+HttpSenderScriptEngine: 'Oracle Nashorn'
+HttpSenderScriptFilePath: 'scripts/add-bearer-token.js'
+HttpSenderScriptDescription: 'add bearer token to each HTTP request'
+HTTPParams: {} Any parameters you want to use in your authentication script, use in script with key, values that change at runtime
+```
+
+For OpenShift Authentication you will need the cookie name and value passed to the HTTPParams using scripts/add-token-cookie-param.js 
+
+example.) `HTTPParams: {"cookieName": 'openshift-session-token', "cookieVal": 'sha256~**'}`
+See [example](scripts/add-token-cookie-param.js) of how to obtain these values in script
+
 
 # Quick Scan Example(using podman)
 
@@ -53,9 +107,19 @@ zaproxy container must be running (either runenv.sh or runenv-ui.sh)
 $ ./runenv.sh
 ```
 
+
+For docker
+```
+$ ./runenv-docker.sh
+```
+
 6. Launch a scan in the project root directory,
 ```
 $ test/scan-example-with-podman.sh <dir_to_store_results>
+
+*OR*
+
+$ test/scan-example-with-docker.sh <dir_to_store_results>
 ```
 
 When a scan is completed, its report will be generated in the `results/<dir_to_store_results>`
@@ -94,6 +158,8 @@ While the following examples are shown based on podman, the same commands can be
 You will need to make the host's `./result` directory writable to the `zap` user in the container. This can be done with the following command. For docker users, this is not necessary.
 ```
 $ podman unshare chown 1000 ./results
+
+$ docker unshare chown 1000 ./results
 ```
 
 See [this](https://docs.podman.io/en/latest/markdown/podman-unshare.1.html) for more information on `podman unshare`.
@@ -106,10 +172,17 @@ See [this](https://docs.podman.io/en/latest/markdown/podman-unshare.1.html) for 
 $ podman-compose -f podman-compose.yml up
 ```
 
+```
+$ docker-compose zaproxy up
+```
+
 On older podman versions (before 3.1.0), you will need to manually make the `./result` directory writable to the `zap` user. This can be done with the following command. For docker users, this is not necessary.
 ```
 $ podman unshare chown 1000 ./results
+$ docker unshare chown 1000 ./results
 ```
+
+
 
 ### Launch a scan
 ```
@@ -119,14 +192,20 @@ $ podman exec zaproxy python /zap/scripts/apis_scan.py <dirname_to_be_created_un
 ### Stopping Environments
 ```
 $ podman-compose -f podman-compose.yml down
+
+$ docker-compose down
 ```
 
-## Run with GUI (useful for debugging)
+#Run with GUI (useful for debugging)
 This is taking advantage of ZAP's webswing feature. See https://www.zaproxy.org/docs/docker/webswing/. Note that any commercial organization that uses Webswing for non-evaluation purposes needs to have a valid commercial license of Webswing. See https://www.webswing.org/licensing for licensing information. 
 
 ### Run a container
 ```
 $ podman-compose -f podman-compose-ui.yml up
+
+**OR**
+
+$ docker-compose zaproxy_ui up
 ```
 
 
@@ -136,11 +215,15 @@ After the step, it is necessary to navigate to the GUI via http://127.0.0.1:8081
 ### Launch a scan
 ```
 $ podman exec zaproxy python /zap/scripts/apis_scan.py <dirname_to_be_created_under_results_dir>
+
+$ docker exec zaproxy python /zap/scripts/apis_scan.py <dirname_to_be_created_under_results_dir>
 ```
 
 ### Stopping Environments
 ```
 $ podman-compose -f podman-compose-ui.yml down
+
+$ docker-compose down
 ```
 
 ## Create a custom rule
@@ -152,13 +235,16 @@ Apply custom rules to the running ZAP instance before launching a scan.
 ### Example: Load and enable custom rule
 ```
 $ podman exec zaproxy python scripts/gen_zap_script/cli.py --from-yaml scripts/gen_zap_script/rules/software_version_revealed.yaml --rapidast-config=<config-file> --load-and-enable
+
+$ docker exec zaproxy python scripts/gen_zap_script/cli.py --from-yaml scripts/gen_zap_script/rules/software_version_revealed.yaml --rapidast-config=<config-file> --load-and-enable
 ```
 
 ### Example: Delete existing custom rules
 ```
 $ podman exec zaproxy python scripts/gen_zap_script/cli.py --rapidast-config=<config-file> --delete
-```
 
+$ docker exec zaproxy python scripts/gen_zap_script/cli.py --rapidast-config=<config-file> --delete
+```
 
 ## Run RapiDast as a GitHub action for CI
 

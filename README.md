@@ -12,11 +12,6 @@ Its core engine is OWASP ZAP Proxy (https://owasp.org/www-project-zap/). Taking 
 
 * podman or docker is required.
 * podman-compose or docker-compose is required.
-* Pull the OWASP ZAP docker image
-```
-$ podman pull docker.io/owasp/zap2docker-stable
-$ docker pull docker.io/owasp/zap2docker-stable
-```
 
 If you're wanting to run on kubernetes or OpenShift cluster you can also install using OLM or helm, see more information on this [README.md](operator/README.md)
 
@@ -104,7 +99,7 @@ zaproxy container must be running (either runenv.sh or runenv-ui.sh)
 5. zaproxy container must be running (either runenv.sh or runenv-ui.sh)
 
 ```
-$ ./runenv.sh
+$ ./podman-wrapper.sh
 ```
 
 
@@ -114,11 +109,14 @@ $ ./runenv-docker.sh
 ```
 
 6. Launch a scan in the project root directory,
+
 ```
 $ test/scan-example-with-podman.sh <dir_to_store_results>
+```
 
 *OR*
 
+```
 $ test/scan-example-with-docker.sh <dir_to_store_results>
 ```
 
@@ -151,60 +149,52 @@ HTML report saved in: /zap/results/testrun/demo1-report-20220722-033427.html
 
 # Usage
 
-While the following examples are shown based on podman, the same commands can be replaced with docker and docker-compose.
-
-## for podman users only
-
-You will need to make the host's `./result` directory writable to the `zap` user in the container. This can be done with the following command. For docker users, this is not necessary.
-```
-$ podman unshare chown 1000 ./results
-
-$ docker unshare chown 1000 ./results
-```
-
-See [this](https://docs.podman.io/en/latest/markdown/podman-unshare.1.html) for more information on `podman unshare`.
-
 ## Run as daemon
 
 ### Run a container
 
 ```
-$ podman-compose -f podman-compose.yml up
+$ ./podman-wrapper.sh
 ```
+
+**OR**
 
 ```
 $ docker-compose zaproxy up
 ```
 
-On older podman versions (before 3.1.0), you will need to manually make the `./result` directory writable to the `zap` user. This can be done with the following command. For docker users, this is not necessary.
-```
-$ podman unshare chown 1000 ./results
-$ docker unshare chown 1000 ./results
-```
-
 
 
 ### Launch a scan
+
 ```
 $ podman exec zaproxy python /zap/scripts/apis_scan.py <dirname_to_be_created_under_results_dir>
 ```
 
 ### Stopping Environments
-```
-$ podman-compose -f podman-compose.yml down
 
-$ docker-compose down
 ```
-
-#Run with GUI (useful for debugging)
-This is taking advantage of ZAP's webswing feature. See https://www.zaproxy.org/docs/docker/webswing/. Note that any commercial organization that uses Webswing for non-evaluation purposes needs to have a valid commercial license of Webswing. See https://www.webswing.org/licensing for licensing information. 
-
-### Run a container
+$ ./podman-wrapper.sh -s
 ```
-$ podman-compose -f podman-compose-ui.yml up
 
 **OR**
 
+```
+$ docker-compose down
+```
+
+# Run with GUI (useful for debugging)
+This is taking advantage of ZAP's webswing feature. See https://www.zaproxy.org/docs/docker/webswing/. Note that any commercial organization that uses Webswing for non-evaluation purposes needs to have a valid commercial license of Webswing. See https://www.webswing.org/licensing for licensing information. 
+
+### Run a container
+
+```
+$ ./podman-wrapper.sh -w
+```
+
+**OR**
+
+```
 $ docker-compose zaproxy_ui up
 ```
 
@@ -215,14 +205,23 @@ After the step, it is necessary to navigate to the GUI via http://127.0.0.1:8081
 ### Launch a scan
 ```
 $ podman exec zaproxy python /zap/scripts/apis_scan.py <dirname_to_be_created_under_results_dir>
+```
 
+**OR**
+
+```
 $ docker exec zaproxy python /zap/scripts/apis_scan.py <dirname_to_be_created_under_results_dir>
 ```
 
 ### Stopping Environments
 ```
-$ podman-compose -f podman-compose-ui.yml down
+$ ./podman-wrapper.sh -sw
+```
+(note: `s` stands for *stop*, `w` for *WebUI*)
 
+**OR**
+
+```
 $ docker-compose down
 ```
 
@@ -240,9 +239,14 @@ $ docker exec zaproxy python scripts/gen_zap_script/cli.py --from-yaml scripts/g
 ```
 
 ### Example: Delete existing custom rules
+
 ```
 $ podman exec zaproxy python scripts/gen_zap_script/cli.py --rapidast-config=<config-file> --delete
+```
 
+**OR**
+
+```
 $ docker exec zaproxy python scripts/gen_zap_script/cli.py --rapidast-config=<config-file> --delete
 ```
 

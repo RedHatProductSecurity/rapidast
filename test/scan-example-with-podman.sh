@@ -24,8 +24,7 @@ fi
 
 # Create rundir
 RUNDIR=$RESULT_DIR/$1
-mkdir $RUNDIR
-podman unshare chown 1000 $RUNDIR
+mkdir -p $RUNDIR
 
 # Load custom rules
 podman exec zaproxy python scripts/gen_zap_script/cli.py --rapidast-config=./config/config.yaml --delete

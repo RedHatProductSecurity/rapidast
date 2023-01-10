@@ -12,6 +12,7 @@ services:
       - ./config:/zap/config:Z
       - ./results:/zap/results:Z
       - ./policies:/zap/policies:Z
+      - ./requirements.txt:/zap/requirements.txt:Z
     entrypoint: /zap/scripts/entrypoint.sh
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8090/"]

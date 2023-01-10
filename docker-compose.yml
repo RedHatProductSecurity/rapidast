@@ -20,6 +20,9 @@ services:
       - type: bind
         source: "./policies"
         target: "/zap/policies"
+      - type: bind
+        source: "./requirements.txt"
+        target: "/zap/requirements.txt"
     entrypoint: /zap/scripts/entrypoint.sh
 
   zaproxy_action:
@@ -43,6 +46,9 @@ services:
       - type: bind
         source: "./policies"
         target: "/zap/policies"
+      - type: bind
+        source: "./requirements.txt"
+        target: "/zap/requirements.txt"
     entrypoint: /zap/scripts/entrypoint.sh
 
   zaproxy_ui:
@@ -66,4 +72,7 @@ services:
       - type: bind
         source: "./policies"
         target: "/zap/policies"
+      - type: bind
+        source: "./requirements.txt"
+        target: "/zap/requirements.txt"
     entrypoint: /zap/scripts/entrypoint_ui.sh

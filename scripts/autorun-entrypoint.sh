@@ -1,5 +1,9 @@
 #!/bin/bash
 
+##
+## This file is used when the RapiDAST image is built with Containerfile as entrypoint
+##
+
 # This MUST be the same as resultDir in config.yaml
 RESULT_DIR=results
 
@@ -18,10 +22,6 @@ done
 
 echo "[entrypoint] Scanning will be starting soon in a min"
 sleep 60 # add a little more room until the instance is completely up
-
-#python scripts/gen_zap_script/cli.py --delete
-#python scripts/gen_zap_script/cli.py --from-yaml scripts/gen_zap_script/rules/software_version_revealed.yaml --load-and-enable
-
 
 # Run scan
 python scripts/apis_scan.py $1

@@ -14,13 +14,20 @@
 var HttpSender = Java.type("org.parosproxy.paros.network.HttpSender");
 var ScriptVars = Java.type("org.zaproxy.zap.extension.script.ScriptVars");
 
-function sendingRequest(msg, initiator, helper) {
-  // add Authorization header to all request in scope except the authorization request itself
-  if (initiator !== HttpSender.AUTHENTICATION_INITIATOR && msg.isInScope()) {
-    msg.getRequestHeader().setHeader("Authorization", "Bearer " + ScriptVars.getGlobalVar("access_token"));
-  }
+function logger() {
+    //print('[' + this['zap.script.name'] + '] ' + arguments[0]);
+}
 
-  return msg;
+function sendingRequest(msg, initiator, helper) {
+    logger("{sendingRequest}: called");
+    // add Authorization header (when it exists) to all request in scope except the authorization request itself
+    var bearer = ScriptVars.getGlobalVar("access_token");
+    if (initiator !== HttpSender.AUTHENTICATION_INITIATOR && msg.isInScope() && bearer ) {
+        logger("{sendingRequest}: Adding bearer to Authorization header");
+        msg.getRequestHeader().setHeader("Authorization", "Bearer " + bearer);
+    }
+
+    return msg;
 }
 
 function responseReceived(msg, initiator, helper) {}

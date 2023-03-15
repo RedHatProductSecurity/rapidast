@@ -13,7 +13,9 @@ CONFIG_TEMPLATE_LONG = "config/config-template-long.yaml"
 def test_config():
     return configmodel.RapidastConfigModel()
 
+
 ## Testing files and paths ##
+
 
 def test_path_translation_host_2_container(test_config):
     test_zap = ZapPodman(config=test_config)
@@ -21,14 +23,13 @@ def test_path_translation_host_2_container(test_config):
     test_zap._add_volume("/a/s/d/f/g", "/h/j/k/l")
     test_zap._add_volume("/z/x/c/v", "/b/n/m")
 
-    assert( test_zap._paths_h2c("/a/s/d/f/g/subdir/myfile") == "/h/j/k/l/subdir/myfile")
+    assert test_zap._paths_h2c("/a/s/d/f/g/subdir/myfile") == "/h/j/k/l/subdir/myfile"
 
-    assert( test_zap._paths_c2h("/b//n/m/subdir/myfile") == "/z/x/c/v/subdir/myfile")
-
-
+    assert test_zap._paths_c2h("/b//n/m/subdir/myfile") == "/z/x/c/v/subdir/myfile"
 
 
 ## Testing Authentication methods ##
+
 
 def test_setup_authentication_no_auth_configured(test_config):
     print(test_config.get("general"))

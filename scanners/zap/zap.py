@@ -1,0 +1,449 @@
+import logging
+import os
+import random
+import shutil
+import string
+import subprocess
+import tarfile
+import tempfile
+
+import yaml
+
+import configmodel
+from scanners import RapidastScanner
+from scanners import State
+
+
+className = "Zap"
+
+import pprint
+
+pp = pprint.PrettyPrinter(indent=4)
+
+
+class Zap(RapidastScanner):
+    ## CONSTANTS
+    DEFAULT_CONTEXT = "Default Context"
+    AF_TEMPLATE = "af-template.yaml"
+    USER = "test1"
+
+    DEFAULT_CONTAINER = "podman"
+    DEFAULT_REPORT_NAME = "report.json"
+
+    # real path from host
+    ROOT_LOCATION_DIR = os.path.dirname(__file__)
+    SCRIPTS_LOCATION_DIR = f"{ROOT_LOCATION_DIR}/scripts/"
+    POLICIES_LOCATION_DIR = f"{ROOT_LOCATION_DIR}/policies/"
+
+    ## FUNCTIONS
+    def __init__(self, config):
+        logging.debug(f"Initializing ZAP scanner")
+        super().__init__(config)
+
+        self.results_dir = os.path.join(
+            self.config.get("config.results_dir", default="results"), "zap"
+        )
+
+        # This is used to construct the ZAP Automation config.
+        # It will be saved to a file during setup phase
+        # and used by the ZAP command during run phase
+        self.af = {}
+
+        # When state is READY, this will contain the entire ZAP command that the container layer should run
+        self.zap_cli = []
+
+    def _add_env(self):
+        logging.warn(
+            "_add_env() was called on the parent ZAP class. This is likely a bug. No operation done"
+        )
+
+    def get_type(self):
+        """Return container type, based on configuration"""
+        return self.config.get(
+            "scanners.zap.container.type", default=Zap.DEFAULT_CONTAINER
+        )
+
+    def setup(self, executable="zap.sh"):
+        """Prepares everything:
+        - the command line to run
+        - environment variables
+        - files & directory
+
+        `exec` contains the ZAP executable name, which may vary depending on container
+        This code handles only the "ZAP" layer, independently of the container used.
+        This method should not be called directly, but only via super() from a child's setup()
+        """
+        logging.info(f"Preparing ZAP configuration")
+
+        self._setup_zap_cli(executable)
+
+        self._setup_zap_automation()
+
+    def _setup_zap_automation(self):
+        # Load the Automation template
+        try:
+            AF_TEMPLATE = f"{Zap.ROOT_LOCATION_DIR}/{Zap.AF_TEMPLATE}"
+            logging.debug(f"Load the Automation Framework template")
+            with open(AF_TEMPLATE, "r") as stream:
+                self.af = yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            raise RuntimeError(
+                f"Something went wrong while parsing the config '{AF_TEMPLATE}':\n {str(exc)}"
+            )
+
+        # Configure the basic environment target
+        try:
+            af_context = find_context(self.af)
+            af_context["urls"].append(self.config.get("application.url"))
+        except KeyError as exc:
+            raise RuntimeError(
+                f"Something went wrong with the Zap scanner configuration, while creating the context':\n {str(exc)}"
+            )
+
+        # Create the AF configuration
+        self._setup_authentication()
+        self._setup_spider()
+        self._setup_api()
+        self._setup_passive_scan()
+        self._setup_active_scan()
+        self._setup_passive_wait()
+        self._setup_report()
+
+    def run(self):
+        """This code handles only the "ZAP" layer, independently of the container used.
+        This method should not be called directly, but only via super() from a child's setup()
+        This method is currently empty as running entirely depends on the containment
+        """
+        pass
+
+    def postprocess(self):
+        host_results = self._paths_c2h(self.RESULTS_CONTAINER_DIR)
+
+        logging.info(f"Extracting report, storing in {self.results_dir}")
+        os.makedirs(self.results_dir, exist_ok=True)
+        shutil.copy(
+            os.path.join(host_results, Zap.DEFAULT_REPORT_NAME),
+            os.path.join(self.results_dir, Zap.DEFAULT_REPORT_NAME),
+        )
+
+        logging.info(f"Saving the session as evidence")
+        with tarfile.open(f"{self.results_dir}/session.tar.gz", "w:gz") as tar:
+            tar.add(host_results, arcname="evidences")
+
+    def cleanup(self):
+        """Generic ZAP cleanup: should be called only via super() inheritance"""
+        pass
+
+    def _setup_authentication(self):
+        """Select among the available authentication types"""
+        auth = self.config.get("scanners.zap.authentication", default={})
+        if not auth:
+            logging.info(f"No authentication configured. Zap will run unauthenticated")
+            self.authenticated = False
+
+        elif auth.get("type") == "oauth2_rtoken":
+            self.authenticated = self.configure_oauth2_rtoken(self.af, self.config)
+
+        elif auth.get("type") == "http_basic":
+            self.authenticated = self.configure_http_basic_auth(self.af, self.config)
+
+        else:
+            logging.warning(
+                f"ZAP Automation Framework could not find a valid authentication method. No authentication has been configured"
+            )
+            self.authenticated = False
+
+    def _setup_api(self):
+        """Prepare an openapi job and append it to the job list"""
+
+        openapi = {"name": "openapi", "type": "openapi", "parameters": {}}
+        api = self.config.get("scanners.zap.apiScan.apis", default={})
+        if api.get("apiUrl"):
+            openapi["parameters"]["apiUrl"] = api.get("apiUrl")
+        elif api.get("apiFile"):
+            # copy the file in the container's result directory
+            # This allows the OpenAPI to be kept as evidence
+            container_openapi_file = f"{self.RESULTS_CONTAINER_DIR}/openapi.json"
+
+            self._include_file(api.get("apiFile"), container_openapi_file)
+            openapi["parameters"]["apiFile"] = container_openapi_file
+        else:
+            logging.warning(
+                f"No API defined in the config, in scanners.zap.apiScan.api"
+            )
+        # default target: main URL, or can be overridden in apiScan
+        openapi["parameters"]["targetUrl"] = self.config.get(
+            "scanners.zap.apiScan.target", default=False
+        ) or self.config.get("application.url")
+        openapi["parameters"]["context"] = Zap.DEFAULT_CONTEXT
+
+        self.af["jobs"].append(openapi)
+
+    def _setup_spider(self):
+        """Prepare an spider job and append it to the job list"""
+
+        if self.config.get("scanners.zap.spider", default=False) is False:
+            return
+
+        af_spider = {
+            "name": "spider",
+            "type": "spider",
+            "parameters": {
+                "user": Zap.USER if self.authenticated else "",
+                "maxDuration": self.config.get(
+                    "scanners.zap.spider.maxDuration", default=0
+                ),
+                "url": self.config.get("scanners.zap.spider.url", default=""),
+            },
+        }
+
+        # Add to includePath to the context
+        if self.config.get("scanners.zap.spider.url"):
+            new_include_path = self.config.get("scanners.zap.spider.url") + ".*"
+            af_context = find_context(self.af)
+            af_context["includePaths"].append(new_include_path)
+
+        self.af["jobs"].append(af_spider)
+
+    def _setup_passive_scan(self):
+        """Adds the passive scan to the job list. Needs to be done prior to Active scan"""
+
+        if self.config.get("scanners.zap.passiveScan", default=False) is False:
+            return
+
+        # passive AF schema
+        passive = {
+            "name": "passiveScan-config",
+            "type": "passiveScan-config",
+            "parameters": {
+                "maxAlertsPerRule": 10,
+                "scanOnlyInScope": True,
+                "maxBodySizeInBytesToScan": 10000,
+                "enableTags": False,
+            },
+            "rules": [],
+        }
+
+        # Fetch the list of disabled passive scan as scanners.zap.policy.disabledPassiveScan
+        disabled = self.config.get("scanners.zap.passiveScan.disabledRules", default="")
+        # ''.split('.') returns [''], which is a non-empty list (which would erroneously get into the loop later)
+        disabled = disabled.split(",") if len(disabled) else []
+        logging.debug(f"disabling the following passive scans: {disabled}")
+        for p in disabled:
+            passive["rules"].append({"id": int(p), "threshold": "off"})
+
+        self.af["jobs"].append(passive)
+
+    def _setup_passive_wait(self):
+        """Adds a wait to the list of jobs, to make sure that the Passive Scan is finished"""
+
+        if self.config.get("scanners.zap.passiveScan", default=False) is False:
+            return
+
+        # Available Parameters: maximum time to wait
+        waitfor = {
+            "type": "passiveScan-wait",
+            "name": "passiveScan-wait",
+            "parameters": {},
+        }
+        self.af["jobs"].append(waitfor)
+
+    def _setup_active_scan(self):
+        """Adds the active scan job list."""
+
+        if self.config.get("scanners.zap.activeScan", default=False) is False:
+            return
+
+        active = {
+            "name": "activeScan",
+            "type": "activeScan",
+            "parameters": {
+                "context": Zap.DEFAULT_CONTEXT,
+                "user": Zap.USER if self.authenticated else "",
+                "policy": self.config.get(
+                    "scanners.zap.activeScan.policy", default="API-scan-minimal"
+                ),
+            },
+        }
+
+        self.af["jobs"].append(active)
+
+    def _setup_report(self):
+        """Adds the report to the job list. This should be called last"""
+
+        report = {
+            "name": "report",
+            "type": "report",
+            "parameters": {
+                "template": "traditional-json",
+                "reportDir": f"{self.RESULTS_CONTAINER_DIR}/",
+                "reportFile": self.DEFAULT_REPORT_NAME,
+                "reportTitle": "ZAP Scanning Report",
+                "reportDescription": "",
+                "displayReport": False,
+            },
+        }
+        self.af["jobs"].append(report)
+
+    def _setup_zap_cli(self, executable):
+        """prepare the zap command"""
+
+        self.zap_cli = [executable]
+
+        # Proxy workaround (because it currently can't be configured from Automation Framework)
+        proxy = self.config.get("scanners.zap.proxy")
+        if proxy:
+            self.zap_cli += [
+                "-config",
+                f"network.connection.httpProxy.host={proxy.get('proxyHost')}",
+                "-config",
+                f"network.connection.httpProxy.port={proxy.get('proxyPort')}",
+                "-config",
+                f"network.connection.httpProxy.enabled=true",
+            ]
+        else:
+            self.zap_cli += ["-config", f"network.connection.httpProxy.enabled=false"]
+
+        # Create a session, to store them as evidence
+        self.zap_cli += [
+            "-newsession",
+            f"{self.SESSION_CONTAINER_DIR}",
+            "-cmd",
+            "-autorun",
+            f"{self.AF_CONTAINER_PATH}",
+        ]
+
+        logging.debug(f"ZAP will run with: {self.zap_cli}")
+
+    def configure_http_basic_auth(self, af, config):
+        """Configure authentication via HTTP Basic Authentication.
+        Adds a 'Authorization: Basic <urlb64("{user}:{password}">' to every query
+
+        Do this using the ZAP_AUTH_HEADER* environment vars
+
+        Returns False as it does not create a ZAP user
+
+        Every authentication methods:
+        - Extract authentication parameters from config's `general.authentication.parameters`
+        - May modify `af` (e.g.: adding jobs, users)
+        - May add environment vars
+        - Return True if it created a user, and False otherwise
+        """
+        from base64 import urlsafe_b64encode
+
+        c = find_context(af)
+
+        username = config.get("scanners.zap.authentication.parameters.username")
+        password = config.get("scanners.zap.authentication.parameters.password")
+
+        blob = urlsafe_b64encode(f"{username}:{password}".encode()).decode("utf-8")
+
+        self._add_env("ZAP_AUTH_HEADER", "Authorization")
+        self._add_env("ZAP_AUTH_HEADER_VALUE", f"Basic {blob}")
+
+        logging.info(f"Zap configured with HTTP Basic Authentication")
+        return False
+
+    def configure_oauth2_rtoken(self, af, config):
+        """Configure authentication via OAuth2 Refresh Tokens
+        In order to achieve that:
+        - Create a ZAP user with username and refresh token
+        - Sets the "script" authentication method in the ZAP Context
+          - The script will request a new token when needed
+        - Sets a "script" (httpsender) job, which will inject the latest
+          token retrieved
+
+        Returns True as it creates a ZAP user
+
+
+        Every authentication methods:
+        - Extract authentication parameters from config's `general.authentication.parameters`
+        - May modify `af` (e.g.: adding jobs, users)
+        - May add environment vars
+        - Return True if it created a user, and False otherwise
+        """
+
+        c = find_context(af)
+        params = config.get("scanners.zap.authentication.parameters")
+
+        # 1- complete the context: script, verification and user
+        c["authentication"] = {
+            "method": "script",
+            "parameters": {
+                "script": f"{self.SCRIPTS_CONTAINER_DIR}/offline-token.js",
+                "scriptEngine": "ECMAScript : Oracle Nashorn",
+                "client_id": params.get("client_id"),
+                "token_endpoint": params.get("token_endpoint"),
+            },
+            "verification": {
+                "method": "response",
+                "loggedOutRegex": "\\Q401\\E",
+                "pollFrequency": 60,
+                "pollUnits": "requests",
+                "pollUrl": "",
+                "pollPostData": "",
+            },
+        }
+        c["users"] = [
+            {
+                "name": Zap.USER,
+                "credentials": {
+                    "refresh_token": f"${{{params.get('rtoken_var_name')}}}"
+                },
+            }
+        ]
+        # 2- add the name of the variable containing the token
+        # The value will be taken from the environment at the time of starting
+        self._add_env(params.get("rtoken_var_name", "RTOKEN"))
+
+        # 2- complete the HTTPSender script job
+        script = {
+            "name": "script",
+            "type": "script",
+            "parameters": {
+                "action": "add",
+                "type": "httpsender",
+                "engine": "ECMAScript : Oracle Nashorn",
+                "name": "",
+                "file": f"{self.SCRIPTS_CONTAINER_DIR}/add-bearer-token.js",
+                "target": "",
+            },
+        }
+        af["jobs"].append(script)
+        logging.info(f"Zap configured with OAuth2 RTOKEN")
+        return True
+
+    def __repr__(self):
+        return super().__repr__()
+
+
+# Given an Automation Framework configuration, return its sub-dictionary corresponding to the context we're going to use
+def find_context(af, context=Zap.DEFAULT_CONTEXT):
+    # quick function that makes sure the context is sane
+    def ensure_default(c):
+        # quick function that makes sure an entry is a list (override if necessary)
+        def ensure_list(e):
+            if not c.get(e) or not type(c.get(e)) is list:
+                c[e] = []
+
+        ensure_list("urls")
+        ensure_list("includePaths")
+        ensure_list("excludePaths")
+        return c
+
+    try:
+        for x in af["env"]["contexts"]:
+            if x["name"] == context:
+                return ensure_default(x)
+    except:
+        pass
+    logging.warning(
+        f"No context matching {context} have ben found in the current Automation Framework configuration. It may be missing from default. An empty context is created"
+    )
+    # something failed: create an empty one and return it
+    if not af["env"]:
+        af["env"] = {}
+    if not af["env"].get("contexts"):
+        af["env"]["contexts"] = []
+    af["env"]["contexts"].append({"name": context})
+    return ensure_default(af["env"]["contexts"][-1])

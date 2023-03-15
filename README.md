@@ -1,274 +1,171 @@
 # RapiDAST
 
-RapiDAST provides a framework for continuous, proactive and fully automated dynamic scanning against web apps/API.
+RapiDAST(Rapid DAST) provides a framework for automated DAST(Dynamic application security testing). It can be used by anyone who aims to improve the security of their products and services.
 
-Its core engine is OWASP ZAP Proxy (https://owasp.org/www-project-zap/). Taking advantage of the ZAP container, this project provides value as follows:
- - Easy automation(via fully working in CLI with yaml configuration) of API scanning based on OAS definition
- - Ability to run the automated API scanning on Kubernetes (or Red Hat OpenShift)
- - Ability to create custom rules via yaml files
- - HTML, JSON report generation (XML is also possible)
+Its structure is as follow:
 
-# Prerequisites
+* `rapidast.py` does:
+    + Loading the main configuration file
+    + For each scanner activated by the config, runs it
 
-* podman or docker is required.
-* podman-compose or docker-compose is required.
+* Currently, OWASP ZAP is supported, which will:
+    + Translate the RapiDAST configuration to a ZAP Automation Framework configuration
+    + Spawn a ZAP container image and run ZAP with the configuration
+    + Save the result
 
-If you're wanting to run on kubernetes or OpenShift cluster you can also install using OLM or helm, see more information on this [README.md](operator/README.md)
 
-# Basic workflow for a scan
-1. Create config.yaml, place it in config/ and set the config values for your API. You can use config/config-template-local.yaml as an example
-2. Get OAS3/Swagger definition files (either URL or in the directory specified in config[openapi][directory] in the config.yaml file)
-3. Set the target URL in config.yaml
-4. Create an .env file in the project root and set the API_KEY and other variables as necessary in it
+# Requirements
 
-## .env file example
+- `python` >= 3.5
+    + because of subprocess.run
+- `podman`
+    + Some scanners (such as the ZAP scanner) may spawn a container using podman
+- See `requirements.txt` for a list of required python libraries
 
-```
-# This file will set environment variables inside zaproxy container
+## Caveats
 
-# API KEY should be set to ensure that public instances of ZAP can only be
-# accessed by the intended clients
-API_KEY=[GENERATE_RANDOM_STRING]
+* Currently, RapiDAST can run only on a full fledged OS (bare metal or VM, but not as a container)
+* Currently, RapiDAST does not cleanup the temporary data when there is an error. Data may include:
+    + a `/tmp/rapidast_zap_*/` directory
+    + a podman container which name starts with `rapidast_zap_`
 
-# oauth2 refresh_token used in authMethod: 'scriptBasedAuthentication' in config.yaml
-#RTOKEN=[oauth_refresh_token]
+To manually remove the podman containers :
 
-# set this to handle basic auth when authMethod: null in config.yaml
-# ZAP_AUTH_HEADER_VALUE=Basic [base64_encoded_creds]
-```
+```sh
+ # 1. identify the container
+$ podman container list --all
+CONTAINER ID  IMAGE                                     COMMAND               CREATED         STATUS                               PORTS       NAMES
+a8e1cc0f4bcc  docker.io/owasp/zap2docker-stable:latest  /zap/zap.sh -conf...  47 minutes ago  Exited (0) 39 minutes ago (healthy)              rapidast_zap_Vapi_OatVmy
 
-## Authentication Config Options
-
-Define authentication method for the context. Possible values are:
-"null", "scriptBasedAuthentication"
-
-if set to null basic auth can be handled by setting the
-ZAP_AUTH_HEADER_VALUE=Basic [base64_encoded_creds] enviromental variable
-in /.env file
-
-authMethod: null
-
-There are 2 parts to script based auth:
-oauth access token that needs to be refreshed on expiration.
-This auth method will work on OAuth2 workflows only if offline_token is available
-
-```
-authMethod: 'scriptBasedAuthentication'
-scriptAuth:
-    authScriptName: 'offline-token'
-    authScriptEngine: 'Oracle Nashorn'
-    authScriptFilePath: 'scripts/offline-token.js'
-    authScriptDescription: 'will automatically fetch the new access token for every unauthorized request'
-    authTokenEndpoint: [oauth_realm_token_endpoint]
-    authClientID: [oauth_client_id]
-    authCreateUser: True
+ # 2. delete it
+$ podman container rm rapidast_zap_Vapi_OatVmy
+rapidast_zap_Vapi_OatVmy
 ```
 
-To use Logged out authIndicatorRegex
-authIsLoggedInIndicator: False
-
-regex expression that indicates the user is logged out and triggers the
-token refresh process
-authIndicatorRegex: '\QHTTP/1.1 401 Unauthorized\E'
-
-Another authentication type is using HTTP sender script with a bearer token. 
-These variables and script adds the bearer token header auth to each request
-```
-authMethod: null
-useHttpSenderScript: True
-HttpSenderScriptName: 'add-bearer-token'
-HttpSenderScriptEngine: 'Oracle Nashorn'
-HttpSenderScriptFilePath: 'scripts/add-bearer-token.js'
-HttpSenderScriptDescription: 'add bearer token to each HTTP request'
-HTTPParams: {} Any parameters you want to use in your authentication script, use in script with key, values that change at runtime
-```
-
-For OpenShift Authentication you will need the cookie name and value passed to the HTTPParams using scripts/add-token-cookie-param.js 
-
-example.) `HTTPParams: {"cookieName": 'openshift-session-token', "cookieVal": 'sha256~**'}`
-See [example](scripts/add-token-cookie-param.js) of how to obtain these values in script
-
-
-# Quick Scan Example(using podman)
-
-zaproxy container must be running (either runenv.sh or runenv-ui.sh)
-1. Get a URL for the OAS3 definition file
-2. Get a URL for the target API
-3. Create config.yaml with the URLs and place it in config/
-4. Set the API_KEY value in .env file
-5. zaproxy container must be running (either runenv.sh or runenv-ui.sh)
-
-```
-$ ./podman-wrapper.sh
-```
-
-
-For docker
-```
-$ ./runenv-docker.sh
-```
-
-6. Launch a scan in the project root directory,
-
-```
-$ test/scan-example-with-podman.sh <dir_to_store_results>
-```
-
-*OR*
-
-```
-$ test/scan-example-with-docker.sh <dir_to_store_results>
-```
-
-When a scan is completed, its report will be generated in the `results/<dir_to_store_results>`
-
-## Example of a scan run
-```
-$ test/scan-example-with-podman.sh testrun                
-Deleting previously generated scripts                                              
-Loading the script to ZAP                                                          
-Templating script Rule_Gen_05eec230-5ba0-4bf5-b1d0-43268b8542d2                    
-Loading script Rule_Gen_05eec230-5ba0-4bf5-b1d0-43268b8542d2 in ZAP from /tmp/Rule_Gen_05eec230-5ba0-4bf5-b1d0-43268b8542d25k5s0yj7.js                                 
-Enabling script Rule_Gen_05eec230-5ba0-4bf5-b1d0-43268b8542d2 in ZAP               
-Script Rule_Gen_05eec230-5ba0-4bf5-b1d0-43268b8542d2 successfully loaded and enabled                                                                                   
-Creating session in: /zap/results/testrun/sessions/20211210-041924/session1          
-Excluded URLs: ^(?:(?!http://192.168.109.202:9000).*).$                               
-Include URL in context: http://192.168.109.202:9000/api/.*                            
-Exclude URL from context:                                                          
-Importing API: /zap/config/oas/openapi.json                                        
->> Target Url: http://192.168.109.202:9000                                            
-Start Active scan. Scan ID equals 0                                                
-Scan Policies: ['API-minimal-example']                                             
-Active Scan progress: 0%                                                           
-Active Scan completed                                                                                                                                                  
-Waiting for Passive Scan to complete                                                                                                                                   
-Passive Scan completed                                                             
-JSON report saved in: /zap/results/testrun/demo1-report-20220722-033427.json                                                                                                                                                                          
-HTML report saved in: /zap/results/testrun/demo1-report-20220722-033427.html
-```
 
 # Usage
 
-## Run as daemon
+## Workflow
 
-### Run a container
+1. Write a configuration file for testing the application, which will include data such as:
+    a. Application URL
+    b. Authentication
+    c. A config entry for each scanner to run. For example: a path to an OpenAPI or enabling spider(crawler) for ZAP
+2. Optionally, an environment file may be added (to separate the secrets from the configuration file)
+3. Run RapiDAST and wait for the results
 
-```
-$ ./podman-wrapper.sh
-```
+## Configuration
 
-**OR**
+The configuration is presented as YAML, and contains several main entries:
+- `config` : contains `configVersion` which tells RapiDAST how to consume the config file
+- `application` : contains data relative to the application being scanned : name, etc.
+- `general` : contains data that will be used by all the scanners, such as proxy configuration, etc.
+    + Each scanner can override an entry from `general` by creating an entry with the same name
+- `scanners` : list of scanners, and their configuration
 
-```
-$ docker-compose zaproxy up
-```
+See `config/config-template.yaml` and `config/config-template-long.yaml` for examples.
 
+## Execution
 
+```sh
+usage: rapidast.py [-h] [--log-level {debug,info,warning,error,critical}]
+                   [--config CONFIG_FILE] [--no-cleanup]
 
-### Launch a scan
+Runs various DAST scanners against a defined target, as configured by a
+configuration file.
 
-```
-$ podman exec zaproxy python /zap/scripts/apis_scan.py <dirname_to_be_created_under_results_dir>
-```
-
-### Stopping Environments
-
-```
-$ ./podman-wrapper.sh -s
-```
-
-**OR**
-
-```
-$ docker-compose down
-```
-
-# Run with GUI (useful for debugging)
-This is taking advantage of ZAP's webswing feature. See https://www.zaproxy.org/docs/docker/webswing/. Note that any commercial organization that uses Webswing for non-evaluation purposes needs to have a valid commercial license of Webswing. See https://www.webswing.org/licensing for licensing information. 
-
-### Run a container
-
-```
-$ ./podman-wrapper.sh -w
+options:
+  -h, --help            show this help message and exit
+  --log-level {debug,info,warning,error,critical}
+                        Level of verbosity
+  --config CONFIG_FILE  Path to YAML config file
+  --no-cleanup          Scanners to not cleanup their environment. (might be
+                        useful for debugging purpose).
 ```
 
-**OR**
+### Scanners
 
+#### ZAP
+
+OWASP® ZAP (Zed Attack Proxy) is an opensource Web Scanner. It can be used for scanning web applications and API.
+
+See https://www.zaproxy.org/ for more information.
+
+This scanner will download a ZAP container image and execute it given the configuration provided.
+
+#### More scanners
+
+TBD
+
+### Authentication
+
+Currently, Authentication is common to all scanner, and is configured in the `general` entry. Not all scanners may support all authentication types.
+
+Currently supported :
+
+- No authentication: the scanners will communicate anonymously with the application
+
+- OAuth2 using a Refresh Token:
+This method describes requires parameters needed to retrieve an access token, using a refresh token as a secret.
+    + authentication type : `oauth2_rtoken`
+    + parameters :
+        * `token_endpoint` : the URL to which send the refresh token
+        * `client_id` : the client ID
+        * `rtoken_var_name`: for practical reasons, the refresh token is provided using environment variables. This entry describes the name of the variable containing the secret refresh token
+
+- HTTP Basic
+This method describes the HTTP Basic Authorization Header. The username/password must be provided in plaintext and will be encoded by the scanners
+    + authentication type: `http_basic`
+    + parameters:
+        * `username`
+        * `password`
+
+```yaml
+general:
+  authentication:
+    type: "oauth2_rtoken"
+    parameters:
+      client_id: "cloud-services"
+      token_endpoint: "<token retrival URL>"
+      rtoken_var_name: "RTOKEN"
 ```
-$ docker-compose zaproxy_ui up
+# Troubleshooting
+
+## Hitting docker.io rate limits
+
+If you are often unable to pull/update an image from docker.io, you may try this method:
+[Workaround docker rate limits](https://developers.redhat.com/blog/2021/02/18/how-to-work-around-dockers-new-download-rate-limit-on-red-hat-openshift#docker_s_new_rate_limit)
+
+## "Error getting access token" using OAuth2
+
+Possible pitfalls :
+
+* Make sure that the parameters are correct (`client_id`, `token_endpoint`, `rtoken_var_name`) and that the refresh token is provided (via environment variable), and is valid
+* Make sure you do not have an environment variable in your current environment that overrides what is set in the `envFile`
+
+
+## Issues with the ZAP scanner
+
+The best way to start is to look at the ZAP logs, which are stored in `~/.ZAP/zap.log` (within the container where ZAP was running)
+
+Example with podman, considering that the container was not wiped (either `--no-cleanup`, or the container failed):
+
+```sh
+[rapidast-ng]$ podman container list --all
+969d721cc5a8  docker.io/owasp/zap2docker-stable:latest  /zap/zap.sh -conf...  2 days ago   Exited (1) 2 days ago (unhealthy)              rapidast_zap_vapi_JxgLjx
+[rapidast-ng]$ podman unshare
+bash-5.2# podman mount rapidast_zap_vapi_JxgLjx
+/home/cedric/.local/share/containers/storage/overlay/a5450de782fb7264ff4446d96632e6512e3ff2275fd05329af7ea04106394b42/merged
+bash-5.2# cd /home/cedric/.local/share/containers/storage/overlay/a5450de782fb7264ff4446d96632e6512e3ff2275fd05329af7ea04106394b42/merged
+bash-5.2# tail home/zap/.ZAP/zap.log
+
+org.zaproxy.zap.extension.openapi.converter.swagger.SwaggerException: Failed to parse swagger defn null
+2023-02-17 22:42:55,922 [main ] INFO  CommandLine - Job openapi added 1 URLs
+2023-02-17 22:42:55,922 [main ] INFO  CommandLine - Job openapi finished
+2023-02-17 22:42:55,923 [main ] INFO  CommandLine - Automation plan failures:
+2023-02-17 22:42:55,923 [main ] INFO  CommandLine -     Job openapi target: https://vapi.example.com/api/vapi/v1 error: Failed to parse OpenAPI definition.
+
+org.zaproxy.zap.extension.openapi.converter.swagger.SwaggerException: Failed to parse swagger defn null
+2023-02-17 22:42:55,924 [main ] INFO  Control - Automation Framework setting exit status to due to plan errors
+2023-02-17 22:43:01,073 [main ] INFO  CommandLineBootstrap - OWASP ZAP 2.12.0 terminated.
 ```
-
-
-After the step, it is necessary to navigate to the GUI via http://127.0.0.1:8081/zap to start an actual ZAP instance.
-
-
-### Launch a scan
-```
-$ podman exec zaproxy python /zap/scripts/apis_scan.py <dirname_to_be_created_under_results_dir>
-```
-
-**OR**
-
-```
-$ docker exec zaproxy python /zap/scripts/apis_scan.py <dirname_to_be_created_under_results_dir>
-```
-
-### Stopping Environments
-```
-$ ./podman-wrapper.sh -sw
-```
-(note: `s` stands for *stop*, `w` for *WebUI*)
-
-**OR**
-
-```
-$ docker-compose down
-```
-
-## Create a custom rule
-
-It is possible to create a custom rule yaml file and apply to the ZAP instance. Refer to a few examples of the yaml rule files in the scripts/gen_zap_script/rules directory.
-
-Apply custom rules to the running ZAP instance before launching a scan.
-
-### Example: Load and enable custom rule
-```
-$ podman exec zaproxy python scripts/gen_zap_script/cli.py --from-yaml scripts/gen_zap_script/rules/software_version_revealed.yaml --rapidast-config=<config-file> --load-and-enable
-
-$ docker exec zaproxy python scripts/gen_zap_script/cli.py --from-yaml scripts/gen_zap_script/rules/software_version_revealed.yaml --rapidast-config=<config-file> --load-and-enable
-```
-
-### Example: Delete existing custom rules
-
-```
-$ podman exec zaproxy python scripts/gen_zap_script/cli.py --rapidast-config=<config-file> --delete
-```
-
-**OR**
-
-```
-$ docker exec zaproxy python scripts/gen_zap_script/cli.py --rapidast-config=<config-file> --delete
-```
-
-## Run RapiDast as a GitHub action for CI
-
-You can find an example of an action in .github/workflows/rapidast-scan.yml.
-This action will run using docker. To config this follow this steps:
-
-1. Follow the "Prerequisites" section
-2. Set GitHub secret named "AUTH_CRED" with the base64 basic authentication credentials for the API to scan. For example:
-```
-dGVzdC11c2VyOnRlc3QtcGFzc3dvcmQ=
-```
-**IMPORTANT**: this action will upload the scan results as action artifacts. This contains info about the intercepted HTTP requests by ZAP which will contain your AUTH_CRED secret value in the Authorization header
-
-
-## RapiDAST Operator
-
-See [this](https://github.com/RedHatProductSecurity/rapidast/blob/development/operator/README.md) for more information.
-
-# Contributing
-
-Contribution to the project is more than welcome. 
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md)

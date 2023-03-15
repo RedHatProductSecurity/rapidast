@@ -1,0 +1,15 @@
+---
+env:
+  contexts:
+  - name: "Default Context"
+    urls: []
+    includePaths: []
+    excludePaths: []
+    sessionManagement:
+      method: "cookie"
+      parameters: {}
+  parameters:
+    failOnError: true
+    failOnWarning: false
+    progressToStdout: true
+jobs: []

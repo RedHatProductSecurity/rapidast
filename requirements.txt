@@ -1,2 +1,2 @@
-jinja2
-pre-commit
+python-dotenv
+pyyaml

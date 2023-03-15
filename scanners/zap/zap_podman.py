@@ -262,7 +262,9 @@ class ZapPodman(Zap):
         for h, c in self.volume_map.items():
             # force resolution to make sure we work with absolute paths
             h = PosixPath(h).resolve()
-            if path.is_relative_to(h):
+
+            # PurePath.is_relative_to() was added in python 3.9, so we have to use `parents` for now
+            if h == path or h in path.parents:
                 # match! replace the host path by the container path
                 path = PurePosixPath(c, path.relative_to(h))
                 return str(path)
@@ -279,7 +281,9 @@ class ZapPodman(Zap):
         path = PurePosixPath(path)
         for h, c in self.volume_map.items():
             c = PurePosixPath(c)
-            if path.is_relative_to(c):
+
+            # PurePath.is_relative_to() was added in python 3.9 only, so we have to use `parents` for now
+            if c == path or c in path.parents:
                 # match! replace the container path by the host path
                 path = PosixPath(h, path.relative_to(c))
                 return str(path)

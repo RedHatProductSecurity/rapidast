@@ -1,6 +1,0 @@
-# Use the 'create api' subcommand to add watches to this file.
-- group: research.psse
-  version: v1alpha1
-  kind: RapiDast
-  chart: helm-charts/rapidast-chart
-#+kubebuilder:scaffold:watch

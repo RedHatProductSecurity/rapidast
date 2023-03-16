@@ -59,6 +59,11 @@ scanners:
     #  maxDuration: 0 # in minutes, default: 0 unlimited
     #  url: ""        # url to start spidering from, default: application.url set above
 
+    #spiderAjax:
+    #  maxDuration: 0 # in minutes, default: 0 unlimited
+    #  url: ""        # url to start spidering from, default: application.url set above
+    #  browserId: firefox-headless
+
     passiveScan:
       # optional comma-separated list of passive rules to disable
       # Use https://www.zaproxy.org/docs/alerts/ to match rule with its ID

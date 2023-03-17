@@ -114,6 +114,7 @@ if __name__ == "__main__":
         # Part 3: run the actual scan
         if scanner.state == scanners.State.READY:
             scanner.run()
+
         else:
             logging.warning(f"scanner {name} is not in READY state: it will not be run")
             continue

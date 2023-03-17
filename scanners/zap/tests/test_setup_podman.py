@@ -82,3 +82,33 @@ def test_setup_authentication_auth_rtoken_configured(test_config):
 
     test_zap.setup()
     assert test_zap.authenticated == True
+
+
+## Testing report format ##
+
+
+@pytest.mark.parametrize(
+    "result_format, expected_template",
+    [
+        ("html", "traditional-html-plus"),
+        ("json", "traditional-json-plus"),
+        ("sarif", "sarif-json"),
+    ],
+)
+def test_setup_report_format(test_config, result_format, expected_template):
+    # test_config.set("scanners.zap.report.format[0]", "json")
+    test_config.set("scanners.zap.report.format", [result_format])
+
+    print(test_config)
+
+    test_zap = ZapPodman(config=test_config)
+    test_zap.setup()
+
+    # print(test_zap.af["jobs"])
+
+    report_job_found = 0
+    for item in test_zap.af["jobs"]:
+        if item["type"] == "report":
+            report_job_found += 1
+            assert item["parameters"]["template"] == expected_template
+            continue

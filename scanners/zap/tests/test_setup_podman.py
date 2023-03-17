@@ -56,6 +56,25 @@ def test_setup_authentication_invalid_auth_configured(test_config):
         test_zap.setup()
 
 
+def test_setup_authentication_cookie(test_config):
+    authentication = {
+        "type": "cookie",
+        "parameters": {"name": "mycookiename", "value": "mycookieval"},
+    }
+    test_config.set("general.authentication", authentication)
+
+    test_config.merge(
+        test_config.get("general", default={}), preserve=False, root=f"scanners.zap"
+    )
+
+    print(test_config)
+
+    test_zap = ZapPodman(config=test_config)
+    test_zap.setup()
+    assert test_zap.authenticated == False
+    assert "ZAP_AUTH_HEADER_VALUE=mycookiename=mycookieval" in test_zap.podman_opts
+
+
 def test_setup_authentication_http_basic(test_config):
     authentication = {
         "type": "http_basic",

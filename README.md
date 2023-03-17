@@ -120,6 +120,13 @@ This method describes the HTTP Basic Authorization Header. The username/password
         * `username`
         * `password`
 
+- Cookie Authentication
+This method describes authentication via Cookie header. The cookie name and value must be provded in plaintest.
+    + authentication type: `cookie`
+    + parameters:
+        * `name`
+        * `value`
+
 ```yaml
 general:
   authentication:

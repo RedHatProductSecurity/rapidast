@@ -364,6 +364,25 @@ class Zap(RapidastScanner):
         logging.info(f"ZAP NOT configured with any authentication")
         return False
 
+    @authentication_factory.register("cookie")
+    def authentication_set_cookie(self):
+        """Configure authentication via HTTP Basic Authentication.
+        Adds a 'Cookie: <name>=<value>' Header to every query
+
+        Do this using the ZAP_AUTH_HEADER* environment vars
+
+        Returns False as it does not create a ZAP user
+        """
+        params_path = "scanners.zap.authentication.parameters"
+        cookie_name = self.config.get(f"{params_path}.name", None)
+        cookie_val = self.config.get(f"{params_path}.value", None)
+
+        self._add_env("ZAP_AUTH_HEADER", "Cookie")
+        self._add_env("ZAP_AUTH_HEADER_VALUE", f"{cookie_name}={cookie_val}")
+
+        logging.info(f"ZAP configured with Cookie authentication")
+        return False
+
     @authentication_factory.register("http_basic")
     def authentication_set_http_basic_auth(self):
         """Configure authentication via HTTP Basic Authentication.

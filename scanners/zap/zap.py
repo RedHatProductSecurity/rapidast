@@ -459,7 +459,7 @@ class Zap(RapidastScanner):
                 "action": "add",
                 "type": "httpsender",
                 "engine": "ECMAScript : Oracle Nashorn",
-                "name": "",
+                "name": "add-bearer-token",
                 "file": f"{self.SCRIPTS_CONTAINER_DIR}/add-bearer-token.js",
                 "target": "",
             },

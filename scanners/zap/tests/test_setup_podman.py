@@ -124,6 +124,8 @@ def test_setup_authentication_auth_rtoken_configured(test_config):
 
     test_zap.setup()
     assert test_zap.authenticated == True
+    assert "RTOKEN" in test_zap.podman_opts
+    assert test_zap.af["jobs"][0]["parameters"]["name"] == "add-bearer-token"
 
 
 ## Testing report format ##

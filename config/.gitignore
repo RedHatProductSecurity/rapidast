@@ -2,3 +2,5 @@
 !.gitignore
 !config-template*
 !*example*
+!older-schemas/
+!older-schemas/*.yaml

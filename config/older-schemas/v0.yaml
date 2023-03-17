@@ -1,0 +1,100 @@
+general:
+  serviceName: "demo1"
+  resultDir: "/results/"
+  appDir: "/zap"
+  localProxy: { "http": "http://127.0.0.1:8090", "https": "http://127.0.0.1:8090" }
+  sessionName: "session1"
+  shutdownOnceFinished: False
+
+urlscan:
+  urlScan: False
+  urlScanDir: "/scripts"
+
+openapi:
+  # import the OpenAPI definitions from an url will only work for public API
+  # definitions. If not public you have to import the OPENAPI definition
+  # file (json or yaml) into the "directory" and set importFromUrl to false
+  importFromUrl: True
+  url: "http://localhost:9001/openapi.yaml"
+
+  # if import_from_url is False, set a directory to contain OAS definition files
+  directory: "/zap/config/oas"
+
+scan:
+  contextName: "context1"
+
+  target: "http://localhost:9000/api/"
+  contextIncludeURL: ["http://localhost:9000/api/.*"]
+
+  # applicationURL is used for a starting point when crawling is required
+  applicationURL: ""
+
+  # Define Context Exclude URL regular expressions.
+  # The UI uses dynamic hashes in the filename to avoid being cached.
+  # Exclude this to avoid the spider getting trap endessly in the UI site tree
+  contextExcludeURL: [""]
+
+  #### SCAN POLICIES ####
+  # scan policies in this folder will be imported and use in the scan
+  policies:
+    # active scan
+    scanPoliciesDir: "/zap/policies"
+    scanPolicyName: "API-minimal-example"
+
+    # passive scan
+    disabledPassiveScan: "2,10015,10027,10096,10024"
+    # https://www.zaproxy.org/docs/alerts/
+    # 2: Private IP Disclosure
+    # 10015: Incomplete or No Cache-control Header Set
+    # 10027: Information Disclosure - Suspicious Comments
+    # 10096: Timestamp Disclosure
+    # 10024: sensitive info in URL
+
+  #### AUTHENTICATION ####
+  # Define authentication method for the context. Possible values are:
+  # "null", "scriptBasedAuthentication"
+  # if set to null basic auth can be handled by setting the
+  # ZAP_AUTH_HEADER_VALUE=Basic [base64_encoded_creds] enviromental variable
+  # in /.env file
+
+  authMethod: null
+
+  # there are 2 parts to script based auth:
+  ## oauth access token that needs to be refreshed on expiration.
+  ## This auth method will work on OAuth2 workflows only if offline_token is
+  ## available
+
+  #authMethod: 'scriptBasedAuthentication'
+  #scriptAuth:
+  #  authScriptName: 'offline-token'
+  #  authScriptEngine: 'Oracle Nashorn'
+  #  authScriptFilePath: 'scripts/offline-token.js'
+  #  authScriptDescription: 'will automatically fetch the new access token for every unauthorized request'
+  #  authTokenEndpoint: [oauth_realm_token_endpoint]
+  #  authClientID: [oauth_client_id]
+  #  authCreateUser: True
+
+  # to use Logged out authIndicatorRegex
+  #  authIsLoggedInIndicator: False
+
+  # regex expression that indicates the user is logged out and triggers the
+  # token refresh process
+  #  authIndicatorRegex: '\QHTTP/1.1 401 Unauthorized\E'
+
+  ## adds the bearer token header auth to each request
+  #useHttpSenderScript: True
+  #HttpSenderScriptName: 'add-bearer-token'
+  #HttpSenderScriptEngine: 'Oracle Nashorn'
+  #HttpSenderScriptFilePath: 'scripts/add-bearer-token.js'
+  #HttpSenderScriptDescription: 'add bearer token to each HTTP request'
+  #HTTPParams: {} # Any parameters you want to use in your authentication script, use in script with key, values that change at runtime
+  ## For OpenShift: {"cookieName": 'openshift-session-token', "cookieVal": 'sha256~**'}
+  ## See [example](../scripts/add-token-cookie-param.js) of how to obtain these values in script
+
+
+#### UPSTREAM PROXY ####
+proxy:
+  useProxyChain: True
+  proxyAddress: ""
+  proxyPort: ""
+  skipProxyAddresses: "127.0.0.1;localhost"

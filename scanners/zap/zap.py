@@ -1,18 +1,14 @@
 import glob
 import logging
 import os
-import random
 import shutil
-import string
-import subprocess
 import tarfile
-import tempfile
+from base64 import urlsafe_b64encode
 
 import yaml
 
-import configmodel
+from scanners import generic_authentication_factory
 from scanners import RapidastScanner
-from scanners import State
 
 
 className = "Zap"
@@ -104,8 +100,10 @@ class Zap(RapidastScanner):
                 f"Something went wrong with the Zap scanner configuration, while creating the context':\n {str(exc)}"
             )
 
+        # authentication MUST happen first in case a user is created
+        self.authenticated = self.authentication_factory()
+
         # Create the AF configuration
-        self._setup_authentication()
         self._setup_spider()
         self._setup_api()
         self._setup_passive_scan()
@@ -145,25 +143,6 @@ class Zap(RapidastScanner):
     def cleanup(self):
         """Generic ZAP cleanup: should be called only via super() inheritance"""
         pass
-
-    def _setup_authentication(self):
-        """Select among the available authentication types"""
-        auth = self.config.get("scanners.zap.authentication", default={})
-        if not auth:
-            logging.info(f"No authentication configured. Zap will run unauthenticated")
-            self.authenticated = False
-
-        elif auth.get("type") == "oauth2_rtoken":
-            self.authenticated = self.configure_oauth2_rtoken(self.af, self.config)
-
-        elif auth.get("type") == "http_basic":
-            self.authenticated = self.configure_http_basic_auth(self.af, self.config)
-
-        else:
-            logging.warning(
-                f"ZAP Automation Framework could not find a valid authentication method. No authentication has been configured"
-            )
-            self.authenticated = False
 
     def _setup_api(self):
         """Prepare an openapi job and append it to the job list"""
@@ -366,36 +345,48 @@ class Zap(RapidastScanner):
 
         logging.debug(f"ZAP will run with: {self.zap_cli}")
 
-    def configure_http_basic_auth(self, af, config):
+    # Building an authentication factory for ZAP
+    # For every authentication methods:
+    # - Will extract authentication parameters from config's `scanners.zap.authentication.parameters`
+    # - May modify `af` (e.g.: adding jobs, users)
+    # - May add environment vars
+    # - MUST return True if it created a user, and False otherwise
+    @generic_authentication_factory("zap")
+    def authentication_factory(self):
+        """This is the default function, attached to error reporting"""
+        raise RuntimeError(
+            f"No valid authenticator found for ZAP. ZAP current config is: {self.config}"
+        )
+
+    @authentication_factory.register(None)
+    def authentication_set_anonymous(self):
+        """No authentication: don't do anything"""
+        logging.info(f"ZAP NOT configured with any authentication")
+        return False
+
+    @authentication_factory.register("http_basic")
+    def authentication_set_http_basic_auth(self):
         """Configure authentication via HTTP Basic Authentication.
         Adds a 'Authorization: Basic <urlb64("{user}:{password}">' to every query
 
         Do this using the ZAP_AUTH_HEADER* environment vars
 
         Returns False as it does not create a ZAP user
-
-        Every authentication methods:
-        - Extract authentication parameters from config's `general.authentication.parameters`
-        - May modify `af` (e.g.: adding jobs, users)
-        - May add environment vars
-        - Return True if it created a user, and False otherwise
         """
-        from base64 import urlsafe_b64encode
-
-        c = find_context(af)
-
-        username = config.get("scanners.zap.authentication.parameters.username")
-        password = config.get("scanners.zap.authentication.parameters.password")
+        params_path = "scanners.zap.authentication.parameters"
+        username = self.config.get(f"{params_path}.username", None)
+        password = self.config.get(f"{params_path}.password", None)
 
         blob = urlsafe_b64encode(f"{username}:{password}".encode()).decode("utf-8")
 
         self._add_env("ZAP_AUTH_HEADER", "Authorization")
         self._add_env("ZAP_AUTH_HEADER_VALUE", f"Basic {blob}")
 
-        logging.info(f"Zap configured with HTTP Basic Authentication")
+        logging.info(f"ZAP configured with HTTP Basic Authentication")
         return False
 
-    def configure_oauth2_rtoken(self, af, config):
+    @authentication_factory.register("oauth2_rtoken")
+    def authentication_set_oauth2_rtoken(self):
         """Configure authentication via OAuth2 Refresh Tokens
         In order to achieve that:
         - Create a ZAP user with username and refresh token
@@ -405,26 +396,22 @@ class Zap(RapidastScanner):
           token retrieved
 
         Returns True as it creates a ZAP user
-
-
-        Every authentication methods:
-        - Extract authentication parameters from config's `general.authentication.parameters`
-        - May modify `af` (e.g.: adding jobs, users)
-        - May add environment vars
-        - Return True if it created a user, and False otherwise
         """
 
-        c = find_context(af)
-        params = config.get("scanners.zap.authentication.parameters")
+        context_ = find_context(self.af)
+        params_path = "scanners.zap.authentication.parameters"
+        client_id = self.config.get(f"{params_path}.client_id", "cloud-services")
+        token_endpoint = self.config.get(f"{params_path}.token_endpoint", None)
+        rtoken = self.config.get(f"{params_path}.rtoken_var_name", "RTOKEN")
 
         # 1- complete the context: script, verification and user
-        c["authentication"] = {
+        context_["authentication"] = {
             "method": "script",
             "parameters": {
                 "script": f"{self.SCRIPTS_CONTAINER_DIR}/offline-token.js",
                 "scriptEngine": "ECMAScript : Oracle Nashorn",
-                "client_id": params.get("client_id"),
-                "token_endpoint": params.get("token_endpoint"),
+                "client_id": client_id,
+                "token_endpoint": token_endpoint,
             },
             "verification": {
                 "method": "response",
@@ -435,17 +422,15 @@ class Zap(RapidastScanner):
                 "pollPostData": "",
             },
         }
-        c["users"] = [
+        context_["users"] = [
             {
                 "name": Zap.USER,
-                "credentials": {
-                    "refresh_token": f"${{{params.get('rtoken_var_name')}}}"
-                },
+                "credentials": {"refresh_token": f"${{{rtoken}}}"},
             }
         ]
         # 2- add the name of the variable containing the token
         # The value will be taken from the environment at the time of starting
-        self._add_env(params.get("rtoken_var_name", "RTOKEN"))
+        self._add_env(rtoken)
 
         # 2- complete the HTTPSender script job
         script = {
@@ -460,8 +445,8 @@ class Zap(RapidastScanner):
                 "target": "",
             },
         }
-        af["jobs"].append(script)
-        logging.info(f"Zap configured with OAuth2 RTOKEN")
+        self.af["jobs"].append(script)
+        logging.info(f"ZAP configured with OAuth2 RTOKEN")
         return True
 
     def __repr__(self):

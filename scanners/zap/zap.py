@@ -107,6 +107,7 @@ class Zap(RapidastScanner):
         # Create the AF configuration
         self._setup_authentication()
         self._setup_spider()
+        self._setup_ajax_spider()
         self._setup_api()
         self._setup_passive_scan()
         self._setup_active_scan()
@@ -216,6 +217,35 @@ class Zap(RapidastScanner):
             af_context["includePaths"].append(new_include_path)
 
         self.af["jobs"].append(af_spider)
+
+    def _setup_ajax_spider(self):
+        """Prepare an spiderAjax job and append it to the job list"""
+
+        if self.config.get("scanners.zap.spiderAjax", default=False) is False:
+            return
+
+        af_spider_ajax = {
+            "name": "spiderAjax",
+            "type": "spiderAjax",
+            "parameters": {
+                "user": Zap.USER if self.authenticated else "",
+                "maxDuration": self.config.get(
+                    "scanners.zap.spiderAjax.maxDuration", default=0
+                ),
+                "url": self.config.get("scanners.zap.spiderAjax.url", default=""),
+                "browserId": self.config.get(
+                    "scanners.zap.spiderAjax.browserId", default="chrome-headless"
+                ),
+            },
+        }
+
+        # Add to includePath to the context
+        if self.config.get("scanners.zap.spiderAjax.url"):
+            new_include_path = self.config.get("scanners.zap.spiderAjax.url") + ".*"
+            af_context = find_context(self.af)
+            af_context["includePaths"].append(new_include_path)
+
+        self.af["jobs"].append(af_spider_ajax)
 
     def _setup_passive_scan(self):
         """Adds the passive scan to the job list. Needs to be done prior to Active scan"""

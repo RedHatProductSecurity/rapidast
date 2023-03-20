@@ -77,4 +77,7 @@ scanners:
     container:
       image: "docker.io/owasp/zap2docker-stable:latest"
 
+#    report:
+#      format: ["json","html","sarif"]  # default: "json" only
+
 # Other scanners to be defined

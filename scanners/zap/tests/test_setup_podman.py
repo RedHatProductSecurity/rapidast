@@ -84,6 +84,22 @@ def test_setup_authentication_auth_rtoken_configured(test_config):
     assert test_zap.authenticated == True
 
 
+def test_setup_ajax(test_config):
+    test_config.set("scanners.zap.spiderAjax.maxDuration", 10)
+    test_config.set("scanners.zap.spiderAjax.url", "http://test.com")
+    test_config.set("scanners.zap.spiderAjax.browserId", "chrome-headless")
+
+    test_zap = ZapPodman(config=test_config)
+    test_zap.setup()
+
+    for item in test_zap.af["jobs"]:
+        if item["type"] == "spiderAjax":
+            assert item["parameters"]["maxDuration"] == 10
+            assert item["parameters"]["url"] == "http://test.com"
+            assert item["parameters"]["browserId"] == "chrome-headless"
+            break
+
+
 ## Testing report format ##
 
 

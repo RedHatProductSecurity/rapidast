@@ -18,7 +18,7 @@ config:
 
 # `application` contains data related to the application, not to the scans.
 application:
-  shortName: "MyApp"
+  shortName: "MyApp-1.0"
   url: "<Mandatory. root URL of the application>"
 
 # `general` is a section that will be applied to all scanners.

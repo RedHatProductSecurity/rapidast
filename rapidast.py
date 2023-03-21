@@ -24,6 +24,23 @@ def load_environment():
         logging.debug("No environment loaded")
 
 
+def get_full_result_dir_path(rapidast_config, scan_datetime_str):
+    # Enforced result layout:
+    # {config.results_base_dir}/
+    #   {application.shortName}/
+    #       {DAST-<date-time>-RapiDAST-<application.shortName>}/
+    #           <scanner-name>
+    # This way each runs will get their own directory, and each scanner their own subdir
+
+    app_name = rapidast_config.get("application.shortName", default="scannedApp")
+    results_dir_path = os.path.join(
+        rapidast_config.get("config.base_results_dir", default="./results"),
+        app_name,
+        f"DAST-{scan_datetime_str}-RapiDAST-{app_name}",
+    )
+    return results_dir_path
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Runs various DAST scanners against a defined target, as configured by a configuration file."
@@ -68,16 +85,8 @@ if __name__ == "__main__":
     # Update to latest config schema if need be
     config = configmodel.converter.update_to_latest_config(config)
 
-    # Choose where the results are going to be stored.
-    # Enforced result layout: {config.results_base_dir}/{application.shortName}/{<date-time>}/<scanner-name>
-    # This way each runs will get their own directory, and each scanner their own subdir
     scan_time_str = datetime.now().strftime("%Y%m%d-%H%M%S")
-    app_name = config.get("application.shortName", default="scannedApp")
-    results_dir = os.path.join(
-        config.get("config.base_results_dir", default="./results"),
-        app_name,
-        f"DAST-{scan_time_str}-RapiDAST-{app_name}",
-    )
+    results_dir = get_full_result_dir_path(config, scan_time_str)
     config.set("config.results_dir", results_dir)
 
     logging.debug(

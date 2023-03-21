@@ -72,10 +72,11 @@ if __name__ == "__main__":
     # Enforced result layout: {config.results_base_dir}/{application.shortName}/{<date-time>}/<scanner-name>
     # This way each runs will get their own directory, and each scanner their own subdir
     scan_time_str = datetime.now().strftime("%Y%m%d-%H%M%S")
+    app_name = config.get("application.shortName", default="scannedApp")
     results_dir = os.path.join(
         config.get("config.base_results_dir", default="./results"),
-        config.get("application.shortName", default="scannedApp"),
-        scan_time_str,
+        app_name,
+        f"DAST-{scan_time_str}-RapiDAST-{app_name}",
     )
     config.set("config.results_dir", results_dir)
 

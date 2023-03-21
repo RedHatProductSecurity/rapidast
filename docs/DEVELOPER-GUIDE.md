@@ -15,6 +15,35 @@ A scanner should:
     - Example: `className = "Zap"`
 
 
+### Authentication factory
+
+A small authentication helper has been provided in the for of decorators.
+Scanners who want to authenticate should use it.
+
+To create an authentication decorator, the scanner (e.g.: zap) needs to
+first create a decorator associated with the default behaviour (e.g.:
+likely either anonymous or error handling)
+
+Example for the ZAP scanner (`scanners.zap`):
+
+```
+from scanners import generic_authentication_factory
+
+@generic_authentication_factory("zap")
+def authentication_factory(self):
+  """Default action"""
+```
+
+Once done, simply register each authentication type, based on
+`scanners.zap.authentication.type` :
+
+```
+@authentication_factory.register("http_basic")
+def authentication_set_http_basic_auth(self):
+  """Configure HTTP Basic authentication"""
+```
+
+
 ## The configuration model
 
 The YAML config files are loaded and merged together using a "RapidastConfigModel" object. This facilitates:

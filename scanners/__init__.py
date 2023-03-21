@@ -1,5 +1,6 @@
 import importlib
 from enum import Enum
+from pprint import pformat
 
 import configmodel
 
@@ -19,14 +20,13 @@ class RapidastScanner:
         self.state = State.UNCONFIGURED
 
     def __repr__(self):
-        from pprint import pformat
-
         return pformat(vars(self), indent=4, width=1)
 
 
 # Given a string representing a scanner, return the corresponding scanner class.
-def str_to_scanner(name, type):
-    mod = importlib.import_module(f"scanners.{name}.{name}_{type}")
+# For example : str_to_scanner("zap", "podman") will load `scanners/zap/zap_podman.py`
+def str_to_scanner(name, method):
+    mod = importlib.import_module(f"scanners.{name}.{name}_{method}")
     class_ = getattr(mod, mod.className)
     return class_
 
@@ -55,15 +55,15 @@ def generic_authentication_factory(scanner_name):
 
             return inner
 
-        def decorator(zap_scanner):
-            authenticator = zap_scanner.config.get(
+        def decorator(scanner):
+            authenticator = scanner.config.get(
                 f"scanners.{scanner_name}.authentication.type", default=None
             )
             func = registry.get(authenticator, registry["error"])
-            return func(zap_scanner)
+            return func(scanner)
 
-        def dispatch(zap_scanner):
-            return registry.get(zap_scanner, registry["error"])
+        def dispatch(scanner):
+            return registry.get(scanner, registry["error"])
 
         decorator.register = register
         decorator.registry = registry

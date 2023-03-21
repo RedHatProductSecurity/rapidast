@@ -3,6 +3,7 @@ from enum import Enum
 from pprint import pformat
 
 import configmodel
+from .path_translators import PathMaps
 
 
 class State(Enum):
@@ -18,6 +19,8 @@ class RapidastScanner:
     def __init__(self, config):
         self.config = config
         self.state = State.UNCONFIGURED
+
+        self.path_map = PathMaps()
 
     def __repr__(self):
         return pformat(vars(self), indent=4, width=1)

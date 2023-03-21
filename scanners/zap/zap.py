@@ -3,7 +3,10 @@ import logging
 import os
 import shutil
 import tarfile
+import tempfile
 from base64 import urlsafe_b64encode
+from enum import auto
+from enum import Enum
 
 import yaml
 
@@ -17,6 +20,21 @@ import pprint
 
 pp = pprint.PrettyPrinter(indent=4)
 
+# Helper: absolute path to this directory (which is not the current directory)
+# Useful for finding files in this directory
+MODULE_DIR = os.path.dirname(__file__)
+
+
+# List important locations for host <-> container mapping point
+# + WORK: where data is stored:
+#   - AF file, reports, evidence, etc. are beneath this path
+# + SCRIPTS: where scripts are stored
+# + POLICIES: where policies are stored
+class PathIds(Enum):
+    WORK = auto()
+    SCRIPTS = auto()
+    POLICIES = auto()
+
 
 class Zap(RapidastScanner):
     ## CONSTANTS
@@ -29,11 +47,6 @@ class Zap(RapidastScanner):
 
     DEFAULT_CONTAINER = "podman"
     DEFAULT_REPORT_NAME_PREFIX = "rapidast-report"
-
-    # real path from host
-    ROOT_LOCATION_DIR = os.path.dirname(__file__)
-    SCRIPTS_LOCATION_DIR = f"{ROOT_LOCATION_DIR}/scripts/"
-    POLICIES_LOCATION_DIR = f"{ROOT_LOCATION_DIR}/policies/"
 
     ## FUNCTIONS
     def __init__(self, config):
@@ -52,16 +65,10 @@ class Zap(RapidastScanner):
         # When state is READY, this will contain the entire ZAP command that the container layer should run
         self.zap_cli = []
 
-    def _add_env(self):
-        logging.warn(
-            "_add_env() was called on the parent ZAP class. This is likely a bug. No operation done"
-        )
-
-    def get_type(self):
-        """Return container type, based on configuration"""
-        return self.config.get(
-            "scanners.zap.container.type", default=Zap.DEFAULT_CONTAINER
-        )
+    ###############################################################
+    # PUBLIC METHODS                                              #
+    # Called via inheritence only                                 #
+    ###############################################################
 
     def setup(self, executable="zap.sh"):
         """Prepares everything:
@@ -74,15 +81,105 @@ class Zap(RapidastScanner):
         This method should not be called directly, but only via super() from a child's setup()
         """
         logging.info(f"Preparing ZAP configuration")
-
         self._setup_zap_cli(executable)
-
         self._setup_zap_automation()
 
+    def run(self):
+        """This code handles only the "ZAP" layer, independently of the container used.
+        This method should not be called directly, but only via super() from a child's setup()
+        This method is currently empty as running entirely depends on the containment
+        """
+        pass
+
+    def postprocess(self):
+        host_results = self.path_map.get(PathIds.WORK).host
+
+        logging.info(f"Extracting report, storing in {self.results_dir}")
+        os.makedirs(self.results_dir, exist_ok=True)
+
+        for report_item in glob.glob(
+            os.path.join(host_results, Zap.DEFAULT_REPORT_NAME_PREFIX) + "*"
+        ):
+            logging.debug(f"shutil copying {report_item}")
+
+            if os.path.isdir(report_item):
+                shutil.copytree(
+                    report_item, self.results_dir + "/" + report_item.split("/")[-1]
+                )
+            else:
+                shutil.copy(report_item, self.results_dir)
+
+        logging.info(f"Saving the session as evidence")
+        with tarfile.open(f"{self.results_dir}/session.tar.gz", "w:gz") as tar:
+            tar.add(host_results, arcname="evidences")
+
+    def cleanup(self):
+        """Generic ZAP cleanup: should be called only via super() inheritance"""
+        pass
+
+    ###############################################################
+    # PROTECTED METHODS                                           #
+    # Called via Zap or inheritence only                          #
+    # May be overloaded by inheriting classes                     #
+    ###############################################################
+
+    def get_type(self):
+        """Return container type, based on configuration.
+        This is only a helper to shorten long lines
+        """
+        return self.config.get(
+            "scanners.zap.container.type", default=Zap.DEFAULT_CONTAINER
+        )
+
+    def _add_env(self):
+        logging.warn(
+            "_add_env() was called on the parent ZAP class. This is likely a bug. No operation done"
+        )
+
+    def _create_work_dir(self):
+        """This function simply creates a temporary directory aiming at storing data in transit.
+        Data such as: the AF configuration, evidence, reports, etc.
+        This directory will be deleted during cleanup.
+        Descendent classes *may* overload this directory (e.g.: if they can't map /tmp)
+        """
+        temp_dir = tempfile.mkdtemp(
+            prefix="rapidast_{}_".format(self.__class__.__name__)
+        )
+        logging.debug(f"Temporary work directory for ZAP scanner in host: {temp_dir}")
+        return temp_dir
+
+    def _host_work_dir(self):
+        """Shortcut to the host path of the work directory"""
+        return self.path_map.get(PathIds.WORK).host
+
+    def _container_work_dir(self):
+        """Shortcut to the container path of the work directory"""
+        return self.path_map.get(PathIds.WORK).container
+
+    def _include_file(self, host_path, container_path=None):
+        """Copies the file from host_path on the host to container_path in the container
+        Notes:
+            - MUST be run after the mapping is done
+            - If container_path evaluates to False, default to `PathIds.WORK`
+            - If container_path is a directory, copy the file to it without renaming it
+        """
+        # 1. Compute host path
+        if not container_path:
+            path_to_dest = self._host_work_dir()
+        else:
+            path_to_dest = self.path_map.container_2_host(container_path)
+
+        shutil.copy(host_path, path_to_dest)
+        logging.debug(f"_include_file() created file '{path_to_dest}'")
+
+    ###############################################################
+    # PRIVATE METHODS                                             #
+    # Those are called only from Zap itself                       #
+    ###############################################################
     def _setup_zap_automation(self):
         # Load the Automation template
         try:
-            AF_TEMPLATE = f"{Zap.ROOT_LOCATION_DIR}/{Zap.AF_TEMPLATE}"
+            AF_TEMPLATE = f"{MODULE_DIR}/{Zap.AF_TEMPLATE}"
             logging.debug(f"Load the Automation Framework template")
             with open(AF_TEMPLATE, "r") as stream:
                 self.af = yaml.safe_load(stream)
@@ -112,38 +209,8 @@ class Zap(RapidastScanner):
         self._setup_passive_wait()
         self._setup_report()
 
-    def run(self):
-        """This code handles only the "ZAP" layer, independently of the container used.
-        This method should not be called directly, but only via super() from a child's setup()
-        This method is currently empty as running entirely depends on the containment
-        """
-        pass
-
-    def postprocess(self):
-        host_results = self._paths_c2h(self.RESULTS_CONTAINER_DIR)
-
-        logging.info(f"Extracting report, storing in {self.results_dir}")
-        os.makedirs(self.results_dir, exist_ok=True)
-
-        for report_item in glob.glob(
-            os.path.join(host_results, Zap.DEFAULT_REPORT_NAME_PREFIX) + "*"
-        ):
-            logging.debug(f"shutil copying {report_item}")
-
-            if os.path.isdir(report_item):
-                shutil.copytree(
-                    report_item, self.results_dir + "/" + report_item.split("/")[-1]
-                )
-            else:
-                shutil.copy(report_item, self.results_dir)
-
-        logging.info(f"Saving the session as evidence")
-        with tarfile.open(f"{self.results_dir}/session.tar.gz", "w:gz") as tar:
-            tar.add(host_results, arcname="evidences")
-
-    def cleanup(self):
-        """Generic ZAP cleanup: should be called only via super() inheritance"""
-        pass
+        # The AF should now be setup and ready to be written
+        self._save_automation_file()
 
     def _setup_api(self):
         """Prepare an openapi job and append it to the job list"""
@@ -155,7 +222,7 @@ class Zap(RapidastScanner):
         elif api.get("apiFile"):
             # copy the file in the container's result directory
             # This allows the OpenAPI to be kept as evidence
-            container_openapi_file = f"{self.RESULTS_CONTAINER_DIR}/openapi.json"
+            container_openapi_file = f"{self._container_work_dir()}/openapi.json"
 
             self._include_file(api.get("apiFile"), container_openapi_file)
             openapi["parameters"]["apiFile"] = container_openapi_file
@@ -295,7 +362,7 @@ class Zap(RapidastScanner):
             "type": "report",
             "parameters": {
                 "template": template,
-                "reportDir": f"{self.RESULTS_CONTAINER_DIR}/",
+                "reportDir": f"{self.path_map.get(PathIds.WORK).container}/",
                 "reportFile": report_file,
                 "reportTitle": "ZAP Scanning Report",
                 "reportDescription": "",
@@ -367,13 +434,20 @@ class Zap(RapidastScanner):
         # Create a session, to store them as evidence
         self.zap_cli += [
             "-newsession",
-            f"{self.SESSION_CONTAINER_DIR}",
+            self.path_map.get(PathIds.WORK).container + "/session_data/session",
             "-cmd",
             "-autorun",
-            f"{self.AF_CONTAINER_PATH}",
+            self.path_map.get(PathIds.WORK).container + "/af.yaml",
         ]
 
         logging.debug(f"ZAP will run with: {self.zap_cli}")
+
+    def _save_automation_file(self):
+        """Save the Automation dictionary as YAML in the container"""
+        af_host_path = self.path_map.get(PathIds.WORK).host + "/af.yaml"
+        with open(af_host_path, "w") as f:
+            f.write(yaml.dump(self.af))
+        logging.info(f"Saved Automation Framework in {af_host_path}")
 
     # Building an authentication factory for ZAP
     # For every authentication methods:
@@ -452,12 +526,13 @@ class Zap(RapidastScanner):
         client_id = self.config.get(f"{params_path}.client_id", "cloud-services")
         token_endpoint = self.config.get(f"{params_path}.token_endpoint", None)
         rtoken = self.config.get(f"{params_path}.rtoken_var_name", "RTOKEN")
+        scripts_dir = self.path_map.get(PathIds.SCRIPTS).container
 
         # 1- complete the context: script, verification and user
         context_["authentication"] = {
             "method": "script",
             "parameters": {
-                "script": f"{self.SCRIPTS_CONTAINER_DIR}/offline-token.js",
+                "script": f"{scripts_dir}/offline-token.js",
                 "scriptEngine": "ECMAScript : Oracle Nashorn",
                 "client_id": client_id,
                 "token_endpoint": token_endpoint,
@@ -490,13 +565,18 @@ class Zap(RapidastScanner):
                 "type": "httpsender",
                 "engine": "ECMAScript : Oracle Nashorn",
                 "name": "add-bearer-token",
-                "file": f"{self.SCRIPTS_CONTAINER_DIR}/add-bearer-token.js",
+                "file": f"{scripts_dir}/add-bearer-token.js",
                 "target": "",
             },
         }
         self.af["jobs"].append(script)
         logging.info(f"ZAP configured with OAuth2 RTOKEN")
         return True
+
+    ###############################################################
+    # MAGIC METHODS                                               #
+    # Special functions (other than __init__())                   #
+    ###############################################################
 
     def __repr__(self):
         return super().__repr__()

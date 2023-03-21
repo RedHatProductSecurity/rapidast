@@ -1,5 +1,6 @@
 import logging
 import os
+import pprint
 import random
 import shutil
 import string
@@ -16,9 +17,8 @@ from .zap import Zap
 from scanners import RapidastScanner
 from scanners import State
 
-className = "ZapPodman"
+CLASSNAME = "ZapPodman"
 
-import pprint
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -44,7 +44,7 @@ class ZapPodman(Zap):
         The code of the function only deals with the "podman" layer, the "ZAP" layer is handled by super()
         """
 
-        logging.debug(f"Initializing podman-based ZAP scanner")
+        logging.debug("Initializing podman-based ZAP scanner")
         super().__init__(config)
 
         # This will contain all the podman options
@@ -72,7 +72,7 @@ class ZapPodman(Zap):
     # + list: setup(), run(), postprocess(), cleanup()            #
     ###############################################################
 
-    def setup(self):
+    def setup(self, executable=None):
         """Prepares everything:
         - the command line to run
         - environment variables
@@ -85,12 +85,14 @@ class ZapPodman(Zap):
             raise RuntimeError(
                 f"Podman setup encounter an unexpected state: {self.state}"
             )
-            self.state = State.ERROR
 
         # MUST be done _before_ super().setup, because we need to prepare volume mapping
         self._setup_podman_cli()
 
         super().setup(executable="/zap/zap.sh")
+
+        if self.state != State.ERROR:
+            self.state = State.READY
 
     def run(self):
         """If the state is READY, run the final podman run command.
@@ -115,7 +117,7 @@ class ZapPodman(Zap):
 
         # DO STUFF
         logging.info(f"Running ZAP with the following command:\n{cli}")
-        result = subprocess.run(cli)
+        result = subprocess.run(cli, check=False)
         logging.debug(
             f"ZAP returned the following:\n=====\n{pp.pformat(result)}\n====="
         )
@@ -156,7 +158,9 @@ class ZapPodman(Zap):
         shutil.rmtree(self._host_work_dir())
 
         logging.debug(f"Deleting podman container {self.container_name}")
-        result = subprocess.run(["podman", "container", "rm", self.container_name])
+        result = subprocess.run(
+            ["podman", "container", "rm", self.container_name], check=False
+        )
         if result.returncode:
             logging.warning(f"Failed to delete container {self.container_name}")
             self.state = State.ERROR
@@ -201,9 +205,6 @@ class ZapPodman(Zap):
         for mapping in self.path_map.paths.values():
             self.podman_opts += ["--volume", f"{mapping.host}:{mapping.container}:Z"]
 
-        if self.state != State.ERROR:
-            self.state = State.READY
-
     def _setup_zap_podman_id_mapping_cli(self):
         """Adds a specific user mapping to the Zap podman container.
         The reason why it is needed is that the `zap` command do not run as the main user, but as the `zap` user (UID 1000)
@@ -222,6 +223,7 @@ class ZapPodman(Zap):
                     "{{ range .Host.IDMappings.UIDMap }}+{{ .Size }}{{ end }}",
                 ],
                 stdout=subprocess.PIPE,
+                check=True,
             )
             .stdout.decode("utf-8")
             .strip("\n")
@@ -237,6 +239,7 @@ class ZapPodman(Zap):
                     "{{ range .Host.IDMappings.GIDMap }}+{{ .Size }}{{ end }}",
                 ],
                 stdout=subprocess.PIPE,
+                check=True,
             )
             .stdout.decode("utf-8")
             .strip("\n")

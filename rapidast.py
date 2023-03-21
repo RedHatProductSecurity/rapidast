@@ -110,7 +110,7 @@ if __name__ == "__main__":
         )
 
         class_ = scanners.str_to_scanner(
-            name, config.get(f"scanner.{name}.container.type", default="podman")
+            name, config.get(f"scanners.{name}.container.type", default="podman")
         )
 
         # Part 1: create a instance based on configuration

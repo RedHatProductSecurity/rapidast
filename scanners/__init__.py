@@ -30,7 +30,7 @@ class RapidastScanner:
 # For example : str_to_scanner("zap", "podman") will load `scanners/zap/zap_podman.py`
 def str_to_scanner(name, method):
     mod = importlib.import_module(f"scanners.{name}.{name}_{method}")
-    class_ = getattr(mod, mod.className)
+    class_ = getattr(mod, mod.CLASSNAME)
     return class_
 
 

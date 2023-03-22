@@ -32,12 +32,21 @@ general:
 
   # remove `authentication` entirely for unauthenticated connection
   authentication:
-    # Other types of authentication: http_basic
     type: "oauth2_rtoken"
     parameters:
       client_id: "cloud-services"
       token_endpoint: "<token retrieval URL>"
       rtoken_var_name: "RTOKEN"     # referring to a env defined in general.environ.envFile
+    # Other types of authentication:
+    #type: "http_basic"
+    #parameters:
+    #  username: "user"
+    #  password: "mypassw0rd"
+    #type: "cookie"
+    #parameters:
+    #  name: "cookie name"
+    #  value: "cookie value"
+
 
   container:
       # one of: podman, docker, flatpak, none

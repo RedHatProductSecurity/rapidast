@@ -1,7 +1,7 @@
-import pytest
 import yaml
 
 import configmodel.converter
+import pytest
 from scanners.zap.zap_podman import ZapPodman
 
 # from pytest_mock import mocker
@@ -24,7 +24,6 @@ def test_path_translation_host_2_container(test_config):
     test_zap._add_volume("/z/x/c/v", "/b/n/m")
 
     assert test_zap._paths_h2c("/a/s/d/f/g/subdir/myfile") == "/h/j/k/l/subdir/myfile"
-
     assert test_zap._paths_c2h("/b//n/m/subdir/myfile") == "/z/x/c/v/subdir/myfile"
 
 
@@ -51,8 +50,51 @@ def test_setup_authentication_invalid_auth_configured(test_config):
     print(test_config)
 
     test_zap = ZapPodman(config=test_config)
+
+    # Currently, misconfigured authentication type is expected to raise exception
+    with pytest.raises(Exception) as e_info:
+        test_zap.setup()
+
+
+def test_setup_authentication_cookie(test_config):
+    authentication = {
+        "type": "cookie",
+        "parameters": {"name": "mycookiename", "value": "mycookieval"},
+    }
+    test_config.set("general.authentication", authentication)
+
+    test_config.merge(
+        test_config.get("general", default={}), preserve=False, root=f"scanners.zap"
+    )
+
+    print(test_config)
+
+    test_zap = ZapPodman(config=test_config)
     test_zap.setup()
     assert test_zap.authenticated == False
+    assert "ZAP_AUTH_HEADER_VALUE=mycookiename=mycookieval" in test_zap.podman_opts
+
+
+def test_setup_authentication_http_basic(test_config):
+    authentication = {
+        "type": "http_basic",
+        "parameters": {"username": "Aladdin", "password": "open sesame"},
+    }
+    test_config.set("general.authentication", authentication)
+
+    test_config.merge(
+        test_config.get("general", default={}), preserve=False, root=f"scanners.zap"
+    )
+
+    print(test_config)
+
+    test_zap = ZapPodman(config=test_config)
+    test_zap.setup()
+    assert test_zap.authenticated == False
+    assert (
+        "ZAP_AUTH_HEADER_VALUE=Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=="
+        in test_zap.podman_opts
+    )
 
 
 def test_setup_authentication_auth_rtoken_configured(test_config):
@@ -82,6 +124,8 @@ def test_setup_authentication_auth_rtoken_configured(test_config):
 
     test_zap.setup()
     assert test_zap.authenticated == True
+    assert "RTOKEN" in test_zap.podman_opts
+    assert test_zap.af["jobs"][0]["parameters"]["name"] == "add-bearer-token"
 
 
 def test_setup_ajax(test_config):

@@ -1,6 +1,6 @@
-from datetime import datetime
+import re
 
-import pytest
+import pytest  # pylint: disable=unused-import
 
 import configmodel
 import rapidast
@@ -15,8 +15,6 @@ def test_get_full_result_dir_path():
     config.set("application.shortName", "testApp")
     config.set("config.base_results_dir", "/tmp")
 
-    scan_time_str = datetime.now().strftime("%Y%m%d-%H%M%S")
-    assert (
-        rapidast.get_full_result_dir_path(config, scan_time_str)
-        == f"/tmp/testApp/DAST-{scan_time_str}-RapiDAST-testApp"
-    )
+    pattern = re.compile("^/tmp/testApp/DAST-(20[0-9]{6})-([0-9]{6})-RapiDAST-testApp$")
+
+    assert pattern.match(rapidast.get_full_result_dir_path(config))

@@ -24,13 +24,15 @@ def load_environment():
         logging.debug("No environment loaded")
 
 
-def get_full_result_dir_path(rapidast_config, scan_datetime_str):
+def get_full_result_dir_path(rapidast_config):
     # Enforced result layout:
     # {config.results_base_dir}/
     #   {application.shortName}/
     #       {DAST-<date-time>-RapiDAST-<application.shortName>}/
     #           <scanner-name>
     # This way each runs will get their own directory, and each scanner their own subdir
+
+    scan_datetime_str = datetime.now().strftime("%Y%m%d-%H%M%S")
 
     app_name = rapidast_config.get("application.shortName", default="scannedApp")
     results_dir_path = os.path.join(
@@ -85,9 +87,7 @@ if __name__ == "__main__":
     # Update to latest config schema if need be
     config = configmodel.converter.update_to_latest_config(config)
 
-    scan_time_str = datetime.now().strftime("%Y%m%d-%H%M%S")
-    results_dir = get_full_result_dir_path(config, scan_time_str)
-    config.set("config.results_dir", results_dir)
+    config.set("config.results_dir", get_full_result_dir_path(config))
 
     logging.debug(
         f"The entire loaded configuration is as follow:\n=====\n{pp.pformat(config)}\n====="

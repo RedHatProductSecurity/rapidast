@@ -1,20 +1,17 @@
 # RapiDAST
 
-RapiDAST(Rapid DAST) provides a framework for automated DAST(Dynamic application security testing). It can be used by anyone who aims to improve the security of their products and services.
+RapiDAST(Rapid DAST) is an open-source security testing tool that automates the process of DAST(Dynamic application security testing) security testing and streamlines the integration of security into your development workflow. It is designed to help you quickly and effectively identify security vulnerabilities in your applications.
 
-Its structure is as follow:
+Taking advantage of [OWASP ZAP](https://www.zaproxy.org/) and additional scanners(TBD), RapiDAST provides additional value as follows:
 
-* `rapidast.py` does:
-    + Loading the main configuration file
-    + For each scanner activated by the config, runs it
+- Ease of use and simple automation of HTTP/API scanning, fully working in CLI with a yaml configuration
+- Ability to run automated DAST scanning to suit various users' needs
+- HTML, JSON and XML report generation
+- Integration with reporting solutions (TBD)
 
-* Currently, OWASP ZAP is supported, which will:
-    + Translate the RapiDAST configuration to a ZAP Automation Framework configuration
-    + Spawn a ZAP container image and run ZAP with the configuration
-    + Save the result
+# Getting Started
 
-
-# Requirements
+## Prerequisites
 
 - `python` >= 3.5
     + because of subprocess.run
@@ -22,51 +19,48 @@ Its structure is as follow:
     + Some scanners (such as the ZAP scanner) may spawn a container using podman
 - See `requirements.txt` for a list of required python libraries
 
-## Caveats
+## Installation
 
-* Currently, RapiDAST can run only on a full fledged OS (bare metal or VM, but not as a container)
-* Currently, RapiDAST does not cleanup the temporary data when there is an error. Data may include:
-    + a `/tmp/rapidast_zap_*/` directory
-    + a podman container which name starts with `rapidast_zap_`
-
-To manually remove the podman containers :
-
-```sh
- # 1. identify the container
-$ podman container list --all
-CONTAINER ID  IMAGE                                     COMMAND               CREATED         STATUS                               PORTS       NAMES
-a8e1cc0f4bcc  docker.io/owasp/zap2docker-stable:latest  /zap/zap.sh -conf...  47 minutes ago  Exited (0) 39 minutes ago (healthy)              rapidast_zap_Vapi_OatVmy
-
- # 2. delete it
-$ podman container rm rapidast_zap_Vapi_OatVmy
-rapidast_zap_Vapi_OatVmy
+It is recommended to create a virtual environment.
+```
+$ python3 -m venv venv
+$ source venv/bin/activate
 ```
 
+Install the project requirements.
+```
+(venv) $ pip install -U pip
+(venv) $ pip install -r requirements.txt
+```
 
 # Usage
 
 ## Workflow
 
-1. Write a configuration file for testing the application, which will include data such as:
-    a. Application URL
-    b. Authentication
-    c. A config entry for each scanner to run. For example: a path to an OpenAPI or enabling spider(crawler) for ZAP
-2. Optionally, an environment file may be added (to separate the secrets from the configuration file)
-3. Run RapiDAST and wait for the results
+This section summarize the basic workflow as follows:
+1. Create a configuration file for testing the application. See the 'configuration' section below for more information.
+2. Optionally, an environment file may be added, e.g., to separate the secrets from the configuration file.
+3. Run RapiDAST and get the results.
 
 ## Configuration
 
-The configuration is presented as YAML, and contains several main entries:
+The configuration file is presented as YAML, and contains several main entries:
 - `config` : contains `configVersion` which tells RapiDAST how to consume the config file
 - `application` : contains data relative to the application being scanned : name, etc.
 - `general` : contains data that will be used by all the scanners, such as proxy configuration, etc.
     + Each scanner can override an entry from `general` by creating an entry with the same name
 - `scanners` : list of scanners, and their configuration
 
-See `config/config-template.yaml` and `config/config-template-long.yaml` for examples.
+See `config/config-template.yaml`(a simple version) and `config/config-template-long.yaml`(an exhaustive version) for examples. Each can be used.
 
 ## Execution
 
+Once you have created a configuration file, you can run a scan with it.
+```
+$ rapidast.py --config <your-config.yaml>
+```
+
+There are more options.
 ```sh
 usage: rapidast.py [-h] [--log-level {debug,info,warning,error,critical}]
                    [--config CONFIG_FILE] [--no-cleanup]
@@ -87,7 +81,7 @@ options:
 
 #### ZAP
 
-OWASP® ZAP (Zed Attack Proxy) is an opensource Web Scanner. It can be used for scanning web applications and API.
+OWASP® ZAP (Zed Attack Proxy) is an open-source Web Scanner. It can be used for scanning web applications and API.
 
 See https://www.zaproxy.org/ for more information.
 
@@ -99,49 +93,40 @@ TBD
 
 ### Authentication
 
-Currently, Authentication is common to all scanner, and is configured in the `general` entry. Not all scanners may support all authentication types.
+Authentication is common to all scanners. Authentication is configured in the `general` entry. Not all scanners may support all authentication types.
 
 Currently supported :
 
 - No authentication: the scanners will communicate anonymously with the application
 
 - OAuth2 using a Refresh Token:
-This method describes requires parameters needed to retrieve an access token, using a refresh token as a secret.
+This method describes required parameters needed to retrieve an access token, using a refresh token as a secret.
     + authentication type : `oauth2_rtoken`
     + parameters :
         * `token_endpoint` : the URL to which send the refresh token
         * `client_id` : the client ID
         * `rtoken_var_name`: for practical reasons, the refresh token is provided using environment variables. This entry describes the name of the variable containing the secret refresh token
 
-- HTTP Basic
-This method describes the HTTP Basic Authorization Header. The username/password must be provided in plaintext and will be encoded by the scanners
+- HTTP Basic:
+This method describes the HTTP Basic Authorization Header. The username and password must be provided in plaintext and will be encoded by the scanners
     + authentication type: `http_basic`
     + parameters:
         * `username`
         * `password`
 
-- Cookie Authentication
-This method describes authentication via Cookie header. The cookie name and value must be provded in plaintest.
+- Cookie Authentication:
+This method describes authentication via Cookie header. The cookie name and value must be provided in plaintext.
     + authentication type: `cookie`
     + parameters:
         * `name`
         * `value`
 
-```yaml
-general:
-  authentication:
-    type: "oauth2_rtoken"
-    parameters:
-      client_id: "cloud-services"
-      token_endpoint: "<token retrival URL>"
-      rtoken_var_name: "RTOKEN"
-```
+
 # Troubleshooting
 
 ## Hitting docker.io rate limits
 
-If you are often unable to pull/update an image from docker.io, you may try this method:
-[Workaround docker rate limits](https://developers.redhat.com/blog/2021/02/18/how-to-work-around-dockers-new-download-rate-limit-on-red-hat-openshift#docker_s_new_rate_limit)
+If you are unable to pull/update an image from docker.io due to rate-limit errors, authenticate to your Docker Hub account.
 
 ## "Error getting access token" using OAuth2
 
@@ -149,7 +134,6 @@ Possible pitfalls :
 
 * Make sure that the parameters are correct (`client_id`, `token_endpoint`, `rtoken_var_name`) and that the refresh token is provided (via environment variable), and is valid
 * Make sure you do not have an environment variable in your current environment that overrides what is set in the `envFile`
-
 
 ## Issues with the ZAP scanner
 
@@ -176,3 +160,21 @@ org.zaproxy.zap.extension.openapi.converter.swagger.SwaggerException: Failed to 
 2023-02-17 22:42:55,924 [main ] INFO  Control - Automation Framework setting exit status to due to plan errors
 2023-02-17 22:43:01,073 [main ] INFO  CommandLineBootstrap - OWASP ZAP 2.12.0 terminated.
 ```
+
+## Caveats
+
+* Currently, RapiDAST does not clean up the temporary data when there is an error. The data may include:
+    + a `/tmp/rapidast_zap_*/` directory
+    + a podman container which name starts with `rapidast_zap_`
+
+This is to help with debugging the error. Once confirmed, it is necessary to manually remove them.
+
+# Support
+
+If you encounter any issues or have questions, please [open an issue](https://github.com/RedHatProductSecurity/rapidast/issues) on GitHub.
+
+# Contributing
+
+Contribution to the project is more than welcome.
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md)

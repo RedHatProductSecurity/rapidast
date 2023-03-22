@@ -1,5 +1,12 @@
 # RapiDAST Developer's Guide
 
+## Install project requirements for development
+
+Install dependencies using the `requirements-dev.txt` file.
+```
+$ pip install -r requirements-dev.txt
+```
+
 ## Install pre-commit
 
 pre-commit is being used to ensure that all code committed to the repository meets a certain level of quality and consistency, e.g. regarding style and formatting issues.
@@ -12,6 +19,13 @@ Once pre-commit is installed in the following way, code will be checked automati
 $ pre-commit install
 ```
 
+## Structure
+
+Its structure is as follow:
+
+* `rapidast.py` does:
+    + Loading the main configuration file
+    + For each scanner activated by the config, running it
 
 ## Adding a scanner
 

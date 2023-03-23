@@ -41,8 +41,7 @@ template:
     containers:
     - name: "{{ .Chart.Name }}"
       image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-      #command: ["sh", "-c", "cp /zap/config/helmcustomscan.policy /home/zap/.ZAP/policies && rapidast.py --config /zap/config/rapidastconfig.yaml"]
-      command: ["sh", "-c", "sleep 2400"]
+      command: ["sh", "-c", "cp /zap/config/helmcustomscan.policy /home/zap/.ZAP/policies && rapidast.py --config /zap/config/rapidastconfig.yaml"]
       imagePullPolicy: {{ .Values.image.pullPolicy }}
       resources:
         {{- toYaml .Values.resources | nindent 8 }}

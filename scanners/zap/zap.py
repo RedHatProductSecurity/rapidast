@@ -157,18 +157,18 @@ class Zap(RapidastScanner):
         """Shortcut to the container path of the work directory"""
         return self.path_map.get(PathIds.WORK).container
 
-    def _include_file(self, host_path, container_path=None):
-        """Copies the file from host_path on the host to container_path in the container
+    def _include_file(self, host_path, dest_in_container=None):
+        """Copies the file from host_path on the host to dest_in_container in the container
         Notes:
             - MUST be run after the mapping is done
-            - If container_path evaluates to False, default to `PathIds.WORK`
-            - If container_path is a directory, copy the file to it without renaming it
+            - If dest_in_container evaluates to False, default to `PathIds.WORK`
+            - If dest_in_container is a directory, copy the file to it without renaming it
         """
         # 1. Compute host path
-        if not container_path:
+        if not dest_in_container:
             path_to_dest = self._host_work_dir()
         else:
-            path_to_dest = self.path_map.container_2_host(container_path)
+            path_to_dest = self.path_map.container_2_host(dest_in_container)
 
         shutil.copy(host_path, path_to_dest)
         logging.debug(f"_include_file() '{host_path} → 'container:{path_to_dest}'")
@@ -225,7 +225,9 @@ class Zap(RapidastScanner):
             # This allows the OpenAPI to be kept as evidence
             container_openapi_file = f"{self._container_work_dir()}/openapi.json"
 
-            self._include_file(api.get("apiFile"), container_openapi_file)
+            self._include_file(
+                host_path=api.get("apiFile"), dest_in_container=container_openapi_file
+            )
             openapi["parameters"]["apiFile"] = container_openapi_file
         else:
             logging.warning("No API defined in the config, in scanners.zap.apiScan.api")

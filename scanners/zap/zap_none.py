@@ -4,21 +4,18 @@ import pprint
 import shutil
 import subprocess
 
+from .zap import MODULE_DIR
 from .zap import PathIds
 from .zap import Zap
 from scanners import State
 
-CLASSNAME = "ZapLocal"
+CLASSNAME = "ZapNone"
 
 
 pp = pprint.PrettyPrinter(indent=4)
 
-# Helper: absolute path to this directory (which is not the current directory)
-# Useful for finding files in this directory
-MODULE_DIR = os.path.dirname(__file__)
 
-
-class ZapLocal(Zap):
+class ZapNone(Zap):
     ###############################################################
     # PRIVATE CONSTANTS                                           #
     # Accessed by ZapLocalhost only                               #
@@ -31,10 +28,10 @@ class ZapLocal(Zap):
 
     def __init__(self, config):
         """Initialize all vars based on the config.
-        The code of the function only deals with the "podman" layer, the "ZAP" layer is handled by super()
+        The code of the function only deals with the "no container" layer, the "ZAP" layer is handled by super()
         """
 
-        logging.debug("Initializing podman-based ZAP scanner")
+        logging.debug("Initializing a local instance of the ZAP scanner")
         super().__init__(config)
 
         # prepare the host <-> container mapping
@@ -62,7 +59,7 @@ class ZapLocal(Zap):
         - environment variables
         - files & directory
 
-        The code of the function only deals with the "localhost" layer, the "ZAP" layer is handled by super()
+        The code of the function only deals with the "no container" layer, the "ZAP" layer is handled by super()
         """
 
         if self.state != State.UNCONFIGURED:
@@ -72,22 +69,22 @@ class ZapLocal(Zap):
 
         super().setup(executable="zap.sh")
 
-        # Since we can't "mount" the policy directory in local mode, and that we can't choose it in ZAP's configuration
+        # Without a container layer, can't "mount" the policy directory, and ZAP does not allow changing it
         # We have to copy it to ~/.ZAP/policies/
         if self.config.get("scanners.zap.activeScan", default=False) is not False:
             policy = self.config.get(
                 "scanners.zap.activeScan.policy", default="API-scan-minimal"
             )
             self._include_file(
-                f"{MODULE_DIR}/policies/{policy}.policy",
-                self.path_map.get(PathIds.POLICIES).container,
+                host_path=f"{MODULE_DIR}/policies/{policy}.policy",
+                dest_in_container=self.path_map.get(PathIds.POLICIES).container,
             )
 
         if self.state != State.ERROR:
             self.state = State.READY
 
     def run(self):
-        """If the state is READY, run the final podman run command.
+        """If the state is READY, run the final run command on the local machine
         There is no need to call super() here.
         """
         logging.info("Running up the ZAP scanner on the host")
@@ -158,15 +155,10 @@ class ZapLocal(Zap):
         """Environment variable to be added to the container.
         If value is None, then the value should be taken from the current host
 
-        In "localhost" mode, simply add the environment in the python process
+        In "no container" type, simply add the environment in the python process
         It will be copied over to ZAP.
         If `value` is None, then do nothing, as it means it's already set in
         python's environment
         """
         if value is not None:
             os.environ[key] = value
-
-    ###############################################################
-    # PRITVATE METHODS                                            #
-    # Accessed by this ZapLocalhost object only                   #
-    ###############################################################

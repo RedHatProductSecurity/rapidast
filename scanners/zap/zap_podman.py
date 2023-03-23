@@ -1,30 +1,19 @@
 import logging
-import os
 import pprint
 import random
 import shutil
 import string
 import subprocess
-import tarfile
-from pathlib import PosixPath
-from pathlib import PurePosixPath
 
-import yaml
-
-import configmodel
+from .zap import MODULE_DIR
 from .zap import PathIds
 from .zap import Zap
-from scanners import RapidastScanner
 from scanners import State
 
 CLASSNAME = "ZapPodman"
 
 
 pp = pprint.PrettyPrinter(indent=4)
-
-# Helper: absolute path to this directory (which is not the current directory)
-# Useful for finding files in this directory
-MODULE_DIR = os.path.dirname(__file__)
 
 
 class ZapPodman(Zap):
@@ -98,9 +87,9 @@ class ZapPodman(Zap):
         """If the state is READY, run the final podman run command.
         There is no need to call super() here.
         """
-        logging.info(f"Running up the ZAP scanner in podman")
+        logging.info("Running up the ZAP scanner in podman")
         if not self.state == State.READY:
-            raise RuntimeError(f"[ZAP SCANNER]: ERROR, not ready to run")
+            raise RuntimeError("[ZAP SCANNER]: ERROR, not ready to run")
 
         cli = ["podman", "run"]
         cli += self.podman_opts
@@ -137,10 +126,10 @@ class ZapPodman(Zap):
             self.state = State.ERROR
 
     def postprocess(self):
-        logging.info(f"Running postprocess for the ZAP Podman environment")
+        logging.info("Running postprocess for the ZAP Podman environment")
         if not self.state == State.DONE:
             raise RuntimeError(
-                f"No post-processing as ZAP has not successfully run yet."
+                "No post-processing as ZAP has not successfully run yet."
             )
 
         super().postprocess()
@@ -149,10 +138,10 @@ class ZapPodman(Zap):
             self.state = State.PROCESSED
 
     def cleanup(self):
-        logging.info(f"Running cleanup for the ZAP Podman environment")
+        logging.info("Running cleanup for the ZAP Podman environment")
 
         if not self.state == State.PROCESSED:
-            raise RuntimeError(f"No cleanning up as ZAP did not processed results.")
+            raise RuntimeError("No cleanning up as ZAP did not processed results.")
 
         logging.debug(f"Deleting temp directory {self._host_work_dir()}")
         shutil.rmtree(self._host_work_dir())
@@ -207,7 +196,7 @@ class ZapPodman(Zap):
 
     def _setup_zap_podman_id_mapping_cli(self):
         """Adds a specific user mapping to the Zap podman container.
-        The reason why it is needed is that the `zap` command do not run as the main user, but as the `zap` user (UID 1000)
+        Needed because the `zap` command do not run as the main user, but as the `zap` user (UID 1000)
         As a result, the resulting files can't be deleted by the host user.
         This function aims as preparing a specific UID/GID mapping so that the `zap` user maps to the host user
         source of the hack :
@@ -229,7 +218,7 @@ class ZapPodman(Zap):
             .strip("\n")
         )
         logging.debug(f"UIDmapping sizes: {sizes}")
-        subuidSize = eval(f"{sizes} - 1")
+        subuid_size = eval(f"{sizes} - 1")
         sizes = (
             subprocess.run(
                 [
@@ -245,7 +234,7 @@ class ZapPodman(Zap):
             .strip("\n")
         )
         logging.debug(f"UIDmapping sizes: {sizes}")
-        subgidSize = eval(f"{sizes} - 1")
+        subgid_size = eval(f"{sizes} - 1")
 
         runas_uid = 1000
         runas_gid = 1000
@@ -255,7 +244,7 @@ class ZapPodman(Zap):
         self.podman_opts += ["--uidmap", f"{runas_uid}:0:1"]
         self.podman_opts += [
             "--uidmap",
-            f"{runas_uid+1}:{runas_uid+1}:{subuidSize-runas_uid}",
+            f"{runas_uid+1}:{runas_uid+1}:{subuid_size-runas_uid}",
         ]
 
         # GID mapping
@@ -263,7 +252,7 @@ class ZapPodman(Zap):
         self.podman_opts += ["--gidmap", f"{runas_gid}:0:1"]
         self.podman_opts += [
             "--gidmap",
-            f"{runas_gid+1}:{runas_gid+1}:{subgidSize-runas_gid}",
+            f"{runas_gid+1}:{runas_gid+1}:{subgid_size-runas_gid}",
         ]
 
-        logging.debug(f"podman enabled UID/GID mapping arguments")
+        logging.debug("podman enabled UID/GID mapping arguments")

@@ -99,10 +99,13 @@ class ZapPodman(Zap):
             )
         )
 
-        # Update scanner as a first command, then actually run ZAP
-        # currently, this is done via a `sh -c` wrapper
-        commands = "zap.sh -cmd -addonupdate; " + " ".join(self.zap_cli)
-        cli += ["sh", "-c", commands]
+        if self.config.get("scanners.zap.updateAddons", default=False):
+            # Update scanner as a first command, then actually run ZAP
+            # currently, this is done via a `sh -c` wrapper
+            commands = "zap.sh -cmd -addonupdate; " + " ".join(self.zap_cli)
+            cli += ["sh", "-c", commands]
+        else:
+            cli += self.zap_cli
 
         # DO STUFF
         logging.info(f"Running ZAP with the following command:\n{cli}")

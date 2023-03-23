@@ -91,12 +91,13 @@ class ZapNone(Zap):
         if not self.state == State.READY:
             raise RuntimeError("[ZAP SCANNER]: ERROR, not ready to run")
 
-        logging.info("Zap: Updating addons")
-        result = subprocess.run(["zap.sh", "-cmd", "-addonupdate"], check=False)
-        if result.returncode != 0:
-            logging.warning(
-                f"The ZAP addon update process did not finish correctly, and exited with code {result.returncode}"
-            )
+        if self.config.get("scanners.zap.updateAddons", default=False):
+            logging.info("Zap: Updating addons")
+            result = subprocess.run(["zap.sh", "-cmd", "-addonupdate"], check=False)
+            if result.returncode != 0:
+                logging.warning(
+                    f"The ZAP addon update process did not finish correctly, and exited with code {result.returncode}"
+                )
 
         # Now the real run
         logging.info(f"Running ZAP with the following command:\n{self.zap_cli}")

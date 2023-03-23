@@ -86,6 +86,9 @@ scanners:
     container:
       image: "docker.io/owasp/zap2docker-stable:latest"
 
+    # Defaults to False, set True do update ZAP's plugins
+    updateAddons: False
+
     report:
       format: ["json"]
 #      format: ["json","html","sarif"]  # default: "json" only

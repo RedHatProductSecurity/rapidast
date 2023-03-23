@@ -75,7 +75,6 @@ class ZapPodman(Zap):
                 f"Podman setup encounter an unexpected state: {self.state}"
             )
 
-        # MUST be done _before_ super().setup, because we need to prepare volume mapping
         self._setup_podman_cli()
 
         super().setup(executable="/zap/zap.sh")

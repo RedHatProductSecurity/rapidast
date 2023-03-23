@@ -3,6 +3,7 @@ from enum import Enum
 from pprint import pformat
 
 import configmodel
+from .path_translators import PathMaps
 
 
 class State(Enum):
@@ -19,6 +20,8 @@ class RapidastScanner:
         self.config = config
         self.state = State.UNCONFIGURED
 
+        self.path_map = PathMaps()
+
     def __repr__(self):
         return pformat(vars(self), indent=4, width=1)
 
@@ -27,7 +30,7 @@ class RapidastScanner:
 # For example : str_to_scanner("zap", "podman") will load `scanners/zap/zap_podman.py`
 def str_to_scanner(name, method):
     mod = importlib.import_module(f"scanners.{name}.{name}_{method}")
-    class_ = getattr(mod, mod.className)
+    class_ = getattr(mod, mod.CLASSNAME)
     return class_
 
 

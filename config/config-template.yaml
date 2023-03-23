@@ -32,6 +32,9 @@ general:
       token_endpoint: "<token retrieval URL>"
       rtoken_var_name: "RTOKEN"  # referring to a env defined in general.environ.envFile
 
+  container:
+    # currently supported: `podman` and `none`
+    type: "podman"
 
 scanners:
   zap:

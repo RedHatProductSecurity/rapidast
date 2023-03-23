@@ -36,6 +36,16 @@ class ZapPodman(Zap):
         logging.debug("Initializing podman-based ZAP scanner")
         super().__init__(config)
 
+        # Setup defaults specific to Podman
+        self.config.set(
+            "scanners.zap.container.parameters.image",
+            ZapPodman.DEFAULT_IMAGE,
+            overwrite=False,
+        )
+        self.config.set(
+            "scanners.zap.container.parameters.executable", "zap.sh", overwrite=False
+        )
+
         # This will contain all the podman options
         self.podman_opts = []
 
@@ -61,7 +71,7 @@ class ZapPodman(Zap):
     # + list: setup(), run(), postprocess(), cleanup()            #
     ###############################################################
 
-    def setup(self, executable=None):
+    def setup(self):
         """Prepares everything:
         - the command line to run
         - environment variables
@@ -75,10 +85,9 @@ class ZapPodman(Zap):
                 f"Podman setup encounter an unexpected state: {self.state}"
             )
 
-        # MUST be done _before_ super().setup, because we need to prepare volume mapping
         self._setup_podman_cli()
 
-        super().setup(executable="/zap/zap.sh")
+        super().setup()
 
         if self.state != State.ERROR:
             self.state = State.READY
@@ -99,10 +108,17 @@ class ZapPodman(Zap):
             )
         )
 
-        # Update scanner as a first command, then actually run ZAP
-        # currently, this is done via a `sh -c` wrapper
-        commands = "zap.sh -cmd -addonupdate; " + " ".join(self.zap_cli)
-        cli += ["sh", "-c", commands]
+        if self.config.get("scanners.zap.updateAddons", default=False):
+            # Update scanner as a first command, then actually run ZAP
+            # currently, this is done via a `sh -c` wrapper
+            commands = (
+                self.config.get("scanners.zap.container.parameters.executable")
+                + " -cmd -addonupdate; "
+                + " ".join(self.zap_cli)
+            )
+            cli += ["sh", "-c", commands]
+        else:
+            cli += self.zap_cli
 
         # DO STUFF
         logging.info(f"Running ZAP with the following command:\n{cli}")

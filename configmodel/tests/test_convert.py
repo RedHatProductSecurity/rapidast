@@ -1,18 +1,37 @@
-import pytest
 import yaml
 
 import configmodel.converter
+import pytest
 
 
 @pytest.fixture(name="config_v0")
 def generate_config_v0():
     try:
         with open("config/older-schemas/v0.yaml") as file:
-            config = configmodel.RapidastConfigModel(yaml.safe_load(file))
+            return configmodel.RapidastConfigModel(yaml.safe_load(file))
     except yaml.YAMLError as exc:
         raise RuntimeError("Unable to load TEST file v0.yaml") from exc
 
     return config
+
+
+@pytest.fixture(name="config_v1")
+def generate_config_v1():
+    path = "config/older-schemas/v1.yaml"
+    try:
+        with open(path) as file:
+            return configmodel.RapidastConfigModel(yaml.safe_load(file))
+    except yaml.YAMLError as exc:
+        raise RuntimeError(f"Unable to load TEST file {path}") from exc
+
+
+def test_v1_to_v2(config_v1):
+    oldconf = config_v1
+    newconf = configmodel.converter.convert_from_version_1_to_2(oldconf)
+
+    assert newconf.get("scanners.zap.container.parameters.image", "x") == oldconf.get(
+        "scanners.zap.container.image", "y"
+    )
 
 
 def test_v0_to_v1(config_v0):

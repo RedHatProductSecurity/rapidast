@@ -34,6 +34,11 @@ class ZapNone(Zap):
         logging.debug("Initializing a local instance of the ZAP scanner")
         super().__init__(config)
 
+        # Setup defaults specific to "no container" mode
+        self.config.set(
+            "scanners.zap.container.parameters.executable", "zap.sh", overwrite=False
+        )
+
         # prepare the host <-> container mapping
         # Because there's no container layer, there's no need to translate anything
         temp_dir = self._create_work_dir()
@@ -53,7 +58,7 @@ class ZapNone(Zap):
     # + list: setup(), run(), postprocess(), cleanup()            #
     ###############################################################
 
-    def setup(self, executable=None):
+    def setup(self):
         """Prepares everything:
         - the command line to run
         - environment variables
@@ -67,7 +72,7 @@ class ZapNone(Zap):
                 f"Podman setup encounter an unexpected state: {self.state}"
             )
 
-        super().setup(executable="zap.sh")
+        super().setup()
 
         # Without a container layer, can't "mount" the policy directory, and ZAP does not allow changing it
         # We have to copy it to ~/.ZAP/policies/
@@ -91,12 +96,20 @@ class ZapNone(Zap):
         if not self.state == State.READY:
             raise RuntimeError("[ZAP SCANNER]: ERROR, not ready to run")
 
-        logging.info("Zap: Updating addons")
-        result = subprocess.run(["zap.sh", "-cmd", "-addonupdate"], check=False)
-        if result.returncode != 0:
-            logging.warning(
-                f"The ZAP addon update process did not finish correctly, and exited with code {result.returncode}"
+        if self.config.get("scanners.zap.updateAddons", default=False):
+            logging.info("Zap: Updating addons")
+            result = subprocess.run(
+                [
+                    self.config.get("scanners.zap.container.parameters.executable"),
+                    "-cmd",
+                    "-addonupdate",
+                ],
+                check=False,
             )
+            if result.returncode != 0:
+                logging.warning(
+                    f"The ZAP addon update process did not finish correctly, and exited with code {result.returncode}"
+                )
 
         # Now the real run
         logging.info(f"Running ZAP with the following command:\n{self.zap_cli}")

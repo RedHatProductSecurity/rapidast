@@ -73,18 +73,17 @@ class Zap(RapidastScanner):
     # Called via inheritence only                                 #
     ###############################################################
 
-    def setup(self, executable="zap.sh"):
+    def setup(self):
         """Prepares everything:
         - the command line to run
         - environment variables
         - files & directory
 
-        `exec` contains the ZAP executable name, which may vary depending on container
         This code handles only the "ZAP" layer, independently of the container used.
         This method should not be called directly, but only via super() from a child's setup()
         """
         logging.info("Preparing ZAP configuration")
-        self._setup_zap_cli(executable)
+        self._setup_zap_cli()
         self._setup_zap_automation()
 
     def run(self):
@@ -413,10 +412,12 @@ class Zap(RapidastScanner):
                 self._construct_report_af(zap_template, report_filename)
             )
 
-    def _setup_zap_cli(self, executable):
-        """prepare the zap command"""
+    def _setup_zap_cli(self):
+        """prepare the zap command: self.zap_cli
+        This is a list of strings, representing the entire ZAP command to match the desired run
+        """
 
-        self.zap_cli = [executable]
+        self.zap_cli = [self.config.get("scanners.zap.container.parameters.executable")]
 
         # Proxy workaround (because it currently can't be configured from Automation Framework)
         proxy = self.config.get("scanners.zap.proxy")

@@ -1,12 +1,11 @@
-#!/usr/bin/python
-# import copy   For future configVersion: make a deepcopy instead of starting from scratch
+import copy
 import logging
 
 import configmodel
 
 # WARNING: this needs to be incremented everytime a non-compatible change is made in the configuration.
 # A corresponding function also needs to be written
-CURR_CONFIG_VERSION = 1
+CURR_CONFIG_VERSION = 2
 
 
 def config_converter_dispatcher(func):
@@ -49,6 +48,36 @@ def convert_configmodel(conf):
     raise RuntimeError(
         f"There was an error in converting configuration. No convertion available for version {version}"
     )
+
+
+@convert_configmodel.register(1)
+def convert_from_version_1_to_2(old):
+    """Returns a *copy* of the original rapidast config file, but updated to v2
+    Change: `scanners.*.container.image` was moved to `scanners.*.container.parameters.image`
+    """
+    new = copy.deepcopy(old)
+
+    # We need to move all scanners.*.container.image
+    # In practice, currently, there's only `zap` to worry about
+    for key in old.conf["scanners"]:
+        if old.exists(f"scanners.{key}.container.image"):
+            new.set(
+                f"scanners.{key}.container.parameters.image",
+                old.get(f"scanners.{key}.container.image"),
+            )
+            new.delete(f"scanners.{key}.container.image")
+
+    # This should not happen: image is not meant to be stored there, but just to be clean
+    if old.exists("general.container.image"):
+        new.set(
+            "general.container.parameters.image", old.get("general.container.image")
+        )
+        new.delete("general.container.image")
+
+    # Finally, set the correct version number
+    new.set("config.configVersion", 2)
+
+    return new
 
 
 @convert_configmodel.register(0)

@@ -31,6 +31,25 @@ class RapidastConfigModel:
         )
         return default
 
+    def delete(self, path):
+        """Delete path"""
+        path = path_to_list(path)
+        walk = self.conf
+        try:
+            for e in path[:-1]:
+                walk = walk[e]
+            del walk[path[-1]]
+            return True
+        except KeyError:
+            pass
+        except AttributeError:
+            pass
+        # Failed to iterate until the end: the path does not exist
+        logging.warning(
+            f"RapidastConfigModel.delete(): Config path {path} was not found. No deletion"
+        )
+        return False
+
     def exists(self, path):
         """Returns true if `path` exists in configuration
         Even if the value is None

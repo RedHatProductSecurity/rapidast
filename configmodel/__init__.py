@@ -44,28 +44,39 @@ class RapidastConfigModel:
         except KeyError:
             return False
 
-    def set(self, path, value):
+    def set(self, path, value, overwrite=True):
         """Set the value pointed by `path` to `value`
         - Create the path if necessary
+        - To prevent modification of existing value: overwrite=False
         - Discard previous value
         - Override (with a warning) path if necessary (if something in the path was not a dict)
+        - Returns True if a modifcation was made
         """
         path = path_to_list(path)
         walk = self.conf
 
         # Walk the path, create subdictionary if needed
         for key in path[:-1]:
-            tmp = walk.get(key)
-            if not tmp:
-                tmp = walk[key] = {}
+            # case 1: path not fully created
+            if key not in walk.keys():
+                walk[key] = {}
+                walk = walk[key]
+                continue
+            tmp = walk[key]
+            # case 2: not a "dictionary" type: warn and overwrite (if True)
             if not isinstance(tmp, dict):
                 logging.warning(
-                    f"RapidastConfigModel.set: overriding entry {key} in {path} from {type(tmp)} to dict"
+                    f"RapidastConfigModel.set: Incompatible {path} at {tmp}"
                 )
+                if not overwrite:
+                    logging.info("RapidastConfigModel.set: no overwrite: early return")
+                    return False
                 walk[key] = {}
-
             walk = walk[key]
-        walk[path[-1]] = value
+        if overwrite or not walk.get(path[-1]):
+            walk[path[-1]] = value
+            return True
+        return False
 
     def merge(self, merge, preserve=False, root=None):
         """Recursively merge `merge` into the configuration.

@@ -49,9 +49,9 @@ general:
 
 
   container:
-      # one of: podman, docker, flatpak, none
-      # not all scanner may support all types
-      # currently: only 'podman' is supported
+    # one of: podman, docker, flatpak, none
+    # not all scanner may support all types
+    # currently supported: `podman` and `none`
     type: "podman"
 
 

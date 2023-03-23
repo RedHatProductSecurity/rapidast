@@ -77,6 +77,20 @@ options:
                         useful for debugging purpose).
 ```
 
+### Choosing the execution environment
+
+It is possible to choose the method to spawn a scanner using `scanners.<name>.container.type` configuration.
+Currently accepted value to choose among :
++ `podman`:
+    - Select the image to load from `scanner.<name>.container.image` (sensible default are provided for each scanner)
++ `none`:
+    - The scanner is run locally, no container used
+    - The scanner needs to be already installed on the host
+    - __Warning__: without a container layer, RapiDAST may have to modify the host's file system, such as the tools configuration to fit its needs. For example: the ZAP plugin has to copy the policy file used in ZAP's user config directory (`~/.ZAP`)
+
+
+The user can set `general.container.type` to set this type for each scanner at once.
+
 ### Scanners
 
 #### ZAP
@@ -164,8 +178,8 @@ org.zaproxy.zap.extension.openapi.converter.swagger.SwaggerException: Failed to 
 ## Caveats
 
 * Currently, RapiDAST does not clean up the temporary data when there is an error. The data may include:
-    + a `/tmp/rapidast_zap_*/` directory
-    + a podman container which name starts with `rapidast_zap_`
+    + a `/tmp/rapidast_*/` directory
+    + a podman container which name starts with `rapidast_`
 
 This is to help with debugging the error. Once confirmed, it is necessary to manually remove them.
 

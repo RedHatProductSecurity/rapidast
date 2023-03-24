@@ -19,6 +19,16 @@ Once pre-commit is installed in the following way, code will be checked automati
 $ pre-commit install
 ```
 
+## pytest
+
+Add test cases under tests/ when adding a new feature or function if possible. Consult [the pytest homepage](https://docs.pytest.org/en/6.2.x/index.html) as necessary.
+
+Make sure every test case passes whenever any commit is to be made, with the following command:
+
+```
+$ pytest
+```
+
 ## Structure
 
 Its structure is as follow:

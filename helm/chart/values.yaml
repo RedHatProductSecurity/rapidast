@@ -5,7 +5,7 @@
 image:
   repository: quay.io/jechoi/rapidast
   pullPolicy: IfNotPresent
-  tag: "latest"
+  tag: "using-ubi9-jdkruntime-old"
 
 job:
   cron: false

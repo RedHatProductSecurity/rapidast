@@ -33,6 +33,7 @@ Create chart name and version as used by the chart label.
 {{/*
 Create job spec
 */}}
+
 {{- define "rapidast-chart.job" -}}
 template:
   metadata:
@@ -41,7 +42,7 @@ template:
     containers:
     - name: "{{ .Chart.Name }}"
       image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-      command: ["sh", "-c", "cp /zap/config/helmcustomscan.policy /home/zap/.ZAP/policies && rapidast.py --config /zap/config/rapidastconfig.yaml"]
+      command: ["sh", "-c", "cp /zap/config/helmcustomscan.policy /home/rapidast/.ZAP/policies && rapidast.py --config /zap/config/rapidastconfig.yaml"]
       imagePullPolicy: {{ .Values.image.pullPolicy }}
       resources:
         {{- toYaml .Values.resources | nindent 8 }}
@@ -49,7 +50,7 @@ template:
       - name: config-volume
         mountPath: /zap/config
       - name: results-volume
-        mountPath: /zap/results/
+        mountPath: /home/rapidast/results/
     volumes:
       - name: config-volume
         configMap:

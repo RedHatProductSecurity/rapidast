@@ -1,9 +1,13 @@
 import glob
 import logging
 import os
+import pprint
 import shutil
 import tarfile
+import tempfile
 from base64 import urlsafe_b64encode
+from enum import auto
+from enum import Enum
 
 import yaml
 
@@ -11,11 +15,25 @@ from scanners import generic_authentication_factory
 from scanners import RapidastScanner
 
 
-className = "Zap"
+CLASSNAME = "Zap"
 
-import pprint
 
 pp = pprint.PrettyPrinter(indent=4)
+
+# Helper: absolute path to this directory (which is not the current directory)
+# Useful for finding files in this directory
+MODULE_DIR = os.path.dirname(__file__)
+
+
+# List important locations for host <-> container mapping point
+# + WORK: where data is stored:
+#   - AF file, reports, evidence, etc. are beneath this path
+# + SCRIPTS: where scripts are stored
+# + POLICIES: where policies are stored
+class PathIds(Enum):
+    WORK = auto()
+    SCRIPTS = auto()
+    POLICIES = auto()
 
 
 class Zap(RapidastScanner):
@@ -30,14 +48,9 @@ class Zap(RapidastScanner):
     DEFAULT_CONTAINER = "podman"
     DEFAULT_REPORT_NAME_PREFIX = "rapidast-report"
 
-    # real path from host
-    ROOT_LOCATION_DIR = os.path.dirname(__file__)
-    SCRIPTS_LOCATION_DIR = f"{ROOT_LOCATION_DIR}/scripts/"
-    POLICIES_LOCATION_DIR = f"{ROOT_LOCATION_DIR}/policies/"
-
     ## FUNCTIONS
     def __init__(self, config):
-        logging.debug(f"Initializing ZAP scanner")
+        logging.debug("Initializing ZAP scanner")
         super().__init__(config)
 
         self.results_dir = os.path.join(
@@ -52,65 +65,26 @@ class Zap(RapidastScanner):
         # When state is READY, this will contain the entire ZAP command that the container layer should run
         self.zap_cli = []
 
-    def _add_env(self):
-        logging.warn(
-            "_add_env() was called on the parent ZAP class. This is likely a bug. No operation done"
-        )
+        # Defines whether a User has been created
+        self.authenticated = False
 
-    def get_type(self):
-        """Return container type, based on configuration"""
-        return self.config.get(
-            "scanners.zap.container.type", default=Zap.DEFAULT_CONTAINER
-        )
+    ###############################################################
+    # PUBLIC METHODS                                              #
+    # Called via inheritence only                                 #
+    ###############################################################
 
-    def setup(self, executable="zap.sh"):
+    def setup(self):
         """Prepares everything:
         - the command line to run
         - environment variables
         - files & directory
 
-        `exec` contains the ZAP executable name, which may vary depending on container
         This code handles only the "ZAP" layer, independently of the container used.
         This method should not be called directly, but only via super() from a child's setup()
         """
-        logging.info(f"Preparing ZAP configuration")
-
-        self._setup_zap_cli(executable)
-
+        logging.info("Preparing ZAP configuration")
+        self._setup_zap_cli()
         self._setup_zap_automation()
-
-    def _setup_zap_automation(self):
-        # Load the Automation template
-        try:
-            AF_TEMPLATE = f"{Zap.ROOT_LOCATION_DIR}/{Zap.AF_TEMPLATE}"
-            logging.debug(f"Load the Automation Framework template")
-            with open(AF_TEMPLATE, "r") as stream:
-                self.af = yaml.safe_load(stream)
-        except yaml.YAMLError as exc:
-            raise RuntimeError(
-                f"Something went wrong while parsing the config '{AF_TEMPLATE}':\n {str(exc)}"
-            )
-
-        # Configure the basic environment target
-        try:
-            af_context = find_context(self.af)
-            af_context["urls"].append(self.config.get("application.url"))
-        except KeyError as exc:
-            raise RuntimeError(
-                f"Something went wrong with the Zap scanner configuration, while creating the context':\n {str(exc)}"
-            )
-
-        # authentication MUST happen first in case a user is created
-        self.authenticated = self.authentication_factory()
-
-        # Create the AF configuration
-        self._setup_spider()
-        self._setup_ajax_spider()
-        self._setup_api()
-        self._setup_passive_scan()
-        self._setup_active_scan()
-        self._setup_passive_wait()
-        self._setup_report()
 
     def run(self):
         """This code handles only the "ZAP" layer, independently of the container used.
@@ -120,7 +94,7 @@ class Zap(RapidastScanner):
         pass
 
     def postprocess(self):
-        host_results = self._paths_c2h(self.RESULTS_CONTAINER_DIR)
+        host_results = self.path_map.get(PathIds.WORK).host
 
         logging.info(f"Extracting report, storing in {self.results_dir}")
         os.makedirs(self.results_dir, exist_ok=True)
@@ -137,13 +111,106 @@ class Zap(RapidastScanner):
             else:
                 shutil.copy(report_item, self.results_dir)
 
-        logging.info(f"Saving the session as evidence")
+        logging.info("Saving the session as evidence")
         with tarfile.open(f"{self.results_dir}/session.tar.gz", "w:gz") as tar:
             tar.add(host_results, arcname="evidences")
 
     def cleanup(self):
         """Generic ZAP cleanup: should be called only via super() inheritance"""
         pass
+
+    ###############################################################
+    # PROTECTED METHODS                                           #
+    # Called via Zap or inheritence only                          #
+    # May be overloaded by inheriting classes                     #
+    ###############################################################
+
+    def get_type(self):
+        """Return container type, based on configuration.
+        This is only a helper to shorten long lines
+        """
+        return self.config.get(
+            "scanners.zap.container.type", default=Zap.DEFAULT_CONTAINER
+        )
+
+    def _add_env(self, key, value=None):
+        logging.warning(
+            "_add_env() was called on the parent ZAP class. This is likely a bug. No operation done"
+        )
+
+    def _create_work_dir(self):
+        """This function simply creates a temporary directory aiming at storing data in transit.
+        Data such as: the AF configuration, evidence, reports, etc.
+        This directory will be deleted during cleanup.
+        Descendent classes *may* overload this directory (e.g.: if they can't map /tmp)
+        """
+        temp_dir = tempfile.mkdtemp(prefix=f"rapidast_{self.__class__.__name__}_")
+        logging.debug(f"Temporary work directory for ZAP scanner in host: {temp_dir}")
+        return temp_dir
+
+    def _host_work_dir(self):
+        """Shortcut to the host path of the work directory"""
+        return self.path_map.get(PathIds.WORK).host
+
+    def _container_work_dir(self):
+        """Shortcut to the container path of the work directory"""
+        return self.path_map.get(PathIds.WORK).container
+
+    def _include_file(self, host_path, dest_in_container=None):
+        """Copies the file from host_path on the host to dest_in_container in the container
+        Notes:
+            - MUST be run after the mapping is done
+            - If dest_in_container evaluates to False, default to `PathIds.WORK`
+            - If dest_in_container is a directory, copy the file to it without renaming it
+        """
+        # 1. Compute host path
+        if not dest_in_container:
+            path_to_dest = self._host_work_dir()
+        else:
+            path_to_dest = self.path_map.container_2_host(dest_in_container)
+
+        shutil.copy(host_path, path_to_dest)
+        logging.debug(f"_include_file() '{host_path} → 'container:{path_to_dest}'")
+
+    ###############################################################
+    # PRIVATE METHODS                                             #
+    # Those are called only from Zap itself                       #
+    ###############################################################
+    def _setup_zap_automation(self):
+        # Load the Automation template
+        try:
+            af_template = f"{MODULE_DIR}/{Zap.AF_TEMPLATE}"
+            logging.debug("Load the Automation Framework template")
+            with open(af_template, "r") as stream:
+                self.af = yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            raise RuntimeError(
+                f"Something went wrong while parsing the config '{af_template}':\n {str(exc)}"
+            ) from exc
+
+        # Configure the basic environment target
+        try:
+            af_context = find_context(self.af)
+            af_context["urls"].append(self.config.get("application.url"))
+        except KeyError as exc:
+            raise RuntimeError(
+                f"Something went wrong with the Zap scanner configuration, while creating the context':\n {str(exc)}"
+            ) from exc
+
+        # authentication MUST happen first in case a user is created
+        self.authenticated = self.authentication_factory()
+
+        # Create the AF configuration
+        self._setup_spider()
+        self._setup_ajax_spider()
+        self._setup_api()
+        self._setup_passive_scan()
+        self._setup_active_scan()
+        self._setup_passive_wait()
+        self._setup_report()
+
+        # The AF should now be setup and ready to be written
+        self._save_automation_file()
 
     def _setup_api(self):
         """Prepare an openapi job and append it to the job list"""
@@ -155,14 +222,14 @@ class Zap(RapidastScanner):
         elif api.get("apiFile"):
             # copy the file in the container's result directory
             # This allows the OpenAPI to be kept as evidence
-            container_openapi_file = f"{self.RESULTS_CONTAINER_DIR}/openapi.json"
+            container_openapi_file = f"{self._container_work_dir()}/openapi.json"
 
-            self._include_file(api.get("apiFile"), container_openapi_file)
+            self._include_file(
+                host_path=api.get("apiFile"), dest_in_container=container_openapi_file
+            )
             openapi["parameters"]["apiFile"] = container_openapi_file
         else:
-            logging.warning(
-                f"No API defined in the config, in scanners.zap.apiScan.api"
-            )
+            logging.warning("No API defined in the config, in scanners.zap.apiScan.api")
         # default target: main URL, or can be overridden in apiScan
         openapi["parameters"]["targetUrl"] = self.config.get(
             "scanners.zap.apiScan.target", default=False
@@ -250,8 +317,8 @@ class Zap(RapidastScanner):
         # ''.split('.') returns [''], which is a non-empty list (which would erroneously get into the loop later)
         disabled = disabled.split(",") if len(disabled) else []
         logging.debug(f"disabling the following passive scans: {disabled}")
-        for p in disabled:
-            passive["rules"].append({"id": int(p), "threshold": "off"})
+        for rulenum in disabled:
+            passive["rules"].append({"id": int(rulenum), "threshold": "off"})
 
         self.af["jobs"].append(passive)
 
@@ -295,7 +362,7 @@ class Zap(RapidastScanner):
             "type": "report",
             "parameters": {
                 "template": template,
-                "reportDir": f"{self.RESULTS_CONTAINER_DIR}/",
+                "reportDir": f"{self.path_map.get(PathIds.WORK).container}/",
                 "reportFile": report_file,
                 "reportTitle": "ZAP Scanning Report",
                 "reportDescription": "",
@@ -337,7 +404,7 @@ class Zap(RapidastScanner):
                     self._construct_report_af(zap_template, report_filename)
                 )
 
-        if is_report_format_set == False:
+        if not is_report_format_set:
             # default report format: json
             zap_template = "traditional-json-plus"
             report_filename = self.DEFAULT_REPORT_NAME_PREFIX + ".json"
@@ -345,10 +412,12 @@ class Zap(RapidastScanner):
                 self._construct_report_af(zap_template, report_filename)
             )
 
-    def _setup_zap_cli(self, executable):
-        """prepare the zap command"""
+    def _setup_zap_cli(self):
+        """prepare the zap command: self.zap_cli
+        This is a list of strings, representing the entire ZAP command to match the desired run
+        """
 
-        self.zap_cli = [executable]
+        self.zap_cli = [self.config.get("scanners.zap.container.parameters.executable")]
 
         # Proxy workaround (because it currently can't be configured from Automation Framework)
         proxy = self.config.get("scanners.zap.proxy")
@@ -359,21 +428,28 @@ class Zap(RapidastScanner):
                 "-config",
                 f"network.connection.httpProxy.port={proxy.get('proxyPort')}",
                 "-config",
-                f"network.connection.httpProxy.enabled=true",
+                "network.connection.httpProxy.enabled=true",
             ]
         else:
-            self.zap_cli += ["-config", f"network.connection.httpProxy.enabled=false"]
+            self.zap_cli += ["-config", "network.connection.httpProxy.enabled=false"]
 
         # Create a session, to store them as evidence
         self.zap_cli += [
             "-newsession",
-            f"{self.SESSION_CONTAINER_DIR}",
+            self.path_map.get(PathIds.WORK).container + "/session_data/session",
             "-cmd",
             "-autorun",
-            f"{self.AF_CONTAINER_PATH}",
+            self.path_map.get(PathIds.WORK).container + "/af.yaml",
         ]
 
         logging.debug(f"ZAP will run with: {self.zap_cli}")
+
+    def _save_automation_file(self):
+        """Save the Automation dictionary as YAML in the container"""
+        af_host_path = self.path_map.get(PathIds.WORK).host + "/af.yaml"
+        with open(af_host_path, "w") as f:
+            f.write(yaml.dump(self.af))
+        logging.info(f"Saved Automation Framework in {af_host_path}")
 
     # Building an authentication factory for ZAP
     # For every authentication methods:
@@ -391,7 +467,7 @@ class Zap(RapidastScanner):
     @authentication_factory.register(None)
     def authentication_set_anonymous(self):
         """No authentication: don't do anything"""
-        logging.info(f"ZAP NOT configured with any authentication")
+        logging.info("ZAP NOT configured with any authentication")
         return False
 
     @authentication_factory.register("cookie")
@@ -410,7 +486,7 @@ class Zap(RapidastScanner):
         self._add_env("ZAP_AUTH_HEADER", "Cookie")
         self._add_env("ZAP_AUTH_HEADER_VALUE", f"{cookie_name}={cookie_val}")
 
-        logging.info(f"ZAP configured with Cookie authentication")
+        logging.info("ZAP configured with Cookie authentication")
         return False
 
     @authentication_factory.register("http_basic")
@@ -431,7 +507,7 @@ class Zap(RapidastScanner):
         self._add_env("ZAP_AUTH_HEADER", "Authorization")
         self._add_env("ZAP_AUTH_HEADER_VALUE", f"Basic {blob}")
 
-        logging.info(f"ZAP configured with HTTP Basic Authentication")
+        logging.info("ZAP configured with HTTP Basic Authentication")
         return False
 
     @authentication_factory.register("oauth2_rtoken")
@@ -452,12 +528,13 @@ class Zap(RapidastScanner):
         client_id = self.config.get(f"{params_path}.client_id", "cloud-services")
         token_endpoint = self.config.get(f"{params_path}.token_endpoint", None)
         rtoken = self.config.get(f"{params_path}.rtoken_var_name", "RTOKEN")
+        scripts_dir = self.path_map.get(PathIds.SCRIPTS).container
 
         # 1- complete the context: script, verification and user
         context_["authentication"] = {
             "method": "script",
             "parameters": {
-                "script": f"{self.SCRIPTS_CONTAINER_DIR}/offline-token.js",
+                "script": f"{scripts_dir}/offline-token.js",
                 "scriptEngine": "ECMAScript : Oracle Nashorn",
                 "client_id": client_id,
                 "token_endpoint": token_endpoint,
@@ -490,40 +567,43 @@ class Zap(RapidastScanner):
                 "type": "httpsender",
                 "engine": "ECMAScript : Oracle Nashorn",
                 "name": "add-bearer-token",
-                "file": f"{self.SCRIPTS_CONTAINER_DIR}/add-bearer-token.js",
+                "file": f"{scripts_dir}/add-bearer-token.js",
                 "target": "",
             },
         }
         self.af["jobs"].append(script)
-        logging.info(f"ZAP configured with OAuth2 RTOKEN")
+        logging.info("ZAP configured with OAuth2 RTOKEN")
         return True
 
-    def __repr__(self):
-        return super().__repr__()
+    ###############################################################
+    # MAGIC METHODS                                               #
+    # Special functions (other than __init__())                   #
+    ###############################################################
 
 
 # Given an Automation Framework configuration, return its sub-dictionary corresponding to the context we're going to use
 def find_context(af, context=Zap.DEFAULT_CONTEXT):
     # quick function that makes sure the context is sane
-    def ensure_default(c):
+    def ensure_default(context2):
         # quick function that makes sure an entry is a list (override if necessary)
-        def ensure_list(e):
-            if not c.get(e) or not type(c.get(e)) is list:
-                c[e] = []
+        def ensure_list(entry):
+            if not context2.get(entry) or not isinstance(context2.get(entry), list):
+                context2[entry] = []
 
         ensure_list("urls")
         ensure_list("includePaths")
         ensure_list("excludePaths")
-        return c
+        return context2
 
     try:
-        for x in af["env"]["contexts"]:
-            if x["name"] == context:
-                return ensure_default(x)
+        for context3 in af["env"]["contexts"]:
+            if context3["name"] == context:
+                return ensure_default(context3)
     except:
         pass
     logging.warning(
-        f"No context matching {context} have ben found in the current Automation Framework configuration. It may be missing from default. An empty context is created"
+        f"No context matching {context} have ben found in the current Automation Framework configuration.",
+        "It may be missing from default. An empty context is created",
     )
     # something failed: create an empty one and return it
     if not af["env"]:

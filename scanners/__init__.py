@@ -20,8 +20,6 @@ class RapidastScanner:
         self.config = config
         self.state = State.UNCONFIGURED
 
-        self.path_map = PathMaps()
-
     def __repr__(self):
         return pformat(vars(self), indent=4, width=1)
 

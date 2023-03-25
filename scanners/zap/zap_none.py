@@ -5,9 +5,9 @@ import shutil
 import subprocess
 
 from .zap import MODULE_DIR
-from .zap import PathIds
 from .zap import Zap
 from scanners import State
+from scanners.path_translators import PathMap
 
 CLASSNAME = "ZapNone"
 
@@ -44,11 +44,11 @@ class ZapNone(Zap):
         temp_dir = self._create_work_dir()
         policies_dir = f"{os.environ['HOME']}/.ZAP/policies"
 
-        self.path_map.add(PathIds.WORK, temp_dir, temp_dir)
-        self.path_map.add(
-            PathIds.SCRIPTS, f"{MODULE_DIR}/scripts", f"{MODULE_DIR}/scripts"
+        self.path_map.workdir = PathMap(temp_dir, temp_dir)
+        self.path_map.scripts = PathMap(
+            f"{MODULE_DIR}/scripts", f"{MODULE_DIR}/scripts"
         )
-        self.path_map.add(PathIds.POLICIES, policies_dir, policies_dir)
+        self.path_map.policies = PathMap(policies_dir, policies_dir)
 
     ###############################################################
     # PUBLIC METHODS                                              #
@@ -82,7 +82,7 @@ class ZapNone(Zap):
             )
             self._include_file(
                 host_path=f"{MODULE_DIR}/policies/{policy}.policy",
-                dest_in_container=self.path_map.get(PathIds.POLICIES).container,
+                dest_in_container=self.path_map.policies.container_path,
             )
 
         if self.state != State.ERROR:

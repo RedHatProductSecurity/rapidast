@@ -3,41 +3,68 @@ from collections import namedtuple
 from pathlib import PosixPath
 from pathlib import PurePosixPath
 
-PathMap = namedtuple("PathMap", ["host", "container"])
+# This associates 2 paths together
+PathMap = namedtuple("PathMap", ["host_path", "container_path"])
 
 
+# A decorator that let object's _data dictionary be accessed by the key directly, as if it were attributes.
+def dynamic_attributes(cls):
+    class Wrapper(cls):
+        def __getattr__(self, key):
+            if key in self._data:
+                return self._data[key]
+            raise AttributeError(
+                f"{self.__class__.__name__} object has no attribute '{key}'"
+            )
+
+        def __setattr__(self, key, value):
+            if key == "_data":
+                self.__dict__[key] = value
+            elif key in self._data and self._data[key] is None:
+                self._data[key] = value
+            else:
+                # Currently: do not allow new entries beyond what was set at creation time
+                raise AttributeError(
+                    f"{self.__class__.__name__} object has no attribute '{key}' or '{key}' was already set"
+                )
+
+    return Wrapper
+
+
+@dynamic_attributes
 class PathMaps:
-    def __init__(self):
-        self.paths = {}  # ID => ("host", "container")
+    def __init__(self, *args):
+        self._data = {id: None for id in args}
 
-    def add(self, id_, host, container):
-        self.paths[id_] = PathMap(host, container)
-
-    def get(self, id_):
-        return self.paths[id_]
+    def list_maps(self):
+        """Return the list of namedtuples"""
+        return self._data.values()
 
     def list_container_paths(self):
-        return [x.container for x in self.paths]
+        """Return the list of all container paths"""
+        return [m.container_path for m in self._data.values()]
 
     def list_host_paths(self):
-        return [x.host for x in self.paths]
+        """Return the list of all host paths"""
+        return [m.host_path for m in self._data.values()]
 
     def list_ids(self):
-        return self.paths.keys()
+        """Return the list of all IDs (list of attributes)"""
+        return self._data.keys()
 
     def host_2_container(self, path):
         """Given a path on the host, find out what will be its path in the container, based on mapping
         WARNING: no support for subvolumes. we would need to find the "best match"
         """
         path = PosixPath(path).resolve()
-        for mapping in self.paths.values():
+        for mapping in self._data.values():
             # force resolution to make sure we work with absolute paths
-            host = PosixPath(mapping.host).resolve()
+            host = PosixPath(mapping.host_path).resolve()
 
             # PurePath.is_relative_to() was added in python 3.9, so we have to use `parents` for now
             if host == path or host in path.parents:
                 # match! replace the host path by the container path
-                path = PurePosixPath(mapping.container, path.relative_to(host))
+                path = PurePosixPath(mapping.container_path, path.relative_to(host))
                 return str(path)
 
         raise RuntimeError(
@@ -50,13 +77,13 @@ class PathMaps:
         WARNING: no support for subvolumes. we would need to find the "best match"
         """
         path = PurePosixPath(path)
-        for mapping in self.paths.values():
-            container = PurePosixPath(mapping.container)
+        for mapping in self._data.values():
+            container = PurePosixPath(mapping.container_path)
 
             # PurePath.is_relative_to() was added in python 3.9 only, so we have to use `parents` for now
             if container == path or container in path.parents:
                 # match! replace the container path by the host path
-                path = PosixPath(mapping.host, path.relative_to(container))
+                path = PosixPath(mapping.host_path, path.relative_to(container))
                 return str(path)
 
         raise RuntimeError(

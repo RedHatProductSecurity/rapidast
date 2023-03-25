@@ -6,13 +6,12 @@ import shutil
 import tarfile
 import tempfile
 from base64 import urlsafe_b64encode
-from enum import auto
-from enum import Enum
 
 import yaml
 
 from scanners import generic_authentication_factory
 from scanners import RapidastScanner
+from scanners.path_translators import PathMaps
 
 
 CLASSNAME = "Zap"
@@ -23,17 +22,6 @@ pp = pprint.PrettyPrinter(indent=4)
 # Helper: absolute path to this directory (which is not the current directory)
 # Useful for finding files in this directory
 MODULE_DIR = os.path.dirname(__file__)
-
-
-# List important locations for host <-> container mapping point
-# + WORK: where data is stored:
-#   - AF file, reports, evidence, etc. are beneath this path
-# + SCRIPTS: where scripts are stored
-# + POLICIES: where policies are stored
-class PathIds(Enum):
-    WORK = auto()
-    SCRIPTS = auto()
-    POLICIES = auto()
 
 
 class Zap(RapidastScanner):
@@ -68,6 +56,14 @@ class Zap(RapidastScanner):
         # Defines whether a User has been created
         self.authenticated = False
 
+        # Instanciate a PathMaps with predifined mapping IDs. They will be filled by the typed scanners
+        # List important locations for host <-> container mapping point
+        # + work: where data is stored:
+        #   - AF file, reports, evidence, etc. are beneath this path
+        # + scripts: where scripts are stored
+        # + policies: where policies are stored
+        self.path_map = PathMaps("workdir", "policies", "scripts")
+
     ###############################################################
     # PUBLIC METHODS                                              #
     # Called via inheritence only                                 #
@@ -94,7 +90,7 @@ class Zap(RapidastScanner):
         pass
 
     def postprocess(self):
-        host_results = self.path_map.get(PathIds.WORK).host
+        host_results = self.path_map.workdir.host_path
 
         logging.info(f"Extracting report, storing in {self.results_dir}")
         os.makedirs(self.results_dir, exist_ok=True)
@@ -150,11 +146,11 @@ class Zap(RapidastScanner):
 
     def _host_work_dir(self):
         """Shortcut to the host path of the work directory"""
-        return self.path_map.get(PathIds.WORK).host
+        return self.path_map.workdir.host_path
 
     def _container_work_dir(self):
         """Shortcut to the container path of the work directory"""
-        return self.path_map.get(PathIds.WORK).container
+        return self.path_map.workdir.container_path
 
     def _include_file(self, host_path, dest_in_container=None):
         """Copies the file from host_path on the host to dest_in_container in the container
@@ -362,7 +358,7 @@ class Zap(RapidastScanner):
             "type": "report",
             "parameters": {
                 "template": template,
-                "reportDir": f"{self.path_map.get(PathIds.WORK).container}/",
+                "reportDir": f"{self.path_map.workdir.container_path}/",
                 "reportFile": report_file,
                 "reportTitle": "ZAP Scanning Report",
                 "reportDescription": "",
@@ -436,17 +432,17 @@ class Zap(RapidastScanner):
         # Create a session, to store them as evidence
         self.zap_cli += [
             "-newsession",
-            self.path_map.get(PathIds.WORK).container + "/session_data/session",
+            self.path_map.workdir.container_path + "/session_data/session",
             "-cmd",
             "-autorun",
-            self.path_map.get(PathIds.WORK).container + "/af.yaml",
+            self.path_map.workdir.container_path + "/af.yaml",
         ]
 
         logging.debug(f"ZAP will run with: {self.zap_cli}")
 
     def _save_automation_file(self):
         """Save the Automation dictionary as YAML in the container"""
-        af_host_path = self.path_map.get(PathIds.WORK).host + "/af.yaml"
+        af_host_path = self.path_map.workdir.host_path + "/af.yaml"
         with open(af_host_path, "w") as f:
             f.write(yaml.dump(self.af))
         logging.info(f"Saved Automation Framework in {af_host_path}")
@@ -528,7 +524,7 @@ class Zap(RapidastScanner):
         client_id = self.config.get(f"{params_path}.client_id", "cloud-services")
         token_endpoint = self.config.get(f"{params_path}.token_endpoint", None)
         rtoken = self.config.get(f"{params_path}.rtoken_var_name", "RTOKEN")
-        scripts_dir = self.path_map.get(PathIds.SCRIPTS).container
+        scripts_dir = self.path_map.scripts.container_path
 
         # 1- complete the context: script, verification and user
         context_["authentication"] = {

@@ -8,7 +8,6 @@ import subprocess
 from .zap import MODULE_DIR
 from .zap import Zap
 from scanners import State
-from scanners.path_translators import PathMap
 
 CLASSNAME = "ZapPodman"
 
@@ -57,11 +56,9 @@ class ZapPodman(Zap):
 
         # prepare the host <-> container mapping
         # The default location for WORK can be chosen by parent itself (no overide of self._create_work_dir)
-        self.path_map.workdir = PathMap(self._create_work_dir(), "/zap/results")
-        self.path_map.scripts = PathMap(f"{MODULE_DIR}/scripts", "/zap/scripts")
-        self.path_map.policies = PathMap(
-            f"{MODULE_DIR}/policies", "/home/zap/.ZAP/policies/"
-        )
+        self.path_map.workdir = (self._create_work_dir(), "/zap/results")
+        self.path_map.scripts = (f"{MODULE_DIR}/scripts", "/zap/scripts")
+        self.path_map.policies = (f"{MODULE_DIR}/policies", "/home/zap/.ZAP/policies/")
 
     ###############################################################
     # PUBLIC METHODS                                              #

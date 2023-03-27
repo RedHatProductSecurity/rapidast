@@ -21,7 +21,11 @@ def dynamic_attributes(cls):
             if key == "_data":
                 self.__dict__[key] = value
             elif key in self._data and self._data[key] is None:
-                self._data[key] = value
+                if not isinstance(value, tuple):
+                    raise ValueError(
+                        f"Setting {self.__class__.__name__}.{key} requires a tuples of 2 paths"
+                    )
+                self._data[key] = PathMap(value[0], value[1])
             else:
                 # Currently: do not allow new entries beyond what was set at creation time
                 raise AttributeError(

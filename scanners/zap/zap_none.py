@@ -7,7 +7,6 @@ import subprocess
 from .zap import MODULE_DIR
 from .zap import Zap
 from scanners import State
-from scanners.path_translators import PathMap
 
 CLASSNAME = "ZapNone"
 
@@ -44,11 +43,9 @@ class ZapNone(Zap):
         temp_dir = self._create_work_dir()
         policies_dir = f"{os.environ['HOME']}/.ZAP/policies"
 
-        self.path_map.workdir = PathMap(temp_dir, temp_dir)
-        self.path_map.scripts = PathMap(
-            f"{MODULE_DIR}/scripts", f"{MODULE_DIR}/scripts"
-        )
-        self.path_map.policies = PathMap(policies_dir, policies_dir)
+        self.path_map.workdir = (temp_dir, temp_dir)
+        self.path_map.scripts = (f"{MODULE_DIR}/scripts", f"{MODULE_DIR}/scripts")
+        self.path_map.policies = (policies_dir, policies_dir)
 
     ###############################################################
     # PUBLIC METHODS                                              #

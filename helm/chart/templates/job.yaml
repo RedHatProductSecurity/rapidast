@@ -7,7 +7,6 @@ kind: Job
 metadata:
   name: {{ .Release.Name }}-job
 spec:
-  backoffLimit: 0 # retry counts when pod fails
 {{ if .Values.job.cron }}
   schedule: "{{ .Values.job.schedule }}"
   jobTemplate:

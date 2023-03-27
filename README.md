@@ -16,7 +16,7 @@ Taking advantage of [OWASP ZAP](https://www.zaproxy.org/) and additional scanner
 - `python` >= 3.5
     + because of subprocess.run
 - `podman`
-    + Some scanners (such as the ZAP scanner) may spawn a container using podman
+    + required when you want to run scanners from their container images, rather than installing them to your host.
 - See `requirements.txt` for a list of required python libraries
 
 ## Installation
@@ -79,27 +79,41 @@ options:
 
 ### Choosing the execution environment
 
-It is possible to choose the method to spawn a scanner using `scanners.<name>.container.type` configuration.
-Currently accepted value to choose among :
+Set `general.container.type` to configure how scanners can be provided.
+
+Accepted values are as follows:
 + `podman`:
+    - Set when you want to run scanners with their container images and use `podman` to run them.
+    - RapiDAST must not run inside a container.
     - Select the image to load from `scanner.<name>.container.image` (sensible default are provided for each scanner)
+
 + `none`:
-    - The scanner is run locally, no container used
-    - The scanner needs to be already installed on the host
+    - Set when you want to run scanners that are installed on the host or you want to build or run the RapiDAST image(scanners are to be built in the same image).
     - __Warning__: without a container layer, RapiDAST may have to modify the host's file system, such as the tools configuration to fit its needs. For example: the ZAP plugin has to copy the policy file used in ZAP's user config directory (`~/.ZAP`)
 
+It is also possible to set the container type for each scanner differently by setting `scanners.<name>.container.type` under a certain scanner configuration. Then the scanner will run from its image, regardless of the `general.container.type` value.
 
-The user can set `general.container.type` to set this type for each scanner at once.
+### Build a RapiDAST image
+
+If you want to build your own RapiDAST image, run the following command.
+
+```
+$ podman build . -f containerize/Containerfile -t <image-tag>
+```
+
+### Running on Kubernetes or OpenShift
+
+Helm chart is provided to help with running RapiDAST on Kubernetes or OpenShift.
+
+See [helm/README.md](./helm/README.md)
 
 ### Scanners
 
 #### ZAP
 
-OWASP® ZAP (Zed Attack Proxy) is an open-source Web Scanner. It can be used for scanning web applications and API.
+OWASP® ZAP (Zed Attack Proxy) is an open-source DAST tool. It can be used for scanning web applications and API.
 
 See https://www.zaproxy.org/ for more information.
-
-This scanner will download a ZAP container image and execute it given the configuration provided.
 
 #### More scanners
 

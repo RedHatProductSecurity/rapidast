@@ -1,0 +1,18 @@
+{{- $pvcExists := lookup "v1" "PersistentVolumeClaim" .Release.Namespace .Values.pvc -}}
+{{- if not $pvcExists -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.pvc }}
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-delete-policy": hook-failed
+    "helm.sh/resource-policy": keep
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 1Gi
+{{- end -}}

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-configmap
+data: # Note: dash or underscore in names is not properly handled
+  rapidastconfig.yaml: {{ .Values.rapidastConfig | quote }}
+  helmcustomscan.policy: {{ .Values.scanPolicyXML | quote }}

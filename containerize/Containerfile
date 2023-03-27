@@ -44,7 +44,7 @@ RUN mkdir -p $HOME/.ZAP/policies
 RUN cp -r $HOME/scanners/zap/policies $HOME/.ZAP/policies
 
 # ZAP update
-RUN zap.sh -cmd -addonupdate
 RUN zap.sh -cmd -addonuninstall graaljs # delete until it is updated to fix https://security.snyk.io/vuln/SNYK-JAVA-ORGJAVADELIGHT-1279048
+RUN zap.sh -cmd -addonupdate
 RUN cp $HOME/.ZAP/plugin/*.zap /zap/plugin/  # This is necessary. Otherwise, for some reason, the next addoninstall command fails due to an error of 'network' addon not being found
 RUN zap.sh -cmd -addoninstall ascanrulesBeta

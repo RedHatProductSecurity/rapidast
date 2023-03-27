@@ -3,65 +3,28 @@ from collections import namedtuple
 from pathlib import PosixPath
 from pathlib import PurePosixPath
 
-# This associates 2 paths together
 PathMap = namedtuple("PathMap", ["host_path", "container_path"])
 
 
-# A decorator that let object's _data dictionary be accessed by the key directly, as if it were attributes.
-def dynamic_attributes(cls):
-    class Wrapper(cls):
-        def __getattr__(self, key):
-            if key in self._data:
-                return self._data[key]
-            raise AttributeError(
-                f"{self.__class__.__name__} object has no attribute '{key}'"
-            )
+def make_mapping_for_scanner(name, *kargs):
+    """Given a Scanner name and a list of (ID, host_path, container_path) tuples: prepare an object.
+    The object has "host" and "container" which can be access via <obj>.<ID> as attributes
 
-        def __setattr__(self, key, value):
-            if key == "_data":
-                self.__dict__[key] = value
-            elif key in self._data and self._data[key] is None:
-                if not isinstance(value, tuple):
-                    raise ValueError(
-                        f"Setting {self.__class__.__name__}.{key} requires a tuples of 2 paths"
-                    )
-                self._data[key] = PathMap(value[0], value[1])
-            else:
-                # Currently: do not allow new entries beyond what was set at creation time
-                raise AttributeError(
-                    f"{self.__class__.__name__} object has no attribute '{key}' or '{key}' was already set"
-                )
+    myobj = make_mapping_for_scanner("Zap", ("work", "/tmp/rapidast", "/zap"))
 
-    return Wrapper
+    myobj.work.host_path  # returns "/tmp/rapidast"
+    myobj.container_2_host("/zap/my/file") # returns "/tmp/rapidast/my/file
+    """
 
-
-@dynamic_attributes
-class PathMaps:
-    def __init__(self, *args):
-        self._data = {id: None for id in args}
-
-    def list_maps(self):
-        """Return the list of namedtuples"""
-        return self._data.values()
-
-    def list_container_paths(self):
-        """Return the list of all container paths"""
-        return [m.container_path for m in self._data.values()]
-
-    def list_host_paths(self):
-        """Return the list of all host paths"""
-        return [m.host_path for m in self._data.values()]
-
-    def list_ids(self):
-        """Return the list of all IDs (list of attributes)"""
-        return self._data.keys()
+    ids = [x[0] for x in kargs]
+    _mapping = namedtuple(f"{name}PathMaps", ids)
 
     def host_2_container(self, path):
         """Given a path on the host, find out what will be its path in the container, based on mapping
         WARNING: no support for subvolumes. we would need to find the "best match"
         """
         path = PosixPath(path).resolve()
-        for mapping in self._data.values():
+        for mapping in self:
             # force resolution to make sure we work with absolute paths
             host = PosixPath(mapping.host_path).resolve()
 
@@ -81,7 +44,7 @@ class PathMaps:
         WARNING: no support for subvolumes. we would need to find the "best match"
         """
         path = PurePosixPath(path)
-        for mapping in self._data.values():
+        for mapping in self:
             container = PurePosixPath(mapping.container_path)
 
             # PurePath.is_relative_to() was added in python 3.9 only, so we have to use `parents` for now
@@ -94,3 +57,25 @@ class PathMaps:
             f"container_2_host(): unable to find a container path for path {path}",
             f"container map list: {self.list_container_paths()}",
         )
+
+    def list_container_paths(self):
+        return [x.container_path for x in self]
+
+    def list_host_paths(self):
+        return [x.host_path for x in self]
+
+    def list_ids(self):
+        return self.keys()
+
+    _mapping.host_2_container = host_2_container
+    _mapping.container_2_host = container_2_host
+    _mapping.list_ids = list_ids
+    _mapping.list_host_paths = list_host_paths
+    _mapping.list_container_paths = list_container_paths
+    _mapping.list_container_paths = list_container_paths
+
+    tuples = (PathMap(host_path=x[1], container_path=x[2]) for x in kargs)
+
+    mymapping = _mapping(*tuples)
+
+    return mymapping

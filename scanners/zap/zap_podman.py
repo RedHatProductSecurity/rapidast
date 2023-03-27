@@ -8,6 +8,7 @@ import subprocess
 from .zap import MODULE_DIR
 from .zap import Zap
 from scanners import State
+from scanners.path_translators import make_mapping_for_scanner
 
 CLASSNAME = "ZapPodman"
 
@@ -56,9 +57,12 @@ class ZapPodman(Zap):
 
         # prepare the host <-> container mapping
         # The default location for WORK can be chosen by parent itself (no overide of self._create_work_dir)
-        self.path_map.workdir = (self._create_work_dir(), "/zap/results")
-        self.path_map.scripts = (f"{MODULE_DIR}/scripts", "/zap/scripts")
-        self.path_map.policies = (f"{MODULE_DIR}/policies", "/home/zap/.ZAP/policies/")
+        self.path_map = make_mapping_for_scanner(
+            "Zap",
+            ("workdir", self._create_work_dir(), "/zap/results"),
+            ("scripts", f"{MODULE_DIR}/scripts", "/zap/scripts"),
+            ("policies", f"{MODULE_DIR}/policies", "/home/zap/.ZAP/policies/"),
+        )
 
     ###############################################################
     # PUBLIC METHODS                                              #
@@ -204,7 +208,7 @@ class ZapPodman(Zap):
         self._setup_zap_podman_id_mapping_cli()
 
         # Volume mappings
-        for mapping in self.path_map.list_maps():
+        for mapping in self.path_map:
             self.podman_opts += [
                 "--volume",
                 f"{mapping.host_path}:{mapping.container_path}:Z",

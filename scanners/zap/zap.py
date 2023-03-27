@@ -11,7 +11,6 @@ import yaml
 
 from scanners import generic_authentication_factory
 from scanners import RapidastScanner
-from scanners.path_translators import PathMaps
 
 
 CLASSNAME = "Zap"
@@ -62,7 +61,7 @@ class Zap(RapidastScanner):
         #   - AF file, reports, evidence, etc. are beneath this path
         # + scripts: where scripts are stored
         # + policies: where policies are stored
-        self.path_map = PathMaps("workdir", "policies", "scripts")
+        self.path_map = None  # to be defined by the typed scanner
 
     ###############################################################
     # PUBLIC METHODS                                              #

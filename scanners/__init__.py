@@ -3,7 +3,6 @@ from enum import Enum
 from pprint import pformat
 
 import configmodel
-from .path_translators import PathMaps
 
 
 class State(Enum):

@@ -13,8 +13,8 @@ Taking advantage of [OWASP ZAP](https://www.zaproxy.org/) and additional scanner
 
 ## Prerequisites
 
-- `python` >= 3.7
-- `podman` >= 4.3
+- `python` >= 3.6.8 (3.7 for MacOS/Darwin)
+- `podman` >= 3.0.1
     + required when you want to run scanners from their container images, rather than installing them to your host.
 - See `requirements.txt` for a list of required python libraries
 

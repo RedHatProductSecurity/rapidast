@@ -1,5 +1,6 @@
 import logging
 import os
+import platform
 import pprint
 import shutil
 import subprocess
@@ -42,7 +43,16 @@ class ZapNone(Zap):
         # prepare the host <-> container mapping
         # Because there's no container layer, there's no need to translate anything
         temp_dir = self._create_work_dir()
-        policies_dir = f"{os.environ['HOME']}/.ZAP/policies"
+
+        if platform.system() == "Darwin":
+            logging.debug(
+                "Darwin(MacOS) is detected. Setting the policies_dir accordingly"
+            )
+            policies_dir = (
+                f"{os.environ['HOME']}/Library/Application Support/ZAP/policies"
+            )
+        else:
+            policies_dir = f"{os.environ['HOME']}/.ZAP/policies"
 
         self.path_map.add(PathIds.WORK, temp_dir, temp_dir)
         self.path_map.add(

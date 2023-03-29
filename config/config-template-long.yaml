@@ -86,13 +86,14 @@ scanners:
     container:
       parameters:
         image: "docker.io/owasp/zap2docker-stable:latest" # for type such as podman
-        executable: "zap.sh"
+        executable: "zap.sh"  # for Linux
+        # executable: "/Applications/OWASP ZAP.app/Contents/Java/zap.sh"    # for MacOS
 
     # Defaults to False, set True do update ZAP's plugins
     updateAddons: False
 
     report:
       format: ["json"]
-#      format: ["json","html","sarif"]  # default: "json" only
+      # format: ["json","html","sarif"]  # default: "json" only
 
-# Other scanners to be defined
+# Other scanners to be defined(TBD)

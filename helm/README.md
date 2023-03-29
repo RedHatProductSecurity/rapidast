@@ -4,7 +4,7 @@ The Helm chart uses the official RapiDAST image: `quay.io/redhatproductsecurity/
 
 `values.yaml` contains various configuration items including a RapiDAST config template and default scan policy. Either you modify it for your environment or override by using `--set-file`, `--set` or `-f`.
 
-For example, using `--set-file config`, it is possible to update configuration for RapiDAST scans.
+For example, using `--set-file rapidastConfig`, it is possible to update configuration for RapiDAST scans.
 
 ```
 $ helm install rapidast ./helm/chart/ --set-file rapidastConfig=<your-rapidast-config-with-container-type-none.yaml>

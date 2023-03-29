@@ -59,5 +59,4 @@ template:
         persistentVolumeClaim:
           claimName: {{ .Values.pvc }}
     restartPolicy: Never
-backoffLimit: 3
 {{- end }}

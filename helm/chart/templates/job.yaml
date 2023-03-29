@@ -11,7 +11,9 @@ spec:
   schedule: "{{ .Values.job.schedule }}"
   jobTemplate:
     spec:
+      backoffLimit: 0
 {{- include "rapidast-chart.job" . | nindent 6}}
 {{ else }}
+  backoffLimit: 3
 {{- include "rapidast-chart.job" . | nindent 2}}
 {{ end }}

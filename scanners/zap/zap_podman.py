@@ -105,7 +105,8 @@ class ZapPodman(Zap):
         cli += self.podman_opts
         cli.append(
             self.config.get(
-                "scanners.zap.container.image", default=ZapPodman.DEFAULT_IMAGE
+                "scanners.zap.container.parameters.image",
+                default=ZapPodman.DEFAULT_IMAGE,
             )
         )
 

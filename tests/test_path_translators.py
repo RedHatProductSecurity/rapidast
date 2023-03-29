@@ -1,11 +1,11 @@
-from scanners.path_translators import PathMaps
+from scanners.path_translators import make_mapping_for_scanner
 
 
 def test_path_translation():
-    path_map = PathMaps()
-    path_map.add("id1", "/q/w/e/r/t", "/y/u/i/o/p")
-    path_map.add("id2", "/a/s/d/f/g", "/h/j/k/l")
-    path_map.add("id3", "/z/x/c/v", "/b/n/m")
+    id1 = ("id1", "/q/w/e/r/t", "/y/u/i/o/p")
+    id2 = ("id2", "/a/s/d/f/g", "/h/j/k/l")
+    id3 = ("id3", "/z/x/c/v", "/b/n/m")
+    path_map = make_mapping_for_scanner("Test", id1, id2, id3)
 
     assert (
         path_map.host_2_container("/a/s/d/f/g/subdir/myfile")

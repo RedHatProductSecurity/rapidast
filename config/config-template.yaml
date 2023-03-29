@@ -9,10 +9,6 @@ config:
   # It is intended to keep backward compatibility (newer RapiDAST running an older config)
   configVersion: 2
 
-  # Import a particular environment, and inject it for each scanner
-  environ:
-    envFile: "path/to/env/file"
-
 # `application` contains data related to the application, not to the scans.
 application:
   shortName: "MyApp-1.0"
@@ -20,10 +16,6 @@ application:
 
 # `general` is a section that will be applied to all scanners.
 general:
-
-  proxy:
-    proxyHost: "<hostname>"
-    proxyPort: "<port>"
 
   authentication:
     type: "oauth2_rtoken"

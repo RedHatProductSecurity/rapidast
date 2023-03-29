@@ -7,12 +7,13 @@ FROM registry.access.redhat.com/ubi9-minimal
 
 RUN microdnf install -y procps tar gzip shadow-utils java-11-openjdk
 
+## ZAP
 RUN mkdir -p /tmp/zap
 RUN curl -sfL https://github.com/zaproxy/zaproxy/releases/download/v2.12.0/ZAP_2.12.0_Linux.tar.gz | tar zxvf - -C /tmp/zap
 RUN mv -T /tmp/zap/ZAP_2.12.0 /zap
 
-# Set up RapiDAST
 
+# Set up for RapiDAST
 RUN useradd -u 1000 -d /home/rapidast -m -s /bin/bash rapidast
 RUN echo rapidast:rapidast | chpasswd
 
@@ -32,18 +33,23 @@ ENV HOME /home/rapidast
 
 ENV PATH $PATH:/zap/:$HOME:$HOME/.local/bin
 
-#### RapiDAST
-
+## Install RapiDAST requirements
 RUN python3 -m ensurepip --upgrade
 RUN pip3 install -r requirements.txt
 
 
-# ZAP set up
-RUN cp -r $HOME/scanners/zap/scripts /zap/scripts
+# Finalize set up for ZAP
+RUN cp -r $HOME/scanners/zap/scripts/*.js /zap/scripts/
 RUN mkdir -p $HOME/.ZAP/policies
-RUN cp -r $HOME/scanners/zap/policies $HOME/.ZAP/policies
+RUN cp -r $HOME/scanners/zap/policies/*.policy $HOME/.ZAP/policies/
 
-# ZAP update
+## for compatiblity, in case /home/zap/.ZAP/policies is referred
+USER root
+RUN mkdir -p /home/zap/.ZAP
+RUN ln -s $HOME/.ZAP/policies/ /home/zap/.ZAP/policies
+USER rapidast
+
+## ZAP addon update
 RUN zap.sh -cmd -addonuninstall graaljs # delete until it is updated to fix https://security.snyk.io/vuln/SNYK-JAVA-ORGJAVADELIGHT-1279048
 RUN zap.sh -cmd -addonupdate
 RUN cp $HOME/.ZAP/plugin/*.zap /zap/plugin/  # This is necessary. Otherwise, for some reason, the next addoninstall command fails due to an error of 'network' addon not being found

@@ -80,6 +80,30 @@ def authentication_set_http_basic_auth(self):
   """Configure HTTP Basic authentication"""
 ```
 
+### Path helper
+
+Because scanners may need to handle path from the "host" view and the "container" view, and translate from one to another, we have created a `path_translator` module to facilitate this.
+
+In practice, this helps to copy files in and out of the container section, or calculate paths inside the container, indepently from the "container" technology. The scanner first needs to setup the mapping correctly, and the rest of the code can work according to the mapping. The mapping usually corresponds to mountpoints, or important directory where the code will need to store/retrieve data.
+
+Example :
+
+```python
+from scanners.path_translators import PathMaps
+from scanners.path_translators import PathMap
+
+path_map = PathMaps("workdir", "policies", "scripts")
+path_map.workdir = PathMap("/on/host/workdir", "/in/container/workdir")
+
+print(f"workdir in container: {path_map.workdir.container_path}")
+
+myfile = "/in/container/workdir/results/myresults.txt"
+print(f"myfile on host: {path_map.container_2_host(myfile)}")
+```
+
+For `type = None` (the scanner will run on the host), then the map must be the same (e.g.: `PathMap("/path/to/dir", "/path/to/dir")`)
+Important note: there is currently no support for submount : if a mapping is set to `/my/first/mount`, there can not be another map to `/my/first/mount/my/other/mount`
+
 
 ## The configuration model
 

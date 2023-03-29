@@ -6,9 +6,9 @@ import shutil
 import subprocess
 
 from .zap import MODULE_DIR
-from .zap import PathIds
 from .zap import Zap
 from scanners import State
+from scanners.path_translators import make_mapping_for_scanner
 
 CLASSNAME = "ZapNone"
 
@@ -54,11 +54,12 @@ class ZapNone(Zap):
         else:
             policies_dir = f"{os.environ['HOME']}/.ZAP/policies"
 
-        self.path_map.add(PathIds.WORK, temp_dir, temp_dir)
-        self.path_map.add(
-            PathIds.SCRIPTS, f"{MODULE_DIR}/scripts", f"{MODULE_DIR}/scripts"
+        self.path_map = make_mapping_for_scanner(
+            "Zap",
+            ("workdir", temp_dir, temp_dir),
+            ("scripts", f"{MODULE_DIR}/scripts", f"{MODULE_DIR}/scripts"),
+            ("policies", policies_dir, policies_dir),
         )
-        self.path_map.add(PathIds.POLICIES, policies_dir, policies_dir)
 
     ###############################################################
     # PUBLIC METHODS                                              #
@@ -92,7 +93,7 @@ class ZapNone(Zap):
             )
             self._include_file(
                 host_path=f"{MODULE_DIR}/policies/{policy}.policy",
-                dest_in_container=self.path_map.get(PathIds.POLICIES).container,
+                dest_in_container=self.path_map.policies.container_path,
             )
 
         if self.state != State.ERROR:

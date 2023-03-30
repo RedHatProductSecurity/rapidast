@@ -31,7 +31,6 @@ scanners:
   zap:
   # define a scan through the ZAP scanner
     apiScan:
-      target: "<optional, if different from application.url>"
       apis:
         apiUrl: "<URL to openAPI>"
         # alternative: apiFile: "<local path to openAPI file>"

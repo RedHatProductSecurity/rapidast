@@ -50,6 +50,26 @@ def convert_configmodel(conf):
     )
 
 
+@convert_configmodel.register(2)
+def convert_from_version_2_to_3(old):
+    """Returns a *copy* of the original rapidast config file, but updated to v2
+    Change: `scanners.zap.updateAddons` moved to `scanners.zap.additionalOptions.updateAddons`
+    """
+    new = copy.deepcopy(old)
+
+    if old.exists("scanners.zap.updateAddons"):
+        new.set(
+            "scanners.zap.additionalOptions.updateAddons",
+            old.get("scanners.zap.updateAddons"),
+        )
+        new.delete("scanners.zap.updateAddons")
+
+    # Finally, set the correct version number
+    new.set("config.configVersion", 3)
+
+    return new
+
+
 @convert_configmodel.register(1)
 def convert_from_version_1_to_2(old):
     """Returns a *copy* of the original rapidast config file, but updated to v2

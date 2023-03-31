@@ -82,9 +82,7 @@ class ZapPodman(Zap):
         """
 
         if self.state != State.UNCONFIGURED:
-            raise RuntimeError(
-                f"Podman setup encounter an unexpected state: {self.state}"
-            )
+            raise RuntimeError(f"ZAP setup encounter an unexpected state: {self.state}")
 
         self._setup_podman_cli()
 
@@ -110,7 +108,7 @@ class ZapPodman(Zap):
             )
         )
 
-        if self.config.get("scanners.zap.updateAddons", default=False):
+        if self.config.get("scanners.zap.additionalOptions.updateAddons", default=True):
             # Update scanner as a first command, then actually run ZAP
             # currently, this is done via a `sh -c` wrapper
             commands = (

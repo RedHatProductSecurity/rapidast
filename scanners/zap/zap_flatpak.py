@@ -91,7 +91,7 @@ class ZapFlatpak(Zap):
         """If the state is READY, run the final run command on the local machine
         There is no need to call super() here.
         """
-        logging.info("Running up the ZAP scanner on the host")
+        logging.info("Running up the ZAP scanner in flatpak")
         if not self.state == State.READY:
             raise RuntimeError("[ZAP SCANNER]: ERROR, not ready to run")
 

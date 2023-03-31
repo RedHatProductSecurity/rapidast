@@ -90,6 +90,8 @@ scanners:
         # executable: "/Applications/OWASP ZAP.app/Contents/Java/zap.sh"    # for MacOS
 
     additionalOptions:
+      # enableUI (default: false), requires a compatible runtime (e.g.: flatpak or no containment)
+      enableUI: False
       # Defaults to True, set False to prevent auto update of ZAP plugins
       updateAddons: True
 

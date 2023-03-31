@@ -5,7 +5,7 @@ import configmodel
 
 # WARNING: this needs to be incremented everytime a non-compatible change is made in the configuration.
 # A corresponding function also needs to be written
-CURR_CONFIG_VERSION = 2
+CURR_CONFIG_VERSION = 3
 
 
 def config_converter_dispatcher(func):

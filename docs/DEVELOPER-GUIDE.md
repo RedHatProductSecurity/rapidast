@@ -101,8 +101,10 @@ myfile = "/in/container/workdir/results/myresults.txt"
 print(f"myfile on host: {path_map.container_2_host(myfile)}")
 ```
 
-For `type = None` (the scanner will run on the host), then the map must be the same (e.g.: `PathMap("/path/to/dir", "/path/to/dir")`)
-Important note: there is currently no support for submount : if a mapping is set to `/my/first/mount`, there can not be another map to `/my/first/mount/my/other/mount`
+__NOTES__
++ Important note: there is currently no support for submount : if a mapping is set to `/my/first/mount`, there can not be another map to `/my/first/mount/my/other/mount`
++ The path are immutable: they must be chosen during creation (in the `__init__()` function), and must not be modified afterwards. The parent scanner (e.g.: `Zap`) should define the mount points, and each runtime (e.g.: `ZapPodman`) should fill each map *once*
++ For `type = None` (the scanner will run on the host), then the map must be the same (e.g.: `PathMap("/path/to/dir", "/path/to/dir")`)
 
 
 ## The configuration model

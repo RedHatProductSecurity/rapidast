@@ -436,9 +436,7 @@ class Zap(RapidastScanner):
             ]
         )
 
-        if not self.config.get(
-            "scanners.zap.additionalOptions.enableUI", default=False
-        ):
+        if not self.config.get("scanners.zap.miscOptions.enableUI", default=False):
             # Disable UI
             self.zap_cli.append("-cmd")
 

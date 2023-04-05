@@ -95,7 +95,7 @@ class ZapFlatpak(Zap):
         if not self.state == State.READY:
             raise RuntimeError("[ZAP SCANNER]: ERROR, not ready to run")
 
-        if self.config.get("scanners.zap.additionalOptions.updateAddons", default=True):
+        if self.config.get("scanners.zap.miscOptions.updateAddons", default=True):
             logging.info("Zap: Updating addons")
             if self._run_in_flatpak(["-cmd", "-addonupdate"]).returncode:
                 logging.warning("ZAP addon update failed")

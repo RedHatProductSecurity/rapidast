@@ -38,9 +38,9 @@ def test_v2_to_v3(config_v2):
     newconf = configmodel.converter.convert_from_version_2_to_3(oldconf)
 
     # Check that new path was created
-    assert newconf.get(
-        "scanners.zap.additionalOptions.updateAddons", "x"
-    ) == oldconf.get("scanners.zap.updateAddons", "y")
+    assert newconf.get("scanners.zap.miscOptions.updateAddons", "x") == oldconf.get(
+        "scanners.zap.updateAddons", "y"
+    )
     # Check that old path was deleted
     assert not newconf.exists("scanners.zap.updateAddons")
 

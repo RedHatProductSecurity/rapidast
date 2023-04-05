@@ -103,7 +103,7 @@ It is also possible to set the container type for each scanner differently by se
 
 ### Additional options
 
-In `scanners.zap.additionalOptions`, additional options can be provided :
+In `scanners.zap.miscOptions`, additional options can be provided :
 
 + enableUI (default: False): Runs ZAP with the UI (useful for debugging). The runtime type must support it (only `none` and `flatpak`)
 + updateAddons (default: True): Prior to running, ZAP will update its addons
@@ -113,7 +113,7 @@ Example:
 ```
 scanners:
     zap:
-        additionalOptions:
+        miscOptions:
             enableUI: True
             updateAddons: False
 ```

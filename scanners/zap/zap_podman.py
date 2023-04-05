@@ -108,7 +108,7 @@ class ZapPodman(Zap):
             )
         )
 
-        if self.config.get("scanners.zap.additionalOptions.updateAddons", default=True):
+        if self.config.get("scanners.zap.miscOptions.updateAddons", default=True):
             # Update scanner as a first command, then actually run ZAP
             # currently, this is done via a `sh -c` wrapper
             commands = (

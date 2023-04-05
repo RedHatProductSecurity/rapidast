@@ -105,7 +105,7 @@ class ZapNone(Zap):
         if not self.state == State.READY:
             raise RuntimeError("[ZAP SCANNER]: ERROR, not ready to run")
 
-        if self.config.get("scanners.zap.additionalOptions.updateAddons", default=True):
+        if self.config.get("scanners.zap.miscOptions.updateAddons", default=True):
             logging.info("Zap: Updating addons")
             result = subprocess.run(
                 [

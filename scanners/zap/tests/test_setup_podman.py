@@ -4,6 +4,7 @@ import yaml
 
 import configmodel.converter
 import pytest
+from scanners.zap.zap import find_context
 from scanners.zap.zap_podman import ZapPodman
 
 # from pytest_mock import mocker
@@ -124,6 +125,22 @@ def test_setup_authentication_auth_rtoken_configured(test_config):
     assert test_zap.authenticated == True
     assert "RTOKEN" in test_zap.podman_opts
     assert test_zap.af["jobs"][0]["parameters"]["name"] == "add-bearer-token"
+
+
+## Testing APIs & URLs ##
+
+
+def test_setup_exclude_urls(test_config):
+    test_config.set("general.urls.excludes", ["abc", "def"])
+    test_config.merge(
+        test_config.get("general", default={}), preserve=False, root=f"scanners.zap"
+    )
+
+    test_zap = ZapPodman(config=test_config)
+    test_zap.setup()
+
+    assert "abc" in find_context(test_zap.af)["excludePaths"]
+    assert "def" in find_context(test_zap.af)["excludePaths"]
 
 
 def test_setup_ajax(test_config):

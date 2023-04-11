@@ -5,7 +5,7 @@ import configmodel
 
 # WARNING: this needs to be incremented everytime a non-compatible change is made in the configuration.
 # A corresponding function also needs to be written
-CURR_CONFIG_VERSION = 2
+CURR_CONFIG_VERSION = 3
 
 
 def config_converter_dispatcher(func):
@@ -48,6 +48,26 @@ def convert_configmodel(conf):
     raise RuntimeError(
         f"There was an error in converting configuration. No convertion available for version {version}"
     )
+
+
+@convert_configmodel.register(2)
+def convert_from_version_2_to_3(old):
+    """Returns a *copy* of the original rapidast config file, but updated to v2
+    Change: `scanners.zap.updateAddons` moved to `scanners.zap.miscOptions.updateAddons`
+    """
+    new = copy.deepcopy(old)
+
+    if old.exists("scanners.zap.updateAddons"):
+        new.set(
+            "scanners.zap.miscOptions.updateAddons",
+            old.get("scanners.zap.updateAddons"),
+        )
+        new.delete("scanners.zap.updateAddons")
+
+    # Finally, set the correct version number
+    new.set("config.configVersion", 3)
+
+    return new
 
 
 @convert_configmodel.register(1)

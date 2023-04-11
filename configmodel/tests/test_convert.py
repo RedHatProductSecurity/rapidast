@@ -7,22 +7,42 @@ import pytest
 @pytest.fixture(name="config_v0")
 def generate_config_v0():
     try:
-        with open("config/older-schemas/v0.yaml") as file:
+        with open("configmodel/tests/older-schemas/v0.yaml") as file:
             return configmodel.RapidastConfigModel(yaml.safe_load(file))
     except yaml.YAMLError as exc:
         raise RuntimeError("Unable to load TEST file v0.yaml") from exc
 
-    return config
-
 
 @pytest.fixture(name="config_v1")
 def generate_config_v1():
-    path = "config/older-schemas/v1.yaml"
+    path = "configmodel/tests/older-schemas/v1.yaml"
     try:
         with open(path) as file:
             return configmodel.RapidastConfigModel(yaml.safe_load(file))
     except yaml.YAMLError as exc:
         raise RuntimeError(f"Unable to load TEST file {path}") from exc
+
+
+@pytest.fixture(name="config_v2")
+def generate_config_v2():
+    path = "configmodel/tests/older-schemas/v2.yaml"
+    try:
+        with open(path) as file:
+            return configmodel.RapidastConfigModel(yaml.safe_load(file))
+    except yaml.YAMLError as exc:
+        raise RuntimeError(f"Unable to load TEST file {path}") from exc
+
+
+def test_v2_to_v3(config_v2):
+    oldconf = config_v2
+    newconf = configmodel.converter.convert_from_version_2_to_3(oldconf)
+
+    # Check that new path was created
+    assert newconf.get("scanners.zap.miscOptions.updateAddons", "x") == oldconf.get(
+        "scanners.zap.updateAddons", "y"
+    )
+    # Check that old path was deleted
+    assert not newconf.exists("scanners.zap.updateAddons")
 
 
 def test_v1_to_v2(config_v1):

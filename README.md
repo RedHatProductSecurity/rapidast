@@ -82,7 +82,7 @@ options:
 
 ### Choosing the execution environment
 
-Set `general.container.type` to configure how scanners can be provided.
+Set `general.container.type` to select a runtime (default: podman)
 
 Accepted values are as follows:
 + `podman`:
@@ -94,7 +94,29 @@ Accepted values are as follows:
     - Set when you want to run scanners that are installed on the host or you want to build or run the RapiDAST image(scanners are to be built in the same image).
     - __Warning__: without a container layer, RapiDAST may have to modify the host's file system, such as the tools configuration to fit its needs. For example: the ZAP plugin has to copy the policy file used in ZAP's user config directory (`~/.ZAP`)
 
++ `flatpak`:
+    - Runs the Flatpak version of ZAP (`org.zaproxy.ZAP` on `flathub`)
+    - Flatpak must be installed, as well as `org.zaproxy.ZAP`
+    - __Warning__: Flatpak's ZAP shares the user's home file system with the host, so RapiDAST may have to modify the host's file system, such as the tools configuration to fit its needs. For example: the ZAP plugin has to copy the policy file used in ZAP's user config directory (`~/.ZAP`)
+
 It is also possible to set the container type for each scanner differently by setting `scanners.<name>.container.type` under a certain scanner configuration. Then the scanner will run from its image, regardless of the `general.container.type` value.
+
+### Additional options
+
+In `scanners.zap.miscOptions`, additional options can be provided :
+
++ enableUI (default: False): Runs ZAP with the UI (useful for debugging). The runtime type must support it (only `none` and `flatpak`)
++ updateAddons (default: True): Prior to running, ZAP will update its addons
+
+Example:
+
+```
+scanners:
+    zap:
+        miscOptions:
+            enableUI: True
+            updateAddons: False
+```
 
 ### Build a RapiDAST image
 

@@ -60,6 +60,8 @@ class RapidastConfigModel:
             for key in path:
                 tmp = tmp[key]
             return True
+        except TypeError:
+            return False
         except KeyError:
             return False
 

@@ -22,7 +22,29 @@ def generate_some_nested_config():
         "key1": "value1",
         "key2": {"key21": "value21"},
         "nested": {"morenested": {"key3": "nestedvalue"}},
+        "nothing": None,
     }
+
+
+def test_configmodel_exists(some_nested_config):
+    myconf = RapidastConfigModel(some_nested_config)
+
+    # verify that some values exist
+    assert myconf.exists("key1")
+    assert myconf.exists("nested.morenested.key3")
+    assert myconf.exists("nothing")
+
+    # verify that some values do not exist
+    assert not myconf.exists("thisdoesntexists")
+    assert not myconf.exists("key1.thisdoesntexists")
+    assert not myconf.exists("key1.value1.thisdoesntexists")
+    assert not myconf.exists("key1.value2.thisdoesntexists")
+    assert not myconf.exists("nested.value2.thisdoesntexists")
+    assert not myconf.exists("nothing.thisdoesntexists")
+
+    # exists looks for keys, not values, so these should return False also
+    assert not myconf.exists("key1.value1")
+    assert not myconf.exists("nested.morenested.key3.nestedvalue")
 
 
 def test_configmodel_get(some_nested_config):
@@ -33,8 +55,8 @@ def test_configmodel_get(some_nested_config):
     assert myconf.get("nested.morenested", "x") == {"key3": "nestedvalue"}
 
     # unexisting values
-    assert myconf.get("nothing", "x") == "x"
-    assert myconf.get("nested.nothing", "x") == "x"
+    assert myconf.get("thisdoesnotexists", "x") == "x"
+    assert myconf.get("nested.thisdoesnotexists", "x") == "x"
 
 
 def test_configmodel_set(some_nested_config):

@@ -1,6 +1,5 @@
 import logging
 import os
-import platform
 import pprint
 import shutil
 import subprocess
@@ -10,16 +9,16 @@ from .zap import Zap
 from scanners import State
 from scanners.path_translators import make_mapping_for_scanner
 
-CLASSNAME = "ZapNone"
+CLASSNAME = "ZapFlatpak"
 
 
 pp = pprint.PrettyPrinter(indent=4)
 
 
-class ZapNone(Zap):
+class ZapFlatpak(Zap):
     ###############################################################
     # PRIVATE CONSTANTS                                           #
-    # Accessed by ZapLocalhost only                               #
+    # Accessed by ZapFlatpak only                               #
     ###############################################################
 
     ###############################################################
@@ -37,22 +36,14 @@ class ZapNone(Zap):
 
         # Setup defaults specific to "no container" mode
         self.config.set(
-            "scanners.zap.container.parameters.executable", "zap.sh", overwrite=False
+            "scanners.zap.container.parameters.executable", "zap", overwrite=False
         )
 
-        # prepare the host <-> container mapping
-        # Because there's no container layer, there's no need to translate anything
+        # prepare the host <-> container mapping: flatpak container shares most directory with host
         temp_dir = self._create_work_dir()
-
-        if platform.system() == "Darwin":
-            logging.debug(
-                "Darwin(MacOS) is detected. Setting the policies_dir accordingly"
-            )
-            policies_dir = (
-                f"{os.environ['HOME']}/Library/Application Support/ZAP/policies"
-            )
-        else:
-            policies_dir = f"{os.environ['HOME']}/.ZAP/policies"
+        policies_dir = (
+            f"{os.environ['HOME']}/.ZAP/policies"  # Flatpak is supposed only on Linux
+        )
 
         self.path_map = make_mapping_for_scanner(
             "Zap",
@@ -83,8 +74,7 @@ class ZapNone(Zap):
 
         super().setup()
 
-        # Without a container layer, can't "mount" the policy directory, and ZAP does not allow changing it
-        # We have to copy it to ~/.ZAP/policies/
+        # Flatpak uses the real user's home directory, so we need to use ~/.ZAP/policies/
         if self.config.get("scanners.zap.activeScan", default=False) is not False:
             policy = self.config.get(
                 "scanners.zap.activeScan.policy", default="API-scan-minimal"
@@ -101,28 +91,19 @@ class ZapNone(Zap):
         """If the state is READY, run the final run command on the local machine
         There is no need to call super() here.
         """
-        logging.info("Running up the ZAP scanner on the host")
+        logging.info("Running up the ZAP scanner in flatpak")
         if not self.state == State.READY:
             raise RuntimeError("[ZAP SCANNER]: ERROR, not ready to run")
 
         if self.config.get("scanners.zap.miscOptions.updateAddons", default=True):
             logging.info("Zap: Updating addons")
-            result = subprocess.run(
-                [
-                    self.config.get("scanners.zap.container.parameters.executable"),
-                    "-cmd",
-                    "-addonupdate",
-                ],
-                check=False,
-            )
-            if result.returncode != 0:
-                logging.warning(
-                    f"The ZAP addon update process did not finish correctly, and exited with code {result.returncode}"
-                )
+            if self._run_in_flatpak(["-cmd", "-addonupdate"]).returncode:
+                logging.warning("ZAP addon update failed")
 
         # Now the real run
         logging.info(f"Running ZAP with the following command:\n{self.zap_cli}")
-        result = subprocess.run(self.zap_cli, check=False)
+        # note: we need to pop out the first element (`zap`) as it is implicitly called by flatpak
+        result = self._run_in_flatpak(self.zap_cli[1:])
         logging.debug(
             f"ZAP returned the following:\n=====\n{pp.pformat(result)}\n====="
         )
@@ -184,3 +165,23 @@ class ZapNone(Zap):
         """
         if value is not None:
             os.environ[key] = value
+
+    ###############################################################
+    # PRIVATE   METHODS                                           #
+    # Accessed by ZapFlatpak only                                 #
+    ###############################################################
+
+    def _run_in_flatpak(self, command):
+        """A Private method: wrapper around the flatpak command
+        `command` MUST be an iterable of all command options
+        """
+        flat = ["flatpak", "run"]
+        # Share the `workdir` with flatpak
+        flat.append(f"--filesystem={self.path_map.workdir.host_path}")
+        flat.append("org.zaproxy.ZAP")
+
+        flat.extend(command)
+
+        result = subprocess.run(flat, check=False)
+        logging.debug(f"Flatpak: command {flat} exited with code {result.returncode}")
+        return result

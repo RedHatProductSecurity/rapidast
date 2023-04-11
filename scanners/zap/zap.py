@@ -429,13 +429,21 @@ class Zap(RapidastScanner):
             self.zap_cli += ["-config", "network.connection.httpProxy.enabled=false"]
 
         # Create a session, to store them as evidence
-        self.zap_cli += [
-            "-newsession",
-            self.path_map.workdir.container_path + "/session_data/session",
-            "-cmd",
-            "-autorun",
-            self.path_map.workdir.container_path + "/af.yaml",
-        ]
+        self.zap_cli.extend(
+            [
+                "-newsession",
+                f"{self.path_map.workdir.container_path}/session_data/session",
+            ]
+        )
+
+        if not self.config.get("scanners.zap.miscOptions.enableUI", default=False):
+            # Disable UI
+            self.zap_cli.append("-cmd")
+
+        # finally: the Automation Framework:
+        self.zap_cli.extend(
+            ["-autorun", self.path_map.workdir.container_path + "/af.yaml"]
+        )
 
         logging.debug(f"ZAP will run with: {self.zap_cli}")
 

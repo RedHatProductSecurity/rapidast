@@ -187,6 +187,9 @@ class Zap(RapidastScanner):
         try:
             af_context = find_context(self.af)
             af_context["urls"].append(self.config.get("application.url"))
+            af_context["excludePaths"].extend(
+                self.config.get("scanners.zap.urls.excludes", default=[])
+            )
         except KeyError as exc:
             raise RuntimeError(
                 f"Something went wrong with the Zap scanner configuration, while creating the context':\n {str(exc)}"
@@ -267,7 +270,7 @@ class Zap(RapidastScanner):
             },
         }
 
-        # Add to includePath to the context
+        # Add to includePaths to the context
         if self.config.get("scanners.zap.spider.url"):
             new_include_path = self.config.get("scanners.zap.spider.url") + ".*"
             af_context = find_context(self.af)
@@ -296,7 +299,7 @@ class Zap(RapidastScanner):
             },
         }
 
-        # Add to includePath to the context
+        # Add to includePaths to the context
         if self.config.get("scanners.zap.spiderAjax.url"):
             new_include_path = self.config.get("scanners.zap.spiderAjax.url") + ".*"
             af_context = find_context(self.af)

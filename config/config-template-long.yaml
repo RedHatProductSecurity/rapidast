@@ -102,5 +102,13 @@ scanners:
       # Defaults to True, set False to prevent auto update of ZAP plugins
       updateAddons: True
 
+    urls:
+      # `excludes` takes a list of regexps. A URL matching that regexp will not be used by the scanner
+      # Note: The regular expressions MUST match the whole URL.
+      #       e.g.: 'http://example.com/do-not-descend-here/' will actually descend
+      excludes:
+        - "^https?://example.com/do-not-descend-here/.*$"
+
+
 
 # Other scanners to be defined(TBD)

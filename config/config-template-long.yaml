@@ -62,7 +62,10 @@ scanners:
       target: "<optional, if different from application.url>"
       apis:
         apiUrl: "<URL to openAPI>"
-        # alternative: apiFile: "<local path to openAPI file>"
+        # alternative to apiURL: apiFile: "<local path to openAPI file>"
+
+    # A list of URLs can also be provided, from a text file (1 URL per line)
+    importUrlsFromFile: "<path to import URL>"
 
     spider:
       maxDuration: 0 # in minutes, default: 0 unlimited

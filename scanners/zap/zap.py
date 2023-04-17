@@ -199,6 +199,7 @@ class Zap(RapidastScanner):
         self._setup_spider()
         self._setup_ajax_spider()
         self._setup_api()
+        self._setup_import_urls()
         self._setup_passive_scan()
         self._setup_active_scan()
         self._setup_passive_wait()
@@ -206,6 +207,21 @@ class Zap(RapidastScanner):
 
         # The AF should now be setup and ready to be written
         self._save_automation_file()
+
+    def _setup_import_urls(self):
+        """If scanners.zap.importUrlsFromFile exists: prepare an import job for URLs
+        scanners.zap.importUrlsFromFile _must_ be an existing file on the host
+        Its content is a text file: a list of GET URLs, each of which will be scanned
+        """
+        job = {"name": "import", "type": "import", "parameters": {"type": "url"}}
+
+        orig = self.config.get("scanners.zap.importUrlsFromFile")
+        if not orig:
+            return
+        dest = f"{self._container_work_dir()}/importUrls.txt"
+        self._include_file(orig, dest)
+        job["parameters"]["fileName"] = dest
+        self.af["jobs"].append(job)
 
     def _setup_api(self):
         """Prepare an openapi job and append it to the job list"""

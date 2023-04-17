@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import yaml
 
 import configmodel.converter
@@ -15,6 +17,15 @@ def test_config():
 
 
 ## Testing Authentication methods ##
+
+
+def test_setup_import_urls(test_config):
+    # trick: set this very file as import
+    test_config.set("scanners.zap.importUrlsFromFile", __file__)
+
+    test_zap = ZapPodman(config=test_config)
+    test_zap.setup()
+    assert Path(test_zap._host_work_dir(), "importUrls.txt").is_file()
 
 
 def test_setup_authentication_no_auth_configured(test_config):

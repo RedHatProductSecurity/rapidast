@@ -187,6 +187,9 @@ class Zap(RapidastScanner):
         try:
             af_context = find_context(self.af)
             af_context["urls"].append(self.config.get("application.url"))
+            af_context["includePaths"].extend(
+                self.config.get("scanners.zap.urls.includes", default=[])
+            )
             af_context["excludePaths"].extend(
                 self.config.get("scanners.zap.urls.excludes", default=[])
             )

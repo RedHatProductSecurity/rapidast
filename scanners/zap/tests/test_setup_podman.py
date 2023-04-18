@@ -1,9 +1,8 @@
 from pathlib import Path
 
-import yaml
+import pytest
 
 import configmodel.converter
-import pytest
 from scanners.zap.zap import find_context
 from scanners.zap.zap_podman import ZapPodman
 
@@ -131,7 +130,7 @@ def test_setup_authentication_auth_rtoken_configured(test_config):
 
 
 def test_setup_exclude_urls(test_config):
-    test_config.set("general.urls.excludes", ["abc", "def"])
+    test_config.set("scanners.zap.urls.excludes", ["abc", "def"])
     test_config.merge(
         test_config.get("general", default={}), preserve=False, root=f"scanners.zap"
     )
@@ -141,6 +140,19 @@ def test_setup_exclude_urls(test_config):
 
     assert "abc" in find_context(test_zap.af)["excludePaths"]
     assert "def" in find_context(test_zap.af)["excludePaths"]
+
+
+def test_setup_include_urls(test_config):
+    test_config.set("scanners.zap.urls.includes", ["abc", "def"])
+    test_config.merge(
+        test_config.get("general", default={}), preserve=False, root=f"scanners.zap"
+    )
+
+    test_zap = ZapPodman(config=test_config)
+    test_zap.setup()
+
+    assert "abc" in find_context(test_zap.af)["includePaths"]
+    assert "def" in find_context(test_zap.af)["includePaths"]
 
 
 def test_setup_ajax(test_config):

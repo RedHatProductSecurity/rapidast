@@ -96,19 +96,23 @@ scanners:
       format: ["json"]
       # format: ["json","html","sarif"]  # default: "json" only
 
+    urls:
+      # Optional, `includes` and `excludes` take a list of regexps.
+      # includes: A URL matching that regexp will be in the scope of scanning, in addition to application.url which is already in scope
+      # excludes: A URL matching that regexp will NOT be in the scope of scanning
+      # Note: The regular expressions MUST match the whole URL.
+      #       e.g.: 'http://example.com/do-not-descend-here/' will actually descend
+
+      #includes:
+      #  - "^https?://example.com:3000/.*$"
+      #excludes:
+      #  - "^https?://example.com:3000/do-not-descend-here/.*$"
+
     miscOptions:
       # enableUI (default: false), requires a compatible runtime (e.g.: flatpak or no containment)
       enableUI: False
       # Defaults to True, set False to prevent auto update of ZAP plugins
       updateAddons: True
-
-    urls:
-      # `excludes` takes a list of regexps. A URL matching that regexp will not be used by the scanner
-      # Note: The regular expressions MUST match the whole URL.
-      #       e.g.: 'http://example.com/do-not-descend-here/' will actually descend
-      excludes:
-        - "^https?://example.com/do-not-descend-here/.*$"
-
 
 
 # Other scanners to be defined(TBD)

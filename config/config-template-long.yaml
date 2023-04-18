@@ -104,7 +104,7 @@ scanners:
       #       e.g.: 'http://example.com/do-not-descend-here/' will actually descend
 
       #includes:
-      #  - "^https?://example.com:3000/do-not-descend-here/.*$"
+      #  - "^https?://example.com:3000/.*$"
       #excludes:
       #  - "^https?://example.com:3000/do-not-descend-here/.*$"
 

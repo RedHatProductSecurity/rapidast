@@ -101,6 +101,8 @@ scanners:
       enableUI: False
       # Defaults to True, set False to prevent auto update of ZAP plugins
       updateAddons: True
+      # If set to True and authentication is oauth2_rtoken and api.apiUrl is set, download the API outside of ZAP
+      oauth2OpenapiManualDownload: False
 
     urls:
       # `excludes` takes a list of regexps. A URL matching that regexp will not be used by the scanner

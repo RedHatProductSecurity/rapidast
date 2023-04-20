@@ -11,6 +11,7 @@ import yaml
 
 from scanners import generic_authentication_factory
 from scanners import RapidastScanner
+from scanners.downloaders import authenticated_download_with_rtoken
 
 
 CLASSNAME = "Zap"
@@ -164,7 +165,12 @@ class Zap(RapidastScanner):
         else:
             path_to_dest = self.path_map.container_2_host(dest_in_container)
 
-        shutil.copy(host_path, path_to_dest)
+        try:
+            shutil.copy(host_path, path_to_dest)
+        except shutil.SameFileError:
+            logging.debug(
+                f"_include_file() ignoring '{host_path} → 'container:{path_to_dest}' as they are the same file"
+            )
         logging.debug(f"_include_file() '{host_path} → 'container:{path_to_dest}'")
 
     ###############################################################
@@ -598,6 +604,39 @@ class Zap(RapidastScanner):
         }
         self.af["jobs"].append(script)
         logging.info("ZAP configured with OAuth2 RTOKEN")
+
+        # quickhack: the openapi job currently does not run with user authentication.
+        # This is a problem when openapi requires an authenticated URL.
+        # => manually download the OAS, and change it to apiFile
+        # This can be deleted when https://github.com/zaproxy/zaproxy/issues/7739 is resolved
+        # Note: to avoid a temporary file, we download the file directly in its final destination in work_dir
+        #       This is not a problem: it will simply be ignored by _include_file()
+        oas_url = self.config.get("scanners.zap.apiScan.apis.apiUrl", default=None)
+        if oas_url and self.config.get(
+            "scanners.zap.miscOptions.oauth2OpenapiManualDownload", default=False
+        ):
+            logging.info("ZAP workaround: manually downloading the OpenAPI file")
+            if authenticated_download_with_rtoken(
+                url=oas_url,
+                dest=f"{self._host_work_dir()}/openapi.json",
+                rtoken=os.environ[rtoken],
+                client_id=client_id,
+                auth_url=token_endpoint,
+                proxy=self.config.get("scanners.zap.proxy", default=None),
+            ):
+                logging.info(
+                    "Successful manual download of the OAS: replacing apiUrl by apiFile"
+                )
+                self.config.set(
+                    "scanners.zap.apiScan.apis.apiFile",
+                    f"{self._host_work_dir()}/openapi.json",
+                )
+                self.config.delete("scanners.zap.apiScan.apis.apiUrl")
+            else:
+                logging.warning(
+                    "Failed to manually download the OAS. delegating to ZAP"
+                )
+
         return True
 
     ###############################################################

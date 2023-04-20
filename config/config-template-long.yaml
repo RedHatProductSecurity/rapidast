@@ -113,6 +113,8 @@ scanners:
       enableUI: False
       # Defaults to True, set False to prevent auto update of ZAP plugins
       updateAddons: True
+      # If set to True and authentication is oauth2_rtoken and api.apiUrl is set, download the API outside of ZAP
+      oauth2OpenapiManualDownload: False
 
 
 # Other scanners to be defined(TBD)

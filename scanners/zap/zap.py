@@ -388,7 +388,6 @@ class Zap(RapidastScanner):
         reports = {
             "json": ReportFormat("traditional-json-plus", "rapidast-report.json"),
             "html": ReportFormat("traditional-html-plus", "rapidast-report.html"),
-            "html": ReportFormat("traditional-html-plus", "rapidast-report.html"),
             "sarif": ReportFormat("sarif-json", "rapidast-report.sarif.json"),
             "xml": ReportFormat("traditional-xml-plus", "rapidast-report.xml"),
         }

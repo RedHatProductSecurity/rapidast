@@ -1,4 +1,3 @@
-import glob
 import logging
 import os
 import pprint
@@ -6,6 +5,7 @@ import shutil
 import tarfile
 import tempfile
 from base64 import urlsafe_b64encode
+from collections import namedtuple
 
 import yaml
 
@@ -29,12 +29,10 @@ class Zap(RapidastScanner):
     DEFAULT_CONTEXT = "Default Context"
     AF_TEMPLATE = "af-template.yaml"
     USER = "test1"
-    ZAP_REPORT_TEMPLATE_HTML = "traditional-html-plus"
-    ZAP_REPORT_TEMPLATE_JSON = "traditional-json-plus"
-    ZAP_REPORT_TEMPLATE_SARIF = "sarif-json"
 
     DEFAULT_CONTAINER = "podman"
-    DEFAULT_REPORT_NAME_PREFIX = "rapidast-report"
+
+    REPORTS_SUBDIR = "reports"
 
     ## FUNCTIONS
     def __init__(self, config):
@@ -90,26 +88,13 @@ class Zap(RapidastScanner):
         pass
 
     def postprocess(self):
-        host_results = self.path_map.workdir.host_path
-
         logging.info(f"Extracting report, storing in {self.results_dir}")
-        os.makedirs(self.results_dir, exist_ok=True)
-
-        for report_item in glob.glob(
-            os.path.join(host_results, Zap.DEFAULT_REPORT_NAME_PREFIX) + "*"
-        ):
-            logging.debug(f"shutil copying {report_item}")
-
-            if os.path.isdir(report_item):
-                shutil.copytree(
-                    report_item, self.results_dir + "/" + report_item.split("/")[-1]
-                )
-            else:
-                shutil.copy(report_item, self.results_dir)
+        reports_dir = os.path.join(self.path_map.workdir.host_path, Zap.REPORTS_SUBDIR)
+        shutil.copytree(reports_dir, self.results_dir)
 
         logging.info("Saving the session as evidence")
         with tarfile.open(f"{self.results_dir}/session.tar.gz", "w:gz") as tar:
-            tar.add(host_results, arcname="evidences")
+            tar.add(self.path_map.workdir.host_path, arcname="evidences")
 
     def cleanup(self):
         """Generic ZAP cleanup: should be called only via super() inheritance"""
@@ -379,14 +364,14 @@ class Zap(RapidastScanner):
 
         self.af["jobs"].append(active)
 
-    def _construct_report_af(self, template, report_file):
+    def _construct_report_af(self, report_format):
         report_af = {
             "name": "report",
             "type": "report",
             "parameters": {
-                "template": template,
-                "reportDir": f"{self.path_map.workdir.container_path}/",
-                "reportFile": report_file,
+                "template": report_format.template,
+                "reportDir": f"{self.path_map.workdir.container_path}/{Zap.REPORTS_SUBDIR}/",
+                "reportFile": report_format.name,
                 "reportTitle": "ZAP Scanning Report",
                 "reportDescription": "",
                 "displayReport": False,
@@ -398,42 +383,33 @@ class Zap(RapidastScanner):
     def _setup_report(self):
         """Adds the report to the job list. This should be called last"""
 
-        report_cfg = self.config.get("scanners.zap.report", default=False)
+        os.makedirs(os.path.join(self.path_map.workdir.host_path, Zap.REPORTS_SUBDIR))
+        ReportFormat = namedtuple("ReportFormat", ["template", "name"])
+        reports = {
+            "json": ReportFormat("traditional-json-plus", "rapidast-report.json"),
+            "html": ReportFormat("traditional-html-plus", "rapidast-report.html"),
+            "sarif": ReportFormat("sarif-json", "rapidast-report.sarif.json"),
+            "xml": ReportFormat("traditional-xml-plus", "rapidast-report.xml"),
+        }
 
-        is_report_format_set = False
-        if report_cfg:
-            logging.debug(
-                f"report format configured: {report_cfg}, type: {type(report_cfg)}"
-            )
-            for report_format in report_cfg["format"]:
-                logging.debug(f"report format configured: {report_format}")
-
-                if report_format == "json":
-                    zap_template = Zap.ZAP_REPORT_TEMPLATE_JSON
-                    report_filename = self.DEFAULT_REPORT_NAME_PREFIX + ".json"
-                elif report_format == "html":
-                    zap_template = Zap.ZAP_REPORT_TEMPLATE_HTML
-                    report_filename = self.DEFAULT_REPORT_NAME_PREFIX + ".html"
-                elif report_format == "sarif":
-                    zap_template = Zap.ZAP_REPORT_TEMPLATE_SARIF
-                    report_filename = self.DEFAULT_REPORT_NAME_PREFIX + ".sarif.json"
-                else:
-                    logging.info(f"invalid report_format: {report_format}")
-                    continue
-
-                logging.debug(f"report filename: {report_filename}")
-                is_report_format_set = True
-                self.af["jobs"].append(
-                    self._construct_report_af(zap_template, report_filename)
+        formats = self.config.get("scanners.zap.report.format", ["json"])
+        if not isinstance(formats, list):
+            formats = [formats]
+        appended = 0
+        for format_id in formats:
+            try:
+                logging.debug(
+                    f"report {format_id}, filename: {reports[format_id].name}"
                 )
-
-        if not is_report_format_set:
-            # default report format: json
-            zap_template = "traditional-json-plus"
-            report_filename = self.DEFAULT_REPORT_NAME_PREFIX + ".json"
-            self.af["jobs"].append(
-                self._construct_report_af(zap_template, report_filename)
-            )
+                self.af["jobs"].append(self._construct_report_af(reports[format_id]))
+                appended += 1
+            except KeyError as exc:
+                logging.warning(
+                    f"Reports: {exc.args[0]} is not a valid format. Ignoring"
+                )
+        if not appended:
+            logging.warning(f"Creating a default report as no valid were found")
+            self.af["jobs"].append(self._construct_report_af(reports["json"]))
 
     def _setup_zap_cli(self):
         """prepare the zap command: self.zap_cli

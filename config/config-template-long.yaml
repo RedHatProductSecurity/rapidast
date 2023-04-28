@@ -67,6 +67,11 @@ scanners:
     # A list of URLs can also be provided, from a text file (1 URL per line)
     importUrlsFromFile: "<path to import URL>"
 
+    graphql:
+      endpoint: "<URL to GraphQL API endpoint>"
+      # schemaUrl: ""
+      # schemaFile: ""
+
     spider:
       maxDuration: 0 # in minutes, default: 0 unlimited
       url: ""        # url to start spidering from, default: application.url set above
@@ -90,7 +95,7 @@ scanners:
       parameters:
         image: "docker.io/owasp/zap2docker-stable:latest" # for type such as podman
         executable: "zap.sh"  # for Linux
-        # executable: "/Applications/OWASP ZAP.app/Contents/Java/zap.sh"    # for MacOS
+        # executable: "/Applications/OWASP ZAP.app/Contents/Java/zap.sh"    # for MacOS, when general.container.type is 'none' only
 
     report:
       format: ["json"]

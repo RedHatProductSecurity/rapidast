@@ -171,6 +171,26 @@ def test_setup_ajax(test_config):
             break
 
 
+def test_setup_graphql(test_config):
+    TEST_GRAPHQL_ENDPOINT = "http://test.com/graphql"
+    TEST_GRAPHQL_SCHEMA_URL = "http://test.com/schema.graphql"
+    TEST_GRAPHQL_SCHEMA_FILE = "schema.graphql"
+
+    test_config.set("scanners.zap.graphql.endpoint", TEST_GRAPHQL_ENDPOINT)
+    test_config.set("scanners.zap.graphql.schemaUrl", TEST_GRAPHQL_SCHEMA_URL)
+    test_config.set("scanners.zap.graphql.schemaFile", TEST_GRAPHQL_SCHEMA_FILE)
+
+    test_zap = ZapPodman(config=test_config)
+    test_zap.setup()
+
+    for item in test_zap.af["jobs"]:
+        if item["type"] == "graphql":
+            assert item["parameters"]["endpoint"] == TEST_GRAPHQL_ENDPOINT
+            assert item["parameters"]["schemaUrl"] == TEST_GRAPHQL_SCHEMA_URL
+            assert item["parameters"]["schemaFile"] == TEST_GRAPHQL_SCHEMA_FILE
+            break
+
+
 ## Testing report format ##
 
 

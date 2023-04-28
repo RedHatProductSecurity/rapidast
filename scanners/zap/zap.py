@@ -196,6 +196,7 @@ class Zap(RapidastScanner):
         self._setup_spider()
         self._setup_ajax_spider()
         self._setup_api()
+        self._setup_graphql()
         self._setup_import_urls()
         self._setup_passive_scan()
         self._setup_active_scan()
@@ -300,6 +301,31 @@ class Zap(RapidastScanner):
             af_context["includePaths"].append(new_include_path)
 
         self.af["jobs"].append(af_spider_ajax)
+
+    def _setup_graphql(self):
+        """Prepare a graphql job and append it to the job list"""
+
+        if self.config.get("scanners.zap.graphql", default=False) is False:
+            return
+
+        af_graphql = {
+            "name": "graphql",
+            "type": "graphql",
+            "parameters": {
+                "user": Zap.USER if self.authenticated else "",
+                "endpoint": self.config.get(
+                    "scanners.zap.graphql.endpoint", default=""
+                ),
+                "schemaUrl": self.config.get(
+                    "scanners.zap.graphql.schemaUrl", default=""
+                ),
+                "schemaFile": self.config.get(
+                    "scanners.zap.graphql.schemaFile", default=""
+                ),
+            },
+        }
+
+        self.af["jobs"].append(af_graphql)
 
     def _setup_passive_scan(self):
         """Adds the passive scan to the job list. Needs to be done prior to Active scan"""

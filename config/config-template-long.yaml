@@ -94,7 +94,7 @@ scanners:
 
     report:
       format: ["json"]
-      # format: ["json","html","sarif"]  # default: "json" only
+      # format: ["json","html","sarif","xml"]  # default: "json" only
 
     urls:
       # Optional, `includes` and `excludes` take a list of regexps.

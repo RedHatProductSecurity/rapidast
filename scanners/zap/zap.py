@@ -312,7 +312,6 @@ class Zap(RapidastScanner):
             "name": "graphql",
             "type": "graphql",
             "parameters": {
-                "user": Zap.USER if self.authenticated else "",
                 "endpoint": self.config.get(
                     "scanners.zap.graphql.endpoint", default=""
                 ),

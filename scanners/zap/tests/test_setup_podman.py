@@ -191,6 +191,8 @@ def test_setup_graphql(test_config):
                 == f"{test_zap._container_work_dir()}/schema.graphql"
             )
             break
+    else:
+        assert False, "graphql job not found"
 
 
 ## Testing report format ##

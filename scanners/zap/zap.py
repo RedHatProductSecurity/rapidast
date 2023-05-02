@@ -311,18 +311,16 @@ class Zap(RapidastScanner):
         af_graphql = {
             "name": "graphql",
             "type": "graphql",
-            "parameters": {
-                "endpoint": self.config.get(
-                    "scanners.zap.graphql.endpoint", default=""
-                ),
-                "schemaUrl": self.config.get(
-                    "scanners.zap.graphql.schemaUrl", default=""
-                ),
-                "schemaFile": self.config.get(
-                    "scanners.zap.graphql.schemaFile", default=""
-                ),
-            },
+            "parameters": self.config.get(
+                "scanners.zap.graphql", default={"endpoint": ""}
+            ),
         }
+
+        hostFile = self.config.get("scanners.zap.graphql.schemaFile")
+        if hostFile:
+            contFile = os.path.join(self._container_work_dir(), "schema.graphql")
+            self._include_file(host_path=hostFile, dest_in_container=contFile)
+            af_graphql["parameters"]["schemaFile"] = contFile
 
         self.af["jobs"].append(af_graphql)
 

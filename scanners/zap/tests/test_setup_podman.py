@@ -174,11 +174,10 @@ def test_setup_ajax(test_config):
 def test_setup_graphql(test_config):
     TEST_GRAPHQL_ENDPOINT = "http://test.com/graphql"
     TEST_GRAPHQL_SCHEMA_URL = "http://test.com/schema.graphql"
-    TEST_GRAPHQL_SCHEMA_FILE = "schema.graphql"
 
     test_config.set("scanners.zap.graphql.endpoint", TEST_GRAPHQL_ENDPOINT)
     test_config.set("scanners.zap.graphql.schemaUrl", TEST_GRAPHQL_SCHEMA_URL)
-    test_config.set("scanners.zap.graphql.schemaFile", TEST_GRAPHQL_SCHEMA_FILE)
+    test_config.set("scanners.zap.graphql.schemaFile", __file__)
 
     test_zap = ZapPodman(config=test_config)
     test_zap.setup()
@@ -187,7 +186,10 @@ def test_setup_graphql(test_config):
         if item["type"] == "graphql":
             assert item["parameters"]["endpoint"] == TEST_GRAPHQL_ENDPOINT
             assert item["parameters"]["schemaUrl"] == TEST_GRAPHQL_SCHEMA_URL
-            assert item["parameters"]["schemaFile"] == TEST_GRAPHQL_SCHEMA_FILE
+            assert (
+                item["parameters"]["schemaFile"]
+                == f"{test_zap._container_work_dir()}/schema.graphql"
+            )
             break
 
 

@@ -69,8 +69,16 @@ scanners:
 
     graphql:
       endpoint: "<URL to GraphQL API endpoint>"
-      # schemaUrl: ""
-      # schemaFile: ""
+      # schemaUrl: ""                       # String: URL pointing to a GraphQL Schema
+      # schemaFile: ""                      # String: Local file path of a GraphQL Schema
+      # maxQueryDepth: 5                    # The maximum query generation depth
+      # lenientMaxQueryDepthEnabled: true   # Whether or not Maximum Query Depth is enforced leniently
+      # maxAdditionalQueryDepth: 5          # The maximum additional query generation depth (used if enforced leniently)
+      # maxArgsDepth: 5                     # The maximum arguments generation depth
+      # optionalArgsEnabled: true           # Whether or not Optional Arguments should be specified
+      # argsType: both                      # Enum [inline, variables, both]: How arguments are specified
+      # querySplitType: leaf                # Enum [leaf, root_field, operation]: The level for which a single query is generated
+      # requestMethod: post_json            # Enum [post_json, post_graphql, get]: The request method
 
     spider:
       maxDuration: 0 # in minutes, default: 0 unlimited

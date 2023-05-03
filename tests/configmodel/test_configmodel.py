@@ -21,6 +21,8 @@ def generate_some_nested_config():
     return {
         "key1": "value1",
         "key2": {"key21": "value21"},
+        "key3": "value3",
+        "key4": "value4",
         "nested": {"morenested": {"key3": "nestedvalue"}},
         "nothing": None,
     }
@@ -77,6 +79,36 @@ def test_configmodel_set(some_nested_config):
     # incompatible set, with overwrite
     myconf.set("nested.morenested", "mynewval", overwrite=True)
     assert myconf.get("nested.morenested") == "mynewval"
+
+
+def test_configmodel_move(some_nested_config):
+    myconf = RapidastConfigModel(some_nested_config)
+
+    # Simple move
+    myconf.move("key1", "moved_key1")
+    assert myconf.get("moved_key1", "x") == "value1"
+    assert not myconf.exists("key1")
+
+    # moving into a sub-entry is supposed to fail
+    # also verify that the move failed and that the config did not get modified
+    with pytest.raises(ValueError):
+        myconf.move("key2", "key2.new_destination")
+    assert myconf.get("key2", "x") == {"key21": "value21"}
+
+    # moving a whole dictionary
+    myconf.move("nested", "key2.nested_moved")
+    assert myconf.get("key2.nested_moved") == {"morenested": {"key3": "nestedvalue"}}
+    assert not myconf.exists("nested")
+
+    # Moving an unexisting entry should be silently ignored
+    myconf.move("key2.doesnotexist", "key2.doesnotexist_moved")
+    assert not myconf.exists("key2.doesnotexist")
+    assert not myconf.exists("key2.doesnotexist_moved")
+
+    # Moving should overwrite existing destination
+    myconf.move("key3", "key4")
+    assert not myconf.exists("key3")
+    assert myconf.get("key4", "x") == "value3"
 
 
 def test_configmodel_delete(some_nested_config):

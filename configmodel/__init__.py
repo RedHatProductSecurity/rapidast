@@ -70,7 +70,7 @@ class RapidastConfigModel:
         - Create the path if necessary
         - To prevent modification of existing value: overwrite=False
         - Discard previous value
-        - Override (with a warning) path if necessary (if something in the path was not a dict)
+        - Overwrite (with a warning) path if necessary (if something in the path was not a dict)
         - Returns True if a modifcation was made
         """
         path = path_to_list(path)
@@ -98,6 +98,24 @@ class RapidastConfigModel:
             walk[path[-1]] = value
             return True
         return False
+
+    def move(self, orig, dest):
+        """Move a subtree to another location. Nothing happens if the origin does not exist
+        Both `orig` and `dest` are paths (list or dot-separated string) within the configuration
+        """
+
+        orig = path_to_list(orig)
+        dest = path_to_list(dest)
+
+        if dest[0 : len(orig)] == orig:
+            raise ValueError("Moving config entry to a subentry is not supported")
+
+        if self.exists(orig):
+            self.set(dest, self.get(orig))
+            self.delete(orig)
+            logging.debug(f"Moved '{orig}' to '{dest}'")
+        else:
+            logging.debug(f"NOT moving '{orig}' as it did not exist")
 
     def merge(self, merge, preserve=False, root=None):
         """Recursively merge `merge` into the configuration.

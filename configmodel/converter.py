@@ -56,13 +56,7 @@ def convert_from_version_2_to_3(old):
     Change: `scanners.zap.updateAddons` moved to `scanners.zap.miscOptions.updateAddons`
     """
     new = copy.deepcopy(old)
-
-    if old.exists("scanners.zap.updateAddons"):
-        new.set(
-            "scanners.zap.miscOptions.updateAddons",
-            old.get("scanners.zap.updateAddons"),
-        )
-        new.delete("scanners.zap.updateAddons")
+    new.move("scanners.zap.updateAddons", "scanners.zap.miscOptions.updateAddons")
 
     # Finally, set the correct version number
     new.set("config.configVersion", 3)
@@ -80,19 +74,13 @@ def convert_from_version_1_to_2(old):
     # We need to move all scanners.*.container.image
     # In practice, currently, there's only `zap` to worry about
     for key in old.conf["scanners"]:
-        if old.exists(f"scanners.{key}.container.image"):
-            new.set(
-                f"scanners.{key}.container.parameters.image",
-                old.get(f"scanners.{key}.container.image"),
-            )
-            new.delete(f"scanners.{key}.container.image")
+        new.move(
+            f"scanners.{key}.container.image",
+            f"scanners.{key}.container.parameters.image",
+        )
 
     # This should not happen: image is not meant to be stored there, but just to be clean
-    if old.exists("general.container.image"):
-        new.set(
-            "general.container.parameters.image", old.get("general.container.image")
-        )
-        new.delete("general.container.image")
+    new.move("general.container.image", "general.container.parameters.image")
 
     # Finally, set the correct version number
     new.set("config.configVersion", 2)

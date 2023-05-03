@@ -169,6 +169,8 @@ def test_setup_ajax(test_config):
             assert item["parameters"]["url"] == "http://test.com"
             assert item["parameters"]["browserId"] == "chrome-headless"
             break
+    else:
+        assert False
 
 
 def test_setup_graphql(test_config):
@@ -204,10 +206,10 @@ def test_setup_graphql(test_config):
         ("html", "traditional-html-plus"),
         ("json", "traditional-json-plus"),
         ("sarif", "sarif-json"),
+        ("xml", "traditional-xml-plus"),
     ],
 )
 def test_setup_report_format(test_config, result_format, expected_template):
-    # test_config.set("scanners.zap.report.format[0]", "json")
     test_config.set("scanners.zap.report.format", [result_format])
 
     print(test_config)
@@ -215,11 +217,9 @@ def test_setup_report_format(test_config, result_format, expected_template):
     test_zap = ZapPodman(config=test_config)
     test_zap.setup()
 
-    # print(test_zap.af["jobs"])
-
-    report_job_found = 0
     for item in test_zap.af["jobs"]:
         if item["type"] == "report":
-            report_job_found += 1
             assert item["parameters"]["template"] == expected_template
-            continue
+            break
+    else:
+        assert False

@@ -106,6 +106,22 @@ __NOTES__
 + The path are immutable: they must be chosen during creation (in the `__init__()` function), and must not be modified afterwards. The parent scanner (e.g.: `Zap`) should define the mount points, and each runtime (e.g.: `ZapPodman`) should fill each map *once*
 + For `type = None` (the scanner will run on the host), then the map must be the same (e.g.: `PathMap("/path/to/dir", "/path/to/dir")`)
 
+### Integrating the scanner to Defect Dojo
+
+The scanner can optionally be integrated to Defect Dojo. All it needs to do is to create an optional `data_for_defect_dojo()` method (no parameters).
+This can be useful when the scanner exports a file that can be imported into a Defect Dojo test.
+This method must return a tuple of 2 values:
+* A dictionary containing a subset of values accepted by Defect Dojo's `import-scan` or `reimport-scan` endpoints (see https://demo.defectdojo.org/api/v2/doc/)
+* A string corresponding to path of the file containing the scan result, in a format parsable by Defect Dojo.
+
+The dictionary must not:
+* contain the `file` entry, as it is done via the tuple's 2nd value
+
+The dictionary must:
+* Contain enough information to let Defect Dojo import the file (e.g.: provide a test identifier for re-import, or at least a `product_name` + `engagement_name` so that Defect Dojo can create a test on its own)
+* Provide the scan `scan_type` corresponding to the result file (e.g.: `ZAP Scan` for ZAP), as well as all other mandatory field (`verified` and `active`)
+
+Note: simply return the `(None, None)` tuple to abort the operation.
 
 ## The configuration model
 

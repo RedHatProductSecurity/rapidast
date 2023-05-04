@@ -9,6 +9,7 @@ from collections import namedtuple
 
 import yaml
 
+from configmodel import RapidastConfigModel
 from scanners import generic_authentication_factory
 from scanners import RapidastScanner
 from scanners.downloaders import authenticated_download_with_rtoken
@@ -99,6 +100,49 @@ class Zap(RapidastScanner):
     def cleanup(self):
         """Generic ZAP cleanup: should be called only via super() inheritance"""
         pass
+
+    def data_for_defect_dojo(self):
+        """Return a tuple containing:
+        1) Metadata for the test (dictionary)
+        2) Path to the result file (string)
+        For additional info regarding the metadata, see the `import-scan`/`reimport-scan`
+        endpoints (https://demo.defectdojo.org/api/v2/doc/)
+
+        To "cancel", return the (None, None) tuple
+        """
+        if not self._should_export_to_defect_dojo():
+            return None, None
+        logging.debug("Preparing data for Defect Dojo")
+
+        # the XML report is supposed to have been forcefully added, and expected to exist
+        filename = f"{self.results_dir}/zap-report.xml"
+
+        # default, mandatory values (which can be overloaded)
+        data = {
+            "scan_type": "ZAP Scan",
+            "active": True,
+            "verified": False,
+        }
+
+        # lists of configured import parameters
+        params_root = "scanners.zap.defectDojoExport.parameters"
+        import_params = self.config.get(params_root, default={}).keys()
+
+        # overload that list onto the defaults
+        for param in import_params:
+            data[param] = self.config.get(f"{params_root}.{param}")
+
+        if data.get("test") is None:
+            # No test ID provided, so we need to make sure there is enough info
+            # But we can't make it default (they should not be filled if there is a test ID
+            if not data.get("product_name"):
+                data["product_name"] = self.config.get(
+                    "application.ProductName"
+                ) or self.config.get("application.shortName")
+            if not data.get("engagement_name"):
+                data["engagement_name"] = "RapiDAST"
+
+        return data, filename
 
     ###############################################################
     # PROTECTED METHODS                                           #
@@ -403,6 +447,13 @@ class Zap(RapidastScanner):
 
         return report_af
 
+    def _should_export_to_defect_dojo(self):
+        """Return a truthful value if Defect Dojo export is configured and not disbaled"""
+        return (
+            self.config.exists("scanners.zap.defectDojoExport")
+            and self.config.get("scanners.zap.defectDojoExport.type") is not False
+        )
+
     def _setup_report(self):
         """Adds the report to the job list. This should be called last"""
 
@@ -415,9 +466,12 @@ class Zap(RapidastScanner):
             "xml": ReportFormat("traditional-xml-plus", "zap-report.xml"),
         }
 
-        formats = self.config.get("scanners.zap.report.format", ["json"])
-        if not isinstance(formats, list):
-            formats = [formats]
+        formats = set(self.config.get("scanners.zap.report.format", {"json"}))
+        # DefectDojo requires XML report type
+        if self._should_export_to_defect_dojo():
+            logging.debug("ZAP report: ensures XML report for Defect Dojo")
+            formats.add("xml")
+
         appended = 0
         for format_id in formats:
             try:

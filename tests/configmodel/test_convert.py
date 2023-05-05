@@ -7,7 +7,7 @@ import pytest
 @pytest.fixture(name="config_v0")
 def generate_config_v0():
     try:
-        with open("configmodel/tests/older-schemas/v0.yaml") as file:
+        with open("tests/configmodel/older-schemas/v0.yaml") as file:
             return configmodel.RapidastConfigModel(yaml.safe_load(file))
     except yaml.YAMLError as exc:
         raise RuntimeError("Unable to load TEST file v0.yaml") from exc
@@ -15,7 +15,7 @@ def generate_config_v0():
 
 @pytest.fixture(name="config_v1")
 def generate_config_v1():
-    path = "configmodel/tests/older-schemas/v1.yaml"
+    path = "tests/configmodel/older-schemas/v1.yaml"
     try:
         with open(path) as file:
             return configmodel.RapidastConfigModel(yaml.safe_load(file))
@@ -25,7 +25,7 @@ def generate_config_v1():
 
 @pytest.fixture(name="config_v2")
 def generate_config_v2():
-    path = "configmodel/tests/older-schemas/v2.yaml"
+    path = "tests/configmodel/older-schemas/v2.yaml"
     try:
         with open(path) as file:
             return configmodel.RapidastConfigModel(yaml.safe_load(file))

@@ -409,10 +409,10 @@ class Zap(RapidastScanner):
         os.makedirs(os.path.join(self.path_map.workdir.host_path, Zap.REPORTS_SUBDIR))
         ReportFormat = namedtuple("ReportFormat", ["template", "name"])
         reports = {
-            "json": ReportFormat("traditional-json-plus", "rapidast-report.json"),
-            "html": ReportFormat("traditional-html-plus", "rapidast-report.html"),
-            "sarif": ReportFormat("sarif-json", "rapidast-report.sarif.json"),
-            "xml": ReportFormat("traditional-xml-plus", "rapidast-report.xml"),
+            "json": ReportFormat("traditional-json-plus", "zap-report.json"),
+            "html": ReportFormat("traditional-html-plus", "zap-report.html"),
+            "sarif": ReportFormat("sarif-json", "zap-report.sarif.json"),
+            "xml": ReportFormat("traditional-xml-plus", "zap-report.xml"),
         }
 
         formats = self.config.get("scanners.zap.report.format", ["json"])
@@ -431,7 +431,7 @@ class Zap(RapidastScanner):
                     f"Reports: {exc.args[0]} is not a valid format. Ignoring"
                 )
         if not appended:
-            logging.warning(f"Creating a default report as no valid were found")
+            logging.warning("Creating a default report as no valid were found")
             self.af["jobs"].append(self._construct_report_af(reports["json"]))
 
     def _setup_zap_cli(self):

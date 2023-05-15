@@ -5,7 +5,7 @@ import configmodel
 
 # WARNING: this needs to be incremented everytime a non-compatible change is made in the configuration.
 # A corresponding function also needs to be written
-CURR_CONFIG_VERSION = 3
+CURR_CONFIG_VERSION = 4
 
 
 def config_converter_dispatcher(func):
@@ -50,9 +50,31 @@ def convert_configmodel(conf):
     )
 
 
+@convert_configmodel.register(3)
+def convert_from_version_3_to_4(old):
+    """Returns a *copy* of the original rapidast config file, but updated to v4
+    Changes: Now any entry can be optionally appended with `_from_var`.
+    `oauth2_rtoken` authentication can now piggy back on this feature, so the original entry is removed
+    """
+    new = copy.deepcopy(old)
+    new.move(
+        "scanners.zap.authentication.parameters.rtoken_var_name",
+        "scanners.zap.authentication.parameters.rtoken_from_var",
+    )
+    new.move(
+        "general.authentication.parameters.rtoken_var_name",
+        "general.authentication.parameters.rtoken_from_var",
+    )
+
+    # Finally, set the correct version number
+    new.set("config.configVersion", 4)
+
+    return new
+
+
 @convert_configmodel.register(2)
 def convert_from_version_2_to_3(old):
-    """Returns a *copy* of the original rapidast config file, but updated to v2
+    """Returns a *copy* of the original rapidast config file, but updated to v3
     Change: `scanners.zap.updateAddons` moved to `scanners.zap.miscOptions.updateAddons`
     """
     new = copy.deepcopy(old)

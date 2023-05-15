@@ -1,3 +1,5 @@
+import os
+
 import yaml
 
 import pytest
@@ -59,6 +61,11 @@ def test_configmodel_get(some_nested_config):
     # unexisting values
     assert myconf.get("thisdoesnotexists", "x") == "x"
     assert myconf.get("nested.thisdoesnotexists", "x") == "x"
+
+    # Value from config "_from_var"
+    os.environ["MY_SECRET"] = "myEnvVal"
+    myconf.set("nested.keyenv.def_from_var", "MY_SECRET")
+    assert myconf.get("nested.keyenv.def", "x") == os.environ["MY_SECRET"]
 
 
 def test_configmodel_set(some_nested_config):

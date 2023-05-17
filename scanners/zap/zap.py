@@ -519,6 +519,25 @@ class Zap(RapidastScanner):
         logging.info("ZAP configured with Cookie authentication")
         return False
 
+    @authentication_factory.register("http_header")
+    def authentication_set_http_header_auth(self):
+        """Configure authentication via a header name/value
+        Adds a 'HeaderName: HeaderValue' to every query
+
+        Do this using the ZAP_AUTH_HEADER* environment vars
+
+        Returns False as it does not create a ZAP user
+        """
+        params_path = "scanners.zap.authentication.parameters"
+        header_name = self.config.get(f"{params_path}.name", default="Authorization")
+        header_val = self.config.get(f"{params_path}.value", default="")
+
+        self._add_env("ZAP_AUTH_HEADER", header_name)
+        self._add_env("ZAP_AUTH_HEADER_VALUE", header_val)
+
+        logging.info("ZAP configured with Authentication using HTTP Header")
+        return False
+
     @authentication_factory.register("http_basic")
     def authentication_set_http_basic_auth(self):
         """Configure authentication via HTTP Basic Authentication.
@@ -557,7 +576,7 @@ class Zap(RapidastScanner):
         params_path = "scanners.zap.authentication.parameters"
         client_id = self.config.get(f"{params_path}.client_id", "cloud-services")
         token_endpoint = self.config.get(f"{params_path}.token_endpoint", None)
-        rtoken = self.config.get(f"{params_path}.rtoken_var_name", "RTOKEN")
+        rtoken = self.config.get(f"{params_path}.rtoken", None)
         scripts_dir = self.path_map.scripts.container_path
 
         # 1- complete the context: script, verification and user
@@ -581,12 +600,12 @@ class Zap(RapidastScanner):
         context_["users"] = [
             {
                 "name": Zap.USER,
-                "credentials": {"refresh_token": f"${{{rtoken}}}"},
+                "credentials": {"refresh_token": f"${{RTOKEN}}"},
             }
         ]
         # 2- add the name of the variable containing the token
         # The value will be taken from the environment at the time of starting
-        self._add_env(rtoken)
+        self._add_env("RTOKEN", rtoken)
 
         # 2- complete the HTTPSender script job
         script = {
@@ -618,7 +637,7 @@ class Zap(RapidastScanner):
             if authenticated_download_with_rtoken(
                 url=oas_url,
                 dest=f"{self._host_work_dir()}/openapi.json",
-                rtoken=os.environ[rtoken],
+                rtoken=rtoken,
                 client_id=client_id,
                 auth_url=token_endpoint,
                 proxy=self.config.get("scanners.zap.proxy", default=None),

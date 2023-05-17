@@ -5,7 +5,7 @@ import configmodel
 
 # WARNING: this needs to be incremented everytime a non-compatible change is made in the configuration.
 # A corresponding function also needs to be written
-CURR_CONFIG_VERSION = 3
+CURR_CONFIG_VERSION = 4
 
 
 def config_converter_dispatcher(func):
@@ -50,19 +50,35 @@ def convert_configmodel(conf):
     )
 
 
+@convert_configmodel.register(3)
+def convert_from_version_3_to_4(old):
+    """Returns a *copy* of the original rapidast config file, but updated to v4
+    Changes: Now any entry can be optionally appended with `_from_var`.
+    `oauth2_rtoken` authentication can now piggy back on this feature, so the original entry is removed
+    """
+    new = copy.deepcopy(old)
+    new.move(
+        "scanners.zap.authentication.parameters.rtoken_var_name",
+        "scanners.zap.authentication.parameters.rtoken_from_var",
+    )
+    new.move(
+        "general.authentication.parameters.rtoken_var_name",
+        "general.authentication.parameters.rtoken_from_var",
+    )
+
+    # Finally, set the correct version number
+    new.set("config.configVersion", 4)
+
+    return new
+
+
 @convert_configmodel.register(2)
 def convert_from_version_2_to_3(old):
-    """Returns a *copy* of the original rapidast config file, but updated to v2
+    """Returns a *copy* of the original rapidast config file, but updated to v3
     Change: `scanners.zap.updateAddons` moved to `scanners.zap.miscOptions.updateAddons`
     """
     new = copy.deepcopy(old)
-
-    if old.exists("scanners.zap.updateAddons"):
-        new.set(
-            "scanners.zap.miscOptions.updateAddons",
-            old.get("scanners.zap.updateAddons"),
-        )
-        new.delete("scanners.zap.updateAddons")
+    new.move("scanners.zap.updateAddons", "scanners.zap.miscOptions.updateAddons")
 
     # Finally, set the correct version number
     new.set("config.configVersion", 3)
@@ -80,19 +96,13 @@ def convert_from_version_1_to_2(old):
     # We need to move all scanners.*.container.image
     # In practice, currently, there's only `zap` to worry about
     for key in old.conf["scanners"]:
-        if old.exists(f"scanners.{key}.container.image"):
-            new.set(
-                f"scanners.{key}.container.parameters.image",
-                old.get(f"scanners.{key}.container.image"),
-            )
-            new.delete(f"scanners.{key}.container.image")
+        new.move(
+            f"scanners.{key}.container.image",
+            f"scanners.{key}.container.parameters.image",
+        )
 
     # This should not happen: image is not meant to be stored there, but just to be clean
-    if old.exists("general.container.image"):
-        new.set(
-            "general.container.parameters.image", old.get("general.container.image")
-        )
-        new.delete("general.container.image")
+    new.move("general.container.image", "general.container.parameters.image")
 
     # Finally, set the correct version number
     new.set("config.configVersion", 2)

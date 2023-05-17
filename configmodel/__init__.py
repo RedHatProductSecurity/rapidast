@@ -196,15 +196,6 @@ def path_to_list(path):
     return list(path)
 
 
-def path_to_env(path):
-    """Path is a list of values (as returned by `path_to_list()`)
-    Returns the equivalent environment variable
-    e.g.: ["a", "b"] returns the string "RAPIDAST_A_B"
-    """
-    separator = "_"
-    return "RAPIDAST" + separator + separator.join(path).upper()
-
-
 def deep_dict_merge(dest, merge, preserve=False):
     """Modifies and returns the 'dest' dict, after merging 'merge' into it
 

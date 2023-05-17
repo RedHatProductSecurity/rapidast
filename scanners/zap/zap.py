@@ -576,7 +576,7 @@ class Zap(RapidastScanner):
         params_path = "scanners.zap.authentication.parameters"
         client_id = self.config.get(f"{params_path}.client_id", "cloud-services")
         token_endpoint = self.config.get(f"{params_path}.token_endpoint", None)
-        rtoken = self.config.get(f"{params_path}.rtoken_var_name", "RTOKEN")
+        rtoken = self.config.get(f"{params_path}.rtoken", None)
         scripts_dir = self.path_map.scripts.container_path
 
         # 1- complete the context: script, verification and user
@@ -600,12 +600,12 @@ class Zap(RapidastScanner):
         context_["users"] = [
             {
                 "name": Zap.USER,
-                "credentials": {"refresh_token": f"${{{rtoken}}}"},
+                "credentials": {"refresh_token": f"${{RTOKEN}}"},
             }
         ]
         # 2- add the name of the variable containing the token
         # The value will be taken from the environment at the time of starting
-        self._add_env(rtoken)
+        self._add_env("RTOKEN", rtoken)
 
         # 2- complete the HTTPSender script job
         script = {
@@ -637,7 +637,7 @@ class Zap(RapidastScanner):
             if authenticated_download_with_rtoken(
                 url=oas_url,
                 dest=f"{self._host_work_dir()}/openapi.json",
-                rtoken=os.environ[rtoken],
+                rtoken=rtoken,
                 client_id=client_id,
                 auth_url=token_endpoint,
                 proxy=self.config.get("scanners.zap.proxy", default=None),

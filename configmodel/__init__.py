@@ -1,5 +1,6 @@
 import copy
 import logging
+import os
 from pprint import pformat
 
 
@@ -11,25 +12,56 @@ class RapidastConfigModel:
         self.conf = conf
 
     def get(self, path, default=None):
+        """Retrieve a config value as the following:
+        1) if config entry `path` entry exists, return its value
+        2) if config entry f"{path}_from_var" exist,
+           AND that the value corresponds to an existing environment variable
+           THEN return the value of that environment variable
+        3) return default
+
+        path is either a list of values, or a dot-separated string
+        """
+        path = path_to_list(path)
+
+        # 1) Try to return value from config
+        try:
+            return self._get_from_conf(path)
+        except KeyError:
+            pass
+
+        # 2) Try to get a `..._from_var` entry, and, if so, return the variable value
+        new_path = path.copy()
+        new_path[-1] = new_path[-1] + "_from_var"
+        try:
+            env_name = self._get_from_conf(new_path)
+            return os.environ[env_name]
+        except KeyError:
+            pass
+
+        # 3) return default
+        return default
+
+    def _get_from_conf(self, path):
         """Walks `path` in the config, and returns the corresponding value
-        - If the path does not exist, returns `default`
+        - This method is meant to be private to the ConfigModel
+        - If the path does not exist return an KeyError exception, which MUST be handled by the caller
+        - `path` should already be translated to a list of value
         """
 
-        path = path_to_list(path)
         walk = self.conf
         try:
             for e in path:
-                walk = walk.get(e, default)
+                walk = walk[e]
             return walk
+        except TypeError:
+            pass
         except KeyError:
             pass
         except AttributeError:
             pass
         # Failed to iterate until the end: the path does not exist
-        logging.debug(
-            f"Config path {path} was not found. Returning default '{default}'"
-        )
-        return default
+        logging.debug(f"Config path {path} was not found")
+        raise KeyError(f"{path} did not exist in the config")
 
     def delete(self, path):
         """Delete path"""
@@ -70,7 +102,7 @@ class RapidastConfigModel:
         - Create the path if necessary
         - To prevent modification of existing value: overwrite=False
         - Discard previous value
-        - Override (with a warning) path if necessary (if something in the path was not a dict)
+        - Overwrite (with a warning) path if necessary (if something in the path was not a dict)
         - Returns True if a modifcation was made
         """
         path = path_to_list(path)
@@ -98,6 +130,24 @@ class RapidastConfigModel:
             walk[path[-1]] = value
             return True
         return False
+
+    def move(self, orig, dest):
+        """Move a subtree to another location. Nothing happens if the origin does not exist
+        Both `orig` and `dest` are paths (list or dot-separated string) within the configuration
+        """
+
+        orig = path_to_list(orig)
+        dest = path_to_list(dest)
+
+        if dest[0 : len(orig)] == orig:
+            raise ValueError("Moving config entry to a subentry is not supported")
+
+        if self.exists(orig):
+            self.set(dest, self.get(orig))
+            self.delete(orig)
+            logging.debug(f"Moved '{orig}' to '{dest}'")
+        else:
+            logging.debug(f"NOT moving '{orig}' as it did not exist")
 
     def merge(self, merge, preserve=False, root=None):
         """Recursively merge `merge` into the configuration.

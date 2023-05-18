@@ -1,12 +1,12 @@
 # RapiDAST
 
-RapiDAST(Rapid DAST) is an open-source security testing tool that automates the process of DAST(Dynamic application security testing) security testing and streamlines the integration of security into your development workflow. It is designed to help you quickly and effectively identify security vulnerabilities in your applications.
+RapiDAST(Rapid DAST) is an open-source security testing tool that automates the process of DAST(Dynamic application security testing) security testing and streamlines the integration of security into your development workflow. It is designed to help you quickly and effectively identify security vulnerabilities in your applications and container images.
 
-Taking advantage of [OWASP ZAP](https://www.zaproxy.org/) and additional scanners(TBD), RapiDAST provides additional value as follows:
+Taking advantage of OSS tools, such as [OWASP ZAP](https://www.zaproxy.org/) and [Trivy](https://github.com/aquasecurity/trivy), RapiDAST provides additional value as follows:
 
-- Ease of use and simple automation of HTTP/API scanning, fully working in CLI with a yaml configuration
+- Ease of use and simple automation of HTTP/API scanning and container image scanning for vulnerabilities, fully working in CLI with a yaml configuration
 - Ability to run automated DAST scanning to suit various users' needs
-- HTML, JSON and XML report generation
+- JSON, SARIF report generation (additionally HTML, XML for ZAP reports)
 - Integration with reporting solutions (TBD)
 
 # Getting Started
@@ -112,7 +112,7 @@ It is also possible to set the container type for each scanner differently by se
 
 ### Additional options
 
-In `scanners.zap.miscOptions`, additional options can be provided :
+Depending on scanners, additional options can be configured. For example, for ZAP there are the following options:
 
 + enableUI (default: False): Runs ZAP with the UI (useful for debugging). The runtime type must support it (only `none` and `flatpak`)
 + updateAddons (default: True): Prior to running, ZAP will update its addons
@@ -149,13 +149,15 @@ OWASP® ZAP (Zed Attack Proxy) is an open-source DAST tool. It can be used for s
 
 See https://www.zaproxy.org/ for more information.
 
-#### More scanners
+#### Trivy
 
-TBD
+Trivy is an open-source tool to provide various scanning features.
+
+See https://github.com/aquasecurity/trivy for more information.
 
 ### Authentication
 
-Authentication is common to all scanners. Authentication is configured in the `general` entry. Not all scanners may support all authentication types.
+Authentication maybe required to scan protected endpoints and contents. Authentication is configured in the `general` entry. Not all scanners may support all authentication types.
 
 Currently supported :
 

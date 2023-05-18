@@ -134,4 +134,19 @@ scanners:
       oauth2OpenapiManualDownload: False
 
 
-# Other scanners to be defined(TBD)
+  trivy:
+    report:
+      format: json         # json or sarif
+      # severity: low,medium,high,critical     # comma separated, default = all
+
+    image:
+      name: "python:3.9" # scan target
+      scanners: ["vuln"] # 'vuln' support only
+
+    container:
+      parameters:
+        image: "docker.io/aquasec/trivy"
+        executable: "trivy"  # for Linux
+
+    miscOptions:
+      skipDbUpdate: true

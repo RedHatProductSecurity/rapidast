@@ -5,14 +5,7 @@ import requests
 import yaml
 
 
-def authenticated_download_with_rtoken(
-    url,
-    dest,
-    rtoken,
-    client_id,
-    auth_url,
-    proxy=None,
-):
+def authenticated_download_with_rtoken(url, dest, auth, proxy=None):
     """Given a URL and Oauth2 authentication parameters, download the URL and store it at `dest`"""
 
     session = requests.Session()
@@ -23,9 +16,9 @@ def authenticated_download_with_rtoken(
         "Content-Type": "application/x-www-form-urlencoded",
     }
     payload = {
-        "client_id": client_id,
+        "client_id": auth.client_id,
         "grant_type": "refresh_token",
-        "refresh_token": rtoken,
+        "refresh_token": auth.rtoken,
     }
     if proxy:
         proxy = {
@@ -33,7 +26,7 @@ def authenticated_download_with_rtoken(
             "http": f"http://{proxy['proxyHost']}:{proxy['proxyPort']}",
         }
 
-    resp = session.post(auth_url, data=payload, headers=headers, proxies=proxy)
+    resp = session.post(auth.url, data=payload, headers=headers, proxies=proxy)
 
     if resp.status_code != 200:
         logging.warning(
@@ -57,7 +50,7 @@ def authenticated_download_with_rtoken(
         )
         return False
 
-    with open(dest, "w") as file:
+    with open(dest, "w", encoding="utf-8") as file:
         file.write(resp.text)
 
     logging.debug(f"Successful download of {url} into {dest}")

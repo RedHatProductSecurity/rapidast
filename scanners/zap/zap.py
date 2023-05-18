@@ -114,6 +114,8 @@ class Zap(RapidastScanner):
             "scanners.zap.container.type", default=Zap.DEFAULT_CONTAINER
         )
 
+    # disabling these 2 rules only here since they might actually be useful else where
+    # pylint: disable=unused-argument,no-self-use
     def _add_env(self, key, value=None):
         logging.warning(
             "_add_env() was called on the parent ZAP class. This is likely a bug. No operation done"
@@ -167,7 +169,7 @@ class Zap(RapidastScanner):
         try:
             af_template = f"{MODULE_DIR}/{Zap.AF_TEMPLATE}"
             logging.debug("Load the Automation Framework template")
-            with open(af_template, "r") as stream:
+            with open(af_template, "r", encoding="utf-8") as stream:
                 self.af = yaml.safe_load(stream)
         except yaml.YAMLError as exc:
             raise RuntimeError(
@@ -316,11 +318,11 @@ class Zap(RapidastScanner):
             ),
         }
 
-        hostFile = self.config.get("scanners.zap.graphql.schemaFile")
-        if hostFile:
-            contFile = os.path.join(self._container_work_dir(), "schema.graphql")
-            self._include_file(host_path=hostFile, dest_in_container=contFile)
-            af_graphql["parameters"]["schemaFile"] = contFile
+        host_file = self.config.get("scanners.zap.graphql.schemaFile")
+        if host_file:
+            cont_file = os.path.join(self._container_work_dir(), "schema.graphql")
+            self._include_file(host_path=host_file, dest_in_container=cont_file)
+            af_graphql["parameters"]["schemaFile"] = cont_file
 
         self.af["jobs"].append(af_graphql)
 
@@ -477,7 +479,7 @@ class Zap(RapidastScanner):
     def _save_automation_file(self):
         """Save the Automation dictionary as YAML in the container"""
         af_host_path = self.path_map.workdir.host_path + "/af.yaml"
-        with open(af_host_path, "w") as f:
+        with open(af_host_path, "w", encoding="utf-8") as f:
             f.write(yaml.dump(self.af))
         logging.info(f"Saved Automation Framework in {af_host_path}")
 
@@ -600,7 +602,7 @@ class Zap(RapidastScanner):
         context_["users"] = [
             {
                 "name": Zap.USER,
-                "credentials": {"refresh_token": f"${{RTOKEN}}"},
+                "credentials": {"refresh_token": rtoken},
             }
         ]
         # 2- add the name of the variable containing the token
@@ -637,9 +639,7 @@ class Zap(RapidastScanner):
             if authenticated_download_with_rtoken(
                 url=oas_url,
                 dest=f"{self._host_work_dir()}/openapi.json",
-                rtoken=rtoken,
-                client_id=client_id,
-                auth_url=token_endpoint,
+                auth={"rtoken": rtoken, "client_id": client_id, "url": token_endpoint},
                 proxy=self.config.get("scanners.zap.proxy", default=None),
             ):
                 logging.info(

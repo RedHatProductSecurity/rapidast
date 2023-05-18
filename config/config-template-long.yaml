@@ -141,7 +141,6 @@ scanners:
 
     image:
       name: "python:3.9" # scan target
-      scanners: ["vuln"] # 'vuln' support only
 
     container:
       parameters:

@@ -17,14 +17,14 @@ pp = pprint.PrettyPrinter(indent=4)
 class TrivyPodman(Trivy):
     ###############################################################
     # PRIVATE CONSTANTS                                           #
-    # Accessed by TrivyPodman only                                  #
+    # Accessed by TrivyPodman only                                #
     ###############################################################
 
     DEFAULT_IMAGE = "docker.io/aquasec/trivy:latest"
 
     ###############################################################
     # PROTECTED CONSTANTS                                         #
-    # Accessed by parent Trivy object                               #
+    # Accessed by parent Trivy object                             #
     ###############################################################
 
     def __init__(self, config):
@@ -156,7 +156,7 @@ class TrivyPodman(Trivy):
 
     ###############################################################
     # PRITVATE METHODS                                            #
-    # Accessed by this trivyPodman object only                      #
+    # Accessed by this trivyPodman object only                    #
     ###############################################################
 
     def _setup_podman_cli(self):

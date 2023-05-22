@@ -34,8 +34,6 @@ repos:
   # W1203, W1201 - Use %s formatting in logging functions (Read more: https://github.com/PyCQA/pylint/issues/2354)
   # W0603 - Using the global statement
   # C0114,C0115,C0116 - docstring checks. Disabled because of pydocstyle checks
-  # C0209 - Formatting a regular string which could be a f-string
-  # W0107 - unnecessary pass
   - repo: https://github.com/PyCQA/pylint
     rev: v2.13.5
     hooks:
@@ -45,5 +43,5 @@ repos:
           - --max-line-length=120
           - --min-public-methods=0
           - --good-names=q,f,fp,i,e
-          - --disable=E0401,W1201,W1203,W0603,C0114,C0115,C0116,C0411,W0107,C0209
+          - --disable=E0401,W1201,W1203,W0603,C0114,C0115,C0116,C0411
         language_version: python3

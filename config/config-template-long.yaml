@@ -145,7 +145,7 @@ scanners:
     container:
       parameters:
         image: "docker.io/aquasec/trivy"
-        executable: "trivy"  # for Linux
+        executable: ""  # command for Trivy. Note the original aquasec/trivy image does not require 'trivy' command so this should be set to empty. Otherwise, set to the path to Trivy.
 
     miscOptions:
       skipDbUpdate: true

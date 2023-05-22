@@ -15,6 +15,25 @@ def test_config():
     return new_config
 
 
+def test_trivy_setup_executable(test_config):
+    test_config.set("scanners.trivy.container.parameters.executable", "trivy")
+
+    test_trivy = TrivyPodman(config=test_config)
+    test_trivy.setup()
+
+    assert test_trivy.trivy_cli[0] == "trivy" and test_trivy.trivy_cli[1] == "image"
+
+
+def test_trivy_setup_empty_executable(test_config):
+    test_config.set("scanners.trivy.container.parameters.executable", "")
+
+    test_trivy = TrivyPodman(config=test_config)
+    test_trivy.setup()
+
+    # when the container.parameters.executable is set to "", podman run a command like "image <image>", not "trivy image <image>"
+    assert test_trivy.trivy_cli[0] == "image"
+
+
 def test_trivy_setup_skip_dbupdate(test_config):
     test_config.set("scanners.trivy.miscOptions.skipDbUpdate", "true")
 

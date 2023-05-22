@@ -33,8 +33,14 @@ class Trivy(RapidastScanner):
         # and used by the trivy command during run phase
         self.trivy_config = {}
 
-        # When state is READY, this will contain the entire trivy command that the container layer should run
-        self.trivy_cli = []
+        # When state is READY, this will contain the entire trivy command
+        if self.config.get("scanners.trivy.container.parameters.executable") == "":
+            logging.debug("Executable command is set to empty")
+            self.trivy_cli = []
+        else:
+            self.trivy_cli = [
+                self.config.get("scanners.trivy.container.parameters.executable")
+            ]
 
         # Instanciate a PathMaps with predifined mapping IDs. They will be filled by the typed scanners
         # List important locations for host <-> container mapping point
@@ -83,6 +89,27 @@ class Trivy(RapidastScanner):
     # May be overloaded by inheriting classes                     #
     ###############################################################
 
+    def _setup_trivy_cli_for_image_scan(self, cli_ops):
+        self.trivy_cli.append("image")
+
+        self.trivy_cli.extend(cli_ops)
+
+        # scanners
+        self.trivy_cli.append("--scanners=vuln")
+
+        # report_format
+        report_format = self.config.get("scanners.trivy.report.format", default="json")
+        self.trivy_cli.append("--format=" + report_format)
+        self.trivy_cli.append(
+            f"--output={self.path_map.workdir.container_path}/{Trivy.TMP_REPORTS_SUBDIR}/"
+            f"image-scan-{report_format}-result.json"
+        )
+
+        # image-name
+        image_name = self.config.get("scanners.trivy.image.name")
+        if image_name:
+            self.trivy_cli.append(image_name)
+
     def _setup_trivy_cli(self):
         """prepare the trivy command: self.trivy_cli
         This is a list of strings, representing the entire Trivy command to match the desired run
@@ -100,35 +127,11 @@ class Trivy(RapidastScanner):
         if self.config.get("scanners.trivy.miscOptions.skipDbUpdate"):
             cli_ops.extend(["--skip-db-update"])
 
+        # Trivy is going to provde multiple layers: e.g. image, k8s
+        # currently, supporting 'image' only.
         image_conf = self.config.get("scanners.trivy.image")
         if image_conf:
-            if self.config.get("general.container.type") == "podman":
-                # podman run <trivy_image> doesn't require 'trivy' command.
-                self.trivy_cli = ["image"]
-            else:
-                self.trivy_cli = ["trivy image"]
-
-            self.trivy_cli.extend(cli_ops)
-
-            # scanners
-            self.trivy_cli.extend(["--scanners=vuln"])
-
-            # report_format
-            report_format = self.config.get(
-                "scanners.trivy.report.format", default="json"
-            )
-            self.trivy_cli.extend(["--format=" + report_format])
-            self.trivy_cli.extend(
-                [
-                    f"--output={self.path_map.workdir.container_path}/{Trivy.TMP_REPORTS_SUBDIR}/"
-                    f"image-scan-{report_format}-result.json"
-                ]
-            )
-
-            # image-name
-            image_name = self.config.get("scanners.trivy.image.name")
-            if image_name:
-                self.trivy_cli.extend([image_name])
+            self._setup_trivy_cli_for_image_scan(cli_ops)
 
         logging.debug(f"Trivy will run with: {self.trivy_cli}")
 

@@ -173,6 +173,18 @@ class ZapNone(Zap):
     # + MUST be implemented                                       #
     ###############################################################
 
+    def _setup_zap_cli(self):
+        """
+        Generate the main ZAP command line (not the container command).
+        Uses super() to generate the generic part of the command
+        """
+
+        self.zap_cli = [self.config.get("scanners.zap.container.parameters.executable")]
+
+        super()._setup_zap_cli()
+
+        logging.debug(f"ZAP will run with: {self.zap_cli}")
+
     def _add_env(self, key, value=None):
         """Environment variable to be added to the container.
         If value is None, then the value should be taken from the current host

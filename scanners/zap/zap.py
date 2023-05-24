@@ -150,6 +150,38 @@ class Zap(RapidastScanner):
     # May be overloaded by inheriting classes                     #
     ###############################################################
 
+    def _setup_zap_cli(self):
+        """
+        Complete the zap_cli list of ZAP argument.
+        This is must be overloaded by descendant, which optionally call this one
+        If called, the descendant must fill at least the executable
+        """
+
+        # Proxy workaround (because it currently can't be configured from Automation Framework)
+        proxy = self.config.get("scanners.zap.proxy")
+        if proxy:
+            self.zap_cli += [
+                "-config",
+                f"network.connection.httpProxy.host={proxy.get('proxyHost')}",
+                "-config",
+                f"network.connection.httpProxy.port={proxy.get('proxyPort')}",
+                "-config",
+                "network.connection.httpProxy.enabled=true",
+            ]
+        else:
+            self.zap_cli += ["-config", "network.connection.httpProxy.enabled=false"]
+
+        # Create a session, to store them as evidence
+        self.zap_cli.append("-newsession")
+        self.zap_cli.append(f"{self._container_work_dir()}/session_data/session")
+
+        if not self.config.get("scanners.zap.miscOptions.enableUI", default=False):
+            # Disable UI
+            self.zap_cli.append("-cmd")
+
+        # finally: the Automation Framework:
+        self.zap_cli.extend(["-autorun", f"{self._container_work_dir()}/af.yaml"])
+
     def get_type(self):
         """Return container type, based on configuration.
         This is only a helper to shorten long lines
@@ -493,46 +525,6 @@ class Zap(RapidastScanner):
             self.automation_config["jobs"].append(
                 self._construct_report_af(reports["json"])
             )
-
-    def _setup_zap_cli(self):
-        """prepare the zap command: self.zap_cli
-        This is a list of strings, representing the entire ZAP command to match the desired run
-        """
-
-        self.zap_cli = [self.config.get("scanners.zap.container.parameters.executable")]
-
-        # Proxy workaround (because it currently can't be configured from Automation Framework)
-        proxy = self.config.get("scanners.zap.proxy")
-        if proxy:
-            self.zap_cli += [
-                "-config",
-                f"network.connection.httpProxy.host={proxy.get('proxyHost')}",
-                "-config",
-                f"network.connection.httpProxy.port={proxy.get('proxyPort')}",
-                "-config",
-                "network.connection.httpProxy.enabled=true",
-            ]
-        else:
-            self.zap_cli += ["-config", "network.connection.httpProxy.enabled=false"]
-
-        # Create a session, to store them as evidence
-        self.zap_cli.extend(
-            [
-                "-newsession",
-                f"{self.path_map.workdir.container_path}/session_data/session",
-            ]
-        )
-
-        if not self.config.get("scanners.zap.miscOptions.enableUI", default=False):
-            # Disable UI
-            self.zap_cli.append("-cmd")
-
-        # finally: the Automation Framework:
-        self.zap_cli.extend(
-            ["-autorun", self.path_map.workdir.container_path + "/af.yaml"]
-        )
-
-        logging.debug(f"ZAP will run with: {self.zap_cli}")
 
     def _save_automation_file(self):
         """Save the Automation dictionary as YAML in the container"""

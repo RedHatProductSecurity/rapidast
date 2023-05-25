@@ -42,7 +42,7 @@ class ZapNone(Zap):
 
         # prepare the host <-> container mapping
         # Because there's no container layer, there's no need to translate anything
-        temp_dir = self._create_work_dir()
+        temp_dir = self._create_temp_dir("workdir")
 
         if platform.system() == "Darwin":
             logging.debug(

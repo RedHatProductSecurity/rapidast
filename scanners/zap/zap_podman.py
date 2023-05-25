@@ -56,10 +56,10 @@ class ZapPodman(Zap):
         self.container_name = f"rapidast_zap_{application_shortname}_{random_chars}"
 
         # prepare the host <-> container mapping
-        # The default location for WORK can be chosen by parent itself (no overide of self._create_work_dir)
+        # The default location for WORK can be chosen by parent itself (no overide of self._create_temp_dir)
         self.path_map = make_mapping_for_scanner(
             "Zap",
-            ("workdir", self._create_work_dir(), "/zap/results"),
+            ("workdir", self._create_temp_dir("workdir"), "/zap/results"),
             ("scripts", f"{MODULE_DIR}/scripts", "/zap/scripts"),
             ("policies", f"{MODULE_DIR}/policies", "/home/zap/.ZAP/policies/"),
         )

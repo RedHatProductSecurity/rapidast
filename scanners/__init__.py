@@ -29,7 +29,9 @@ class RapidastScanner:
         This directory must be manually deleted by the caller during cleanup.
         Descendent classes *may* overload this directory (e.g.: if they can't map /tmp)
         """
-        temp_dir = tempfile.mkdtemp(prefix=f"rapidast_{self.__class__.__name__}_{name}_")
+        temp_dir = tempfile.mkdtemp(
+            prefix=f"rapidast_{self.__class__.__name__}_{name}_"
+        )
         logging.debug(f"Temporary directory created in host: {temp_dir}")
         return temp_dir
 

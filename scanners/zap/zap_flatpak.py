@@ -43,7 +43,7 @@ class ZapFlatpak(Zap):
 
         # prepare the host <-> container mapping: flatpak container shares most directory with host
         temp_dir = self._create_temp_dir("workdir")
-        policies_dir = (f"{self.zap_home}/policies/")
+        policies_dir = f"{self.zap_home}/policies/"
 
         self.path_map = make_mapping_for_scanner(
             "Zap",
@@ -74,14 +74,15 @@ class ZapFlatpak(Zap):
 
         super().setup()
 
-        # Flatpak uses the real user's home directory, so we need to use ~/.ZAP/policies/
+        # Copy the selected policy to the policies directory
         if self.config.get("scanners.zap.activeScan", default=False) is not False:
             policy = self.config.get(
                 "scanners.zap.activeScan.policy", default="API-scan-minimal"
             )
+            os.mkdir(self.path_map.policies.host_path)
             self._include_file(
                 host_path=f"{MODULE_DIR}/policies/{policy}.policy",
-                dest_in_container=self.path_map.policies.container_path,
+                dest_in_container=f"{self.path_map.policies.container_path}/{policy}.policy",
             )
 
         if self.state != State.ERROR:
@@ -97,7 +98,9 @@ class ZapFlatpak(Zap):
 
         if self.config.get("scanners.zap.miscOptions.updateAddons", default=True):
             logging.info("Zap: Updating addons")
-            if self._run_in_flatpak(["-cmd", "-dir", self.zap_home, "-addonupdate"]).returncode:
+            if self._run_in_flatpak(
+                ["-cmd", "-dir", self.zap_home, "-addonupdate"]
+            ).returncode:
                 logging.warning("ZAP addon update failed")
 
         # Now the real run
@@ -140,7 +143,9 @@ class ZapFlatpak(Zap):
         if not self.state == State.PROCESSED:
             raise RuntimeError("No cleanning up as ZAP did not processed results.")
 
-        logging.debug(f"Deleting temp directories {self._host_work_dir()} and {self.zap_home}")
+        logging.debug(
+            f"Deleting temp directories {self._host_work_dir()} and {self.zap_home}"
+        )
         shutil.rmtree(self._host_work_dir())
         shutil.rmtree(self.zap_home)
 
@@ -161,7 +166,7 @@ class ZapFlatpak(Zap):
         Uses super() to generate the generic part of the command
         """
 
-        # Note: flatpak automatically adds the executable for us, 
+        # Note: flatpak automatically adds the executable for us,
         # so we only add the command options
 
         self.zap_cli = ["-dir", self.zap_home]

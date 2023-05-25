@@ -1,4 +1,6 @@
 import importlib
+import logging
+import tempfile
 from enum import Enum
 from pprint import pformat
 
@@ -21,6 +23,15 @@ class RapidastScanner:
 
     def __repr__(self):
         return pformat(vars(self), indent=4, width=1)
+
+    def _create_temp_dir(self, name="X"):
+        """This function simply creates a temporary directory aiming at storing data in transit.
+        This directory must be manually deleted by the caller during cleanup.
+        Descendent classes *may* overload this directory (e.g.: if they can't map /tmp)
+        """
+        temp_dir = tempfile.mkdtemp(prefix=f"rapidast_{self.__class__.__name__}_{name}_")
+        logging.debug(f"Temporary directory created in host: {temp_dir}")
+        return temp_dir
 
 
 # Given a string representing a scanner, return the corresponding scanner class.

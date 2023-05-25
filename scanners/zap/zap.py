@@ -3,7 +3,6 @@ import os
 import pprint
 import shutil
 import tarfile
-import tempfile
 from base64 import urlsafe_b64encode
 from collections import namedtuple
 
@@ -195,16 +194,6 @@ class Zap(RapidastScanner):
         logging.warning(
             "_add_env() was called on the parent ZAP class. This is likely a bug. No operation done"
         )
-
-    def _create_work_dir(self):
-        """This function simply creates a temporary directory aiming at storing data in transit.
-        Data such as: the AF configuration, evidence, reports, etc.
-        This directory will be deleted during cleanup.
-        Descendent classes *may* overload this directory (e.g.: if they can't map /tmp)
-        """
-        temp_dir = tempfile.mkdtemp(prefix=f"rapidast_{self.__class__.__name__}_")
-        logging.debug(f"Temporary work directory for ZAP scanner in host: {temp_dir}")
-        return temp_dir
 
     def _host_work_dir(self):
         """Shortcut to the host path of the work directory"""

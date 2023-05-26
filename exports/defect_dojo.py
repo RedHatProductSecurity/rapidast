@@ -77,6 +77,16 @@ class DefectDojo:
 
     def _private_import(self, endpoint, data, filename):
         """Send a POST request to endpoint [typically import or reimport], with data and filname"""
+
+        mandatory = {
+            "scan_type",
+            "active",
+            "verified",
+        }
+        missing = mandatory - set(data.keys())
+        if missing:
+            raise ValueError(f"Missing required entries for reimport: {missing}")
+
         if not self.token:
             self.get_token()
 
@@ -94,32 +104,27 @@ class DefectDojo:
     def reimport_scan(self, data, filename):
         """Reimport to an existing engagement with an existing compatible scan."""
 
-        mandatory = {
-            "product_name",
-            "engagement_name",
-            "scan_type",
-            "active",
-            "verified",
-        }
-        missing = mandatory - set(data.keys())
-        if missing:
-            raise ValueError(f"Missing required entries for reimport: {missing}")
+        if not data.get("test") and not (
+            data.get("engagement_name")
+            and data.get("product_name")
+            and data.get("test_title")
+        ):
+            raise ValueError(
+                "Reimport needs to identify an existing test (by ID or names of product+engagement+test)"
+            )
 
         self._private_import(f"{self.base_url}/api/v2/reimport-scan/", data, filename)
 
     def import_scan(self, data, filename):
         """Import to an existing engagement."""
 
-        mandatory = {
-            "product_name",
-            "engagement_name",
-            "scan_type",
-            "active",
-            "verified",
-        }
-        missing = mandatory - set(data.keys())
-        if missing:
-            raise ValueError(f"Missing required entries for reimport: {missing}")
+        if not data.get("engagement") and not (
+            data.get("engagement_name") and data.get("product_name")
+        ):
+            raise ValueError(
+                "Import needs to identify an existing engagement (by ID or names of product+engagement)"
+            )
+
         self._private_import(f"{self.base_url}/api/v2/import-scan/", data, filename)
 
     def import_or_reimport_scan(self, data, filename):

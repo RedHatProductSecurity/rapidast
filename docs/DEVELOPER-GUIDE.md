@@ -108,7 +108,7 @@ __NOTES__
 
 ### Integrating the scanner to Defect Dojo
 
-The scanner can optionally be integrated to Defect Dojo. All it needs to do is to create an optional `data_for_defect_dojo()` method (no parameters).
+If a scanner is supported by Defect Dojo, the scanner can be configured to export its scan results to Defect Dojo automatically. All it needs to do is to create an optional `data_for_defect_dojo()` method (no parameters).
 This can be useful when the scanner exports a file that can be imported into a Defect Dojo test.
 This method must return a tuple of 2 values:
 * A dictionary containing a subset of values accepted by Defect Dojo's `import-scan` or `reimport-scan` endpoints (see https://demo.defectdojo.org/api/v2/doc/)

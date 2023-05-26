@@ -74,7 +74,7 @@ In order to do that:
 * create a user without any global role
 * add that user as a "writer" for the product(s) it is supposed to scan
 
-Then the product, as well as an engagement for that product, must be created on RapiDAST. It would not be advised to give the RapiDAST user an "admin" role and simply set `auto_create_context` to True, as it would be both insecure and accident prone (a typo in the product name would let RapiDAST create a new product)
+Then the product, as well as an engagement for that product, must be created in Defect Dojo. It would not be advised to give the RapiDAST user an "admin" role and simply set `auto_create_context` to True, as it would be both insecure and accident prone (a typo in the product name would let RapiDAST create a new product)
 
 #### Defect Dojo configuration in RapiDAST
 

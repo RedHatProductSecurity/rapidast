@@ -144,7 +144,7 @@ scanners:
       oauth2OpenapiManualDownload: False
 
     defectDojoExport:
-      type: "reimport" # choose betwee: import, reimport, False (disable export). Default (or other content): re-import if test is set
+      type: "reimport" # choose between: import, reimport, False (disable export). Default (or other content): re-import if test is set
       # Parameters contain data that will directly be sent as parameters to DefectDojo's import/reimport endpoints.
       # For example: commit tag, version, push_to_jira, etc.
       # See https://demo.defectdojo.org/api/v2/doc/ for a list of possibilities
@@ -155,13 +155,13 @@ scanners:
       parameters:
         product_name: "My Product"
         engagement_name: "RapiDAST"
-          # - or -
-        engagement: 3   # engagement ID
-          # - or -
-        test_title: "ZAP"
-          # - or -
-        test: 5       # test ID, that will force "reimport" mode
-          # additional options, see https://demo.defectdojo.org/api/v2/doc/ for list
+        # - or -
+        #engagement: 3   # engagement ID
+        # - or -
+        #test_title: "ZAP"
+        # - or -
+        #test: 5       # test ID, that will force "reimport" mode
+        # additional options, see https://demo.defectdojo.org/api/v2/doc/ for list
         auto_create_context: False  # Optional. set to True to auto-create engagement (requires product_name and engagement_name)
 
 

@@ -47,6 +47,6 @@ repos:
         args:
           - --max-line-length=120
           - --min-public-methods=0
-          - --good-names=q,f,fp,i,e,af
+          - --good-names=q,f,fp,i,e
           - --disable=E0401,W1201,W1203,W0603,C0114,C0115,C0116,C0411,W0107,W0702,R0801,R1705,R1710
         language_version: python3

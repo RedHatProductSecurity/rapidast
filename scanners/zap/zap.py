@@ -46,7 +46,7 @@ class Zap(RapidastScanner):
         # This is used to construct the ZAP Automation config.
         # It will be saved to a file during setup phase
         # and used by the ZAP command during run phase
-        self.af = {}
+        self.automation_config = {}
 
         # When state is READY, this will contain the entire ZAP command that the container layer should run
         self.zap_cli = []
@@ -170,7 +170,7 @@ class Zap(RapidastScanner):
             af_template = f"{MODULE_DIR}/{Zap.AF_TEMPLATE}"
             logging.debug("Load the Automation Framework template")
             with open(af_template, "r", encoding="utf-8") as stream:
-                self.af = yaml.safe_load(stream)
+                self.automation_config = yaml.safe_load(stream)
         except yaml.YAMLError as exc:
             raise RuntimeError(
                 f"Something went wrong while parsing the config '{af_template}':\n {str(exc)}"
@@ -178,7 +178,7 @@ class Zap(RapidastScanner):
 
         # Configure the basic environment target
         try:
-            af_context = find_context(self.af)
+            af_context = find_context(self.automation_config)
             af_context["urls"].append(self.config.get("application.url"))
             af_context["includePaths"].extend(
                 self.config.get("scanners.zap.urls.includes", default=[])
@@ -221,7 +221,7 @@ class Zap(RapidastScanner):
         dest = f"{self._container_work_dir()}/importUrls.txt"
         self._include_file(orig, dest)
         job["parameters"]["fileName"] = dest
-        self.af["jobs"].append(job)
+        self.automation_config["jobs"].append(job)
 
     def _setup_api(self):
         """Prepare an openapi job and append it to the job list"""
@@ -247,7 +247,7 @@ class Zap(RapidastScanner):
         ) or self.config.get("application.url")
         openapi["parameters"]["context"] = Zap.DEFAULT_CONTEXT
 
-        self.af["jobs"].append(openapi)
+        self.automation_config["jobs"].append(openapi)
 
     def _setup_spider(self):
         """Prepare an spider job and append it to the job list"""
@@ -270,10 +270,10 @@ class Zap(RapidastScanner):
         # Add to includePaths to the context
         if self.config.get("scanners.zap.spider.url"):
             new_include_path = self.config.get("scanners.zap.spider.url") + ".*"
-            af_context = find_context(self.af)
+            af_context = find_context(self.automation_config)
             af_context["includePaths"].append(new_include_path)
 
-        self.af["jobs"].append(af_spider)
+        self.automation_config["jobs"].append(af_spider)
 
     def _setup_ajax_spider(self):
         """Prepare an spiderAjax job and append it to the job list"""
@@ -299,10 +299,10 @@ class Zap(RapidastScanner):
         # Add to includePaths to the context
         if self.config.get("scanners.zap.spiderAjax.url"):
             new_include_path = self.config.get("scanners.zap.spiderAjax.url") + ".*"
-            af_context = find_context(self.af)
+            af_context = find_context(self.automation_config)
             af_context["includePaths"].append(new_include_path)
 
-        self.af["jobs"].append(af_spider_ajax)
+        self.automation_config["jobs"].append(af_spider_ajax)
 
     def _setup_graphql(self):
         """Prepare a graphql job and append it to the job list"""
@@ -324,7 +324,7 @@ class Zap(RapidastScanner):
             self._include_file(host_path=host_file, dest_in_container=cont_file)
             af_graphql["parameters"]["schemaFile"] = cont_file
 
-        self.af["jobs"].append(af_graphql)
+        self.automation_config["jobs"].append(af_graphql)
 
     def _setup_passive_scan(self):
         """Adds the passive scan to the job list. Needs to be done prior to Active scan"""
@@ -353,7 +353,7 @@ class Zap(RapidastScanner):
         for rulenum in disabled:
             passive["rules"].append({"id": int(rulenum), "threshold": "off"})
 
-        self.af["jobs"].append(passive)
+        self.automation_config["jobs"].append(passive)
 
     def _setup_passive_wait(self):
         """Adds a wait to the list of jobs, to make sure that the Passive Scan is finished"""
@@ -367,7 +367,7 @@ class Zap(RapidastScanner):
             "name": "passiveScan-wait",
             "parameters": {},
         }
-        self.af["jobs"].append(waitfor)
+        self.automation_config["jobs"].append(waitfor)
 
     def _setup_active_scan(self):
         """Adds the active scan job list."""
@@ -387,7 +387,7 @@ class Zap(RapidastScanner):
             },
         }
 
-        self.af["jobs"].append(active)
+        self.automation_config["jobs"].append(active)
 
     def _construct_report_af(self, report_format):
         report_af = {
@@ -426,7 +426,9 @@ class Zap(RapidastScanner):
                 logging.debug(
                     f"report {format_id}, filename: {reports[format_id].name}"
                 )
-                self.af["jobs"].append(self._construct_report_af(reports[format_id]))
+                self.automation_config["jobs"].append(
+                    self._construct_report_af(reports[format_id])
+                )
                 appended += 1
             except KeyError as exc:
                 logging.warning(
@@ -434,7 +436,9 @@ class Zap(RapidastScanner):
                 )
         if not appended:
             logging.warning("Creating a default report as no valid were found")
-            self.af["jobs"].append(self._construct_report_af(reports["json"]))
+            self.automation_config["jobs"].append(
+                self._construct_report_af(reports["json"])
+            )
 
     def _setup_zap_cli(self):
         """prepare the zap command: self.zap_cli
@@ -480,7 +484,7 @@ class Zap(RapidastScanner):
         """Save the Automation dictionary as YAML in the container"""
         af_host_path = self.path_map.workdir.host_path + "/af.yaml"
         with open(af_host_path, "w", encoding="utf-8") as f:
-            f.write(yaml.dump(self.af))
+            f.write(yaml.dump(self.automation_config))
         logging.info(f"Saved Automation Framework in {af_host_path}")
 
     # Building an authentication factory for ZAP
@@ -574,7 +578,7 @@ class Zap(RapidastScanner):
         Returns True as it creates a ZAP user
         """
 
-        context_ = find_context(self.af)
+        context_ = find_context(self.automation_config)
         params_path = "scanners.zap.authentication.parameters"
         client_id = self.config.get(f"{params_path}.client_id", "cloud-services")
         token_endpoint = self.config.get(f"{params_path}.token_endpoint", None)
@@ -602,7 +606,7 @@ class Zap(RapidastScanner):
         context_["users"] = [
             {
                 "name": Zap.USER,
-                "credentials": {"refresh_token": rtoken},
+                "credentials": {"refresh_token": "${RTOKEN}"},
             }
         ]
         # 2- add the name of the variable containing the token
@@ -622,7 +626,7 @@ class Zap(RapidastScanner):
                 "target": "",
             },
         }
-        self.af["jobs"].append(script)
+        self.automation_config["jobs"].append(script)
         logging.info("ZAP configured with OAuth2 RTOKEN")
 
         # quickhack: the openapi job currently does not run with user authentication.
@@ -664,7 +668,7 @@ class Zap(RapidastScanner):
 
 
 # Given an Automation Framework configuration, return its sub-dictionary corresponding to the context we're going to use
-def find_context(af, context=Zap.DEFAULT_CONTEXT):
+def find_context(automation_config, context=Zap.DEFAULT_CONTEXT):
     # quick function that makes sure the context is sane
     def ensure_default(context2):
         # quick function that makes sure an entry is a list (override if necessary)
@@ -678,7 +682,7 @@ def find_context(af, context=Zap.DEFAULT_CONTEXT):
         return context2
 
     try:
-        for context3 in af["env"]["contexts"]:
+        for context3 in automation_config["env"]["contexts"]:
             if context3["name"] == context:
                 return ensure_default(context3)
     except:
@@ -688,9 +692,9 @@ def find_context(af, context=Zap.DEFAULT_CONTEXT):
         "It may be missing from default. An empty context is created",
     )
     # something failed: create an empty one and return it
-    if not af["env"]:
-        af["env"] = {}
-    if not af["env"].get("contexts"):
-        af["env"]["contexts"] = []
-    af["env"]["contexts"].append({"name": context})
-    return ensure_default(af["env"]["contexts"][-1])
+    if not automation_config["env"]:
+        automation_config["env"] = {}
+    if not automation_config["env"].get("contexts"):
+        automation_config["env"]["contexts"] = []
+    automation_config["env"]["contexts"].append({"name": context})
+    return ensure_default(automation_config["env"]["contexts"][-1])

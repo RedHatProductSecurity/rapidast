@@ -65,6 +65,58 @@ To avoid this, RapiDAST proposes 2 ways to provide a value for a given configura
 - Create an entry in the configuration file (this is the usual method)
 - Create an entry in the configuration file pointing to the environment variable that actually contains the data, by appending `_from_var` to the entry name: `general.authentication.parameters.rtoken_from_var=RTOKEN` (in this example, the token value is provided by the `$RTOKEN` environment variable)
 
+### Defect Dojo integration
+
+#### Preamble: creating Defect Dojo user
+
+RapiDAST needs to be able to authenticate to Defect Dojo. However, ideally, it should have the minimum set of permissions, such that it will not be allow to modify products other than the one(s) it is supposed to.
+In order to do that:
+* create a user without any global role
+* add that user as a "writer" for the product(s) it is supposed to scan
+
+Then the product, as well as an engagement for that product, must be created in Defect Dojo. It would not be advised to give the RapiDAST user an "admin" role and simply set `auto_create_context` to True, as it would be both insecure and accident prone (a typo in the product name would let RapiDAST create a new product)
+
+#### Defect Dojo configuration in RapiDAST
+
+First, RapiDAST needs to be able to authenticate itself to a Defect Dojo service. This is a typical configuration:
+
+```yaml
+config:
+  # Defect dojo configuration
+  defectDojo:
+    url: "https://mydefectdojo.example.com/"
+    authorization:
+      username: "rapidast_productname"
+      password: "password"
+      # alternatively, a `token` entry can be set in place of username/password
+```
+
+You can either authenticate using a username/password combination, or a token (make sure it is not expired). In either case, you can use the `_from_var` method described in previous chapter to avoid hardcoding the value in the configuration.
+
+Then, RapiDAST needs to know, for each scanner, sufficient information such that it can identify which product/engagement/test to match.
+This is configured in the `zap.scanner.defectDojoExport.parameters` entry. See the `import-scan` or  `reimport-scan` parameters at https://demo.defectdojo.org/api/v2/doc/ for a list of accepted entries.
+Notes:
+    * `engagement` and `test` refer to identifiers, and should be integers (as opposed to `engagement_name` and `test_title`
+    * If a `test` identifier is provided, RapiDAST will reimport the result to that test. The existing test must be compatible (same file schema, such as ZAP Scan, for example)
+    * If the `product_name` does not exist, the scanner should default to `application.productName`, or `application.shortName`
+    * Tip: the entries common to all scanners can be added to `general.defectDojoExport.parameters`, while the scanner-dependant entries (e.g.: test identifier) can be set in the scanner's configuration (e.g.: `scanners.zap.defectDojoExport.parameters`)
+
+```yaml
+general:
+  defectDojoExport:
+    parameters:
+      productName: "My product"
+      tags: ["RapiDAST"]
+
+scanners:
+  zap:
+    defectDojoExport:
+      parameters:
+        test: 34
+        endpoint_to_add: "https://qa.myapp.local/"
+```
+
+
 ## Execution
 
 Once you have created a configuration file, you can run a scan with it.

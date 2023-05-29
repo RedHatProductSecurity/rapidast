@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 
 import configmodel.converter
 import scanners
+from exports.defect_dojo import DefectDojo
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -96,6 +97,15 @@ if __name__ == "__main__":
     # Do early: load the environment file if one is there
     load_environment()
 
+    # Prepare Defect Dojo if configured
+    if config.get("config.defectDojo.url"):
+        defect_d = DefectDojo(
+            config.get("config.defectDojo.url"),
+            config.get("config.defectDojo.authorization.username"),
+            config.get("config.defectDojo.authorization.password"),
+            config.get("config.defectDojo.authorization.token"),
+        )
+
     # Run all scanners
     for name in config.get("scanners"):
         logging.info(f"Next scanner: '{name}'")
@@ -138,3 +148,7 @@ if __name__ == "__main__":
         # Part 5: cleanup
         if not args.no_cleanup:
             scanner.cleanup()
+
+        # Part 6: export to defect dojo, if the scanner is compatible
+        if defect_d and hasattr(scanner, "data_for_defect_dojo"):
+            defect_d.import_or_reimport_scan(*scanner.data_for_defect_dojo())

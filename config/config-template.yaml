@@ -9,14 +9,6 @@ config:
   # It is intended to keep backward compatibility (newer RapiDAST running an older config)
   configVersion: 4
 
-  # Defect Dojo configuration
-  defectDojo:
-    url: "https://mydefectdojo.example.com/"
-    authorization:
-      username: "rapidast"
-      password: "password"
-
-
 # `application` contains data related to the application, not to the scans.
 application:
   shortName: "MyApp-1.0"
@@ -32,7 +24,11 @@ general:
       password: "mypassw0rd"
 
   container:
-    # currently supported: `podman` and `none`
+    # This configures what technology is to be used for RapiDAST to run each scanner.
+    # Currently supported: `podman`, `flatpak` and `none`
+    #   podman: RapiDAST runs each scanner using podman
+    #   flatpak: RapiDAST runs each scanner using flatpak
+    #   none: RapiDAST runs each scanner in the same host or container (where RapiDAST itself is running in a container)
     type: "podman"
 
 scanners:

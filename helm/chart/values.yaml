@@ -32,7 +32,7 @@ rapidastConfig: |
         # This value tells RapiDAST what schema should be used to read this configuration.
         # Therefore you should only change it if you update the configuration to a newer schema
         # It is intended to keep backward compatibility (newer RapiDAST running an older config)
-        configVersion: 2
+        configVersion: 4
 
     # Import a particular environment, and inject it for each scanner
     environ:

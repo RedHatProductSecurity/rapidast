@@ -20,6 +20,7 @@ RUN echo rapidast:rapidast | chpasswd
 COPY ./rapidast.py /home/rapidast/
 COPY ./scanners/ /home/rapidast/scanners/
 COPY ./tools/ /home/rapidast/tools/
+COPY ./exports/ /home/rapidast/exports/
 COPY ./config/ /home/rapidast/config/
 COPY ./configmodel/ /home/rapidast/configmodel/
 COPY ./requirements.txt /home/rapidast/

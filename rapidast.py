@@ -15,7 +15,7 @@ from exports.defect_dojo import DefectDojo
 pp = pprint.PrettyPrinter(indent=4)
 
 
-def load_environment():
+def load_environment(config):
     """Load the environment variables based on the config set in config.environ"""
     source = config.get("config.environ.envFile")
     if source:
@@ -44,7 +44,7 @@ def get_full_result_dir_path(rapidast_config):
     return results_dir_path
 
 
-if __name__ == "__main__":
+def run():
     parser = argparse.ArgumentParser(
         description="Runs various DAST scanners against a defined target, as configured by a configuration file."
     )
@@ -95,9 +95,10 @@ if __name__ == "__main__":
     )
 
     # Do early: load the environment file if one is there
-    load_environment()
+    load_environment(config)
 
     # Prepare Defect Dojo if configured
+    defect_d = None
     if config.get("config.defectDojo.url"):
         defect_d = DefectDojo(
             config.get("config.defectDojo.url"),
@@ -152,3 +153,7 @@ if __name__ == "__main__":
         # Part 6: export to defect dojo, if the scanner is compatible
         if defect_d and hasattr(scanner, "data_for_defect_dojo"):
             defect_d.import_or_reimport_scan(*scanner.data_for_defect_dojo())
+
+
+if __name__ == "__main__":
+    run()

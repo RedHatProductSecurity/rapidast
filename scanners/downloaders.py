@@ -16,9 +16,9 @@ def authenticated_download_with_rtoken(url, dest, auth, proxy=None):
         "Content-Type": "application/x-www-form-urlencoded",
     }
     payload = {
-        "client_id": auth.client_id,
+        "client_id": auth["client_id"],
         "grant_type": "refresh_token",
-        "refresh_token": auth.rtoken,
+        "refresh_token": auth["rtoken"],
     }
     if proxy:
         proxy = {
@@ -26,7 +26,7 @@ def authenticated_download_with_rtoken(url, dest, auth, proxy=None):
             "http": f"http://{proxy['proxyHost']}:{proxy['proxyPort']}",
         }
 
-    resp = session.post(auth.url, data=payload, headers=headers, proxies=proxy)
+    resp = session.post(auth["url"], data=payload, headers=headers, proxies=proxy)
 
     if resp.status_code != 200:
         logging.warning(

@@ -1,8 +1,8 @@
 import os
 
+import pytest
 import yaml
 
-import pytest
 from configmodel import RapidastConfigModel
 
 

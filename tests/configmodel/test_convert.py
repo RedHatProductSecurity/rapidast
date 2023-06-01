@@ -1,7 +1,7 @@
+import pytest
 import yaml
 
 import configmodel.converter
-import pytest
 
 
 @pytest.fixture(name="config_v0")

@@ -237,4 +237,7 @@ tags
 # Persistent undo
 [._]*.un~
 
+#pycharm
+.idea/
+
 # End of https://www.toptal.com/developers/gitignore/api/vim,linux,python,macos

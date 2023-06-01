@@ -9,6 +9,7 @@ from .zap import MODULE_DIR
 from .zap import Zap
 from scanners import State
 from scanners.path_translators import make_mapping_for_scanner
+from utils import safe_add
 
 CLASSNAME = "ZapPodman"
 
@@ -50,10 +51,9 @@ class ZapPodman(Zap):
         self.podman_opts = []
 
         # Container name in the form 'rapidast_zap_<app-shortName>_<random-chars>
-        self.container_name = "rapidast_zap_{}_{}".format(
-            self.config.get("application.shortName"),
-            "".join(random.choices(string.ascii_letters, k=6)),
-        )
+        application_shortname = self.config.get("application.shortName")
+        random_chars = "".join(random.choices(string.ascii_letters, k=6))
+        self.container_name = f"rapidast_zap_{application_shortname}_{random_chars}"
 
         # prepare the host <-> container mapping
         # The default location for WORK can be chosen by parent itself (no overide of self._create_work_dir)
@@ -237,7 +237,7 @@ class ZapPodman(Zap):
             .strip("\n")
         )
         logging.debug(f"UIDmapping sizes: {sizes}")
-        subuid_size = eval(f"{sizes} - 1")
+        subuid_size = safe_add(f"{sizes} - 1")
         sizes = (
             subprocess.run(
                 [
@@ -253,7 +253,7 @@ class ZapPodman(Zap):
             .strip("\n")
         )
         logging.debug(f"UIDmapping sizes: {sizes}")
-        subgid_size = eval(f"{sizes} - 1")
+        subgid_size = safe_add(f"{sizes} - 1")
 
         runas_uid = 1000
         runas_gid = 1000

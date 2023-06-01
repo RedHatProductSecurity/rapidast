@@ -1,7 +1,8 @@
 from pathlib import Path
 
-import configmodel.converter
 import pytest
+
+import configmodel.converter
 from scanners.zap.zap import find_context
 from scanners.zap.zap_podman import ZapPodman
 

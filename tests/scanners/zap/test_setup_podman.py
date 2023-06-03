@@ -1,8 +1,7 @@
 from pathlib import Path
 
-import pytest
-
 import configmodel.converter
+import pytest
 from scanners.zap.zap import find_context
 from scanners.zap.zap_podman import ZapPodman
 
@@ -143,7 +142,10 @@ def test_setup_authentication_auth_rtoken_configured(test_config):
     test_zap.setup()
     assert test_zap.authenticated == True
     assert "RTOKEN" in test_zap.podman_opts
-    assert test_zap.af["jobs"][0]["parameters"]["name"] == "add-bearer-token"
+    assert (
+        test_zap.automation_config["jobs"][0]["parameters"]["name"]
+        == "add-bearer-token"
+    )
 
 
 ## Testing APIs & URLs ##
@@ -158,8 +160,8 @@ def test_setup_exclude_urls(test_config):
     test_zap = ZapPodman(config=test_config)
     test_zap.setup()
 
-    assert "abc" in find_context(test_zap.af)["excludePaths"]
-    assert "def" in find_context(test_zap.af)["excludePaths"]
+    assert "abc" in find_context(test_zap.automation_config)["excludePaths"]
+    assert "def" in find_context(test_zap.automation_config)["excludePaths"]
 
 
 def test_setup_include_urls(test_config):
@@ -171,8 +173,8 @@ def test_setup_include_urls(test_config):
     test_zap = ZapPodman(config=test_config)
     test_zap.setup()
 
-    assert "abc" in find_context(test_zap.af)["includePaths"]
-    assert "def" in find_context(test_zap.af)["includePaths"]
+    assert "abc" in find_context(test_zap.automation_config)["includePaths"]
+    assert "def" in find_context(test_zap.automation_config)["includePaths"]
 
 
 def test_setup_ajax(test_config):
@@ -183,7 +185,7 @@ def test_setup_ajax(test_config):
     test_zap = ZapPodman(config=test_config)
     test_zap.setup()
 
-    for item in test_zap.af["jobs"]:
+    for item in test_zap.automation_config["jobs"]:
         if item["type"] == "spiderAjax":
             assert item["parameters"]["maxDuration"] == 10
             assert item["parameters"]["url"] == "http://test.com"
@@ -204,7 +206,7 @@ def test_setup_graphql(test_config):
     test_zap = ZapPodman(config=test_config)
     test_zap.setup()
 
-    for item in test_zap.af["jobs"]:
+    for item in test_zap.automation_config["jobs"]:
         if item["type"] == "graphql":
             assert item["parameters"]["endpoint"] == TEST_GRAPHQL_ENDPOINT
             assert item["parameters"]["schemaUrl"] == TEST_GRAPHQL_SCHEMA_URL
@@ -237,7 +239,7 @@ def test_setup_report_format(test_config, result_format, expected_template):
     test_zap = ZapPodman(config=test_config)
     test_zap.setup()
 
-    for item in test_zap.af["jobs"]:
+    for item in test_zap.automation_config["jobs"]:
         if item["type"] == "report":
             assert item["parameters"]["template"] == expected_template
             break

@@ -31,9 +31,8 @@ COPY ./requirements.txt /opt/rapidast/
 COPY ./containerize/run_rapidast.sh /usr/bin/
 
 ### Add /opt/zap to the PATH (for any user and future user)
-COPY ./containerize/path_zap.sh /usr/profile.d/zap.sh
+COPY ./containerize/path_zap.sh /etc/profile.d/zap.sh
 
 ### Install RapiDAST requirements, globally, so that it's available to any user
 RUN python3 -m ensurepip --upgrade
 RUN pip3 install -r /opt/rapidast/requirements.txt
-

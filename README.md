@@ -197,20 +197,6 @@ It is also possible to set the container type for each scanner differently by se
 
 ### Additional options
 
-In `scanners.zap.miscOptions`, additional options can be provided :
-
-+ enableUI (default: False): Runs ZAP with the UI (useful for debugging). The runtime type must support it (only `none` and `flatpak`)
-+ updateAddons (default: True): Prior to running, ZAP will update its addons
-
-Example:
-
-```
-scanners:
-    zap:
-        miscOptions:
-            enableUI: True
-            updateAddons: False
-```
 
 ### Build a RapiDAST image
 
@@ -235,6 +221,33 @@ See [helm/README.md](./helm/README.md)
 OWASP® ZAP (Zed Attack Proxy) is an open-source DAST tool. It can be used for scanning web applications and API.
 
 See https://www.zaproxy.org/ for more information.
+
+##### ZAP scanner specific options
+
+Below are some configuration tips related to the ZAP scanner.
+
+* Podman only: inject the ZAP container in an existing Pod.
+It is possible to gather both RapiDAST and the tested application into the same podman Pod. This might help CI/CD automation & clean-up.
+In order to do that, the user must create the Pod prior to running RapiDAST, and indicate its name in the RapiDAST configuration: `scanners.zap.container.parameters.podName`.
+However, it is currently necessary to map the host user to UID 1000 / GID 1000 manually during the creation of the Pod using the `--userns=keep-id:uid=1000,gid=1000` option
+Example: `podman pod create --userns=keep-id:uid=1000,gid=1000 myApp_Pod`
+
++ Enable ZAP's Graphical UI (useful for debugging): set `scanners.zap.miscOptions.enableUI: True` (default: False). The runtime type must support it (only `none` and `flatpak`)
+
++ Disable add-on updates: `scanners.zap.miscOptions.updateAddons: False` (default: True): Prior to running, ZAP will update its addons unless this value is `False`
+
+Example:
+
+```yaml
+scanners:
+    zap:
+        container:
+            parameters:
+                podName: "myApp_Pod"
+        miscOptions:
+            enableUI: True
+            updateAddons: False
+```
 
 #### More scanners
 

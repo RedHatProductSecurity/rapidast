@@ -197,14 +197,23 @@ class ZapPodman(Zap):
     ###############################################################
 
     def _setup_podman_cli(self):
+        """Prepare the podman command.
+        The function does not return anything, but adds options to self.podman_opts
+        """
         logging.info(
             f"Preparing a podman container for the zap image, called {self.container_name}"
         )
 
         self.podman_opts += ["--name", self.container_name]
 
-        # UID/GID mapping, in case of older podman version
-        self._setup_zap_podman_id_mapping_cli()
+        pod_name = self.config.get("scanners.zap.container.parameters.podName")
+        if pod_name:
+            # injecting the container in an existing pod
+            self.podman_opts += ["--pod", pod_name]
+        else:
+            # UID/GID mapping, in case of older podman version
+            # note: incompatible with pod injection
+            self._setup_zap_podman_id_mapping_cli()
 
         # Volume mappings
         for mapping in self.path_map:

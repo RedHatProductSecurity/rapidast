@@ -1,4 +1,5 @@
 import logging
+import platform
 import pprint
 import random
 import shutil
@@ -208,10 +209,15 @@ class ZapPodman(Zap):
 
         # Volume mappings
         for mapping in self.path_map:
-            self.podman_opts += [
-                "--volume",
-                f"{mapping.host_path}:{mapping.container_path}:Z",
-            ]
+            vol_map = f"{mapping.host_path}:{mapping.container_path}"
+            if platform.system() == "Darwin":
+                logging.debug(
+                    "Darwin(MacOS) is detected. Disabling Podman SELinux eXtented attributes for volume mapping"
+                )
+            else:
+                vol_map += ":Z"
+
+            self.podman_opts += ["--volume", vol_map]
 
     def _setup_zap_podman_id_mapping_cli(self):
         """Adds a specific user mapping to the Zap podman container.

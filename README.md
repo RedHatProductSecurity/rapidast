@@ -39,7 +39,7 @@ scanners:
         executable: "/Applications/OWASP ZAP.app/Contents/Java/zap.sh"
 ```
 
-* When using "podman" as execution environemtn (`general.container.type: "podman"` or `scanners.zap.container.type: "podman" in the configuration): This mode is currently experimental. You will need to start the podman virtual machine sharing both the `rapidast` directory as well as the current temporary directory.
+* When using "podman" as execution environemtn (`general.container.type: "podman"` or `scanners.zap.container.type: "podman"` in the configuration): This mode is currently experimental. You will need to start the podman virtual machine sharing both the `rapidast` directory as well as the current temporary directory.
 
 Example:
 

@@ -94,7 +94,7 @@ class DefectDojo:
             endpoint,
             headers=self.headers,
             data=data,
-            files={"file": open(filename, "rb")},
+            files={"file": open(filename, "rb")},  # pylint: disable=consider-using-with
         )
         if resp.status_code >= 400:
             print(vars(resp))

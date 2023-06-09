@@ -22,6 +22,39 @@ Taking advantage of [OWASP ZAP](https://www.zaproxy.org/) and additional scanner
 
 Linux and MacOS are supported.
 
+#### Note regarding MacOS and ZAP
+
+RapiDAST supports executing ZAP on the host directly, or, experimentally, in podman. See [Choosing the execution environment](#choosing-the-execution-environment) for further information on configuring execution environments.
+
+* When using ZAP directly on the host (`general.container.type: "none"` or `scanners.zap.container.type: "none"` in the configuration): you will need to configure `scanners.zap.container.parameters.executable` to the installation path of the `zap.sh` command, because it is not available in the PATH. Usually, its path is `/Applications/OWASP ZAP.app/Contents/Java/zap.sh`
+
+Example:
+
+```yaml
+scanners:
+  zap:
+    container:
+      type: none
+      parameters:
+        executable: "/Applications/OWASP ZAP.app/Contents/Java/zap.sh"
+```
+
+* When using "podman" as execution environemtn (`general.container.type: "podman"` or `scanners.zap.container.type: "podman"` in the configuration): This mode is currently experimental. You will need to start the podman virtual machine sharing both the `rapidast` directory as well as the current temporary directory.
+
+Example:
+
+```sh
+podman machine init -v "$PWD:$PWD" -v "$TMPDIR:$TMPDIR" rapidast
+podman machine start rapidast
+./rapidast --config ./config/<config-file>
+
+ # after successful run, when the VM is no longer needed:
+podman machine stop rapidast
+podman machine rm rapidast
+```
+
+
+
 ## Installation
 
 It is recommended to create a virtual environment.

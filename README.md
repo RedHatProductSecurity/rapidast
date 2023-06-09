@@ -26,7 +26,7 @@ Linux and MacOS are supported.
 
 RapiDAST supports executing ZAP on the host directly, or, experimentally, in podman. See [Choosing the execution environment](#choosing-the-execution-environment) for further information on configuring execution environments.
 
-* When using ZAP directly on the host (`general.container.type: "none"` or `scanners.zap.container.type: "none" in the configuration): you will need to configure `scanners.zap.container.parameters.executable` to the installation path of the `zap.sh` command, because it is not available in the PATH. Usually, its path is `/Applications/OWASP ZAP.app/Contents/Java/zap.sh`
+* When using ZAP directly on the host (`general.container.type: "none"` or `scanners.zap.container.type: "none"` in the configuration): you will need to configure `scanners.zap.container.parameters.executable` to the installation path of the `zap.sh` command, because it is not available in the PATH. Usually, its path is `/Applications/OWASP ZAP.app/Contents/Java/zap.sh`
 
 Example:
 

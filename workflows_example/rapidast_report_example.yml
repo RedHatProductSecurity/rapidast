@@ -10,7 +10,7 @@ jobs:
   rapidast:
     runs-on: ubuntu-latest
     env:
-      B_WISDOM_TOKEN: "Bearer ${{ secrets.SOME_TOKEN }}"
+      EXPORTED_TOKEN: "Bearer ${{ secrets.SOME_TOKEN }}"
 
     steps:
       - name: Checkout

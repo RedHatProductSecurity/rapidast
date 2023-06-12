@@ -40,7 +40,7 @@ repos:
   # R1705: Unnecessary "elif" after "return", remove the leading "el" from "elif" (no-else-return)
   # R1710: Either all return statements in a function should return an expression, or none of them should. (inconsistent-return-statements)
   - repo: https://github.com/PyCQA/pylint
-    rev: v2.13.5
+    rev: v2.17.4
     hooks:
       - id: pylint
         exclude: ^tests/
@@ -48,5 +48,5 @@ repos:
           - --max-line-length=120
           - --min-public-methods=0
           - --good-names=q,f,fp,i,e
-          - --disable=E0401,W1201,W1203,W0603,C0114,C0115,C0116,C0411,W0107,W0702,R0801,R1705,R1710
+          - --disable=E0401,W1201,W1203,C0114,C0115,C0116,C0411,W0107,W0702,R0801,R1705,R1710
         language_version: python3

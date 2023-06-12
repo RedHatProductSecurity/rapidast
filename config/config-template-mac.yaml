@@ -1,0 +1,61 @@
+# This is a regular template file, which shows only the most important configuration entries for running on MacOS and using token as authentication against the sevice you want to test.
+# Additional configuration options are available, as shown in "config-template-long.yaml".
+# All the values are optional (except `config.configVersion`): if a key is missing, it will mean either "disabled" or a sensible default will be selected
+
+config:
+  # WARNING: `configVersion` indicates the schema version of the config file.
+  # This value tells RapiDAST what schema should be used to read this configuration.
+  # Therefore you should only change it if you update the configuration to a newer schema
+  # It is intended to keep backward compatibility (newer RapiDAST running an older config)
+  configVersion: 4
+
+  # the following is a workaround until Rapidast v2.1.1 is out
+  defectDojo:
+    url: "http://localhost"
+
+
+# `application` contains data related to the application, not to the scans.
+application:
+  shortName: "service-name"
+  url: "<service-url>"
+
+# `general` is a section that will be applied to all scanners.
+general:
+
+  authentication:
+    type: "http_header"
+    parameters:
+      name: "Authorization"
+      value_from_var: "EXPORTED_TOKEN"
+
+  container:
+    # This configures what technology is to be used for RapiDAST to run each scanner.
+    # Currently supported: `podman`, `flatpak` and `none`
+    #   podman: RapiDAST runs each scanner using podman
+    #   flatpak: RapiDAST runs each scanner using flatpak
+    #   none: RapiDAST runs each scanner in the same host or container (where RapiDAST itself is running in a container)
+    type: "none"
+
+scanners:
+  zap:
+  # define a scan through the ZAP scanner
+    apiScan:
+      apis:
+        apiFile: "path/to/local/openapi-schema"
+
+    passiveScan:
+      # optional list of passive rules to disable
+      disabledRules: "2,10015,10027,10096,10024"
+
+    activeScan:
+      # If no policy is chosen, a default ("API-scan-minimal") will be selected
+      # The list of policies can be found in scanners/zap/policies/
+      policy: "API-scan-minimal"
+
+    container:
+      parameters:
+        image: "docker.io/owasp/zap2docker-stable:latest" # for type such as podman
+        executable: "/Applications/OWASP ZAP.app/Contents/Java/zap.sh"    # for MacOS, when general.container.type is 'none' only, need to dDownload OWASP ZAP https://www.zaproxy.org/download/
+
+
+# Other scanners to be defined(TBD)

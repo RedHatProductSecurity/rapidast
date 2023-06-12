@@ -3,6 +3,7 @@ import argparse
 import logging
 import os
 import pprint
+import sys
 from datetime import datetime
 
 import yaml
@@ -108,6 +109,7 @@ def run():
         )
 
     # Run all scanners
+    scan_error_count = 0
     for name in config.get("scanners"):
         logging.info(f"Next scanner: '{name}'")
 
@@ -144,6 +146,7 @@ def run():
             scanner.postprocess()
         else:
             logging.warning(f"scanner {name} is not in DONE state: no post processing")
+            scan_error_count += 1
             continue
 
         # Part 5: cleanup
@@ -153,6 +156,12 @@ def run():
         # Part 6: export to defect dojo, if the scanner is compatible
         if defect_d and hasattr(scanner, "data_for_defect_dojo"):
             defect_d.import_or_reimport_scan(*scanner.data_for_defect_dojo())
+
+    if scan_error_count > 0:
+        logging.warning(f"Number of failed scanners: {scan_error_count}")
+        sys.exit(2)
+    else:
+        sys.exit(0)
 
 
 if __name__ == "__main__":

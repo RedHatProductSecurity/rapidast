@@ -17,3 +17,8 @@ It is also possible to override the scan policy in the same way.
 ```
 $ helm install rapidast ./helm/chart/ --set-file scanPolicyXML=<your-custom-scan-policy.xml>
 ```
+
+
+**NOTE**: When running on OpenShift make sure that your namespace you are running on has proper privileges for running a pod/container
+
+As well as set secContext: '{ "privileged": true}' at top of ./chart/values.yaml

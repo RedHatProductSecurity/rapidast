@@ -25,6 +25,9 @@ resources: {}
 
 pvc: rapidast-pvc
 
+
+secContext: '{ "privileged": true }'
+
 # config is (currently) same as config file -- must be multiline string
 rapidastConfig: |
     config:

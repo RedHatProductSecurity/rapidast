@@ -5,10 +5,7 @@
 # build and install scanners in advance (more scanners will be added)
 FROM registry.access.redhat.com/ubi9-minimal
 
-RUN microdnf install -y procps tar gzip shadow-utils java-11-openjdk
-
-# TMP!!!
-RUN microdnf install -y nano
+RUN microdnf install -y procps tar gzip shadow-utils java-11-openjdk nano
 
 ## ZAP
 RUN mkdir /opt/zap
@@ -16,6 +13,12 @@ RUN mkdir -p /tmp/zap
 RUN curl -sfL https://github.com/zaproxy/zaproxy/releases/download/v2.12.0/ZAP_2.12.0_Linux.tar.gz | tar zxvf - -C /tmp/zap
 RUN mv -T /tmp/zap/ZAP_2.12.0 /opt/zap
 ENV PATH $PATH:/opt/zap/
+
+### Update add-ons
+RUN zap.sh -cmd -silent -addonupdate
+### Copy them to installation directory
+RUN cp /root/.ZAP/plugin/*.zap /opt/zap/plugin/ || :
+
 
 ## RapiDAST
 RUN mkdir /opt/rapidast

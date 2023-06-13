@@ -35,6 +35,12 @@ class ZapPodman(Zap):
         The code of the function only deals with the "podman" layer, the "ZAP" layer is handled by super()
         """
 
+        # First verify that "podman" exists
+        if not shutil.which("podman"):
+            raise OSError(
+                "Podman is not installed on not in the PATH. It is required to run ZAP in podman"
+            )
+
         logging.debug("Initializing podman-based ZAP scanner")
         super().__init__(config)
 

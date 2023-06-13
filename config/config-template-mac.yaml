@@ -9,11 +9,6 @@ config:
   # It is intended to keep backward compatibility (newer RapiDAST running an older config)
   configVersion: 4
 
-  # the following is a workaround until Rapidast v2.1.1 is out
-  defectDojo:
-    url: "http://localhost"
-
-
 # `application` contains data related to the application, not to the scans.
 application:
   shortName: "service-name"

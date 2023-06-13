@@ -11,6 +11,7 @@ job:
   cron: false
   schedule: "0 22 * * *"  # used when job.cron is true, e.g. at 10pm daily
 
+secContext: '{}'
 resources: {}
   # It is recommended not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
@@ -52,9 +53,9 @@ rapidastConfig: |
         authentication:
             type: "oauth2_rtoken"
             parameters:
-                client_id: "cloud-services"
-                token_endpoint: "<token retrieval URL>"
-                rtoken_var_name: "RTOKEN"  # referring to a env defined in general.environ.envFile
+            client_id: "cloud-services"
+            token_endpoint: "<token retrieval URL>"
+            rtoken_var_name: "RTOKEN"  # referring to a env defined in general.environ.envFile
 
         container:
             # currently supported: `podman` and `none`
@@ -64,19 +65,19 @@ rapidastConfig: |
         zap:
         # define a scan through the ZAP scanner
             apiScan:
-                target: "<optional, if different from application.url>"
-                apis:
-                    apiUrl: "<URL to openAPI>"
-                    # alternative: apiFile: "<local path to openAPI file>"
+            target: "<optional, if different from application.url>"
+            apis:
+                apiUrl: "<URL to openAPI>"
+                # alternative: apiFile: "<local path to openAPI file>"
 
             passiveScan:
-                # optional list of passive rules to disable
-                disabledRules: "2,10015,10027,10096,10024"
+            # optional list of passive rules to disable
+            disabledRules: "2,10015,10027,10096,10024"
 
             activeScan:
-                # If no policy is chosen, a default ("API-scan-minimal") will be selected
-                # The list of policies can be found in scanners/zap/policies/
-                policy: "API-scan-minimal"
+            # If no policy is chosen, a default ("API-scan-minimal") will be selected
+            # The list of policies can be found in scanners/zap/policies/
+            policy: "API-scan-minimal"
 
 scanPolicyXML: |
   <?xml version="1.0" encoding="UTF-8" standalone="no"?>

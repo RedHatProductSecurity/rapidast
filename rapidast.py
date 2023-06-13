@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 import configmodel.converter
 import scanners
 from exports.defect_dojo import DefectDojo
+from utils import add_logging_level
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -116,7 +117,7 @@ def run():
     parser.add_argument(
         "--log-level",
         dest="loglevel",
-        choices=["debug", "info", "warning", "error", "critical"],
+        choices=["debug", "verbose", "info", "warning", "error", "critical"],
         default="info",
         help="Level of verbosity",
     )
@@ -136,6 +137,7 @@ def run():
 
     args = parser.parse_args()
     args.loglevel = args.loglevel.upper()
+    add_logging_level("VERBOSE", logging.DEBUG + 5)
     logging.basicConfig(format="%(levelname)s:%(message)s", level=args.loglevel)
     logging.debug(
         f"log level set to debug. Config file: '{parser.parse_args().config_file.name}'"

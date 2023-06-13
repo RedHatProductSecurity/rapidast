@@ -8,7 +8,6 @@ from collections import namedtuple
 
 import yaml
 
-from configmodel import RapidastConfigModel
 from scanners import generic_authentication_factory
 from scanners import RapidastScanner
 from scanners.downloaders import authenticated_download_with_rtoken
@@ -190,7 +189,7 @@ class Zap(RapidastScanner):
         )
 
     # disabling these 2 rules only here since they might actually be useful else where
-    # pylint: disable=unused-argument,no-self-use
+    # pylint: disable=unused-argument
     def _add_env(self, key, value=None):
         logging.warning(
             "_add_env() was called on the parent ZAP class. This is likely a bug. No operation done"

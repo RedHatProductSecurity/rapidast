@@ -3,6 +3,7 @@ import argparse
 import logging
 import os
 import pprint
+import sys
 from datetime import datetime
 
 import yaml
@@ -42,6 +43,70 @@ def get_full_result_dir_path(rapidast_config):
         f"DAST-{scan_datetime_str}-RapiDAST-{app_name}",
     )
     return results_dir_path
+
+
+def run_scanner(name, config, args, defect_d):
+    """given the config `config`, runs scanner `name`.
+    Returns:
+        0 for success
+        1 for failure
+    (in order to count the number of failure)
+    """
+
+    # Merge the "general" configuration into the scanner's config
+    # (but without overwriting anything: scanner's config takes precedence over the general config)
+    logging.debug(f"Merging general config into {name}'s config")
+    config.merge(
+        config.get("general", default={}),
+        preserve=True,
+        root=f"scanners.{name}",
+    )
+
+    typ = config.get(f"scanners.{name}.container.type", default="podman")
+    try:
+        class_ = scanners.str_to_scanner(name, typ)
+    except ModuleNotFoundError:
+        logging.error(f"Scanner `{name}` of type `{typ}` does not exist")
+        logging.error(f"Ignoring failed Scanner `{name}` of type `{typ}`")
+        logging.error(f"Please verify your configuration file: `scanners.{name}`")
+        return 1
+
+    # Part 1: create a instance based on configuration
+    try:
+        scanner = class_(config)
+    except OSError as excp:
+        logging.error(excp)
+        logging.error(f"Ignoring failed Scanner `{name}` of type `{typ}`")
+        return 1
+
+    # Part 2: setup the environment (e.g.: spawn a server)
+    scanner.setup()
+
+    logging.debug(scanner)
+
+    # Part 3: run the actual scan
+    if scanner.state == scanners.State.READY:
+        scanner.run()
+    else:
+        logging.error(f"scanner {name} is not in READY state: it will not be run")
+        return 1
+
+    # Part 4: Post process
+    if scanner.state == scanners.State.DONE:
+        scanner.postprocess()
+    else:
+        logging.error(f"scanner {name} is not in DONE state: no post processing")
+        return 1
+
+    # Part 5: cleanup
+    if not args.no_cleanup:
+        scanner.cleanup()
+
+    # Part 6: export to defect dojo, if the scanner is compatible
+    if defect_d and hasattr(scanner, "data_for_defect_dojo"):
+        defect_d.import_or_reimport_scan(*scanner.data_for_defect_dojo())
+
+    return 0
 
 
 def run():
@@ -108,51 +173,17 @@ def run():
         )
 
     # Run all scanners
+    scan_error_count = 0
     for name in config.get("scanners"):
         logging.info(f"Next scanner: '{name}'")
 
-        # Merge the "general" configuration into the scanner's config
-        # (but without overwriting anything: scanner's config takes precedence over the general config)
-        logging.debug(f"Merging general config into {name}'s config")
-        config.merge(
-            config.get("general", default={}),
-            preserve=True,
-            root=f"scanners.{name}",
-        )
+        scan_error_count += run_scanner(name, config, args, defect_d)
 
-        class_ = scanners.str_to_scanner(
-            name, config.get(f"scanners.{name}.container.type", default="podman")
-        )
-
-        # Part 1: create a instance based on configuration
-        scanner = class_(config)
-
-        # Part 2: setup the environment (e.g.: spawn a server)
-        scanner.setup()
-
-        logging.debug(scanner)
-
-        # Part 3: run the actual scan
-        if scanner.state == scanners.State.READY:
-            scanner.run()
-        else:
-            logging.warning(f"scanner {name} is not in READY state: it will not be run")
-            continue
-
-        # Part 4: Post process
-        if scanner.state == scanners.State.DONE:
-            scanner.postprocess()
-        else:
-            logging.warning(f"scanner {name} is not in DONE state: no post processing")
-            continue
-
-        # Part 5: cleanup
-        if not args.no_cleanup:
-            scanner.cleanup()
-
-        # Part 6: export to defect dojo, if the scanner is compatible
-        if defect_d and hasattr(scanner, "data_for_defect_dojo"):
-            defect_d.import_or_reimport_scan(*scanner.data_for_defect_dojo())
+    if scan_error_count > 0:
+        logging.warning(f"Number of failed scanners: {scan_error_count}")
+        sys.exit(2)
+    else:
+        sys.exit(0)
 
 
 if __name__ == "__main__":

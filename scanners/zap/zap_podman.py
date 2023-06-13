@@ -1,4 +1,5 @@
 import logging
+import platform
 import pprint
 import random
 import shutil
@@ -33,6 +34,12 @@ class ZapPodman(Zap):
         """Initialize all vars based on the config.
         The code of the function only deals with the "podman" layer, the "ZAP" layer is handled by super()
         """
+
+        # First verify that "podman" exists
+        if not shutil.which("podman"):
+            raise OSError(
+                "Podman is not installed on not in the PATH. It is required to run ZAP in podman"
+            )
 
         logging.debug("Initializing podman-based ZAP scanner")
         super().__init__(config)
@@ -220,10 +227,15 @@ class ZapPodman(Zap):
 
         # Volume mappings
         for mapping in self.path_map:
-            self.podman_opts += [
-                "--volume",
-                f"{mapping.host_path}:{mapping.container_path}:Z",
-            ]
+            vol_map = f"{mapping.host_path}:{mapping.container_path}"
+            if platform.system() == "Darwin":
+                logging.debug(
+                    "Darwin(MacOS) is detected. Disabling Podman SELinux eXtented attributes for volume mapping"
+                )
+            else:
+                vol_map += ":Z"
+
+            self.podman_opts += ["--volume", vol_map]
 
     def _setup_zap_podman_id_mapping_cli(self):
         """Adds a specific user mapping to the Zap podman container.

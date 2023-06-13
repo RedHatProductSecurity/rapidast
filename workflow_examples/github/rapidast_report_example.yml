@@ -1,0 +1,56 @@
+## This is an example workflow on how to run the rapidast script and upload a parsed results as artifacts ##
+
+name: rapidast-report
+
+on:
+  workflow_dispatch:
+
+
+jobs:
+  rapidast:
+    runs-on: ubuntu-latest
+    env:
+      EXPORTED_TOKEN: "Bearer ${{ secrets.SOME_TOKEN }}"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up python3
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Check if podman installed
+        run: |
+          apt list --installed | grep podman
+
+      - name: Clone rapidast repo
+        run: |
+          git clone https://github.com/RedHatProductSecurity/rapidast.git
+
+      - name: Install dependencies and run rapidast.py
+        id: rapidast-report
+        run: |
+          cp data/rapidast-config.yaml rapidast/
+          cd rapidast/
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          ./rapidast.py --config rapidast-config.yaml
+          # the rapidast.py generates a report with a timestamp which we need to find since the path is hard to anticipate
+          RAPIDAST_REPORT=$(find . -name zap-report.json)
+          # the find command returns the path with a "./" prefix, which we need to remove for the next step
+          echo "RAPIDAST_REPORT=$(echo $RAPIDAST_REPORT | sed 's/^..//')" >> $GITHUB_OUTPUT
+
+      - name: Rapidast Results Parser
+        run: |
+          git clone https://github.com/jperezdealgaba/rapidast-results-parser.git
+          cd rapidast-results-parser/
+          python3 rapidast_parser.py --file ../rapidast/${{ steps.rapidast-report.outputs.RAPIDAST_REPORT }}
+
+      - name: Upload rapidast parsed results
+        uses: actions/upload-artifact@v3
+        with:
+          name: rapidast-parsed-results
+          path: '**/parsed_results*'
+        if: ${{ always() }}

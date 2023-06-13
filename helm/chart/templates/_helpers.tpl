@@ -41,7 +41,6 @@ template:
   spec:
     containers:
     - name: "{{ .Chart.Name }}"
-      securityContext: {{ .Values.secContext }}
       image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
       command: ["sh", "-c", "cp /zap/config/helmcustomscan.policy /home/rapidast/.ZAP/policies && rapidast.py --config /zap/config/rapidastconfig.yaml"]
       imagePullPolicy: {{ .Values.image.pullPolicy }}

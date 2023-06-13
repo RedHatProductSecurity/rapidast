@@ -25,9 +25,6 @@ resources: {}
 
 pvc: rapidast-pvc
 
-
-secContext: '{}'
-
 # config is (currently) same as config file -- must be multiline string
 rapidastConfig: |
     config:

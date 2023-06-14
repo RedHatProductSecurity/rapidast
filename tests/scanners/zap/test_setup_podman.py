@@ -219,6 +219,19 @@ def test_setup_graphql(test_config):
         assert False, "graphql job not found"
 
 
+def test_setup_pod_injection(test_config):
+    test_config.set("scanners.zap.container.parameters.podName", "podABC")
+
+    test_zap = ZapPodman(config=test_config)
+    test_zap.setup()
+
+    assert "--pod" in test_zap.podman_opts
+    assert "podABC" in test_zap.podman_opts
+
+    # Also assert that there is no uid mapping
+    assert not "--uidmap" in test_zap.podman_opts
+
+
 ## Testing report format ##
 
 

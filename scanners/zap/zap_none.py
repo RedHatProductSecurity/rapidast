@@ -117,6 +117,13 @@ class ZapNone(Zap):
                 logging.warning(
                     f"The ZAP addon update process did not finish correctly, and exited with code {result.returncode}"
                 )
+            # temporary workaround: cleanup addon state
+            # see https://github.com/zaproxy/zaproxy/issues/7590#issuecomment-1308909500
+            statefile = f"{self.zap_home}/add-ons-state.xml"
+            try:
+                os.remove(statefile)
+            except FileNotFoundError:
+                logging.info(f"The addon state file {statefile} was not created")
 
         # Now the real run
         logging.info(f"Running ZAP with the following command:\n{self.zap_cli}")

@@ -36,15 +36,19 @@ class ZapFlatpak(Zap):
 
         # Note: flatpak enforces the executable on its own, so we do not have to fill it up
 
+        # Generate on the fly a ZAP home dir, which will be filled up with default data.
+        # The policies will be copied inside it.
+        # Benefits: don't fiddle with user's ZAP environment, have a predictable base config
+        self.zap_home = self._create_temp_dir("home")
+
         # prepare the host <-> container mapping: flatpak container shares most directory with host
-        work_dir = self._create_temp_dir("workdir")
-        policies_dir = f"{os.environ['HOME']}/.ZAP/policies/"
-        scripts_dir = f"{MODULE_DIR}/scripts"
+        temp_dir = self._create_temp_dir("workdir")
+        policies_dir = f"{self.zap_home}/policies/"
 
         self.path_map = make_mapping_for_scanner(
             "Zap",
-            ("workdir", work_dir, work_dir),
-            ("scripts", scripts_dir, scripts_dir),
+            ("workdir", temp_dir, temp_dir),
+            ("scripts", f"{MODULE_DIR}/scripts", f"{MODULE_DIR}/scripts"),
             ("policies", policies_dir, policies_dir),
         )
 
@@ -75,6 +79,7 @@ class ZapFlatpak(Zap):
             policy = self.config.get(
                 "scanners.zap.activeScan.policy", default="API-scan-minimal"
             )
+            os.mkdir(self.path_map.policies.host_path)
             self._include_file(
                 host_path=f"{MODULE_DIR}/policies/{policy}.policy",
                 dest_in_container=f"{self.path_map.policies.container_path}/{policy}.policy",
@@ -93,8 +98,18 @@ class ZapFlatpak(Zap):
 
         if self.config.get("scanners.zap.miscOptions.updateAddons", default=True):
             logging.info("Zap: Updating addons")
-            if self._run_in_flatpak(["-cmd", "-addonupdate"]).returncode:
+            if self._run_in_flatpak(
+                ["-cmd", "-dir", self.zap_home, "-addonupdate"]
+            ).returncode:
                 logging.warning("ZAP addon update failed")
+
+            # temporary workaround: cleanup addon state
+            # see https://github.com/zaproxy/zaproxy/issues/7590#issuecomment-1308909500
+            statefile = f"{self.zap_home}/add-ons-state.xml"
+            try:
+                os.remove(statefile)
+            except FileNotFoundError:
+                logging.info(f"The addon state file {statefile} was not created")
 
         # Now the real run
         logging.info(f"Running ZAP with the following options:\n{self.zap_cli}")
@@ -136,8 +151,11 @@ class ZapFlatpak(Zap):
         if not self.state == State.PROCESSED:
             raise RuntimeError("No cleanning up as ZAP did not processed results.")
 
-        logging.debug(f"Deleting temp directories {self._host_work_dir()}")
+        logging.debug(
+            f"Deleting temp directories {self._host_work_dir()} and {self.zap_home}"
+        )
         shutil.rmtree(self._host_work_dir())
+        shutil.rmtree(self.zap_home)
 
         super().cleanup()
 
@@ -155,6 +173,11 @@ class ZapFlatpak(Zap):
         Generate the main ZAP command line (not the container command).
         Uses super() to generate the generic part of the command
         """
+
+        # Note: flatpak automatically adds the executable for us,
+        # so we only add the command options
+
+        self.zap_cli = ["-dir", self.zap_home]
 
         super()._setup_zap_cli()
 
@@ -184,6 +207,7 @@ class ZapFlatpak(Zap):
         flat = ["flatpak", "run"]
         # Share the `workdir` with flatpak
         flat.append(f"--filesystem={self.path_map.workdir.host_path}")
+        flat.append(f"--filesystem={self.zap_home}")
         flat.append("org.zaproxy.ZAP")
 
         flat.extend(command)

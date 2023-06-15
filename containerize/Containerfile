@@ -24,6 +24,7 @@ COPY ./exports/ /home/rapidast/exports/
 COPY ./config/ /home/rapidast/config/
 COPY ./configmodel/ /home/rapidast/configmodel/
 COPY ./requirements.txt /home/rapidast/
+COPY ./utils/ /home/rapidast/utils/
 
 RUN chown -R rapidast:rapidast /zap
 RUN chown -R rapidast:rapidast /home/rapidast

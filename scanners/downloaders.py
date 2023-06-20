@@ -5,6 +5,30 @@ import requests
 import yaml
 
 
+def anonymous_download(url, dest=None, proxy=None):
+    """Given a URL, load it using a GET request to dest"""
+
+    logging.verbose(f"Downloading {url}")
+    if proxy:
+        proxy = {
+            "https": f"http://{proxy['proxyHost']}:{proxy['proxyPort']}",
+            "http": f"http://{proxy['proxyHost']}:{proxy['proxyPort']}",
+        }
+    resp = requests.get(url, allow_redirects=True, proxies=proxy)
+    if resp.status_code >= 400:
+        logging.warning(f"Download {url} failed with {resp.status_code}.")
+        return False
+
+    if dest:
+        with open(dest, "wb") as file:
+            file.write(resp.content)
+        logging.verbose(f"Download saved in {dest}")
+        return True
+    else:
+        logging.verbose("Returning content")
+        return resp.content
+
+
 def authenticated_download_with_rtoken(url, dest, auth, proxy=None):
     """Given a URL and Oauth2 authentication parameters, download the URL and store it at `dest`"""
 

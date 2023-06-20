@@ -323,6 +323,19 @@ org.zaproxy.zap.extension.openapi.converter.swagger.SwaggerException: Failed to 
 2023-02-17 22:43:01,073 [main ] INFO  CommandLineBootstrap - OWASP ZAP 2.12.0 terminated.
 ```
 
+### ZAP's plugins are missing from the host installation
+
+Only when using the host's ZAP (`type: none`)
+
+If you see a message such as `Missing mandatory plugins. Fixing`, or ZAP fails with an error containing the string `The mandatory add-on was not found:`, this is because ZAP deleted the application's plugin.
+See https://github.com/zaproxy/zaproxy/issues/7703 for additional information.
+RapiDAST works around this bug, but with little inconvenients (slower because it has to fix itself and download all the plugins)
+
+- Verify that the host installation directory is missing its plugins.
+e.g., in a MacOS installation, `/Applications/OWASP ZAP.app/Contents/Java/plugin/` will be mostly empty. In particular, no `callhome*.zap` and `network*.zap` file are present.
+- Reinstall ZAP, but __DO NOT RUN IT__, as it would delete the plugins. Verify that the directory contains many plugins.
+- `chown` the installation files to root, so that when running ZAP, the application running as the user does not have sufficient permission to delete its own plugins
+
 ## Caveats
 
 * Currently, RapiDAST does not clean up the temporary data when there is an error. The data may include:

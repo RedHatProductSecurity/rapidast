@@ -34,16 +34,16 @@ class ZapFlatpak(Zap):
         logging.debug("Initializing a local instance of the ZAP scanner")
         super().__init__(config)
 
-        # Setup defaults specific to "no container" mode
-        self.config.set(
-            "scanners.zap.container.parameters.executable", "zap", overwrite=False
-        )
+        # Note: flatpak enforces the executable on its own, so we do not have to fill it up
+
+        # Generate on the fly a ZAP home dir, which will be filled up with default data.
+        # The policies will be copied inside it.
+        # Benefits: don't fiddle with user's ZAP environment, have a predictable base config
+        self.zap_home = self._create_temp_dir("home")
 
         # prepare the host <-> container mapping: flatpak container shares most directory with host
-        temp_dir = self._create_work_dir()
-        policies_dir = (
-            f"{os.environ['HOME']}/.ZAP/policies"  # Flatpak is supposed only on Linux
-        )
+        temp_dir = self._create_temp_dir("workdir")
+        policies_dir = f"{self.zap_home}/policies/"
 
         self.path_map = make_mapping_for_scanner(
             "Zap",
@@ -74,14 +74,15 @@ class ZapFlatpak(Zap):
 
         super().setup()
 
-        # Flatpak uses the real user's home directory, so we need to use ~/.ZAP/policies/
+        # Copy the selected policy to the policies directory
         if self.config.get("scanners.zap.activeScan", default=False) is not False:
             policy = self.config.get(
                 "scanners.zap.activeScan.policy", default="API-scan-minimal"
             )
+            os.mkdir(self.path_map.policies.host_path)
             self._include_file(
                 host_path=f"{MODULE_DIR}/policies/{policy}.policy",
-                dest_in_container=self.path_map.policies.container_path,
+                dest_in_container=f"{self.path_map.policies.container_path}/{policy}.policy",
             )
 
         if self.state != State.ERROR:
@@ -97,13 +98,23 @@ class ZapFlatpak(Zap):
 
         if self.config.get("scanners.zap.miscOptions.updateAddons", default=True):
             logging.info("Zap: Updating addons")
-            if self._run_in_flatpak(["-cmd", "-addonupdate"]).returncode:
+            if self._run_in_flatpak(
+                ["-cmd", "-dir", self.zap_home, "-addonupdate"]
+            ).returncode:
                 logging.warning("ZAP addon update failed")
 
+            # temporary workaround: cleanup addon state
+            # see https://github.com/zaproxy/zaproxy/issues/7590#issuecomment-1308909500
+            statefile = f"{self.zap_home}/add-ons-state.xml"
+            try:
+                os.remove(statefile)
+            except FileNotFoundError:
+                logging.info(f"The addon state file {statefile} was not created")
+
         # Now the real run
-        logging.info(f"Running ZAP with the following command:\n{self.zap_cli}")
+        logging.info(f"Running ZAP with the following options:\n{self.zap_cli}")
         # note: we need to pop out the first element (`zap`) as it is implicitly called by flatpak
-        result = self._run_in_flatpak(self.zap_cli[1:])
+        result = self._run_in_flatpak(self.zap_cli)
         logging.debug(
             f"ZAP returned the following:\n=====\n{pp.pformat(result)}\n====="
         )
@@ -140,8 +151,11 @@ class ZapFlatpak(Zap):
         if not self.state == State.PROCESSED:
             raise RuntimeError("No cleanning up as ZAP did not processed results.")
 
-        logging.debug(f"Deleting temp directory {self._host_work_dir()}")
+        logging.debug(
+            f"Deleting temp directories {self._host_work_dir()} and {self.zap_home}"
+        )
         shutil.rmtree(self._host_work_dir())
+        shutil.rmtree(self.zap_home)
 
         super().cleanup()
 
@@ -153,6 +167,21 @@ class ZapFlatpak(Zap):
     # Accessed by Zap parent only                                 #
     # + MUST be implemented                                       #
     ###############################################################
+
+    def _setup_zap_cli(self):
+        """
+        Generate the main ZAP command line (not the container command).
+        Uses super() to generate the generic part of the command
+        """
+
+        # Note: flatpak automatically adds the executable for us,
+        # so we only add the command options
+
+        self.zap_cli = ["-dir", self.zap_home]
+
+        super()._setup_zap_cli()
+
+        logging.debug(f"ZAP will run with these options: {self.zap_cli}")
 
     def _add_env(self, key, value=None):
         """Environment variable to be added to the container.
@@ -178,6 +207,7 @@ class ZapFlatpak(Zap):
         flat = ["flatpak", "run"]
         # Share the `workdir` with flatpak
         flat.append(f"--filesystem={self.path_map.workdir.host_path}")
+        flat.append(f"--filesystem={self.zap_home}")
         flat.append("org.zaproxy.ZAP")
 
         flat.extend(command)

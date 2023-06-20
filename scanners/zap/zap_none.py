@@ -1,6 +1,5 @@
 import logging
 import os
-import platform
 import pprint
 import shutil
 import subprocess
@@ -42,17 +41,14 @@ class ZapNone(Zap):
 
         # prepare the host <-> container mapping
         # Because there's no container layer, there's no need to translate anything
-        temp_dir = self._create_work_dir()
+        temp_dir = self._create_temp_dir("workdir")
 
-        if platform.system() == "Darwin":
-            logging.debug(
-                "Darwin(MacOS) is detected. Setting the policies_dir accordingly"
-            )
-            policies_dir = (
-                f"{os.environ['HOME']}/Library/Application Support/ZAP/policies"
-            )
-        else:
-            policies_dir = f"{os.environ['HOME']}/.ZAP/policies"
+        # Generate on the fly a ZAP home dir, which will be filled up with default data.
+        # The policies will be copied inside it.
+        # Benefits: don't fiddle with user's ZAP environment, have a predictable base config
+        self.zap_home = self._create_temp_dir("home")
+
+        policies_dir = f"{self.zap_home}/policies"
 
         self.path_map = make_mapping_for_scanner(
             "Zap",
@@ -84,14 +80,15 @@ class ZapNone(Zap):
         super().setup()
 
         # Without a container layer, can't "mount" the policy directory, and ZAP does not allow changing it
-        # We have to copy it to ~/.ZAP/policies/
+        # We have to copy it to ZAP's policies directory
         if self.config.get("scanners.zap.activeScan", default=False) is not False:
             policy = self.config.get(
                 "scanners.zap.activeScan.policy", default="API-scan-minimal"
             )
+            os.mkdir(self.path_map.policies.host_path)
             self._include_file(
                 host_path=f"{MODULE_DIR}/policies/{policy}.policy",
-                dest_in_container=self.path_map.policies.container_path,
+                dest_in_container=f"{self.path_map.policies.container_path}/{policy}.policy",
             )
 
         if self.state != State.ERROR:
@@ -107,18 +104,26 @@ class ZapNone(Zap):
 
         if self.config.get("scanners.zap.miscOptions.updateAddons", default=True):
             logging.info("Zap: Updating addons")
-            result = subprocess.run(
-                [
-                    self.config.get("scanners.zap.container.parameters.executable"),
-                    "-cmd",
-                    "-addonupdate",
-                ],
-                check=False,
-            )
+            command = [
+                self.config.get("scanners.zap.container.parameters.executable"),
+                "-dir",
+                self.zap_home,
+                "-cmd",
+                "-addonupdate",
+            ]
+            logging.debug(f"update command: {command}")
+            result = subprocess.run(command, check=False)
             if result.returncode != 0:
                 logging.warning(
                     f"The ZAP addon update process did not finish correctly, and exited with code {result.returncode}"
                 )
+            # temporary workaround: cleanup addon state
+            # see https://github.com/zaproxy/zaproxy/issues/7590#issuecomment-1308909500
+            statefile = f"{self.zap_home}/add-ons-state.xml"
+            try:
+                os.remove(statefile)
+            except FileNotFoundError:
+                logging.info(f"The addon state file {statefile} was not created")
 
         # Now the real run
         logging.info(f"Running ZAP with the following command:\n{self.zap_cli}")
@@ -159,8 +164,11 @@ class ZapNone(Zap):
         if not self.state == State.PROCESSED:
             raise RuntimeError("No cleanning up as ZAP did not processed results.")
 
-        logging.debug(f"Deleting temp directory {self._host_work_dir()}")
+        logging.debug(
+            f"Deleting temp directories {self._host_work_dir()} and {self.zap_home}"
+        )
         shutil.rmtree(self._host_work_dir())
+        shutil.rmtree(self.zap_home)
 
         super().cleanup()
 
@@ -172,6 +180,22 @@ class ZapNone(Zap):
     # Accessed by Zap parent only                                 #
     # + MUST be implemented                                       #
     ###############################################################
+
+    def _setup_zap_cli(self):
+        """
+        Generate the main ZAP command line (not the container command).
+        Uses super() to generate the generic part of the command
+        """
+
+        self.zap_cli = [
+            self.config.get("scanners.zap.container.parameters.executable"),
+            "-dir",
+            self.zap_home,
+        ]
+
+        super()._setup_zap_cli()
+
+        logging.debug(f"ZAP will run with: {self.zap_cli}")
 
     def _add_env(self, key, value=None):
         """Environment variable to be added to the container.

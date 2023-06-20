@@ -63,10 +63,10 @@ class ZapPodman(Zap):
         self.container_name = f"rapidast_zap_{application_shortname}_{random_chars}"
 
         # prepare the host <-> container mapping
-        # The default location for WORK can be chosen by parent itself (no overide of self._create_work_dir)
+        # The default location for WORK can be chosen by parent itself (no overide of self._create_temp_dir)
         self.path_map = make_mapping_for_scanner(
             "Zap",
-            ("workdir", self._create_work_dir(), "/zap/results"),
+            ("workdir", self._create_temp_dir("workdir"), "/zap/results"),
             ("scripts", f"{MODULE_DIR}/scripts", "/zap/scripts"),
             ("policies", f"{MODULE_DIR}/policies", "/home/zap/.ZAP/policies/"),
         )
@@ -187,6 +187,18 @@ class ZapPodman(Zap):
     # Accessed by Zap parent only                                 #
     # + MUST be implemented                                       #
     ###############################################################
+
+    def _setup_zap_cli(self):
+        """
+        Generate the main ZAP command line (not the container command).
+        Uses super() to generate the generic part of the command
+        """
+
+        self.zap_cli = [self.config.get("scanners.zap.container.parameters.executable")]
+
+        super()._setup_zap_cli()
+
+        logging.debug(f"ZAP will run with: {self.zap_cli}")
 
     def _add_env(self, key, value=None):
         """Environment variable to be added to the container.

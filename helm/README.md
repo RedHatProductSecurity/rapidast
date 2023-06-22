@@ -18,9 +18,23 @@ It is also possible to override the scan policy in the same way.
 $ helm install rapidast ./helm/chart/ --set-file scanPolicyXML=<your-custom-scan-policy.xml>
 ```
 
+#### Getting Results
+
+Once the scan has been finished, the result is stored in PersistentVolume (default: through PersistentVolumeClaim(PVC), which is rapidast-pvc. See the charts/values.yaml.)
+
+The easiest way to get results is to use a pod that mounts the same PVC used to store the results, and use `kubectl cp POD:/results_dir local_dir` to copy an entire directory, or `kubectl cp POD:/path/to/file /local/path` for a single file.
+
+For convenience, a script results.sh is provided. It will create a pod mounting the specified PVC, then use `kubectl cp` to copy the entire results directory to your specified local directory before deleting the pod.
+
+Run this script with
+
+```
+$ bash results.sh <PVC> <LOCAL_RESULTS_DIR>
+```
+
 #### Running on OpenShift
 When running on OpenShift make sure that your namespace you are running on has proper privileges for running a pod/container
 
-You'll need to add 'securityContext: {{ .Values.secContext }}' in the` helm/chart/templates/_helpers.tpl` file under the container name 
+You'll need to add 'securityContext: {{ .Values.secContext }}' in the` helm/chart/templates/_helpers.tpl` file under the container name
 
 As well as set secContext: '{ "privileged": true}' at top of ./chart/values.yaml

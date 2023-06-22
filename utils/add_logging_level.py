@@ -11,6 +11,7 @@ def add_logging_level(level_name, level_num):
 
     def log_for_level(self, message, *args, **kwargs):
         if self.isEnabledFor(level_num):
+            # pylint: disable=protected-access
             self._log(level_num, message, args, **kwargs)
 
     def log_to_root(message, *args, **kwargs):

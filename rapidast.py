@@ -3,8 +3,10 @@ import argparse
 import logging
 import os
 import pprint
+import re
 import sys
 from datetime import datetime
+from urllib import request
 
 import yaml
 from dotenv import load_dotenv
@@ -44,6 +46,13 @@ def get_full_result_dir_path(rapidast_config):
         f"DAST-{scan_datetime_str}-RapiDAST-{app_name}",
     )
     return results_dir_path
+
+
+def load_config_file(config_file_location: str):
+    if re.compile(r"^https?://").match(config_file_location):
+        return request.urlopen(config_file_location)
+    else:
+        return open(config_file_location, mode="r", encoding="utf-8")
 
 
 def run_scanner(name, config, args, defect_d):
@@ -125,8 +134,7 @@ def run():
         "--config",
         dest="config_file",
         default="./config/config.yaml",
-        type=argparse.FileType("r", encoding="utf-8"),
-        help="Path to YAML config file",
+        help="URL or Path to YAML config file",
     )
     parser.add_argument(
         "--no-cleanup",
@@ -140,12 +148,12 @@ def run():
     add_logging_level("VERBOSE", logging.DEBUG + 5)
     logging.basicConfig(format="%(levelname)s:%(message)s", level=args.loglevel)
     logging.debug(
-        f"log level set to debug. Config file: '{parser.parse_args().config_file.name}'"
+        f"log level set to debug. Config file: '{parser.parse_args().config_file}'"
     )
 
     try:
         config = configmodel.RapidastConfigModel(
-            yaml.safe_load(parser.parse_args().config_file)
+            yaml.safe_load(load_config_file(parser.parse_args().config_file))
         )
     except yaml.YAMLError as exc:
         raise RuntimeError(

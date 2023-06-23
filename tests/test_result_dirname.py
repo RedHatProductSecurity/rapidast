@@ -1,7 +1,8 @@
 import re
 
-import configmodel
 import pytest  # pylint: disable=unused-import
+
+import configmodel
 import rapidast
 
 # from pytest_mock import mocker

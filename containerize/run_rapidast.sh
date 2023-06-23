@@ -1,6 +1,7 @@
 #!/usr/bin/bash
 
-CONF=$(realpath $1)
+# config file should be either absolute path or URL
+CONF=$1
 
 pushd /opt/rapidast/
-./rapidast.py --log-level debug --config "${CONF}"
+./rapidast.py --config "${CONF}"

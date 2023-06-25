@@ -7,6 +7,7 @@ import subprocess
 from .zap import MODULE_DIR
 from .zap import Zap
 from scanners import State
+from scanners.downloaders import anonymous_download
 from scanners.path_translators import make_mapping_for_scanner
 
 CLASSNAME = "ZapNone"
@@ -101,6 +102,16 @@ class ZapNone(Zap):
         logging.info("Running up the ZAP scanner on the host")
         if not self.state == State.READY:
             raise RuntimeError("[ZAP SCANNER]: ERROR, not ready to run")
+
+        self.check_plugin_status()
+
+        # temporary workaround: cleanup addon state
+        # see https://github.com/zaproxy/zaproxy/issues/7590#issuecomment-1308909500
+        statefile = f"{self.zap_home}/add-ons-state.xml"
+        try:
+            os.remove(statefile)
+        except FileNotFoundError:
+            logging.info(f"The addon state file {statefile} was not created")
 
         if self.config.get("scanners.zap.miscOptions.updateAddons", default=True):
             logging.info("Zap: Updating addons")
@@ -208,3 +219,56 @@ class ZapNone(Zap):
         """
         if value is not None:
             os.environ[key] = value
+
+    ###############################################################
+    # PRIVATE   METHODS                                           #
+    # Accessed by ZapNone only                                    #
+    # + MUST be implemented                                       #
+    ###############################################################
+
+    def check_plugin_status(self):
+        """MacOS workaround for "The mandatory add-on was not found" error
+        See https://github.com/zaproxy/zaproxy/issues/7703
+        """
+        logging.info("Zap: verifying the viability of ZAP")
+        command = [
+            self.config.get("scanners.zap.container.parameters.executable"),
+            "-dir",
+            self.zap_home,
+            "-cmd",
+        ]
+        logging.debug(f"ZAP create home command: {command}")
+        result = subprocess.run(command, check=False, capture_output=True)
+        if result.returncode == 0:
+            logging.debug("ZAP appears to be in a correct state")
+        elif (
+            result.stderr.find(bytes("The mandatory add-on was not found:", "ascii"))
+            > 0
+        ):
+            logging.info("Missing mandatory plugins. Fixing")
+            url_root = "https://github.com/zaproxy/zap-extensions/releases/download"
+            anonymous_download(
+                url=f"{url_root}/callhome-v0.6.0/callhome-release-0.6.0.zap",
+                dest=f"{self.zap_home}/plugin/callhome-release-0.6.0.zap",
+                proxy=self.config.get("scanners.zap.proxy", default=None),
+            )
+            anonymous_download(
+                url=f"{url_root}/network-v0.9.0/network-beta-0.9.0.zap",
+                dest=f"{self.zap_home}/plugin/network-beta-0.9.0.zap",
+                proxy=self.config.get("scanners.zap.proxy", default=None),
+            )
+            logging.info("Workaround: installing all addons")
+            command = [
+                self.config.get("scanners.zap.container.parameters.executable"),
+                "-dir",
+                self.zap_home,
+                "-cmd",
+                "-addoninstallall",
+            ]
+            logging.debug(f"ZAP: installing all addons: {command}")
+            result = subprocess.run(command, check=False)
+
+        else:
+            logging.warning(
+                f"ZAP appears to be in a incorrect state. Error: {result.stderr}"
+            )

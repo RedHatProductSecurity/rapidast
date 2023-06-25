@@ -5,14 +5,14 @@
 # build and install scanners in advance (more scanners will be added)
 FROM registry.access.redhat.com/ubi9-minimal
 
-RUN microdnf install -y procps tar gzip shadow-utils java-11-openjdk nano
+RUN microdnf install -y procps tar gzip shadow-utils java-11-openjdk
 
 ## ZAP
 RUN mkdir /opt/zap
 RUN mkdir -p /tmp/zap
 RUN curl -sfL https://github.com/zaproxy/zaproxy/releases/download/v2.12.0/ZAP_2.12.0_Linux.tar.gz | tar zxvf - -C /tmp/zap
 RUN mv -T /tmp/zap/ZAP_2.12.0 /opt/zap
-ENV PATH $PATH:/opt/zap/
+ENV PATH $PATH:/opt/zap/:/opt/rapidast/
 
 ### Update add-ons
 RUN zap.sh -cmd -silent -addonupdate
@@ -31,11 +31,16 @@ COPY ./configmodel/ /opt/rapidast/configmodel/
 COPY ./utils/ /opt/rapidast/utils/
 COPY ./config/ /opt/rapidast/config/
 COPY ./requirements.txt /opt/rapidast/
-COPY ./containerize/run_rapidast.sh /usr/bin/
 
 ### Add /opt/zap to the PATH (for any user and future user)
-COPY ./containerize/path_zap.sh /etc/profile.d/zap.sh
+COPY ./containerize/path_rapidast.sh /etc/profile.d/rapidast.sh
 
 ### Install RapiDAST requirements, globally, so that it's available to any user
 RUN python3 -m ensurepip --upgrade
 RUN pip3 install -r /opt/rapidast/requirements.txt
+
+
+RUN useradd -u 1000 -d /home/rapidast -m -s /bin/bash rapidast
+RUN echo rapidast:rapidast | chpasswd 
+USER rapidast
+WORKDIR /home/rapidast

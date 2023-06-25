@@ -1,1 +1,0 @@
-pathmunge /opt/zap

@@ -32,15 +32,20 @@ COPY ./utils/ /opt/rapidast/utils/
 COPY ./config/ /opt/rapidast/config/
 COPY ./requirements.txt /opt/rapidast/
 
-### Add /opt/zap to the PATH (for any user and future user)
+### Add /opt/{zap,rapidast}/ to the PATH (for any user and future user)
 COPY ./containerize/path_rapidast.sh /etc/profile.d/rapidast.sh
 
 ### Install RapiDAST requirements, globally, so that it's available to any user
 RUN python3 -m ensurepip --upgrade
 RUN pip3 install -r /opt/rapidast/requirements.txt
 
+### Allow the `dast` usergroup to make modifications to rapidast
+RUN groupadd dast
+RUN chown -R :dast /opt/rapidast
+RUN chmod -R g+w /opt/rapidast
 
-RUN useradd -u 1000 -d /home/rapidast -m -s /bin/bash rapidast
-RUN echo rapidast:rapidast | chpasswd 
+
+RUN useradd -u 1000 -d /home/rapidast -m -s /bin/bash -G dast rapidast
+RUN echo rapidast:rapidast | chpasswd
 USER rapidast
 WORKDIR /home/rapidast

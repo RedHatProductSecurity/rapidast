@@ -208,6 +208,8 @@ $ podman build . -f containerize/Containerfile -t <image-tag>
 
 Disclaimer: This tool is not intended to be run as a long-running service. Instead, it is designed to be run for a short period of time while a scan is being invoked and executed in a separate test environment. If this tool is used solely for the scanning purposes, vulnerabilities that may be indicated to exist in the image will not have a chance to be exploited. The user assumes all risks and liability associated with its use.
 
+The `Containerfile.multiuser` image can be used with additional freedom, such as creating additional users. Members of the `dast` group will also have the ability to modify rapidast (such as: adding new policies and writing results in the default location)
+
 ### Running on Kubernetes or OpenShift
 
 Helm chart is provided to help with running RapiDAST on Kubernetes or OpenShift.

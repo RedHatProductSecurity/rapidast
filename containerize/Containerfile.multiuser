@@ -5,7 +5,7 @@
 # build and install scanners in advance (more scanners will be added)
 FROM registry.access.redhat.com/ubi9-minimal
 
-RUN microdnf install -y procps tar gzip shadow-utils java-11-openjdk
+RUN microdnf install -y procps tar gzip shadow-utils java-11-openjdk git
 
 ## ZAP
 RUN mkdir /opt/zap

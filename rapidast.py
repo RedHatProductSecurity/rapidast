@@ -102,13 +102,16 @@ def run_scanner(name, config, args, defect_d):
         return 1
 
     # Part 4: Post process
-    if scanner.state == scanners.State.DONE:
-        scanner.postprocess()
-    else:
-        logging.error(f"scanner {name} is not in DONE state: no post processing")
-        return 1
+    # Even in case of error, some information will be stored in the result directory for troubleshooting
+    scanner.postprocess()
 
     # Part 5: cleanup
+    if not scanner.state == scanners.State.PROCESSED:
+        logging.error(
+            f"Something is wrong. Scanner {name} is not in PROCESSED state: the workdir won't be cleaned up"
+        )
+        return 1
+
     if not args.no_cleanup:
         scanner.cleanup()
 

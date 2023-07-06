@@ -89,6 +89,7 @@ class Zap(RapidastScanner):
     def postprocess(self):
         logging.info(f"Extracting report, storing in {self.results_dir}")
         reports_dir = os.path.join(self.path_map.workdir.host_path, Zap.REPORTS_SUBDIR)
+        logging.debug(f"Extracting report from {reports_dir}")
         shutil.copytree(reports_dir, self.results_dir)
 
         logging.info("Saving the session as evidence")

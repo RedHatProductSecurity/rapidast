@@ -76,14 +76,14 @@ def run_scanner(name, config, args, defect_d):
     try:
         class_ = scanners.str_to_scanner(name, typ)
     except ModuleNotFoundError:
-        logging.error(f"Scanner `{name}` of type `{typ}` does not exist")
-        logging.error(f"Ignoring failed Scanner `{name}` of type `{typ}`")
+        logging.error(f"Scanner `{name.split('_')[0]}` of type `{typ}` does not exist")
+        logging.error(f"Ignoring failed Scanner `name.split('_')[0]` of type `{typ}`")
         logging.error(f"Please verify your configuration file: `scanners.{name}`")
         return 1
 
     # Part 1: create a instance based on configuration
     try:
-        scanner = class_(config)
+        scanner = class_(config, name)
     except OSError as excp:
         logging.error(excp)
         logging.error(f"Ignoring failed Scanner `{name}` of type `{typ}`")

@@ -26,13 +26,13 @@ class ZapFlatpak(Zap):
     # Accessed by parent Zap object                               #
     ###############################################################
 
-    def __init__(self, config):
+    def __init__(self, config, ident="zap"):
         """Initialize all vars based on the config.
         The code of the function only deals with the "no container" layer, the "ZAP" layer is handled by super()
         """
 
         logging.debug("Initializing a local instance of the ZAP scanner")
-        super().__init__(config)
+        super().__init__(config, ident)
 
         # Note: flatpak enforces the executable on its own, so we do not have to fill it up
 
@@ -75,10 +75,8 @@ class ZapFlatpak(Zap):
         super().setup()
 
         # Copy the selected policy to the policies directory
-        if self.config.get("scanners.zap.activeScan", default=False) is not False:
-            policy = self.config.get(
-                "scanners.zap.activeScan.policy", default="API-scan-minimal"
-            )
+        if self.my_conf("activeScan", default=False) is not False:
+            policy = self.my_conf("activeScan.policy", default="API-scan-minimal")
             os.mkdir(self.path_map.policies.host_path)
             self._include_file(
                 host_path=f"{MODULE_DIR}/policies/{policy}.policy",
@@ -96,7 +94,7 @@ class ZapFlatpak(Zap):
         if not self.state == State.READY:
             raise RuntimeError("[ZAP SCANNER]: ERROR, not ready to run")
 
-        if self.config.get("scanners.zap.miscOptions.updateAddons", default=True):
+        if self.my_conf("miscOptions.updateAddons", default=True):
             logging.info("Zap: Updating addons")
             if self._run_in_flatpak(
                 ["-cmd", "-dir", self.zap_home, "-addonupdate"]

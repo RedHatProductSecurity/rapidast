@@ -27,17 +27,19 @@ class ZapNone(Zap):
     # Accessed by parent Zap object                               #
     ###############################################################
 
-    def __init__(self, config):
+    def __init__(self, config, ident="zap"):
         """Initialize all vars based on the config.
         The code of the function only deals with the "no container" layer, the "ZAP" layer is handled by super()
         """
 
         logging.debug("Initializing a local instance of the ZAP scanner")
-        super().__init__(config)
+        super().__init__(config, ident)
 
         # Setup defaults specific to "no container" mode
         self.config.set(
-            "scanners.zap.container.parameters.executable", "zap.sh", overwrite=False
+            f"scanners.{self.ident}.container.parameters.executable",
+            "zap.sh",
+            overwrite=False,
         )
 
         # prepare the host <-> container mapping
@@ -82,10 +84,8 @@ class ZapNone(Zap):
 
         # Without a container layer, can't "mount" the policy directory, and ZAP does not allow changing it
         # We have to copy it to ZAP's policies directory
-        if self.config.get("scanners.zap.activeScan", default=False) is not False:
-            policy = self.config.get(
-                "scanners.zap.activeScan.policy", default="API-scan-minimal"
-            )
+        if self.my_conf("activeScan", default=False) is not False:
+            policy = self.my_conf("activeScan.policy", default="API-scan-minimal")
             os.mkdir(self.path_map.policies.host_path)
             self._include_file(
                 host_path=f"{MODULE_DIR}/policies/{policy}.policy",
@@ -113,10 +113,10 @@ class ZapNone(Zap):
         except FileNotFoundError:
             logging.info(f"The addon state file {statefile} was not created")
 
-        if self.config.get("scanners.zap.miscOptions.updateAddons", default=True):
+        if self.my_conf("miscOptions.updateAddons", default=True):
             logging.info("Zap: Updating addons")
             command = [
-                self.config.get("scanners.zap.container.parameters.executable"),
+                self.my_conf("container.parameters.executable"),
                 "-dir",
                 self.zap_home,
                 "-cmd",
@@ -199,7 +199,7 @@ class ZapNone(Zap):
         """
 
         self.zap_cli = [
-            self.config.get("scanners.zap.container.parameters.executable"),
+            self.my_conf("container.parameters.executable"),
             "-dir",
             self.zap_home,
         ]
@@ -232,7 +232,7 @@ class ZapNone(Zap):
         """
         logging.info("Zap: verifying the viability of ZAP")
         command = [
-            self.config.get("scanners.zap.container.parameters.executable"),
+            self.my_conf("container.parameters.executable"),
             "-dir",
             self.zap_home,
             "-cmd",
@@ -250,16 +250,16 @@ class ZapNone(Zap):
             anonymous_download(
                 url=f"{url_root}/callhome-v0.6.0/callhome-release-0.6.0.zap",
                 dest=f"{self.zap_home}/plugin/callhome-release-0.6.0.zap",
-                proxy=self.config.get("scanners.zap.proxy", default=None),
+                proxy=self.my_conf("proxy", default=None),
             )
             anonymous_download(
                 url=f"{url_root}/network-v0.9.0/network-beta-0.9.0.zap",
                 dest=f"{self.zap_home}/plugin/network-beta-0.9.0.zap",
-                proxy=self.config.get("scanners.zap.proxy", default=None),
+                proxy=self.my_conf("proxy", default=None),
             )
             logging.info("Workaround: installing all addons")
             command = [
-                self.config.get("scanners.zap.container.parameters.executable"),
+                self.my_conf("container.parameters.executable"),
                 "-dir",
                 self.zap_home,
                 "-cmd",

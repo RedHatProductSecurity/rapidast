@@ -30,7 +30,7 @@ class ZapPodman(Zap):
     # Accessed by parent Zap object                               #
     ###############################################################
 
-    def __init__(self, config):
+    def __init__(self, config, ident="zap"):
         """Initialize all vars based on the config.
         The code of the function only deals with the "podman" layer, the "ZAP" layer is handled by super()
         """
@@ -42,16 +42,18 @@ class ZapPodman(Zap):
             )
 
         logging.debug("Initializing podman-based ZAP scanner")
-        super().__init__(config)
+        super().__init__(config, ident)
 
         # Setup defaults specific to Podman
         self.config.set(
-            "scanners.zap.container.parameters.image",
+            f"scanners.{self.ident}.container.parameters.image",
             ZapPodman.DEFAULT_IMAGE,
             overwrite=False,
         )
         self.config.set(
-            "scanners.zap.container.parameters.executable", "zap.sh", overwrite=False
+            f"scanners.{self.ident}.container.parameters.executable",
+            "zap.sh",
+            overwrite=False,
         )
 
         # This will contain all the podman options
@@ -109,17 +111,14 @@ class ZapPodman(Zap):
         cli = ["podman", "run"]
         cli += self.podman_opts
         cli.append(
-            self.config.get(
-                "scanners.zap.container.parameters.image",
-                default=ZapPodman.DEFAULT_IMAGE,
-            )
+            self.my_conf("container.parameters.image", default=ZapPodman.DEFAULT_IMAGE)
         )
 
-        if self.config.get("scanners.zap.miscOptions.updateAddons", default=True):
+        if self.my_conf("miscOptions.updateAddons", default=True):
             # Update scanner as a first command, then actually run ZAP
             # currently, this is done via a `sh -c` wrapper
             commands = (
-                self.config.get("scanners.zap.container.parameters.executable")
+                self.my_conf("container.parameters.executable")
                 + " -cmd -addonupdate; "
                 + " ".join(self.zap_cli)
             )
@@ -194,7 +193,7 @@ class ZapPodman(Zap):
         Uses super() to generate the generic part of the command
         """
 
-        self.zap_cli = [self.config.get("scanners.zap.container.parameters.executable")]
+        self.zap_cli = [self.my_conf("container.parameters.executable")]
 
         super()._setup_zap_cli()
 
@@ -225,7 +224,7 @@ class ZapPodman(Zap):
 
         self.podman_opts += ["--name", self.container_name]
 
-        pod_name = self.config.get("scanners.zap.container.parameters.podName")
+        pod_name = self.my_conf("container.parameters.podName")
         if pod_name:
             # injecting the container in an existing pod
             self.podman_opts += ["--pod", pod_name]

@@ -34,12 +34,12 @@ class Zap(RapidastScanner):
     REPORTS_SUBDIR = "reports"
 
     ## FUNCTIONS
-    def __init__(self, config):
+    def __init__(self, config, ident):
         logging.debug("Initializing ZAP scanner")
-        super().__init__(config)
+        super().__init__(config, ident)
 
         self.results_dir = os.path.join(
-            self.config.get("config.results_dir", default="results"), "zap"
+            self.config.get("config.results_dir", default="results"), self.ident
         )
 
         # This is used to construct the ZAP Automation config.
@@ -123,12 +123,12 @@ class Zap(RapidastScanner):
         }
 
         # lists of configured import parameters
-        params_root = "scanners.zap.defectDojoExport.parameters"
-        import_params = self.config.get(params_root, default={}).keys()
+        params_root = "defectDojoExport.parameters"
+        import_params = self.my_conf(params_root, default={}).keys()
 
         # overload that list onto the defaults
         for param in import_params:
-            data[param] = self.config.get(f"{params_root}.{param}")
+            data[param] = self.my_conf(f"{params_root}.{param}")
 
         if data.get("test") is None:
             # No test ID provided, so we need to make sure there is enough info
@@ -156,13 +156,15 @@ class Zap(RapidastScanner):
         """
 
         # Proxy workaround (because it currently can't be configured from Automation Framework)
-        proxy = self.config.get("scanners.zap.proxy")
-        if proxy:
+        p_host, p_port = self.my_conf("proxy.proxyHost"), self.my_conf(
+            "proxy.proxyPort"
+        )
+        if p_host and p_port:
             self.zap_cli += [
                 "-config",
-                f"network.connection.httpProxy.host={proxy.get('proxyHost')}",
+                f"network.connection.httpProxy.host={p_host}",
                 "-config",
-                f"network.connection.httpProxy.port={proxy.get('proxyPort')}",
+                f"network.connection.httpProxy.port={p_port}",
                 "-config",
                 "network.connection.httpProxy.enabled=true",
             ]
@@ -173,20 +175,12 @@ class Zap(RapidastScanner):
         self.zap_cli.append("-newsession")
         self.zap_cli.append(f"{self._container_work_dir()}/session_data/session")
 
-        if not self.config.get("scanners.zap.miscOptions.enableUI", default=False):
+        if not self.my_conf("miscOptions.enableUI", default=False):
             # Disable UI
             self.zap_cli.append("-cmd")
 
         # finally: the Automation Framework:
         self.zap_cli.extend(["-autorun", f"{self._container_work_dir()}/af.yaml"])
-
-    def get_type(self):
-        """Return container type, based on configuration.
-        This is only a helper to shorten long lines
-        """
-        return self.config.get(
-            "scanners.zap.container.type", default=Zap.DEFAULT_CONTAINER
-        )
 
     # disabling these 2 rules only here since they might actually be useful else where
     # pylint: disable=unused-argument
@@ -244,12 +238,8 @@ class Zap(RapidastScanner):
         try:
             af_context = find_context(self.automation_config)
             af_context["urls"].append(self.config.get("application.url"))
-            af_context["includePaths"].extend(
-                self.config.get("scanners.zap.urls.includes", default=[])
-            )
-            af_context["excludePaths"].extend(
-                self.config.get("scanners.zap.urls.excludes", default=[])
-            )
+            af_context["includePaths"].extend(self.my_conf("urls.includes", default=[]))
+            af_context["excludePaths"].extend(self.my_conf("urls.excludes", default=[]))
         except KeyError as exc:
             raise RuntimeError(
                 f"Something went wrong with the Zap scanner configuration, while creating the context':\n {str(exc)}"
@@ -273,13 +263,13 @@ class Zap(RapidastScanner):
         self._save_automation_file()
 
     def _setup_import_urls(self):
-        """If scanners.zap.importUrlsFromFile exists: prepare an import job for URLs
-        scanners.zap.importUrlsFromFile _must_ be an existing file on the host
+        """If importUrlsFromFile exists:
+        prepare an import job for URLs importUrlsFromFile _must_ be an existing file on the host
         Its content is a text file: a list of GET URLs, each of which will be scanned
         """
         job = {"name": "import", "type": "import", "parameters": {"type": "url"}}
 
-        orig = self.config.get("scanners.zap.importUrlsFromFile")
+        orig = self.my_conf("importUrlsFromFile")
         if not orig:
             return
         dest = f"{self._container_work_dir()}/importUrls.txt"
@@ -291,23 +281,24 @@ class Zap(RapidastScanner):
         """Prepare an openapi job and append it to the job list"""
 
         openapi = {"name": "openapi", "type": "openapi", "parameters": {}}
-        api = self.config.get("scanners.zap.apiScan.apis", default={})
-        if api.get("apiUrl"):
-            openapi["parameters"]["apiUrl"] = api.get("apiUrl")
-        elif api.get("apiFile"):
+        api_url = self.my_conf("apiScan.apis.apiUrl")
+        api_file = self.my_conf("apiScan.apis.apiFile")
+        if api_url:
+            openapi["parameters"]["apiUrl"] = api_url
+        elif api_file:
             # copy the file in the container's result directory
             # This allows the OpenAPI to be kept as evidence
             container_openapi_file = f"{self._container_work_dir()}/openapi.json"
-
             self._include_file(
-                host_path=api.get("apiFile"), dest_in_container=container_openapi_file
+                host_path=api_file, dest_in_container=container_openapi_file
             )
+
             openapi["parameters"]["apiFile"] = container_openapi_file
         else:
-            logging.warning("No API defined in the config, in scanners.zap.apiScan.api")
+            logging.warning("No API defined in the config, in apiScan.api")
         # default target: main URL, or can be overridden in apiScan
-        openapi["parameters"]["targetUrl"] = self.config.get(
-            "scanners.zap.apiScan.target", default=False
+        openapi["parameters"]["targetUrl"] = self.my_conf(
+            "apiScan.target"
         ) or self.config.get("application.url")
         openapi["parameters"]["context"] = Zap.DEFAULT_CONTEXT
 
@@ -316,7 +307,7 @@ class Zap(RapidastScanner):
     def _setup_spider(self):
         """Prepare an spider job and append it to the job list"""
 
-        if self.config.get("scanners.zap.spider", default=False) is False:
+        if self.my_conf("spider", default=False) is False:
             return
 
         af_spider = {
@@ -324,16 +315,14 @@ class Zap(RapidastScanner):
             "type": "spider",
             "parameters": {
                 "user": Zap.USER if self.authenticated else "",
-                "maxDuration": self.config.get(
-                    "scanners.zap.spider.maxDuration", default=0
-                ),
-                "url": self.config.get("scanners.zap.spider.url", default=""),
+                "maxDuration": self.my_conf("spider.maxDuration", default=0),
+                "url": self.my_conf("spider.url", default=""),
             },
         }
 
         # Add to includePaths to the context
-        if self.config.get("scanners.zap.spider.url"):
-            new_include_path = self.config.get("scanners.zap.spider.url") + ".*"
+        if self.my_conf("spider.url"):
+            new_include_path = self.my_conf("spider.url") + ".*"
             af_context = find_context(self.automation_config)
             af_context["includePaths"].append(new_include_path)
 
@@ -342,7 +331,7 @@ class Zap(RapidastScanner):
     def _setup_ajax_spider(self):
         """Prepare an spiderAjax job and append it to the job list"""
 
-        if self.config.get("scanners.zap.spiderAjax", default=False) is False:
+        if self.my_conf("spiderAjax", default=False) is False:
             return
 
         af_spider_ajax = {
@@ -350,19 +339,18 @@ class Zap(RapidastScanner):
             "type": "spiderAjax",
             "parameters": {
                 "user": Zap.USER if self.authenticated else "",
-                "maxDuration": self.config.get(
-                    "scanners.zap.spiderAjax.maxDuration", default=0
-                ),
-                "url": self.config.get("scanners.zap.spiderAjax.url", default=""),
-                "browserId": self.config.get(
-                    "scanners.zap.spiderAjax.browserId", default="chrome-headless"
+                "maxDuration": self.my_conf("spiderAjax.maxDuration", default=0),
+                "url": self.my_conf("spiderAjax.url", default=""),
+                "browserId": self.my_conf(
+                    "spiderAjax.browserId", default="chrome-headless"
                 ),
             },
         }
 
         # Add to includePaths to the context
-        if self.config.get("scanners.zap.spiderAjax.url"):
-            new_include_path = self.config.get("scanners.zap.spiderAjax.url") + ".*"
+        ajax_url = self.my_conf("spiderAjax.url")
+        if ajax_url:
+            new_include_path = f"{ajax_url}.*"
             af_context = find_context(self.automation_config)
             af_context["includePaths"].append(new_include_path)
 
@@ -371,18 +359,16 @@ class Zap(RapidastScanner):
     def _setup_graphql(self):
         """Prepare a graphql job and append it to the job list"""
 
-        if self.config.get("scanners.zap.graphql", default=False) is False:
+        if self.my_conf("graphql", default=False) is False:
             return
 
         af_graphql = {
             "name": "graphql",
             "type": "graphql",
-            "parameters": self.config.get(
-                "scanners.zap.graphql", default={"endpoint": ""}
-            ),
+            "parameters": self.my_conf("graphql", default={"endpoint": ""}),
         }
 
-        host_file = self.config.get("scanners.zap.graphql.schemaFile")
+        host_file = self.my_conf("graphql.schemaFile")
         if host_file:
             cont_file = os.path.join(self._container_work_dir(), "schema.graphql")
             self._include_file(host_path=host_file, dest_in_container=cont_file)
@@ -393,7 +379,7 @@ class Zap(RapidastScanner):
     def _setup_passive_scan(self):
         """Adds the passive scan to the job list. Needs to be done prior to Active scan"""
 
-        if self.config.get("scanners.zap.passiveScan", default=False) is False:
+        if self.my_conf("passiveScan", default=False) is False:
             return
 
         # passive AF schema
@@ -409,8 +395,8 @@ class Zap(RapidastScanner):
             "rules": [],
         }
 
-        # Fetch the list of disabled passive scan as scanners.zap.policy.disabledPassiveScan
-        disabled = self.config.get("scanners.zap.passiveScan.disabledRules", default="")
+        # Fetch the list of disabled passive scan as policy.disabledPassiveScan
+        disabled = self.my_conf("passiveScan.disabledRules", default="")
         # ''.split('.') returns [''], which is a non-empty list (which would erroneously get into the loop later)
         disabled = disabled.split(",") if len(disabled) else []
         logging.debug(f"disabling the following passive scans: {disabled}")
@@ -422,7 +408,7 @@ class Zap(RapidastScanner):
     def _setup_passive_wait(self):
         """Adds a wait to the list of jobs, to make sure that the Passive Scan is finished"""
 
-        if self.config.get("scanners.zap.passiveScan", default=False) is False:
+        if self.my_conf("passiveScan", default=False) is False:
             return
 
         # Available Parameters: maximum time to wait
@@ -436,7 +422,7 @@ class Zap(RapidastScanner):
     def _setup_active_scan(self):
         """Adds the active scan job list."""
 
-        if self.config.get("scanners.zap.activeScan", default=False) is False:
+        if self.my_conf("activeScan", default=False) is False:
             return
 
         active = {
@@ -445,9 +431,7 @@ class Zap(RapidastScanner):
             "parameters": {
                 "context": Zap.DEFAULT_CONTEXT,
                 "user": Zap.USER if self.authenticated else "",
-                "policy": self.config.get(
-                    "scanners.zap.activeScan.policy", default="API-scan-minimal"
-                ),
+                "policy": self.my_conf("activeScan.policy", default="API-scan-minimal"),
             },
         }
 
@@ -472,8 +456,8 @@ class Zap(RapidastScanner):
     def _should_export_to_defect_dojo(self):
         """Return a truthful value if Defect Dojo export is configured and not disbaled"""
         return (
-            self.config.exists("scanners.zap.defectDojoExport")
-            and self.config.get("scanners.zap.defectDojoExport.type") is not False
+            self.my_conf("defectDojoExport", default=False) is not False
+            and self.my_conf("defectDojoExport.type", default=False) is not False
         )
 
     def _setup_report(self):
@@ -488,7 +472,7 @@ class Zap(RapidastScanner):
             "xml": ReportFormat("traditional-xml-plus", "zap-report.xml"),
         }
 
-        formats = set(self.config.get("scanners.zap.report.format", {"json"}))
+        formats = set(self.my_conf("report.format", {"json"}))
         # DefectDojo requires XML report type
         if self._should_export_to_defect_dojo():
             logging.debug("ZAP report: ensures XML report for Defect Dojo")
@@ -523,8 +507,8 @@ class Zap(RapidastScanner):
 
     # Building an authentication factory for ZAP
     # For every authentication methods:
-    # - Will extract authentication parameters from config's `scanners.zap.authentication.parameters`
-    # - May modify `af` (e.g.: adding jobs, users)
+    # - Will extract authentication parameters from config's `authentication.parameters`
+    # - May modify `self.automation_config` (e.g.: adding jobs, users)
     # - May add environment vars
     # - MUST return True if it created a user, and False otherwise
     @generic_authentication_factory("zap")
@@ -549,9 +533,9 @@ class Zap(RapidastScanner):
 
         Returns False as it does not create a ZAP user
         """
-        params_path = "scanners.zap.authentication.parameters"
-        cookie_name = self.config.get(f"{params_path}.name", None)
-        cookie_val = self.config.get(f"{params_path}.value", None)
+        params_path = "authentication.parameters"
+        cookie_name = self.my_conf(f"{params_path}.name", None)
+        cookie_val = self.my_conf(f"{params_path}.value", None)
 
         self._add_env("ZAP_AUTH_HEADER", "Cookie")
         self._add_env("ZAP_AUTH_HEADER_VALUE", f"{cookie_name}={cookie_val}")
@@ -568,9 +552,9 @@ class Zap(RapidastScanner):
 
         Returns False as it does not create a ZAP user
         """
-        params_path = "scanners.zap.authentication.parameters"
-        header_name = self.config.get(f"{params_path}.name", default="Authorization")
-        header_val = self.config.get(f"{params_path}.value", default="")
+        params_path = "authentication.parameters"
+        header_name = self.my_conf(f"{params_path}.name", default="Authorization")
+        header_val = self.my_conf(f"{params_path}.value", default="")
 
         self._add_env("ZAP_AUTH_HEADER", header_name)
         self._add_env("ZAP_AUTH_HEADER_VALUE", header_val)
@@ -587,9 +571,9 @@ class Zap(RapidastScanner):
 
         Returns False as it does not create a ZAP user
         """
-        params_path = "scanners.zap.authentication.parameters"
-        username = self.config.get(f"{params_path}.username", None)
-        password = self.config.get(f"{params_path}.password", None)
+        params_path = "authentication.parameters"
+        username = self.my_conf(f"{params_path}.username", None)
+        password = self.my_conf(f"{params_path}.password", None)
 
         blob = urlsafe_b64encode(f"{username}:{password}".encode()).decode("utf-8")
 
@@ -613,10 +597,10 @@ class Zap(RapidastScanner):
         """
 
         context_ = find_context(self.automation_config)
-        params_path = "scanners.zap.authentication.parameters"
-        client_id = self.config.get(f"{params_path}.client_id", "cloud-services")
-        token_endpoint = self.config.get(f"{params_path}.token_endpoint", None)
-        rtoken = self.config.get(f"{params_path}.rtoken", None)
+        params_path = "authentication.parameters"
+        client_id = self.my_conf(f"{params_path}.client_id", "cloud-services")
+        token_endpoint = self.my_conf(f"{params_path}.token_endpoint", None)
+        rtoken = self.my_conf(f"{params_path}.rtoken", None)
         scripts_dir = self.path_map.scripts.container_path
 
         # 1- complete the context: script, verification and user
@@ -669,25 +653,25 @@ class Zap(RapidastScanner):
         # This can be deleted when https://github.com/zaproxy/zaproxy/issues/7739 is resolved
         # Note: to avoid a temporary file, we download the file directly in its final destination in work_dir
         #       This is not a problem: it will simply be ignored by _include_file()
-        oas_url = self.config.get("scanners.zap.apiScan.apis.apiUrl", default=None)
-        if oas_url and self.config.get(
-            "scanners.zap.miscOptions.oauth2OpenapiManualDownload", default=False
+        oas_url = self.my_conf("apiScan.apis.apiUrl", default=None)
+        if oas_url and self.my_conf(
+            "miscOptions.oauth2OpenapiManualDownload", default=False
         ):
             logging.info("ZAP workaround: manually downloading the OpenAPI file")
             if authenticated_download_with_rtoken(
                 url=oas_url,
                 dest=f"{self._host_work_dir()}/openapi.json",
                 auth={"rtoken": rtoken, "client_id": client_id, "url": token_endpoint},
-                proxy=self.config.get("scanners.zap.proxy", default=None),
+                proxy=self.my_conf("proxy", default=None),
             ):
                 logging.info(
                     "Successful manual download of the OAS: replacing apiUrl by apiFile"
                 )
                 self.config.set(
-                    "scanners.zap.apiScan.apis.apiFile",
+                    f"scanners.{self.ident}.apiScan.apis.apiFile",
                     f"{self._host_work_dir()}/openapi.json",
                 )
-                self.config.delete("scanners.zap.apiScan.apis.apiUrl")
+                self.config.delete(f"scanners.{self.ident}.apiScan.apis.apiUrl")
             else:
                 logging.warning(
                     "Failed to manually download the OAS. delegating to ZAP"

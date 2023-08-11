@@ -160,11 +160,6 @@ class ZapNone(Zap):
     def postprocess(self):
         logging.info("Running postprocess for the ZAP Host environment")
 
-        logging.debug(f"zap_home: {self.zap_home}")
-        shutil.copy(
-            f"{self.zap_home}/zap.log", f"{self._host_work_dir()}/{self.REPORTS_SUBDIR}"
-        )
-
         super().postprocess()
 
         if not self.state == State.ERROR:

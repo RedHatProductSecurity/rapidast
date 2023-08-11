@@ -1,3 +1,4 @@
+import glob
 import logging
 import os
 import pprint
@@ -61,6 +62,9 @@ class Zap(RapidastScanner):
         # + policies: where policies are stored
         self.path_map = None  # to be defined by the typed scanner
 
+        # zap_home will be updated in the child class
+        self.zap_home = ""
+
     ###############################################################
     # PUBLIC METHODS                                              #
     # Called via inheritence only                                 #
@@ -87,14 +91,20 @@ class Zap(RapidastScanner):
         pass
 
     def postprocess(self):
-        logging.info(f"Extracting report, storing in {self.results_dir}")
         reports_dir = os.path.join(self.path_map.workdir.host_path, Zap.REPORTS_SUBDIR)
-        logging.debug(f"Extracting report from {reports_dir}")
+        logging.debug(f"reports_dir: {reports_dir}")
+
+        logging.info(f"Extracting report, storing in {self.results_dir}")
         shutil.copytree(reports_dir, self.results_dir)
 
         logging.info("Saving the session as evidence")
         with tarfile.open(f"{self.results_dir}/session.tar.gz", "w:gz") as tar:
             tar.add(self.path_map.workdir.host_path, arcname="evidences")
+
+            # adding zap log files to the archive
+            for log in glob.glob(f"{self.zap_home}/zap.log*"):
+                # log path is like '/tmp/rapidast_*/zap.log'
+                tar.add(log, f"evidences/zap_logs/{log.split('/')[-1]}")
 
     def cleanup(self):
         """Generic ZAP cleanup: should be called only via super() inheritance"""

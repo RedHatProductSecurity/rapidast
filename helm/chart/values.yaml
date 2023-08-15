@@ -28,61 +28,64 @@ pvc: rapidast-pvc
 
 # config is (currently) same as config file -- must be multiline string
 rapidastConfig: |
-    config:
-        # WARNING: `configVersion` indicates the schema version of the config file.
-        # This value tells RapiDAST what schema should be used to read this configuration.
-        # Therefore you should only change it if you update the configuration to a newer schema
-        # It is intended to keep backward compatibility (newer RapiDAST running an older config)
-        configVersion: 4
+  # This is a regular template file, which shows only the most important configuration entries.
+  # Additional configuration options are available, as shown in "config-template-long.yaml".
+  # All the values are optional (except `config.configVersion`): if a key is missing, it will mean either "disabled" or a sensible default will be selected
 
-    # Import a particular environment, and inject it for each scanner
-    environ:
-        envFile: "path/to/env/file"
+  config:
+    # WARNING: `configVersion` indicates the schema version of the config file.
+    # This value tells RapiDAST what schema should be used to read this configuration.
+    # Therefore you should only change it if you update the configuration to a newer schema
+    # It is intended to keep backward compatibility (newer RapiDAST running an older config)
+    configVersion: 4
 
-    # `application` contains data related to the application, not to the scans.
-    application:
-        shortName: "MyApp-1.0"
-        url: "<Mandatory. root URL of the application>"
+  # `application` contains data related to the application, not to the scans.
+  application:
+    shortName: "MyApp-1.0"
+    url: "<Mandatory. root URL of the application>"
 
-    # `general` is a section that will be applied to all scanners.
-    general:
-        proxy:
-            proxyHost: "<hostname>"
-            proxyPort: "<port>"
+  # `general` is a section that will be applied to all scanners.
+  general:
 
-        authentication:
-            type: "oauth2_rtoken"
-            parameters:
-            client_id: "cloud-services"
-            token_endpoint: "<token retrieval URL>"
-            rtoken_var_name: "RTOKEN"  # referring to a env defined in general.environ.envFile
+    # See the config-template-long.yaml for more authentication options
+    authentication:
+      type: http_basic
+      parameters:
+        username: "user"
+        password: "mypassw0rd"
 
-        container:
-            # currently supported: `podman` and `none`
-            type: "none"
+    container:
+      # This configures what technology is to be used for RapiDAST to run each scanner.
+      # Currently supported: `podman`, `flatpak` and `none`
+      #   podman: RapiDAST runs each scanner using podman
+      #   flatpak: RapiDAST runs each scanner using flatpak
+      #   none: RapiDAST runs each scanner in the same host or container (where RapiDAST itself is running in a container)
+      type: "none"
 
-    scanners:
-        zap:
-        # define a scan through the ZAP scanner
-            apiScan:
-            target: "<optional, if different from application.url>"
-            apis:
-                apiUrl: "<URL to openAPI>"
-                # alternative: apiFile: "<local path to openAPI file>"
+  # `scanners' is a section that configures scanning options
+  # See the config-template-long.yaml for more options
+  scanners:
+    zap:
+      apiScan:
+        apis:
+          apiUrl: "<URL to openAPI>"
+          # alternative: apiFile: "<local path to openAPI file>"
 
-            passiveScan:
-            # optional list of passive rules to disable
-            disabledRules: "2,10015,10027,10096,10024"
+      passiveScan:
+        # optional list of passive rules to disable
+        disabledRules: "2,10015,10027,10096,10024"
 
-            activeScan:
-            # If no policy is chosen, a default ("API-scan-minimal") will be selected
-            # The list of policies can be found in scanners/zap/policies/
-            policy: "API-scan-minimal"
+      # Enable activeScan by uncommenting, once scans with the passiveScan only has run successfully
+      #  # If no policy is chosen, a default ("API-scan-minimal") will be selected
+      #  # The list of policies can be found in scanners/zap/policies/
+      #activeScan:
+      #  policy: "helm-custom-scan"  # if you want
+      #  policy: "API-scan-minimal"
 
 scanPolicyXML: |
   <?xml version="1.0" encoding="UTF-8" standalone="no"?>
   <configuration>
-      <policy>API-scan-minimal</policy>
+      <policy>helm-custom-scan</policy>
       <scanner>
           <level>MEDIUM</level>
           <strength>MEDIUM</strength>

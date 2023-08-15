@@ -48,7 +48,7 @@ RUN cp -r $HOME/scanners/zap/policies/*.policy $HOME/.ZAP/policies/
 ## for compatiblity, in case /home/zap/.ZAP/policies is referred
 USER root
 RUN mkdir -p /home/zap/.ZAP
-RUN ln -s $HOME/.ZAP/policies/ /home/zap/.ZAP/policies
+RUN ln -sfn $HOME/.ZAP /home/zap/.ZAP
 USER rapidast
 
 ## ZAP addon update

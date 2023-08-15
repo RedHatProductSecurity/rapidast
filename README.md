@@ -77,6 +77,8 @@ This section summarize the basic workflow as follows:
 1. Create a configuration file for testing the application. See the 'configuration' section below for more information.
 2. Optionally, an environment file may be added, e.g., to separate the secrets from the configuration file.
 3. Run RapiDAST and get the results.
+    - First run with passive scanning only which can save your time at the initial scanning  phase. There are various situations that can cause an issue, not only from scanning set up but also from your application or test environment. Active scanning takes a long time in general.
+    - Once passive Scanning has run successfully, run another scan with active scanning enabled in the configuration file.
 
 ## Configuration
 

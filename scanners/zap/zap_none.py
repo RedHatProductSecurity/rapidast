@@ -159,10 +159,6 @@ class ZapNone(Zap):
 
     def postprocess(self):
         logging.info("Running postprocess for the ZAP Host environment")
-        if not self.state == State.DONE:
-            raise RuntimeError(
-                "No post-processing as ZAP has not successfully run yet."
-            )
 
         super().postprocess()
 

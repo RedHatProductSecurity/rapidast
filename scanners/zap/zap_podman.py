@@ -71,7 +71,10 @@ class ZapPodman(Zap):
             ("workdir", self._create_temp_dir("workdir"), "/zap/results"),
             ("scripts", f"{MODULE_DIR}/scripts", "/zap/scripts"),
             ("policies", f"{MODULE_DIR}/policies", "/home/zap/.ZAP/policies/"),
+            ("zaphomedir", self._create_temp_dir("zaphomedir"), "/home/zap/.ZAP"),
         )
+        self.zap_home = self.path_map.zaphomedir.host_path
+        logging.debug(f"zap_home is set: {self.zap_home}")
 
     ###############################################################
     # PUBLIC METHODS                                              #

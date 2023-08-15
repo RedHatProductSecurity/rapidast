@@ -17,6 +17,7 @@ application:
 # `general` is a section that will be applied to all scanners.
 general:
 
+  # See the config-template-long.yaml for more authentication options
   authentication:
     type: http_basic
     parameters:
@@ -31,9 +32,10 @@ general:
     #   none: RapiDAST runs each scanner in the same host or container (where RapiDAST itself is running in a container)
     type: "podman"
 
+# `scanners' is a section that configures scanning options
+# See the config-template-long.yaml for more options
 scanners:
   zap:
-  # define a scan through the ZAP scanner
     apiScan:
       apis:
         apiUrl: "<URL to openAPI>"
@@ -43,9 +45,10 @@ scanners:
       # optional list of passive rules to disable
       disabledRules: "2,10015,10027,10096,10024"
 
-    activeScan:
-      # If no policy is chosen, a default ("API-scan-minimal") will be selected
-      # The list of policies can be found in scanners/zap/policies/
-      policy: "API-scan-minimal"
+    # Enable activeScan by uncommenting, once scans with the passiveScan only has run successfully
+    #  # If no policy is chosen, a default ("API-scan-minimal") will be selected
+    #  # The list of policies can be found in scanners/zap/policies/
+    #activeScan:
+    #  policy: "API-scan-minimal"
 
 # Other scanners to be defined(TBD)

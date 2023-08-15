@@ -79,8 +79,8 @@ rapidastConfig: |
       #  # If no policy is chosen, a default ("API-scan-minimal") will be selected
       #  # The list of policies can be found in scanners/zap/policies/
       #activeScan:
-      #  policy: "helm-custom-scan"  # if you want
-      #  policy: "API-scan-minimal"
+      #  policy: "helm-custom-scan"   # Use this policy name in order to run scans with the scanPolicyXML scan policy below.  This has to match the policy name inside the <policy> tag
+      #  policy: "API-scan-minimal"   # Otherwise, this can be used to run scans with the default scan policy
 
 scanPolicyXML: |
   <?xml version="1.0" encoding="UTF-8" standalone="no"?>

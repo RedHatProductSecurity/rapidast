@@ -168,6 +168,12 @@ class ZapPodman(Zap):
     # + MUST be implemented                                       #
     ###############################################################
 
+    def _add_env(self, key, value=None):
+        """Environment variable to be added to the container.
+        If value is None, then the value should be taken from the current host
+        """
+        self.podman.add_env(key, value)
+
     def _setup_zap_cli(self):
         """
         Generate the main ZAP command line (not the container command).
@@ -187,7 +193,7 @@ class ZapPodman(Zap):
 
     def _setup_podman_cli(self):
         """Prepare the podman command.
-        The function does not return anything, but adds options to self.podman_opts
+        The function does not return anything, but adds options to self.podman
         """
         pod_name = self.my_conf("container.parameters.podName")
         if pod_name:

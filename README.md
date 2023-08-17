@@ -280,9 +280,25 @@ scanners:
             updateAddons: False
 ```
 
-#### More scanners
+#### Generic scanner
 
-TBD
+It is possible to request RapiDAST to run a command in a podman image, using the `generic` plugin.
+
+For example, to run trivy and make it scan itself, and store its output as a result:
+
+```yaml
+scanners:
+  generic:
+    results: "*stdout"
+
+    container:
+      type: "podman"
+      parameters:
+        image: "docker.io/aquasec/trivy"
+        command: ["image", "docker.io/aquasec/trivy"]
+```
+
+Additional options, such as volume mounts, can be set. See `config/config-template-long.yaml` for additional options.
 
 ### Authentication
 

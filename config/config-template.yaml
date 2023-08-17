@@ -51,4 +51,14 @@ scanners:
     #activeScan:
     #  policy: "API-scan-minimal"
 
-# Other scanners to be defined(TBD)
+  generic:
+    # This is a generic scanner, defined by the user
+
+    # file or directory where results are stored on the host, or "*stdout" (default)
+    results: "*stdout"
+
+    container:
+      type: "podman"
+      parameters:
+        image: "docker.io/aquasec/trivy" # example, for a Trivy scan
+        command: ["image", "<image to scan>"]   # example for a trivy scan.

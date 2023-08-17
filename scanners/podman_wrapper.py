@@ -41,8 +41,12 @@ class PodmanWrapper:
         `cmd` is the array of command that podman run should run
         DOES NOT RUN the command, only returns it as a list of strings
         """
+        # can't set default to [] directly because of side-effects of mutables
+        if cmd is None:
+            cmd = []
+
         cli = ["podman", "run"] + self.opts + [self.image] + cmd
-        logging.verbose(f"The podman CLI: {cli}")
+        logging.debug(f"The podman CLI: {cli}")
         return cli
 
     def delete_yourself(self):

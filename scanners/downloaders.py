@@ -8,7 +8,7 @@ import yaml
 def anonymous_download(url, dest=None, proxy=None):
     """Given a URL, load it using a GET request to dest"""
 
-    logging.verbose(f"Downloading {url}")
+    logging.debug(f"Downloading {url}")
     if proxy:
         proxy = {
             "https": f"http://{proxy['proxyHost']}:{proxy['proxyPort']}",
@@ -22,10 +22,10 @@ def anonymous_download(url, dest=None, proxy=None):
     if dest:
         with open(dest, "wb") as file:
             file.write(resp.content)
-        logging.verbose(f"Download saved in {dest}")
+        logging.debug(f"Download saved in {dest}")
         return True
     else:
-        logging.verbose("Returning content")
+        logging.debug("Returning content")
         return resp.content
 
 

@@ -1,16 +1,14 @@
 import logging
 import platform
 import pprint
-import random
 import shutil
-import string
 import subprocess
 
 from .zap import MODULE_DIR
 from .zap import Zap
 from scanners import State
 from scanners.path_translators import make_mapping_for_scanner
-from utils import safe_add
+from scanners.podman_wrapper import PodmanWrapper
 
 CLASSNAME = "ZapPodman"
 
@@ -35,34 +33,23 @@ class ZapPodman(Zap):
         The code of the function only deals with the "podman" layer, the "ZAP" layer is handled by super()
         """
 
-        # First verify that "podman" exists
-        if not shutil.which("podman"):
-            raise OSError(
-                "Podman is not installed on not in the PATH. It is required to run ZAP in podman"
-            )
-
         logging.debug("Initializing podman-based ZAP scanner")
+        # Initialize ZAP scanner
         super().__init__(config, ident)
 
-        # Setup defaults specific to Podman
-        self.config.set(
-            f"scanners.{self.ident}.container.parameters.image",
-            ZapPodman.DEFAULT_IMAGE,
-            overwrite=False,
+        # Initialize podman
+        self.podman = PodmanWrapper(
+            app_name=self.config.get("application.shortName"),
+            scan_name=self.ident,
+            image=self.my_conf("container.parameters.image", ZapPodman.DEFAULT_IMAGE),
         )
+
+        # Setup defaults specific to Podman
         self.config.set(
             f"scanners.{self.ident}.container.parameters.executable",
             "zap.sh",
             overwrite=False,
         )
-
-        # This will contain all the podman options
-        self.podman_opts = []
-
-        # Container name in the form 'rapidast_zap_<app-shortName>_<random-chars>
-        application_shortname = self.config.get("application.shortName")
-        random_chars = "".join(random.choices(string.ascii_letters, k=6))
-        self.container_name = f"rapidast_zap_{application_shortname}_{random_chars}"
 
         # prepare the host <-> container mapping
         # The default location for WORK can be chosen by parent itself (no overide of self._create_temp_dir)
@@ -111,12 +98,6 @@ class ZapPodman(Zap):
         if not self.state == State.READY:
             raise RuntimeError("[ZAP SCANNER]: ERROR, not ready to run")
 
-        cli = ["podman", "run"]
-        cli += self.podman_opts
-        cli.append(
-            self.my_conf("container.parameters.image", default=ZapPodman.DEFAULT_IMAGE)
-        )
-
         if self.my_conf("miscOptions.updateAddons", default=True):
             # Update scanner as a first command, then actually run ZAP
             # currently, this is done via a `sh -c` wrapper
@@ -125,9 +106,11 @@ class ZapPodman(Zap):
                 + " -cmd -addonupdate; "
                 + " ".join(self.zap_cli)
             )
-            cli += ["sh", "-c", commands]
+            cli = ["sh", "-c", commands]
         else:
-            cli += self.zap_cli
+            cli = self.zap_cli
+
+        cli = self.podman.get_complete_cli(cli)
 
         # DO STUFF
         logging.info(f"Running ZAP with the following command:\n{cli}")
@@ -171,12 +154,7 @@ class ZapPodman(Zap):
         logging.debug(f"Deleting temp directory {self._host_work_dir()}")
         shutil.rmtree(self._host_work_dir())
 
-        logging.debug(f"Deleting podman container {self.container_name}")
-        result = subprocess.run(
-            ["podman", "container", "rm", self.container_name], check=False
-        )
-        if result.returncode:
-            logging.warning(f"Failed to delete container {self.container_name}")
+        if self.podman.delete_yourself():
             self.state = State.ERROR
 
         super().cleanup()
@@ -202,16 +180,6 @@ class ZapPodman(Zap):
 
         logging.debug(f"ZAP will run with: {self.zap_cli}")
 
-    def _add_env(self, key, value=None):
-        """Environment variable to be added to the container.
-        If value is None, then the value should be taken from the current host
-        """
-        if value is None:
-            opt = ["--env", key]
-        else:
-            opt = ["--env", f"{key}={value}"]
-        self.podman_opts += opt
-
     ###############################################################
     # PRITVATE METHODS                                            #
     # Accessed by this ZapPodman object only                      #
@@ -221,20 +189,16 @@ class ZapPodman(Zap):
         """Prepare the podman command.
         The function does not return anything, but adds options to self.podman_opts
         """
-        logging.info(
-            f"Preparing a podman container for the zap image, called {self.container_name}"
-        )
-
-        self.podman_opts += ["--name", self.container_name]
-
         pod_name = self.my_conf("container.parameters.podName")
         if pod_name:
             # injecting the container in an existing pod
-            self.podman_opts += ["--pod", pod_name]
+            self.podman.deploy_to_pod(pod_name)
         else:
             # UID/GID mapping, in case of older podman version
-            # note: incompatible with pod injection
-            self._setup_zap_podman_id_mapping_cli()
+            # In the Zap image: this is uid=1000, gid=1000
+            # note: this incompatible with pod injection,
+            # in which case it needs to be done manually during the Pod creation
+            self.podman.change_user_id(1000, 1000)
 
         # Volume mappings
         for mapping in self.path_map:
@@ -246,67 +210,4 @@ class ZapPodman(Zap):
             else:
                 vol_map += ":Z"
 
-            self.podman_opts += ["--volume", vol_map]
-
-    def _setup_zap_podman_id_mapping_cli(self):
-        """Adds a specific user mapping to the Zap podman container.
-        Needed because the `zap` command do not run as the main user, but as the `zap` user (UID 1000)
-        As a result, the resulting files can't be deleted by the host user.
-        This function aims as preparing a specific UID/GID mapping so that the `zap` user maps to the host user
-        source of the hack :
-        https://github.com/containers/podman/blob/main/troubleshooting.md#39-podman-run-fails-with-error-unrecognized-namespace-mode-keep-iduid1000gid1000-passed
-        """
-
-        sizes = (
-            subprocess.run(
-                [
-                    "podman",
-                    "info",
-                    "--format",
-                    "{{ range .Host.IDMappings.UIDMap }}+{{ .Size }}{{ end }}",
-                ],
-                stdout=subprocess.PIPE,
-                check=True,
-            )
-            .stdout.decode("utf-8")
-            .strip("\n")
-        )
-        logging.debug(f"UIDmapping sizes: {sizes}")
-        subuid_size = safe_add(f"{sizes} - 1")
-        sizes = (
-            subprocess.run(
-                [
-                    "podman",
-                    "info",
-                    "--format",
-                    "{{ range .Host.IDMappings.GIDMap }}+{{ .Size }}{{ end }}",
-                ],
-                stdout=subprocess.PIPE,
-                check=True,
-            )
-            .stdout.decode("utf-8")
-            .strip("\n")
-        )
-        logging.debug(f"UIDmapping sizes: {sizes}")
-        subgid_size = safe_add(f"{sizes} - 1")
-
-        runas_uid = 1000
-        runas_gid = 1000
-
-        # UID mapping
-        self.podman_opts += ["--uidmap", f"0:1:{runas_uid}"]
-        self.podman_opts += ["--uidmap", f"{runas_uid}:0:1"]
-        self.podman_opts += [
-            "--uidmap",
-            f"{runas_uid+1}:{runas_uid+1}:{subuid_size-runas_uid}",
-        ]
-
-        # GID mapping
-        self.podman_opts += ["--gidmap", f"0:1:{runas_gid}"]
-        self.podman_opts += ["--gidmap", f"{runas_gid}:0:1"]
-        self.podman_opts += [
-            "--gidmap",
-            f"{runas_gid+1}:{runas_gid+1}:{subgid_size-runas_gid}",
-        ]
-
-        logging.debug("podman enabled UID/GID mapping arguments")
+            self.podman.add_volume_map(vol_map)

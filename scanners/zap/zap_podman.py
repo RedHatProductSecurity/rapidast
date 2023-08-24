@@ -122,6 +122,8 @@ class ZapPodman(Zap):
             # currently, this is done via a `sh -c` wrapper
             commands = (
                 self.my_conf("container.parameters.executable")
+                + " "
+                + " ".join(self._get_standard_options())
                 + " -cmd -addonupdate; "
                 + " ".join(self.zap_cli)
             )

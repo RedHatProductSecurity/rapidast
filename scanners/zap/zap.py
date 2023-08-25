@@ -165,26 +165,12 @@ class Zap(RapidastScanner):
         This is must be overloaded by descendant, which optionally call this one
         If called, the descendant must fill at least the executable
         """
-
-        # Proxy workaround (because it currently can't be configured from Automation Framework)
-        p_host, p_port = self.my_conf("proxy.proxyHost"), self.my_conf(
-            "proxy.proxyPort"
-        )
-        if p_host and p_port:
-            self.zap_cli += [
-                "-config",
-                f"network.connection.httpProxy.host={p_host}",
-                "-config",
-                f"network.connection.httpProxy.port={p_port}",
-                "-config",
-                "network.connection.httpProxy.enabled=true",
-            ]
-        else:
-            self.zap_cli += ["-config", "network.connection.httpProxy.enabled=false"]
+        self.zap_cli.extend(self._get_standard_options())
 
         # Create a session, to store them as evidence
-        self.zap_cli.append("-newsession")
-        self.zap_cli.append(f"{self._container_work_dir()}/session_data/session")
+        self.zap_cli.extend(
+            ["-newsession", f"{self._container_work_dir()}/session_data/session"]
+        )
 
         if not self.my_conf("miscOptions.enableUI", default=False):
             # Disable UI
@@ -192,6 +178,35 @@ class Zap(RapidastScanner):
 
         # finally: the Automation Framework:
         self.zap_cli.extend(["-autorun", f"{self._container_work_dir()}/af.yaml"])
+
+    def _get_standard_options(self):
+        """
+        Based on config, returns a list of "standard" option that should be common to
+        all ZAP command (regardless of container type).
+        Such as: upstream proxy, local port, etc.
+        """
+        standard = []
+
+        # Proxy workaround (because it currently can't be configured from Automation Framework)
+        p_host, p_port = self.my_conf("proxy.proxyHost"), self.my_conf(
+            "proxy.proxyPort"
+        )
+        if p_host and p_port:
+            standard.extend(["-config", f"network.connection.httpProxy.host={p_host}"])
+            standard.extend(["-config", f"network.connection.httpProxy.port={p_port}"])
+            standard.extend(["-config", "network.connection.httpProxy.enabled=true"])
+        else:
+            standard.extend(["-config", "network.connection.httpProxy.enabled=false"])
+
+        # Since we're not using the proxy, except (maybe?) for Ajax, but we are unable to disable it
+        # Select a port that is unlikely to collide with anything else, but let the user able to
+        # override it if need be
+        local_port = self.my_conf("miscOptions.zapPort", 47691)
+        standard.extend(
+            ["-config", f"network.localServers.mainProxy.port={local_port}"]
+        )
+
+        return standard
 
     # disabling these 2 rules only here since they might actually be useful else where
     # pylint: disable=unused-argument

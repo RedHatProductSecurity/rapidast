@@ -115,13 +115,13 @@ class ZapNone(Zap):
 
         if self.my_conf("miscOptions.updateAddons", default=True):
             logging.info("Zap: Updating addons")
-            command = [
-                self.my_conf("container.parameters.executable"),
-                "-dir",
-                self.zap_home,
-                "-cmd",
-                "-addonupdate",
-            ]
+
+            command = [self.my_conf("container.parameters.executable")]
+            command.extend(self._get_standard_options())
+            command.extend(["-dir", self.zap_home])
+            command.append("-cmd")
+            command.append("-addonupdate")
+
             logging.debug(f"update command: {command}")
             result = subprocess.run(command, check=False)
             if result.returncode != 0:
@@ -227,12 +227,12 @@ class ZapNone(Zap):
         See https://github.com/zaproxy/zaproxy/issues/7703
         """
         logging.info("Zap: verifying the viability of ZAP")
-        command = [
-            self.my_conf("container.parameters.executable"),
-            "-dir",
-            self.zap_home,
-            "-cmd",
-        ]
+
+        command = [self.my_conf("container.parameters.executable")]
+        command.extend(self._get_standard_options())
+        command.extend(["-dir", self.zap_home])
+        command.append("-cmd")
+
         logging.debug(f"ZAP create home command: {command}")
         result = subprocess.run(command, check=False, capture_output=True)
         if result.returncode == 0:
@@ -254,13 +254,13 @@ class ZapNone(Zap):
                 proxy=self.my_conf("proxy", default=None),
             )
             logging.info("Workaround: installing all addons")
-            command = [
-                self.my_conf("container.parameters.executable"),
-                "-dir",
-                self.zap_home,
-                "-cmd",
-                "-addoninstallall",
-            ]
+
+            command = [self.my_conf("container.parameters.executable")]
+            command.extend(self._get_standard_options())
+            command.extend(["-dir", self.zap_home])
+            command.append("-cmd")
+            command.append("-addoninstallall")
+
             logging.debug(f"ZAP: installing all addons: {command}")
             result = subprocess.run(command, check=False)
 

@@ -10,8 +10,8 @@ RUN microdnf install -y procps tar gzip shadow-utils java-11-openjdk git
 ## ZAP
 RUN mkdir /opt/zap
 RUN mkdir -p /tmp/zap
-RUN curl -sfL https://github.com/zaproxy/zaproxy/releases/download/v2.12.0/ZAP_2.12.0_Linux.tar.gz | tar zxvf - -C /tmp/zap
-RUN mv -T /tmp/zap/ZAP_2.12.0 /opt/zap
+RUN curl -sfL https://github.com/zaproxy/zaproxy/releases/download/v2.13.0/ZAP_2.13.0_Linux.tar.gz | tar zxvf - -C /tmp/zap
+RUN mv -T /tmp/zap/ZAP_2.13.0 /opt/zap
 ENV PATH $PATH:/opt/zap/:/opt/rapidast/
 
 ### Update add-ons

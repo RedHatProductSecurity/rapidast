@@ -241,3 +241,6 @@ tags
 .idea/
 
 # End of https://www.toptal.com/developers/gitignore/api/vim,linux,python,macos
+
+# curl creates those lude file
+lude

@@ -19,6 +19,13 @@ RUN zap.sh -cmd -silent -addonupdate
 ### Copy them to installation directory
 RUN cp /root/.ZAP/plugin/*.zap /opt/zap/plugin/ || :
 
+# Firefox, for Ajax
+RUN microdnf install -y tar bzip2 gtk3 dbus-glib
+RUN mkdir /opt/firefox
+RUN mkdir -p /tmp/firefox
+RUN curl -sfL  'https://download.mozilla.org/?product=firefox-esr-latest-ssl&os=linux64&lang=en-US' | tar xjvf - -C /tmp/firefox
+RUN mv -T /tmp/firefox/firefox /opt/firefox
+ENV PATH $PATH:/opt/firefox/
 
 ## RapiDAST
 RUN mkdir /opt/rapidast

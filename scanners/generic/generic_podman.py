@@ -114,7 +114,7 @@ class GenericPodman(Generic):
 
         # If we captured an output, let's save it into a temporary file, and use that as a new result parameter
         if result_is_stdout:
-            report_path = f"{self.workdir}/report.txt"
+            report_path = f"{self.workdir}/stdout-report.txt"
             with open(report_path, "w", encoding="utf-8") as results:
                 results.write(scanning.stdout)
             # Now that the result is a file, change the config to point to it

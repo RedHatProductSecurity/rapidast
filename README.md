@@ -298,7 +298,14 @@ scanners:
         command: ["image", "docker.io/aquasec/trivy"]
 ```
 
-Additional options, such as volume mounts, can be set. See `config/config-template-long.yaml` for additional options.
+The `results` entry works as follow:
+* if it is missing or `*stdout`, the output of the command will be chosen and stored as `stdout-report.txt` in the standard result directory
+* if it is a directory, it will be recursively copied into the standard result directory
+* if it is a file, it will be copied into the standard result directory
+
+__Notes__:
+- when using `type: podman`, the results (if different from stdout) must be present on the host after podman has run, which likely means you will need to use the `container.parameters.volumes` entry to share the results between the container and the host.
+- See `config/config-template-long.yaml` for additional options.
 
 ### Authentication
 

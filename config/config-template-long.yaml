@@ -181,7 +181,7 @@ scanners:
     results: "/path/to/results"   # if None or "*stdout", the command's standard output is selected
 
     container:
-      type: "podman"    # currently, only podman is supported
+      type: "podman"    # currently, only "podman" type is supported
       parameters:
         # Mandatory: image to run.
         image: "docker.io/aquasec/trivy" # Example: for a trivy scan

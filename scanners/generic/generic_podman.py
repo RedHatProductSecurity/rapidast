@@ -100,7 +100,7 @@ class GenericPodman(Generic):
         )
 
         if scanning.returncode in self.my_conf(
-            "container.parameters.valid_returns", [0]
+            "container.parameters.validReturns", [0]
         ):
             logging.info(
                 f"The generic process finished correctly, and exited with code {scanning.returncode}"

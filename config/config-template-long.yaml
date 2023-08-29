@@ -193,7 +193,7 @@ scanners:
         command: ["image", "<image to scan>"]   # example for a Trivy container image scan..
 
         # Optional: list of expected return codes, anything else will be considered as an error. by default: [0]
-        valid_returns: [ 0, 1 ]
+        validReturns: [ 0, 1 ]
 
         # Optional list of volume to mount, e.g.: to retrieve results on the host
         volumes:

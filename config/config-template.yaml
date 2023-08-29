@@ -61,4 +61,4 @@ scanners:
       type: "podman"
       parameters:
         image: "docker.io/aquasec/trivy" # example, for a Trivy scan
-        command: ["image", "<image to scan>"]   # example for a Trivy container image scan..
+        command: "image '<image to scan>'"   # example for a Trivy container image scan..

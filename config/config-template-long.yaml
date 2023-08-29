@@ -190,7 +190,7 @@ scanners:
         podName: "mypod"
 
         # Optional: command to run, as a list of arguments. By default, the image's entrypoint will be run
-        command: ["image", "<image to scan>"]   # example for a Trivy container image scan..
+        command: "image '<image to scan>'"   # example for a Trivy container image scan..
 
         # Optional: list of expected return codes, anything else will be considered as an error. by default: [0]
         validReturns: [ 0, 1 ]

@@ -1,5 +1,6 @@
 import logging
 import pprint
+import shlex
 import subprocess
 
 from scanners import State
@@ -86,15 +87,23 @@ class GenericPodman(Generic):
         cli = self.podman.get_complete_cli(self.generic_cli)
 
         # The result is stdout if "results" is undefined or `*stdout`
-        result_is_stdout = (
-            not self.my_conf("results") or self.my_conf("results") == "*stdout"
+        stdout_store = (
+            subprocess.PIPE
+            if not self.my_conf("results") or self.my_conf("results") == "*stdout"
+            else None
         )
 
         # DO STUFF
         logging.info(f"Running generic with the following command:\n{cli}")
-        scanning = subprocess.run(
-            cli, encoding="utf-8", check=False, capture_output=result_is_stdout
-        )
+        scanning_stdout_results = ""
+        with subprocess.Popen(
+            cli, stdout=stdout_store, bufsize=1, universal_newlines=True
+        ) as scanning:
+            if stdout_store:
+                logging.debug("Storing podman's standard output")
+                for line in scanning.stdout:
+                    print(line, end="")
+                    scanning_stdout_results += line
         logging.debug(
             f"generic returned the following:\n=====\n{pp.pformat(scanning)}\n====="
         )
@@ -113,10 +122,10 @@ class GenericPodman(Generic):
             self.state = State.ERROR
 
         # If we captured an output, let's save it into a temporary file, and use that as a new result parameter
-        if result_is_stdout:
+        if stdout_store:
             report_path = f"{self.workdir}/stdout-report.txt"
             with open(report_path, "w", encoding="utf-8") as results:
-                results.write(scanning.stdout)
+                results.write(scanning_stdout_results)
             # Now that the result is a file, change the config to point to it
             logging.debug(
                 f"Overloading {self.ident} config result parameter to {report_path}"
@@ -162,6 +171,8 @@ class GenericPodman(Generic):
         """
 
         self.generic_cli = super()._setup_generic_cli()
+        if isinstance(self.generic_cli, str):
+            self.generic_cli = shlex.split(self.generic_cli)
 
         logging.debug(f"generic will run with: {self.generic_cli}")
 

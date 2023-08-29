@@ -295,7 +295,7 @@ scanners:
       type: "podman"
       parameters:
         image: "docker.io/aquasec/trivy"
-        command: ["image", "docker.io/aquasec/trivy"]
+        command: "image docker.io/aquasec/trivy"
 ```
 
 The `results` entry works as follow:
@@ -304,6 +304,7 @@ The `results` entry works as follow:
 * if it is a file, it will be copied into the standard result directory
 
 __Notes__:
+- `command` can be either a list of string, or a single string which will be split using `shlex.split()`
 - when using `type: podman`, the results (if different from stdout) must be present on the host after podman has run, which likely means you will need to use the `container.parameters.volumes` entry to share the results between the container and the host.
 - See `config/config-template-long.yaml` for additional options.
 

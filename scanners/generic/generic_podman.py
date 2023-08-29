@@ -85,10 +85,9 @@ class GenericPodman(Generic):
 
         cli = self.podman.get_complete_cli(self.generic_cli)
 
-        # The result is stdout if "container.results" is undefined or `*stdout`
+        # The result is stdout if "results" is undefined or `*stdout`
         result_is_stdout = (
-            not self.my_conf("container.results")
-            or self.my_conf("container.results") == "*stdout"
+            not self.my_conf("results") or self.my_conf("results") == "*stdout"
         )
 
         # DO STUFF
@@ -122,7 +121,7 @@ class GenericPodman(Generic):
             logging.debug(
                 f"Overloading {self.ident} config result parameter to {report_path}"
             )
-            self.set_my_conf("container.results", value=report_path, overwrite=True)
+            self.set_my_conf("results", value=report_path, overwrite=True)
 
     def postprocess(self):
         logging.info("Running postprocess for the generic Podman environment")

@@ -63,7 +63,7 @@ class Generic(RapidastScanner):
 
     def postprocess(self):
         logging.info(f"Extracting report, storing in {self.results_dir}")
-        result = self.my_conf("container.results")
+        result = self.my_conf("results")
         try:
             os.makedirs(self.results_dir)
             if os.path.isdir(result):

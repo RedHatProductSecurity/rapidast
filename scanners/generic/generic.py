@@ -67,7 +67,7 @@ class Generic(RapidastScanner):
         try:
             os.makedirs(self.results_dir)
             if os.path.isdir(result):
-                shutil.copytree(result, self.results_dir)
+                shutil.copytree(result, self.results_dir, dirs_exist_ok=True)
             else:
                 shutil.copy(result, self.results_dir)
 

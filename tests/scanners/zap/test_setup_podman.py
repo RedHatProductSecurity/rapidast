@@ -70,8 +70,8 @@ def test_setup_authentication_http_header(test_config):
     test_zap = ZapPodman(config=test_config)
     test_zap.setup()
     assert test_zap.authenticated == False
-    assert "ZAP_AUTH_HEADER_VALUE=myheaderval" in test_zap.podman_opts
-    assert "ZAP_AUTH_HEADER=myheadername" in test_zap.podman_opts
+    assert "ZAP_AUTH_HEADER_VALUE=myheaderval" in test_zap.podman.get_complete_cli()
+    assert "ZAP_AUTH_HEADER=myheadername" in test_zap.podman.get_complete_cli()
 
 
 def test_setup_authentication_cookie(test_config):
@@ -90,7 +90,10 @@ def test_setup_authentication_cookie(test_config):
     test_zap = ZapPodman(config=test_config)
     test_zap.setup()
     assert test_zap.authenticated == False
-    assert "ZAP_AUTH_HEADER_VALUE=mycookiename=mycookieval" in test_zap.podman_opts
+    assert (
+        "ZAP_AUTH_HEADER_VALUE=mycookiename=mycookieval"
+        in test_zap.podman.get_complete_cli()
+    )
 
 
 def test_setup_authentication_http_basic(test_config):
@@ -111,7 +114,7 @@ def test_setup_authentication_http_basic(test_config):
     assert test_zap.authenticated == False
     assert (
         "ZAP_AUTH_HEADER_VALUE=Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=="
-        in test_zap.podman_opts
+        in test_zap.podman.get_complete_cli()
     )
 
 
@@ -142,7 +145,7 @@ def test_setup_authentication_auth_rtoken_configured(test_config):
 
     test_zap.setup()
     assert test_zap.authenticated == True
-    assert "RTOKEN" in test_zap.podman_opts
+    assert "RTOKEN" in test_zap.podman.get_complete_cli()
     assert (
         test_zap.automation_config["jobs"][0]["parameters"]["name"]
         == "add-bearer-token"
@@ -226,11 +229,11 @@ def test_setup_pod_injection(test_config):
     test_zap = ZapPodman(config=test_config)
     test_zap.setup()
 
-    assert "--pod" in test_zap.podman_opts
-    assert "podABC" in test_zap.podman_opts
+    assert "--pod" in test_zap.podman.get_complete_cli()
+    assert "podABC" in test_zap.podman.get_complete_cli()
 
     # Also assert that there is no uid mapping
-    assert not "--uidmap" in test_zap.podman_opts
+    assert not "--uidmap" in test_zap.podman.get_complete_cli()
 
 
 ## Testing report format ##

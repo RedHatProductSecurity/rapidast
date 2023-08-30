@@ -1,5 +1,6 @@
 import importlib
 import logging
+import os
 import tempfile
 from enum import Enum
 from pprint import pformat
@@ -22,11 +23,21 @@ class RapidastScanner:
         self.config = config
         self.state = State.UNCONFIGURED
 
-    def my_conf(self, path, default=None):
+        self.results_dir = os.path.join(
+            self.config.get("config.results_dir", default="results"), self.ident
+        )
+
+    def my_conf(self, path, *args, **kwargs):
         """Handy shortcut to get the scanner's configuration.
         Only for within `scanners.<scanner>`
         """
-        return self.config.get(f"scanners.{self.ident}.{path}", default)
+        return self.config.get(f"scanners.{self.ident}.{path}", *args, **kwargs)
+
+    def set_my_conf(self, path, *args, **kwargs):
+        """Handy shortcut to set the scanner's configuration.
+        Only for within `scanners.<scanner>`
+        """
+        return self.config.set(f"scanners.{self.ident}.{path}", *args, **kwargs)
 
     def __repr__(self):
         return pformat(vars(self), indent=4, width=1)

@@ -39,10 +39,6 @@ class Zap(RapidastScanner):
         logging.debug("Initializing ZAP scanner")
         super().__init__(config, ident)
 
-        self.results_dir = os.path.join(
-            self.config.get("config.results_dir", default="results"), self.ident
-        )
-
         # This is used to construct the ZAP Automation config.
         # It will be saved to a file during setup phase
         # and used by the ZAP command during run phase

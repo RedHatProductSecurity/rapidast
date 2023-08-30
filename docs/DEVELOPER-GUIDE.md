@@ -106,6 +106,28 @@ __NOTES__
 + The path are immutable: they must be chosen during creation (in the `__init__()` function), and must not be modified afterwards. The parent scanner (e.g.: `Zap`) should define the mount points, and each runtime (e.g.: `ZapPodman`) should fill each map *once*
 + For `type = None` (the scanner will run on the host), then the map must be the same (e.g.: `PathMap("/path/to/dir", "/path/to/dir")`)
 
+### Podman wrapper
+
+A podman scanner can instanciate a `PodmanWrapper` object. This provides functions to prepare the podman command, such as adding volumes, etc.
+
+Example:
+
+```python
+# Initialize podman
+self.podman = PodmanWrapper(
+    app_name=self.config.get("application.shortName"),
+    scan_name=self.ident,
+    image = self.my_conf("container.parameters.image", default="docker.io/group/application:latest")
+)
+
+cli = self.podman.get_complete_cli(self.generic_cli)
+self.podman.deploy_to_pod("myPod")
+self.podman.add_volume_map("/tmp/result/:/var/results/:Z")
+cli = self.podman.get_complete_cli(self.generic_cli)
+subprocess.run(self.podman.get_complete_cli(["touch", "/var/results/file"]))
+self.podman.delete_yourself():
+```
+
 ### Integrating the scanner to Defect Dojo
 
 If a scanner is supported by Defect Dojo, the scanner can be configured to export its scan results to Defect Dojo automatically. All it needs to do is to create an optional `data_for_defect_dojo()` method (no parameters).

@@ -33,8 +33,8 @@ $ bash results.sh <PVC> <LOCAL_RESULTS_DIR>
 ```
 
 #### Running on OpenShift
-When running on OpenShift make sure that your namespace you are running on has proper privileges for running a pod/container
 
-You'll need to add 'securityContext: {{ .Values.secContext }}' in the` helm/chart/templates/_helpers.tpl` file under the container name
+When running on OpenShift, make sure that your namespace you are running on has proper privileges for running a pod/container
 
-As well as set secContext: '{ "privileged": true}' at top of ./chart/values.yaml
+You'll need to set `secContext: '{"privileged": true}'` at [https://github.com/RedHatProductSecurity/rapidast/blob/development/helm/chart/values.yaml#L14](https://github.com/RedHatProductSecurity/rapidast/blob/development/helm/chart/values.yaml#L14)
+

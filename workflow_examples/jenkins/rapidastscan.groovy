@@ -31,19 +31,14 @@ podTemplate(
                 }
 
                 stage("Run Rapidast for service") {
-                    dir('rapidast') {
-                        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                            writeFile file: '.env', text: "RTOKEN=${RTOKEN}"
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                        writeFile file: '.env', text: "RTOKEN=${RTOKEN}"
                             sh "./rapidast.py --log-level debug --config config/config.yaml"
-                        }
                     }
                 }
 
                 stage("Collect artifacts") {
-                    dir('rapidast') {
-                        archiveArtifacts allowEmptyArchive: true, artifacts: "results/${SERVICENAME}/**/zap/*.*, , results.html"
-
-                    }
+                    archiveArtifacts allowEmptyArchive: true, artifacts: "results/${SERVICENAME}/**/zap/*.*, results.html"
                 }
             }
         }

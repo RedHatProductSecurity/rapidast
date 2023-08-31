@@ -51,29 +51,3 @@ scanners:
       parameters:
         image: "docker.io/owasp/zap2docker-stable:latest" # for type such as podman
         executable: "/Applications/OWASP ZAP.app/Contents/Java/zap.sh"    # for MacOS, when general.container.type is 'none' only, need to download OWASP ZAP https://www.zaproxy.org/download/
-
-
-  generic:
-    # This is a generic scanner, defined by the user
-
-    # file or directory where results are stored on the host.
-    results: "/path/to/results"   # if None or "*stdout", the command's standard output is selected
-
-    container:
-      type: "podman"    # currently, only "podman" type is supported
-      parameters:
-        # Mandatory: image to run.
-        image: "docker.io/aquasec/trivy" # Example: for a trivy scan
-
-        # Optional: inject in an existing Pod
-        podName: "mypod"
-
-        # Optional: command to run, as a list of arguments. By default, the image's entrypoint will be run
-        command: "image '<image to scan>'"   # example for a Trivy container image scan..
-
-        # Optional: list of expected return codes, anything else will be considered as an error. by default: [0]
-        validReturns: [ 0, 1 ]
-
-        # Optional list of volume to mount, e.g.: to retrieve results on the host
-        volumes:
-          - "<host/path>:<guest/path>"

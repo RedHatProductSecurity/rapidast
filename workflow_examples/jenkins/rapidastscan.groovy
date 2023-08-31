@@ -5,7 +5,7 @@ podTemplate(
         containers: [
             containerTemplate(
                 name: 'rapidast',
-                image: "quay.io/repository/redhatproductsecurity/rapidast:2.2.1",
+                image: "quay.io/redhatproductsecurity/rapidast:2.2.1",
                 resourceRequestCpu: '2',
                 resourceLimitCpu: '3',
                 resourceRequestMemory: '1Gi',
@@ -27,23 +27,20 @@ podTemplate(
                 }
 
                 stage("Inject configs for  Service") {
-                    parse_rapidast_options("${SERVICENAME}", "${API_SCANNER}", "${TARGET_URL}", "${API_SPEC_URL}", "${CLIENT_ID}", "${SSO_ENDPOINT}", $"{PROXY}")
+                    parse_rapidast_options("${SERVICENAME}", "${API_SCANNER}", "${TARGET_URL}", "${API_SPEC_URL}", "${CLIENT_ID}", "${SSO_ENDPOINT}", "${PROXY}")
                 }
 
                 stage("Run Rapidast for service") {
-                    dir('rapidast') {
-                        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                            writeFile file: '.env', text: "RTOKEN="${RTOKEN}"
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                        withCredentials([string(credentialsId: 'RTOKEN', variable: 'RTOKEN')])  {
+                            writeFile file: '.env', text: "RTOKEN=${RTOKEN}"
                             sh "./rapidast.py --log-level debug --config config/config.yaml"
                         }
                     }
                 }
 
                 stage("Collect artifacts") {
-                    dir('rapidast') {
-                        archiveArtifacts allowEmptyArchive: true, artifacts: "results/${SERVICENAME}/**/zap/*.*, , results.html"
-
-                    }
+                    archiveArtifacts allowEmptyArchive: true, artifacts: "results/${SERVICENAME}/**/zap/*.*, results.html"
                 }
             }
         }
@@ -53,7 +50,7 @@ podTemplate(
 def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetUrl, String ApISpecUrl, String CLIENT_ID, String SSO_ENDPOINT, String Proxy) {
     // Parse the options for rapidast and add it to the config file. Always pull the latest config file
 
-    git url: 'https://github.com/RedHatProductSecurity/rapidast.git', branch: 'development'
+    git url: 'https://github.com/RedHatProductSecurity/rapidast.git', branch: 'main'
     def filename = 'config/config-template-long.yaml'
     // Comment the fields not required.
     sh "sed -i 's/importUrlsFromFile:/# importUrlsFromFile:/' ${filename}"
@@ -84,7 +81,6 @@ def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetU
     data.scanners.zap.apiScan.apis.apiUrl = "${ApISpecUrl}"
     data.scanners.zap.miscOptions.oauth2OpenapiManualDownload = "True"
 
-    def Proxy = "${Proxy}"
     if (Proxy) {
         String[] proxyarr;
         proxyarr = Proxy.split(':');

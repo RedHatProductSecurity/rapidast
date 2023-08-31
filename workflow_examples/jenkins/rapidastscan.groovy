@@ -32,10 +32,10 @@ podTemplate(
 
                 stage("Run Rapidast for service") {
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-						withCredentials([string(credentialsId: 'RTOKEN', variable: 'RTOKEN')])  {
-							writeFile file: '.env', text: "RTOKEN=${RTOKEN}"
-							sh "./rapidast.py --log-level debug --config config/config.yaml"
-						}
+                        withCredentials([string(credentialsId: 'RTOKEN', variable: 'RTOKEN')])  {
+                            writeFile file: '.env', text: "RTOKEN=${RTOKEN}"
+                            sh "./rapidast.py --log-level debug --config config/config.yaml"
+                        }
                     }
                 }
 

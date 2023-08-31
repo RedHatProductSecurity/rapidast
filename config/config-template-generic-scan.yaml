@@ -48,6 +48,7 @@ scanners:
         # Optional: list of expected return codes, anything else will be considered as an error. by default: [0]
         # validReturns: [ 0, 1 ]
 
-        # Optional list of volume to mount, e.g.: to retrieve results on the host
-        #volumes:
-        #  - "<host/path>:<guest/path>:Z"
+        # Optional: list of volume to mount, e.g.: to retrieve results on the host
+        # volumes:
+        #  - "<host/path>:<guest/path>:Z"   # for Linux
+        #  - "<host/path>:<guest/path>"     # for Mac

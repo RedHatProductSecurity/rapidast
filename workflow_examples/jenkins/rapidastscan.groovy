@@ -53,7 +53,7 @@ podTemplate(
 def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetUrl, String ApISpecUrl, String CLIENT_ID, String SSO_ENDPOINT, String Proxy) {
     // Parse the options for rapidast and add it to the config file. Always pull the latest config file
 
-    git url: 'https://github.com/RedHatProductSecurity/rapidast.git', branch: 'development'
+    git url: 'https://github.com/RedHatProductSecurity/rapidast.git', branch: 'main'
     def filename = 'config/config-template-long.yaml'
     // Comment the fields not required.
     sh "sed -i 's/importUrlsFromFile:/# importUrlsFromFile:/' ${filename}"

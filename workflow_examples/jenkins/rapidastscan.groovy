@@ -5,7 +5,7 @@ podTemplate(
         containers: [
             containerTemplate(
                 name: 'rapidast',
-                image: "quay.io/repository/redhatproductsecurity/rapidast:2.2.1",
+                image: "quay.io/redhatproductsecurity/rapidast:2.2.1",
                 resourceRequestCpu: '2',
                 resourceLimitCpu: '3',
                 resourceRequestMemory: '1Gi',
@@ -27,13 +27,13 @@ podTemplate(
                 }
 
                 stage("Inject configs for  Service") {
-                    parse_rapidast_options("${SERVICENAME}", "${API_SCANNER}", "${TARGET_URL}", "${API_SPEC_URL}", "${CLIENT_ID}", "${SSO_ENDPOINT}", $"{PROXY}")
+                    parse_rapidast_options("${SERVICENAME}", "${API_SCANNER}", "${TARGET_URL}", "${API_SPEC_URL}", "${CLIENT_ID}", "${SSO_ENDPOINT}", "${PROXY}")
                 }
 
                 stage("Run Rapidast for service") {
                     dir('rapidast') {
                         catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                            writeFile file: '.env', text: "RTOKEN="${RTOKEN}"
+                            writeFile file: '.env', text: "RTOKEN=${RTOKEN}"
                             sh "./rapidast.py --log-level debug --config config/config.yaml"
                         }
                     }
@@ -84,7 +84,6 @@ def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetU
     data.scanners.zap.apiScan.apis.apiUrl = "${ApISpecUrl}"
     data.scanners.zap.miscOptions.oauth2OpenapiManualDownload = "True"
 
-    def Proxy = "${Proxy}"
     if (Proxy) {
         String[] proxyarr;
         proxyarr = Proxy.split(':');

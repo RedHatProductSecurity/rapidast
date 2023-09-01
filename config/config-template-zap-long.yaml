@@ -1,4 +1,7 @@
 # This is a verbose configuration template. A lot of value do not need to be present, for most configuration.
+#
+# Author: Red Hat Product Security
+#
 # See "config-template.yaml" for a simpler configuration file.
 # All the values are optional (except `config.configVersion`): if a key is missing, it will mean either "disabled" or a sensible default will be selected
 

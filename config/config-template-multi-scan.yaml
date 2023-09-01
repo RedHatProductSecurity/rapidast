@@ -1,7 +1,9 @@
-# This is a configuration template file to perform scans using user-defined container images
+# This is a configuration template file to perform scans using ZAP and user-defined container images
 #
 # Author: Red Hat Product Security
 #
+# This shows only the most important configuration entries for each scanning option.
+# For more configuration options, see "config-template-long.yaml" for ZAP scan and "config-template-generic-scan.yaml" for user-defined scan
 
 config:
   # WARNING: `configVersion` indicates the schema version of the config file.
@@ -13,9 +15,17 @@ config:
 # `application` contains data related to the application, not to the scans.
 application:
   shortName: "MyApp-1.0"
+  url: "<Mandatory. root URL of the application>"
 
 # `general` is a section that will be applied to all scanners.
 general:
+
+  # See the config-template-long.yaml for more authentication options
+  authentication:
+    type: http_basic
+    parameters:
+      username: "user"
+      password: "mypassw0rd"
 
   container:
     # This configures what technology is to be used for RapiDAST to run each scanner.
@@ -26,31 +36,35 @@ general:
     type: "podman"
 
 # `scanners' is a section that configures scanning options
+# See the config-template-long.yaml for more options
 scanners:
+  zap:
+    apiScan:
+      apis:
+        apiUrl: "<URL to openAPI>"
+        # alternative: apiFile: "<local path to openAPI file>"
+
+    passiveScan:
+      # optional list of passive rules to disable
+      disabledRules: "2,10015,10027,10096,10024"
+
+    # Enable activeScan by uncommenting, once scans with the passiveScan only has run successfully
+    #  # If no policy is chosen, a default ("API-scan-minimal") will be selected
+    #  # The list of policies can be found in scanners/zap/policies/
+    #activeScan:
+    #  policy: "API-scan-minimal"
+    #
+
   generic_1:
     # This is a generic scanner configuration, defined by the user
     # Multiple items can be defined with "generic_<random_str>" named
-    # This config can be combined into ZAP scan config file if the 'podman' container type is used for it too
 
     # A path to file or directory where results are stored on the host. Note this needs to be used along with the 'volumes' configuration
-    results: "/path/to/results"   # if None or "*stdout", the command's standard output is selected
+    results: "*stdout"   # if None or "*stdout", the command's standard output is selected
 
     container:
       type: "podman"    # currently, only "podman" type is supported
       parameters:
         # Mandatory: image name to run
         image: "<container image name>"
-
-        # Optional: command to run. By default, the image's ENTRYPOINT will be run
-        # command: "<command to run in the container>"
-
-        # Optional: inject into an existing Pod
-        # podName: "mypod"
-
-        # Optional: list of expected return codes, anything else will be considered as an error. by default: [0]
-        # validReturns: [ 0, 1 ]
-
-        # Optional: list of volume to mount, e.g.: to retrieve results on the host
-        # volumes:
-        #  - "<host/path>:<guest/path>:Z"   # for Linux
-        #  - "<host/path>:<guest/path>"     # for Mac
+        command: "<command to run in the container>" # Optional: By default, the image's ENTRYPOINT will be run

@@ -19,15 +19,6 @@ def test_config():
 ## Testing Authentication methods ##
 
 
-def test_setup_import_urls(test_config):
-    # trick: set this very file as import
-    test_config.set("scanners.zap.importUrlsFromFile", __file__)
-
-    test_zap = ZapPodman(config=test_config)
-    test_zap.setup()
-    assert Path(test_zap._host_work_dir(), "importUrls.txt").is_file()
-
-
 def test_setup_authentication_no_auth_configured(test_config):
     print(test_config.get("general"))
 
@@ -155,6 +146,15 @@ def test_setup_authentication_auth_rtoken_configured(test_config):
 ## Testing APIs & URLs ##
 
 
+def test_setup_import_urls(test_config):
+    # trick: set this very file as import
+    test_config.set("scanners.zap.importUrlsFromFile", __file__)
+
+    test_zap = ZapPodman(config=test_config)
+    test_zap.setup()
+    assert Path(test_zap._host_work_dir(), "importUrls.txt").is_file()
+
+
 def test_setup_exclude_urls(test_config):
     test_config.set("scanners.zap.urls.excludes", ["abc", "def"])
     test_config.merge(
@@ -262,3 +262,20 @@ def test_setup_report_format(test_config, result_format, expected_template):
             break
     else:
         assert False
+
+
+# Misc tests
+
+
+def test_override_memory_allocation(test_config):
+    # "regular" test
+    test_config.set("scanners.zap.miscOptions.memMaxHeap", "8G")
+    test_zap = ZapPodman(config=test_config)
+    test_zap.setup()
+    assert "-Xmx8G" in test_zap.zap_cli
+
+    # Fail match
+    test_config.set("scanners.zap.miscOptions.memMaxHeap", "8i")
+    test_zap = ZapPodman(config=test_config)
+    test_zap.setup()
+    assert "-Xmx8i" not in test_zap.zap_cli

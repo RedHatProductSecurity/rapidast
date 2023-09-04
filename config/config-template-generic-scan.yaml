@@ -1,0 +1,56 @@
+# This is a configuration template file to perform scans using user-defined container images
+#
+# Author: Red Hat Product Security
+#
+
+config:
+  # WARNING: `configVersion` indicates the schema version of the config file.
+  # This value tells RapiDAST what schema should be used to read this configuration.
+  # Therefore you should only change it if you update the configuration to a newer schema
+  # It is intended to keep backward compatibility (newer RapiDAST running an older config)
+  configVersion: 4
+
+# `application` contains data related to the application, not to the scans.
+application:
+  shortName: "MyApp-1.0"
+
+# `general` is a section that will be applied to all scanners.
+general:
+
+  container:
+    # This configures what technology is to be used for RapiDAST to run each scanner.
+    # Currently supported: `podman`, `flatpak` and `none`
+    #   podman: RapiDAST runs each scanner using podman
+    #   flatpak: RapiDAST runs each scanner using flatpak
+    #   none: RapiDAST runs each scanner in the same host or container (where RapiDAST itself is running in a container)
+    type: "podman"
+
+# `scanners' is a section that configures scanning options
+scanners:
+  generic_1:
+    # This is a generic scanner configuration, defined by the user
+    # Multiple items can be defined with "generic_<random_str>" named
+    # This config can be combined into ZAP scan config file if the 'podman' container type is used for it too
+
+    # A path to file or directory where results are stored on the host. Note this needs to be used along with the 'volumes' configuration
+    results: "/path/to/results"   # if None or "*stdout", the command's standard output is selected
+
+    container:
+      type: "podman"    # currently, only "podman" type is supported
+      parameters:
+        # Mandatory: image name to run
+        image: "<container image name>"
+
+        # Optional: command to run. By default, the image's ENTRYPOINT will be run
+        # command: "<command to run in the container>"
+
+        # Optional: inject into an existing Pod
+        # podName: "mypod"
+
+        # Optional: list of expected return codes, anything else will be considered as an error. by default: [0]
+        # validReturns: [ 0, 1 ]
+
+        # Optional: list of volume to mount, e.g.: to retrieve results on the host
+        # volumes:
+        #  - "<host/path>:<guest/path>:Z"   # for Linux
+        #  - "<host/path>:<guest/path>"     # for Mac

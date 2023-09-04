@@ -27,6 +27,3 @@ pipelineJob('rapidast-scan-job') {
         }
     }
 }
-
-
-

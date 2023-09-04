@@ -267,6 +267,8 @@ Example: `podman pod create --userns=keep-id:uid=1000,gid=1000 myApp_Pod`
 
 + Disable add-on updates: `scanners.zap.miscOptions.updateAddons: False` (default: True): Prior to running, ZAP will update its addons unless this value is `False`
 
++ Force maximum heap size for the JVM: `scanners.zap.miscOptions.memMaxHeap` (default: ¼ of the RAM): Java's `-Xmx` option
+
 Example:
 
 ```yaml
@@ -278,6 +280,7 @@ scanners:
         miscOptions:
             enableUI: True
             updateAddons: False
+            memMaxHeap: "6144m"
 ```
 
 #### Generic scanner
@@ -390,6 +393,33 @@ RapiDAST works around this bug, but with little inconvenients (slower because it
 e.g., in a MacOS installation, `/Applications/OWASP ZAP.app/Contents/Java/plugin/` will be mostly empty. In particular, no `callhome*.zap` and `network*.zap` file are present.
 - Reinstall ZAP, but __DO NOT RUN IT__, as it would delete the plugins. Verify that the directory contains many plugins.
 - `chown` the installation files to root, so that when running ZAP, the application running as the user does not have sufficient permission to delete its own plugins
+
+### ZAP crashing with `java.lang.OutOfMemoryError: Java heap space`
+
+ZAP allows the JVM heap to grow up to a quarter of the RAM. The value can be increased using the `scanners.zap.miscOptions.memMaxHeap` configuration entry
+
+```
+2023-09-04 08:44:37,782 [main ] INFO  CommandLine - Job openapi started
+2023-09-04 08:44:46,985 [main ] INFO  CommandLineBootstrap - OWASP ZAP 2.13.0 terminated.
+2023-09-04 08:44:46,985 [main ] ERROR UncaughtExceptionLogger - Exception in thread "main"
+java.lang.OutOfMemoryError: Java heap space
+        at java.lang.AbstractStringBuilder.<init>(AbstractStringBuilder.java:86) ~[?:?]
+        at java.lang.StringBuilder.<init>(StringBuilder.java:116) ~[?:?]
+        at com.fasterxml.jackson.core.util.TextBuffer.contentsAsString(TextBuffer.java:487) ~[?:?]
+        at com.fasterxml.jackson.core.io.SegmentedStringWriter.getAndClear(SegmentedStringWriter.java:99) ~[?:?]
+        at com.fasterxml.jackson.databind.ObjectWriter.writeValueAsString(ObjectWriter.java:1141) ~[?:?]
+        at io.swagger.v3.core.util.Json.pretty(Json.java:24) ~[?:?]
+        at org.zaproxy.zap.extension.openapi.ExtensionOpenApi.importOpenApiDefinitionV2(ExtensionOpenApi.java:371) ~[?:?]
+        at org.zaproxy.zap.extension.openapi.automation.OpenApiJob.runJob(OpenApiJob.java:123) ~[?:?]
+        at org.zaproxy.addon.automation.ExtensionAutomation.runPlan(ExtensionAutomation.java:366) ~[?:?]
+        at org.zaproxy.addon.automation.ExtensionAutomation.runAutomationFile(ExtensionAutomation.java:507) ~[?:?]
+        at org.zaproxy.addon.automation.ExtensionAutomation.execute(ExtensionAutomation.java:621) ~[?:?]
+        at org.parosproxy.paros.extension.ExtensionLoader.runCommandLine(ExtensionLoader.java:553) ~[zap-2.13.0.jar:2.13.0]
+        at org.parosproxy.paros.control.Control.runCommandLine(Control.java:426) ~[zap-2.13.0.jar:2.13.0]
+        at org.zaproxy.zap.CommandLineBootstrap.start(CommandLineBootstrap.java:91) ~[zap-2.13.0.jar:2.13.0]
+        at org.zaproxy.zap.ZAP.main(ZAP.java:94) ~[zap-2.13.0.jar:2.13.0]
+```
+
 
 ## Caveats
 

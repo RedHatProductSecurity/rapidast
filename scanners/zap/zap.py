@@ -2,6 +2,7 @@ import glob
 import logging
 import os
 import pprint
+import re
 import shutil
 import tarfile
 from base64 import urlsafe_b64encode
@@ -201,6 +202,16 @@ class Zap(RapidastScanner):
         standard.extend(
             ["-config", f"network.localServers.mainProxy.port={local_port}"]
         )
+
+        # By default, ZAP allocates ¼ of the available RAM to the Java process.
+        # This is not efficient when RapiDAST is executed in a dedicated environment.
+        jmem = self.my_conf("miscOptions.memMaxHeap")
+        if jmem:
+            logging.debug(f"Memory allocation override: {jmem}")
+            if not re.search("^[0-9]+[kmg]?$", jmem, flags=re.IGNORECASE):
+                logging.warning(f"Invalid value miscOptions.memMaxHeap: {jmem}")
+            else:
+                standard.append(f"-Xmx{jmem}")
 
         return standard
 

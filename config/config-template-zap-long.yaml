@@ -156,6 +156,10 @@ scanners:
       # overwrite the default port in case it is required. The default port was selected to avoid any collision with other services
       zapPort: 8080
 
+      # Maximum heap size of the JVM. Default: ¼ of the RAM. acceptable values: [0-9]+[kKmMgG]?
+      # This may be required for large OpenAPI definition
+      memMaxHeap: "6144m"
+
     # (Optional) configure to export scan results to OWASP Defect Dojo.
     # `config.defectDojo` must be configured first.
     defectDojoExport:

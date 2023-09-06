@@ -1,7 +1,4 @@
 # This is a verbose configuration template. A lot of value do not need to be present, for most configuration.
-#
-# Author: Red Hat Product Security
-#
 # See "config-template.yaml" for a simpler configuration file.
 # All the values are optional (except `config.configVersion`): if a key is missing, it will mean either "disabled" or a sensible default will be selected
 
@@ -10,7 +7,7 @@ config:
   # This value tells RapiDAST what schema should be used to read this configuration.
   # Therefore you should only change it if you update the configuration to a newer schema
   # It is intended to keep backward compatibility (newer RapiDAST running an older config)
-  configVersion: 5
+  configVersion: 4
 
   # all the results of all scanners will be stored under that location
   base_results_dir: "./results"
@@ -150,15 +147,11 @@ scanners:
       enableUI: False
       # Defaults to True, set False to prevent auto update of ZAP plugins
       updateAddons: True
-      # If set to True and authentication is oauth2_rtoken: manually download schemas (e.g.: openAPI, GraphQL)
-      oauth2ManualDownload: False
+      # If set to True and authentication is oauth2_rtoken and api.apiUrl is set, download the API outside of ZAP
+      oauth2OpenapiManualDownload: False
 
       # overwrite the default port in case it is required. The default port was selected to avoid any collision with other services
       zapPort: 8080
-
-      # Maximum heap size of the JVM. Default: ¼ of the RAM. acceptable values: [0-9]+[kKmMgG]?
-      # This may be required for large OpenAPI definition
-      memMaxHeap: "6144m"
 
     # (Optional) configure to export scan results to OWASP Defect Dojo.
     # `config.defectDojo` must be configured first.
@@ -182,3 +175,6 @@ scanners:
         #test: 5       # test ID, that will force "reimport" mode
         # additional options, see https://demo.defectdojo.org/api/v2/doc/ for list
         auto_create_context: False  # Optional. set to True to auto-create engagement (requires product_name and engagement_name)
+
+
+# Other scanners to be defined(TBD)

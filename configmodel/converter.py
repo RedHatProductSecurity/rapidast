@@ -5,7 +5,7 @@ import configmodel
 
 # WARNING: this needs to be incremented everytime a non-compatible change is made in the configuration.
 # A corresponding function also needs to be written
-CURR_CONFIG_VERSION = 4
+CURR_CONFIG_VERSION = 5
 
 
 def config_converter_dispatcher(func):
@@ -48,6 +48,30 @@ def convert_configmodel(conf):
     raise RuntimeError(
         f"There was an error in converting configuration. No convertion available for version {version}"
     )
+
+
+@convert_configmodel.register(4)
+def convert_from_version_4_to_5(old):
+    """Returns a *copy* of the original rapidast config file, but updated to v5
+    scanner.zap.miscOptions.oauth2OpenapiManualDownload was renamed oauth2ManualDownload
+
+    Note: scanners can now have IDs (i.e.: scanner.zap_foo, not just scanner.zap)
+    """
+    new = copy.deepcopy(old)
+
+    for key in old.conf["scanners"]:
+        if key.startswith("zap") and old.exists(
+            f"scanners.{key}.miscOptions.oauth2OpenapiManualDownload"
+        ):
+            new.move(
+                f"scanners.{key}.miscOptions.oauth2OpenapiManualDownload",
+                f"scanners.{key}.miscOptions.oauth2ManualDownload",
+            )
+
+    # Finally, set the correct version number
+    new.set("config.configVersion", 5)
+
+    return new
 
 
 @convert_configmodel.register(3)

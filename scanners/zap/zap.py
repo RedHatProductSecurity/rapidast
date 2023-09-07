@@ -273,6 +273,9 @@ class Zap(RapidastScanner):
             app_url = self.config.get("application.url")
             if app_url:
                 af_context["urls"].append(app_url)
+            else:
+                logging.error("Configuration: ZAP requires an application.url entry")
+                raise KeyError("Missing `application.url` in configuration")
             af_context["includePaths"].extend(self.my_conf("urls.includes", default=[]))
             af_context["excludePaths"].extend(self.my_conf("urls.excludes", default=[]))
         except KeyError as exc:

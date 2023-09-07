@@ -13,7 +13,9 @@ CONFIG_TEMPLATE_LONG = "config/config-template-long.yaml"
 
 @pytest.fixture(scope="function")
 def test_config():
-    return configmodel.RapidastConfigModel()
+    return configmodel.RapidastConfigModel(
+        {"application": {"url": "http://example.com"}}
+    )
 
 
 ## Testing Authentication methods ##

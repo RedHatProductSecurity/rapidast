@@ -270,7 +270,12 @@ class Zap(RapidastScanner):
         # Configure the basic environment target
         try:
             af_context = find_context(self.automation_config)
-            af_context["urls"].append(self.config.get("application.url"))
+            app_url = self.config.get("application.url")
+            if app_url:
+                af_context["urls"].append(app_url)
+            else:
+                logging.error("Configuration: ZAP requires an application.url entry")
+                raise KeyError("Missing `application.url` in configuration")
             af_context["includePaths"].extend(self.my_conf("urls.includes", default=[]))
             af_context["excludePaths"].extend(self.my_conf("urls.excludes", default=[]))
         except KeyError as exc:
@@ -278,7 +283,7 @@ class Zap(RapidastScanner):
                 f"Something went wrong with the Zap scanner configuration, while creating the context':\n {str(exc)}"
             ) from exc
 
-        # authentication MUST happen first in case a user is created
+        # authentication MUST happen first in case a user is created, or authenticated manual download is needed
         self.authenticated = self.authentication_factory()
 
         # Create the AF configuration
@@ -680,35 +685,12 @@ class Zap(RapidastScanner):
         self.automation_config["jobs"].append(script)
         logging.info("ZAP configured with OAuth2 RTOKEN")
 
-        # quickhack: the openapi job currently does not run with user authentication.
-        # This is a problem when openapi requires an authenticated URL.
-        # => manually download the OAS, and change it to apiFile
-        # This can be deleted when https://github.com/zaproxy/zaproxy/issues/7739 is resolved
-        # Note: to avoid a temporary file, we download the file directly in its final destination in work_dir
-        #       This is not a problem: it will simply be ignored by _include_file()
-        oas_url = self.my_conf("apiScan.apis.apiUrl", default=None)
-        if oas_url and self.my_conf(
-            "miscOptions.oauth2OpenapiManualDownload", default=False
-        ):
-            logging.info("ZAP workaround: manually downloading the OpenAPI file")
-            if authenticated_download_with_rtoken(
-                url=oas_url,
-                dest=f"{self._host_work_dir()}/openapi.json",
+        if self.my_conf("miscOptions.oauth2ManualDownload"):
+            # See if manual authenticated downloads are required
+            self._manual_oauth2_download(
                 auth={"rtoken": rtoken, "client_id": client_id, "url": token_endpoint},
                 proxy=self.my_conf("proxy", default=None),
-            ):
-                logging.info(
-                    "Successful manual download of the OAS: replacing apiUrl by apiFile"
-                )
-                self.config.set(
-                    f"scanners.{self.ident}.apiScan.apis.apiFile",
-                    f"{self._host_work_dir()}/openapi.json",
-                )
-                self.config.delete(f"scanners.{self.ident}.apiScan.apis.apiUrl")
-            else:
-                logging.warning(
-                    "Failed to manually download the OAS. delegating to ZAP"
-                )
+            )
 
         return True
 
@@ -716,6 +698,54 @@ class Zap(RapidastScanner):
     # MAGIC METHODS                                               #
     # Special functions (other than __init__())                   #
     ###############################################################
+
+    def _manual_oauth2_download(self, auth, proxy):
+        """QUICKHACK: some ZAP requests can't be authenticated.
+        This is an issue for schema downloads behind a login (e.g.: openapi, graphQL)
+
+        IF a manual download is requested:
+        1) identify those URLs in the config
+        2) For each ones:
+          a) Download the said schema
+          b) Modify the config to use a file path instead of the URL
+
+        Example of issues: https://github.com/zaproxy/zaproxy/issues/7739 is resolved
+        Note: to avoid a temporary file, we download the files directly in its final destination in work_dir
+              This is not a problem: it will simply be ignored by _include_file()
+        """
+        logging.info("Looking for URLs to downloads manually")
+
+        # Preparation: list of all locations in the RapiDAST configuration that might need replacement
+        #  - config_url: URL's placement in the rapidast configuration, under the scanner
+        #  - path: destination for the download
+        #  - config_path: the RapiDAST config entry that will replace `config_url`
+        Change = namedtuple("Change", ["config_url", "path", "config_path"])
+        changes = [
+            Change(
+                "apiScan.apis.apiUrl",
+                f"{self._host_work_dir()}/openapi.json",
+                "apiScan.apis.apiFile",
+            ),
+            Change(
+                "graphql.schemaUrl",
+                f"{self._host_work_dir()}/schema.graphql",
+                "graphql.schemaFile",
+            ),
+        ]
+
+        for change in changes:
+            url = self.my_conf(change.config_url)
+            if url:
+                if authenticated_download_with_rtoken(url, change.path, auth, proxy):
+                    logging.info(
+                        f"Successful download of scanner's {change.config_url}"
+                    )
+                    self.config.set(
+                        f"scanners.{self.ident}.{change.config_path}", change.path
+                    )
+                    self.config.delete(f"scanners.{self.ident}.{change.config_url}")
+                else:
+                    logging.warning("Failed to download scanner's {change.config_url}")
 
 
 # Given an Automation Framework configuration, return its sub-dictionary corresponding to the context we're going to use

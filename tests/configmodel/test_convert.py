@@ -45,6 +45,28 @@ def test_v2_to_v3(config_v2):
     assert not newconf.exists("scanners.zap.updateAddons")
 
 
+@pytest.fixture(name="config_v4")
+def generate_config_v4():
+    path = "tests/configmodel/older-schemas/v4.yaml"
+    try:
+        with open(path) as file:
+            return configmodel.RapidastConfigModel(yaml.safe_load(file))
+    except yaml.YAMLError as exc:
+        raise RuntimeError(f"Unable to load TEST file {path}") from exc
+
+
+def test_v4_to_v5(config_v4):
+    oldconf = config_v4
+    newconf = configmodel.converter.convert_from_version_4_to_5(oldconf)
+
+    # Check that new path was created
+    assert newconf.get(
+        "scanners.zap.miscOptions.oauth2ManualDownload", "x"
+    ) == oldconf.get("scanners.zap.miscOptions.oauth2OpenapiManualDownload", "y")
+    # Check that old path was deleted
+    assert not newconf.exists("scanners.zap.miscOptions.oauth2OpenapiManualDownload")
+
+
 def test_v1_to_v2(config_v1):
     oldconf = config_v1
     newconf = configmodel.converter.convert_from_version_1_to_2(oldconf)

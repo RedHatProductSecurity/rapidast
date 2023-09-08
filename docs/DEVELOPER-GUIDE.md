@@ -63,22 +63,25 @@ likely either anonymous or error handling)
 
 Example for the ZAP scanner (`scanners.zap`):
 
-```
-from scanners import generic_authentication_factory
+```python
+from scanners.authentication_factory import generic_authentication_factory
 
-@generic_authentication_factory("zap")
+@generic_authentication_factory()
 def authentication_factory(self):
-  """Default action"""
+  """Default action, called when no corresponding authenticator were found"""
 ```
 
 Once done, simply register each authentication type, based on
-`scanners.zap.authentication.type` :
+`scanners.*.authentication.type` :
 
-```
+```python
 @authentication_factory.register("http_basic")
 def authentication_set_http_basic_auth(self):
   """Configure HTTP Basic authentication"""
 ```
+
+Then calling the `authentication_factory()` function will automatically redirect the call to the correct authentication function.
+
 
 ### Path helper
 

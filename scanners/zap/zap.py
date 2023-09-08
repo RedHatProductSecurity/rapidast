@@ -10,8 +10,8 @@ from collections import namedtuple
 
 import yaml
 
-from scanners import generic_authentication_factory
 from scanners import RapidastScanner
+from scanners.authentication_factory import generic_authentication_factory
 from scanners.downloaders import authenticated_download_with_rtoken
 
 
@@ -549,7 +549,7 @@ class Zap(RapidastScanner):
     # - May modify `self.automation_config` (e.g.: adding jobs, users)
     # - May add environment vars
     # - MUST return True if it created a user, and False otherwise
-    @generic_authentication_factory("zap")
+    @generic_authentication_factory()
     def authentication_factory(self):
         """This is the default function, attached to error reporting"""
         raise RuntimeError(

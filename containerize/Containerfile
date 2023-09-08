@@ -39,6 +39,9 @@ COPY ./utils/ /opt/rapidast/utils/
 COPY ./config/ /opt/rapidast/config/
 COPY ./requirements.txt /opt/rapidast/
 
+### Overload default config (set 'none' as default container type)
+COPY ./containerize/container_default_config.yaml /opt/rapidast/rapidast-defaults.yaml
+
 ### Add /opt/{zap,rapidast}/ to the PATH (for any user and future user)
 COPY ./containerize/path_rapidast.sh /etc/profile.d/rapidast.sh
 

@@ -191,6 +191,8 @@ def path_to_list(path):
     - path_to_list(('a','b','c')) => ['a','b','c']
     """
 
+    if not path:
+        return []
     if isinstance(path, str):
         path = path.split(".")
     return list(path)

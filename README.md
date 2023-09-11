@@ -2,7 +2,7 @@
 
 RapiDAST(Rapid DAST) is an open-source security testing tool that automates the process of DAST(Dynamic application security testing) security testing and streamlines the integration of security into your development workflow. It is designed to help you quickly and effectively identify security vulnerabilities in your applications.
 
-Taking advantage of [OWASP ZAP](https://www.zaproxy.org/) and additional scanners(TBD), RapiDAST provides additional value as follows:
+Taking advantage of [ZAP](https://www.zaproxy.org/) and additional scanners(TBD), RapiDAST provides additional value as follows:
 
 - Ease of use and simple automation of HTTP/API scanning, fully working in CLI with a yaml configuration
 - Ability to run automated DAST scanning to suit various users' needs
@@ -249,7 +249,7 @@ See [helm/README.md](./helm/README.md)
 
 #### ZAP
 
-OWASP® ZAP (Zed Attack Proxy) is an open-source DAST tool. It can be used for scanning web applications and API.
+ZAP (Zed Attack Proxy) is an open-source DAST tool. It can be used for scanning web applications and API.
 
 See https://www.zaproxy.org/ for more information.
 

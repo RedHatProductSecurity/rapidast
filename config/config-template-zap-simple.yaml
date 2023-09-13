@@ -33,7 +33,8 @@ general:
     #   podman: RapiDAST runs each scanner using podman
     #   flatpak: RapiDAST runs each scanner using flatpak
     #   none: RapiDAST runs each scanner in the same host or container (where RapiDAST itself is running in a container)
-    type: "podman"
+    # When undefined, relies on rapidast-defaults.yaml, or `podman` if nothing is set
+    #type: "podman"
 
 # `scanners' is a section that configures scanning options
 # See the config-template-long.yaml for more options
@@ -49,7 +50,7 @@ scanners:
       disabledRules: "2,10015,10027,10096,10024"
 
     # Enable activeScan by uncommenting, once scans with the passiveScan only has run successfully
-    #  # If no policy is chosen, a default ("API-scan-minimal") will be selected
-    #  # The list of policies can be found in scanners/zap/policies/
+    # If no policy is chosen, a default ("API-scan-minimal") will be selected
+    # The list of policies can be found in scanners/zap/policies/
     #activeScan:
     #  policy: "API-scan-minimal"

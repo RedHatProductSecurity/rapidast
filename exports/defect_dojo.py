@@ -1,13 +1,13 @@
-import json
 import logging
 from urllib import parse
-from urllib import request
 
 import requests
 
 
 class DefectDojo:
     """This class instanciates a connection to DefectDojo, and pushes reports"""
+
+    DD_CONNECT_TIMEOUT = 10  # in seconds
 
     def __init__(self, base_url, username=None, password=None, token=None):
         if not base_url:
@@ -35,18 +35,19 @@ class DefectDojo:
             )
         url = self.base_url + "/api/v2/api-token-auth/"
         data = {"username": self.username, "password": self.password}
-        data = parse.urlencode(data).encode("ascii")
 
-        with request.urlopen(url, data=data) as resp:
-            if resp.getcode() >= 400:
-                logging.warning(
-                    f"Defect Dojo did not answer as expected during login (status: {resp.getcode()})"
-                )
+        try:
+            resp = requests.post(url, timeout=self.DD_CONNECT_TIMEOUT, data=data)
+            resp.raise_for_status()
 
-            self.token = json.load(resp)["token"]
+            logging.debug(f"resp: {resp.json()}")
+            self.token = resp.json()["token"]
 
-        self.headers["Authorization"] = f"Token {self.token}"
-        logging.debug("Defect Dojo: successfully refreshed token")
+            self.headers["Authorization"] = f"Token {self.token}"
+            logging.debug("Defect Dojo: successfully refreshed token")
+        except requests.exceptions.HTTPError as e:
+            logging.warning(f"Defect Dojo export failed: {e}")
+            raise
 
     def engagement_exists(self, engagement_id=None, name=None):
         """Return True if an engagement exists, False otherwise

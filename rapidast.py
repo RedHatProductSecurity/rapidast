@@ -117,8 +117,10 @@ def run_scanner(name, config, args, defect_d):
 
     # Part 6: export to defect dojo, if the scanner is compatible
     if defect_d and hasattr(scanner, "data_for_defect_dojo"):
+        logging.info("Exporting results to the Defect Dojo service as configured")
         defect_d.import_or_reimport_scan(*scanner.data_for_defect_dojo())
 
+    logging.info("RapiDAST scan completed")
     return 0
 
 

@@ -253,6 +253,47 @@ ZAP (Zed Attack Proxy) is an open-source DAST tool. It can be used for scanning 
 
 See https://www.zaproxy.org/ for more information.
 
+##### Methodology
+
+ZAP needs to be pointed to a list of endpoints to the tested application. Those can be:
+
+* A regular HTLM page
+* A REST endpoint
+* A GraphQL interface
+
+The GraphQL interface can be provided to RapiDAST via the `graphql` configuration entry. It requires the URL of the GraphQL interface and the GraphQL schema, in order to be scanned. Additional options are available (see the long ZAP configuration template for a list of options).
+
+The other endpoints can be provided via several methods, discussed in the chapters below.
+
+###### an OpenAPI schema
+
+This is the prefered method, to be used whenever possible.
+RapiDAST accepts openAPI v2 and v3 schemas (tools are available to convert older schemas into v3). These schemas will describe a list of endpoints, and for each of them, a list of parameters accepted by the application.
+
+###### Build the endpoint list using a spider/crawler
+
+In this method, RapiDAST is given a Web entrypoint. The crawler will download that page, extract a list of URL and recursively crawl all of them. The entire list of URLs found is then provided to the scanner.
+
+There are 2 crawlers available:
+
+- basic spider: the list of URLs will be searched in the HTML tags (e.g.: `<a>`, `<img>`, etc.)
+- Ajax spider: this crawler will run a real browser (by default: firefox headless), allowing the dynamic execution of Javascripts from each page found. This method will find URLs generated dynamically.
+
+See the `spider` and `spiderAjax` configuration entries in the long ZAP configuration template for a list of options available.
+
+###### A list of endpoints
+
+A file containing a list of URLs corresponding to endpoints and their parameters.
+
+Example of file:
+
+```
+https://example.com/api/v3/groupA/functionA?parameter1=abc&parameter2=123
+https://example.com/api/v3/groupB/functionB?parameter1=def&parameter2=456
+```
+
+Only GET requests will be scanned
+
 ##### ZAP scanner specific options
 
 Below are some configuration tips related to the ZAP scanner.

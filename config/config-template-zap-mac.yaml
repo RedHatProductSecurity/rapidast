@@ -33,7 +33,7 @@ general:
     #   flatpak: RapiDAST runs each scanner using flatpak
     #   none: RapiDAST runs each scanner in the same host or container (where RapiDAST itself is running in a container)
     # When undefined, relies on rapidast-defaults.yaml, or `podman` if nothing is set
-    #type: "none"
+    type: "none"
 
 scanners:
   zap:

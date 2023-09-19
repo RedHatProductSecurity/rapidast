@@ -158,14 +158,26 @@ def run():
         f"log level set to debug. Config file: '{parser.parse_args().config_file}'"
     )
 
+    # Load config file
     try:
         config = configmodel.RapidastConfigModel(
             yaml.safe_load(load_config_file(parser.parse_args().config_file))
         )
     except yaml.YAMLError as exc:
         raise RuntimeError(
-            f"Something went wrong while parsing one of the config '{parser.parse_args().config_file}':\n {str(exc)}"
+            f"YAML error in config {parser.parse_args().config_file}':\n {str(exc)}"
         ) from exc
+
+    # Optionally adds default if file exists (will not overwrite existing entries)
+    default_conf = os.path.join(os.path.dirname(__file__), "rapidast-defaults.yaml")
+    if os.path.exists(default_conf):
+        logging.info(f"Loading defaults from: {default_conf}")
+        try:
+            config.merge(yaml.safe_load(load_config_file(default_conf)), preserve=True)
+        except yaml.YAMLError as exc:
+            raise RuntimeError(
+                f"YAML error in config {default_conf}':\n {str(exc)}"
+            ) from exc
 
     # Update to latest config schema if need be
     config = configmodel.converter.update_to_latest_config(config)

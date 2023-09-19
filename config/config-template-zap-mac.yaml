@@ -32,11 +32,12 @@ general:
     #   podman: RapiDAST runs each scanner using podman
     #   flatpak: RapiDAST runs each scanner using flatpak
     #   none: RapiDAST runs each scanner in the same host or container (where RapiDAST itself is running in a container)
+    # When undefined, relies on rapidast-defaults.yaml, or `podman` if nothing is set
     type: "none"
 
 scanners:
   zap:
-  # define a scan through the ZAP scanner
+  # Define a scan through the ZAP scanner
     apiScan:
       apis:
         apiFile: "path/to/local/openapi-schema"

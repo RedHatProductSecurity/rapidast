@@ -72,7 +72,8 @@ general:
     #   flatpak: RapiDAST runs each scanner using flatpak
     #   none: RapiDAST runs each scanner in the same host or container (where RapiDAST itself is running in a container)
     #         container.
-    type: "podman"
+    # When undefined, relies on rapidast-defaults.yaml, or `podman` if nothing is set
+    #type: "podman"
 
 
 # `scanners' is a section that configures scanning options
@@ -111,7 +112,7 @@ scanners:
       browserId: firefox-headless
 
     passiveScan:
-      # optional comma-separated list of passive rules to disable
+      # Optional comma-separated list of passive rules to disable
       # Use https://www.zaproxy.org/docs/alerts/ to match rule with its ID
       disabledRules: "2,10015,10027,10096,10024"
 
@@ -126,12 +127,12 @@ scanners:
         #podName: "mypod"  # optional: inject ZAP in an existing Pod
 
         executable: "zap.sh"  # for Linux
-        # executable: "/Applications/OWASP ZAP.app/Contents/Java/zap.sh"    # for MacOS, when general.container.type is 'none' only
+        #executable: "/Applications/OWASP ZAP.app/Contents/Java/zap.sh"    # for MacOS, when general.container.type is 'none' only
 
 
     report:
       format: ["json"]
-      # format: ["json","html","sarif","xml"]  # default: "json" only
+      #format: ["json","html","sarif","xml"]  # default: "json" only
 
     urls:
       # Optional, `includes` and `excludes` take a list of regexps.
@@ -146,14 +147,14 @@ scanners:
       #  - "^https?://example.com:3000/do-not-descend-here/.*$"
 
     miscOptions:
-      # enableUI (default: false), requires a compatible runtime (e.g.: flatpak or no containment)
+      # EnableUI (default: false), requires a compatible runtime (e.g.: flatpak or no containment)
       enableUI: False
       # Defaults to True, set False to prevent auto update of ZAP plugins
       updateAddons: True
       # If set to True and authentication is oauth2_rtoken: manually download schemas (e.g.: openAPI, GraphQL)
       oauth2ManualDownload: False
 
-      # overwrite the default port in case it is required. The default port was selected to avoid any collision with other services
+      # Overwrite the default port in case it is required. The default port was selected to avoid any collision with other services
       zapPort: 8080
 
       # Maximum heap size of the JVM. Default: ¼ of the RAM. acceptable values: [0-9]+[kKmMgG]?

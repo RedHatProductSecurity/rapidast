@@ -23,7 +23,8 @@ general:
     #   podman: RapiDAST runs each scanner using podman
     #   flatpak: RapiDAST runs each scanner using flatpak
     #   none: RapiDAST runs each scanner in the same host or container (where RapiDAST itself is running in a container)
-    type: "podman"
+    # When undefined, relies on rapidast-defaults.yaml, or `podman` if nothing is set
+    #type: "podman"
 
 # `scanners' is a section that configures scanning options
 scanners:
@@ -42,15 +43,15 @@ scanners:
         image: "<container image name>"
 
         # Optional: command to run. By default, the image's ENTRYPOINT will be run
-        # command: "<command to run in the container>"
+        #command: "<command to run in the container>"
 
         # Optional: inject into an existing Pod
-        # podName: "mypod"
+        #podName: "mypod"
 
         # Optional: list of expected return codes, anything else will be considered as an error. by default: [0]
-        # validReturns: [ 0, 1 ]
+        #validReturns: [ 0, 1 ]
 
         # Optional: list of volume to mount, e.g.: to retrieve results on the host
-        # volumes:
+        #volumes:
         #  - "<host/path>:<guest/path>:Z"   # for Linux
         #  - "<host/path>:<guest/path>"     # for Mac

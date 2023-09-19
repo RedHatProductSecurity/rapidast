@@ -117,7 +117,11 @@ def run_scanner(name, config, args, defect_d):
 
     # Part 6: export to defect dojo, if the scanner is compatible
     if defect_d and hasattr(scanner, "data_for_defect_dojo"):
-        defect_d.import_or_reimport_scan(*scanner.data_for_defect_dojo())
+        logging.info("Exporting results to the Defect Dojo service as configured")
+
+        if defect_d.import_or_reimport_scan(*scanner.data_for_defect_dojo()) == 1:
+            logging.error("Exporting results to DefectDojo failed")
+            return 1
 
     return 0
 
@@ -190,7 +194,12 @@ def run():
     for name in config.get("scanners"):
         logging.info(f"Next scanner: '{name}'")
 
-        scan_error_count += run_scanner(name, config, args, defect_d)
+        ret = run_scanner(name, config, args, defect_d)
+        if ret == 1:
+            logging.info(f"scanner: '{name}' failed")
+            scan_error_count = scan_error_count + 1
+        else:
+            logging.info(f"scanner: '{name}' completed successfully")
 
     if scan_error_count > 0:
         logging.warning(f"Number of failed scanners: {scan_error_count}")

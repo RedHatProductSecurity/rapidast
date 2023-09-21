@@ -1,10 +1,9 @@
+import json
 import logging
 import random
 import shutil
 import string
 import subprocess
-
-from utils import safe_add
 
 
 class PodmanWrapper:
@@ -98,38 +97,30 @@ class PodmanWrapper:
         https://github.com/containers/podman/blob/main/troubleshooting.md#39-podman-run-fails-with-error-unrecognized-namespace-mode-keep-iduid1000gid1000-passed
         """
 
-        sizes = (
-            subprocess.run(
-                [
-                    "podman",
-                    "info",
-                    "--format",
-                    "{{ range .Host.IDMappings.UIDMap }}+{{ .Size }}{{ end }}",
-                ],
-                stdout=subprocess.PIPE,
-                check=True,
+        try:
+            info = json.loads(
+                subprocess.run(
+                    ["podman", "info", "--format", "json"],
+                    stdout=subprocess.PIPE,
+                    check=True,
+                ).stdout.decode("utf-8")
             )
-            .stdout.decode("utf-8")
-            .strip("\n")
-        )
-        logging.debug(f"UIDmapping sizes: {sizes}")
-        subuid_size = safe_add(f"{sizes} - 1")
-        sizes = (
-            subprocess.run(
-                [
-                    "podman",
-                    "info",
-                    "--format",
-                    "{{ range .Host.IDMappings.GIDMap }}+{{ .Size }}{{ end }}",
-                ],
-                stdout=subprocess.PIPE,
-                check=True,
+            logging.debug(f"podman UID mapping: {info['host']['idMappings']['uidmap']}")
+            subuid_size = (
+                sum(i["size"] for i in info["host"]["idMappings"]["uidmap"]) - 1
             )
-            .stdout.decode("utf-8")
-            .strip("\n")
-        )
-        logging.debug(f"UIDmapping sizes: {sizes}")
-        subgid_size = safe_add(f"{sizes} - 1")
+            subgid_size = (
+                sum(i["size"] for i in info["host"]["idMappings"]["gidmap"]) - 1
+            )
+        except json.JSONDecodeError as exc:
+            raise RuntimeError(f"Unable to parse `podman info` output: {exc}") from exc
+        except (KeyError, AttributeError) as exc:
+            raise RuntimeError(
+                f"Unexpected podman info output: entry not found: {exc}"
+            ) from exc
+        except Exception as exc:
+            logging.error(f"change_user_id unexpected error: {exc}")
+            raise RuntimeError(f"Unable to retrieve podman UID mapping: {exc}") from exc
 
         # UID mapping
         self.add_option("--uidmap", f"0:1:{runas_uid}")

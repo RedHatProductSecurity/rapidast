@@ -271,7 +271,10 @@ class Zap(RapidastScanner):
         try:
             af_context = find_context(self.automation_config)
             app_url = self.config.get("application.url")
-            if app_url:
+            if app_url and isinstance(app_url, str):
+                if not app_url.endswith("/"):
+                    # For some unknonw reason, ZAP appears to behave weirdly if the URL is just the hostname without '/'
+                    app_url = app_url + "/"
                 af_context["urls"].append(app_url)
             else:
                 logging.error("Configuration: ZAP requires an application.url entry")

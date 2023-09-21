@@ -18,6 +18,20 @@ def test_config():
     )
 
 
+## Basic test
+
+
+def test_setup_basic(test_config):
+    test_zap = ZapPodman(config=test_config)
+    test_zap.setup()
+
+    # a '/' should have been appended
+    assert (
+        test_zap.automation_config["env"]["contexts"][0]["urls"][0]
+        == "http://example.com/"
+    )
+
+
 ## Testing Authentication methods ##
 
 

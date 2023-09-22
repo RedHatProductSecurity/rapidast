@@ -57,7 +57,6 @@ class ZapPodman(Zap):
             "Zap",
             ("workdir", self._create_temp_dir("workdir"), "/zap/results"),
             ("scripts", f"{MODULE_DIR}/scripts", "/zap/scripts"),
-            ("policies", f"{MODULE_DIR}/policies", "/home/zap/.ZAP/policies/"),
             ("zaphomedir", self._create_temp_dir("zaphomedir"), "/home/zap/.ZAP"),
         )
         self.zap_home = self.path_map.zaphomedir.host_path
@@ -82,6 +81,9 @@ class ZapPodman(Zap):
 
         if self.state != State.UNCONFIGURED:
             raise RuntimeError(f"ZAP setup encounter an unexpected state: {self.state}")
+
+        # copy policy files so that they will be available in the container
+        shutil.copytree(f"{MODULE_DIR}/policies", f"{self.zap_home}/policies")
 
         self._setup_podman_cli()
 

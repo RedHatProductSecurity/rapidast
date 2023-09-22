@@ -12,6 +12,8 @@ class PodmanWrapper:
     # Accessed by PodmanWrapper only                              #
     ###############################################################
 
+    DEFAULT_ID_MAPPING_MAP_SIZE = 65536
+
     ###############################################################
     # PROTECTED CONSTANTS                                         #
     # Accessed by parent scanner object                           #
@@ -97,6 +99,9 @@ class PodmanWrapper:
         https://github.com/containers/podman/blob/main/troubleshooting.md#39-podman-run-fails-with-error-unrecognized-namespace-mode-keep-iduid1000gid1000-passed
         """
 
+        subuid_size = self.DEFAULT_ID_MAPPING_MAP_SIZE - 1
+        subgid_size = self.DEFAULT_ID_MAPPING_MAP_SIZE - 1
+
         try:
             info = json.loads(
                 subprocess.run(
@@ -106,12 +111,28 @@ class PodmanWrapper:
                 ).stdout.decode("utf-8")
             )
             logging.debug(f"podman UID mapping: {info['host']['idMappings']['uidmap']}")
-            subuid_size = (
-                sum(i["size"] for i in info["host"]["idMappings"]["uidmap"]) - 1
-            )
-            subgid_size = (
-                sum(i["size"] for i in info["host"]["idMappings"]["gidmap"]) - 1
-            )
+
+            if info["host"]["idMappings"]["uidmap"] is not None:
+                subuid_size = (
+                    sum(i["size"] for i in info["host"]["idMappings"]["uidmap"]) - 1
+                )
+            else:
+                logging.warning(
+                    f"the value of host.idMappings.uidmap in 'podman info' is null. \
+                      Something might be wrong in your podman setup. If it's MacOS, try recreating podman machine. \
+                      DEFAULT_MAP_SIZE {self.DEFAULT_ID_MAPPING_MAP_SIZE} applied"
+                )
+            if info["host"]["idMappings"]["gidmap"] is not None:
+                subgid_size = (
+                    sum(i["size"] for i in info["host"]["idMappings"]["gidmap"]) - 1
+                )
+            else:
+                logging.warning(
+                    f"the value of host.idMappings.gidmap in 'podman info' is null. \
+                    Something might be wrong in your podman setup. If it's MacOS, try recreating podman machine. \
+                    DEFAULT_MAP_SIZE {self.DEFAULT_ID_MAPPING_MAP_SIZE} applied"
+                )
+
         except json.JSONDecodeError as exc:
             raise RuntimeError(f"Unable to parse `podman info` output: {exc}") from exc
         except (KeyError, AttributeError) as exc:

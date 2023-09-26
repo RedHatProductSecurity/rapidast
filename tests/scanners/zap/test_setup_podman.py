@@ -168,7 +168,7 @@ def test_setup_import_urls(test_config):
 
     test_zap = ZapPodman(config=test_config)
     test_zap.setup()
-    assert Path(test_zap._host_work_dir(), "importUrls.txt").is_file()
+    assert Path(test_zap.host_work_dir, "importUrls.txt").is_file()
 
 
 def test_setup_exclude_urls(test_config):
@@ -232,7 +232,7 @@ def test_setup_graphql(test_config):
             assert item["parameters"]["schemaUrl"] == TEST_GRAPHQL_SCHEMA_URL
             assert (
                 item["parameters"]["schemaFile"]
-                == f"{test_zap._container_work_dir()}/schema.graphql"
+                == f"{test_zap.container_work_dir}/schema.graphql"
             )
             break
     else:

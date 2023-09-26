@@ -53,14 +53,11 @@ class Zap(RapidastScanner):
 
         # Instanciate a PathMaps with predifined mapping IDs. They will be filled by the typed scanners
         # List important locations for host <-> container mapping point
-        # + work: where data is stored:
+        # + workdir: where data is stored:
         #   - AF file, reports, evidence, etc. are beneath this path
         # + scripts: where scripts are stored
-        # + policies: where policies are stored
+        # + zaphomedir: a temporary location where policies and logs will be found
         self.path_map = None  # to be defined by the typed scanner
-
-        # zap_home will be updated in the child class
-        self.zap_home = ""
 
     ###############################################################
     # PUBLIC METHODS                                              #
@@ -88,7 +85,7 @@ class Zap(RapidastScanner):
         pass
 
     def postprocess(self):
-        reports_dir = os.path.join(self.path_map.workdir.host_path, Zap.REPORTS_SUBDIR)
+        reports_dir = os.path.join(self.host_work_dir, Zap.REPORTS_SUBDIR)
         logging.debug(f"reports_dir: {reports_dir}")
 
         logging.info(f"Extracting report, storing in {self.results_dir}")
@@ -96,16 +93,23 @@ class Zap(RapidastScanner):
 
         logging.info("Saving the session as evidence")
         with tarfile.open(f"{self.results_dir}/session.tar.gz", "w:gz") as tar:
-            tar.add(self.path_map.workdir.host_path, arcname="evidences")
+            tar.add(self.host_work_dir, arcname="evidences")
 
             # adding zap log files to the archive
-            for log in glob.glob(f"{self.zap_home}/zap.log*"):
+            for log in glob.glob(f"{self.host_home_dir}/zap.log*"):
                 # log path is like '/tmp/rapidast_*/zap.log'
                 tar.add(log, f"evidences/zap_logs/{log.split('/')[-1]}")
 
     def cleanup(self):
-        """Generic ZAP cleanup: should be called only via super() inheritance"""
-        pass
+        """Generic ZAP cleanup: should be called only via super() inheritance
+        Deletes home and work directory
+        """
+
+        logging.debug(
+            f"Deleting temp directories {self.host_work_dir} and {self.host_home_dir}"
+        )
+        shutil.rmtree(self.host_work_dir)
+        shutil.rmtree(self.host_home_dir)
 
     def data_for_defect_dojo(self):
         """Return a tuple containing:
@@ -166,7 +170,7 @@ class Zap(RapidastScanner):
 
         # Create a session, to store them as evidence
         self.zap_cli.extend(
-            ["-newsession", f"{self._container_work_dir()}/session_data/session"]
+            ["-newsession", f"{self.container_work_dir}/session_data/session"]
         )
 
         if not self.my_conf("miscOptions.enableUI", default=False):
@@ -174,7 +178,7 @@ class Zap(RapidastScanner):
             self.zap_cli.append("-cmd")
 
         # finally: the Automation Framework:
-        self.zap_cli.extend(["-autorun", f"{self._container_work_dir()}/af.yaml"])
+        self.zap_cli.extend(["-autorun", f"{self.container_work_dir}/af.yaml"])
 
     def _get_standard_options(self):
         """
@@ -222,14 +226,6 @@ class Zap(RapidastScanner):
             "_add_env() was called on the parent ZAP class. This is likely a bug. No operation done"
         )
 
-    def _host_work_dir(self):
-        """Shortcut to the host path of the work directory"""
-        return self.path_map.workdir.host_path
-
-    def _container_work_dir(self):
-        """Shortcut to the container path of the work directory"""
-        return self.path_map.workdir.container_path
-
     def _include_file(self, host_path, dest_in_container=None):
         """Copies the file from host_path on the host to dest_in_container in the container
         Notes:
@@ -239,7 +235,7 @@ class Zap(RapidastScanner):
         """
         # 1. Compute host path
         if not dest_in_container:
-            path_to_dest = self._host_work_dir()
+            path_to_dest = self.host_work_dir
         else:
             path_to_dest = self.path_map.container_2_host(dest_in_container)
 
@@ -250,6 +246,52 @@ class Zap(RapidastScanner):
                 f"_include_file() ignoring '{host_path} → 'container:{path_to_dest}' as they are the same file"
             )
         logging.debug(f"_include_file() '{host_path} → 'container:{path_to_dest}'")
+
+    ###############################################################
+    # SHORTCUTS: using getters                                    #
+    # To make code clear and consise                              #
+    # Currently, there are no setters as it's not meant to change #
+    ###############################################################
+
+    @property
+    def host_work_dir(self):
+        """Shortcut to the host path of the work directory"""
+        return self.path_map.workdir.host_path
+
+    @property
+    def container_work_dir(self):
+        """Shortcut to the container path of the work directory"""
+        return self.path_map.workdir.container_path
+
+    @property
+    def host_scripts_dir(self):
+        """Shortcut to the host path of the scripts directory"""
+        return self.path_map.scripts.host_path
+
+    @property
+    def container_scripts_dir(self):
+        """Shortcut to the container path of the scripts directory"""
+        return self.path_map.scripts.container_path
+
+    @property
+    def host_home_dir(self):
+        """Shortcut to the host path of ZAP's home directory"""
+        return self.path_map.zaphomedir.host_path
+
+    @property
+    def container_home_dir(self):
+        """Shortcut to the container path of ZAP's home directory"""
+        return self.path_map.zaphomedir.container_path
+
+    @property
+    def host_policies_dir(self):
+        """Shortcut to the host path of the work directory"""
+        return os.path.join(self.host_home_dir, "policies")
+
+    @property
+    def container_policies_dir(self):
+        """Shortcut to the container path of the work directory"""
+        return os.path.join(self.container_home_dir, "policies")
 
     ###############################################################
     # PRIVATE METHODS                                             #
@@ -313,7 +355,7 @@ class Zap(RapidastScanner):
         orig = self.my_conf("importUrlsFromFile")
         if not orig:
             return
-        dest = f"{self._container_work_dir()}/importUrls.txt"
+        dest = f"{self.container_work_dir}/importUrls.txt"
         self._include_file(orig, dest)
         job["parameters"]["fileName"] = dest
         self.automation_config["jobs"].append(job)
@@ -329,7 +371,7 @@ class Zap(RapidastScanner):
         elif api_file:
             # copy the file in the container's result directory
             # This allows the OpenAPI to be kept as evidence
-            container_openapi_file = f"{self._container_work_dir()}/openapi.json"
+            container_openapi_file = f"{self.container_work_dir}/openapi.json"
             self._include_file(
                 host_path=api_file, dest_in_container=container_openapi_file
             )
@@ -411,7 +453,7 @@ class Zap(RapidastScanner):
 
         host_file = self.my_conf("graphql.schemaFile")
         if host_file:
-            cont_file = os.path.join(self._container_work_dir(), "schema.graphql")
+            cont_file = os.path.join(self.container_work_dir, "schema.graphql")
             self._include_file(host_path=host_file, dest_in_container=cont_file)
             af_graphql["parameters"]["schemaFile"] = cont_file
 
@@ -484,7 +526,7 @@ class Zap(RapidastScanner):
             "type": "report",
             "parameters": {
                 "template": report_format.template,
-                "reportDir": f"{self.path_map.workdir.container_path}/{Zap.REPORTS_SUBDIR}/",
+                "reportDir": f"{self.container_work_dir}/{Zap.REPORTS_SUBDIR}/",
                 "reportFile": report_format.name,
                 "reportTitle": "ZAP Scanning Report",
                 "reportDescription": "",
@@ -504,7 +546,7 @@ class Zap(RapidastScanner):
     def _setup_report(self):
         """Adds the report to the job list. This should be called last"""
 
-        os.makedirs(os.path.join(self.path_map.workdir.host_path, Zap.REPORTS_SUBDIR))
+        os.makedirs(os.path.join(self.host_work_dir, Zap.REPORTS_SUBDIR))
         ReportFormat = namedtuple("ReportFormat", ["template", "name"])
         reports = {
             "json": ReportFormat("traditional-json-plus", "zap-report.json"),
@@ -541,7 +583,7 @@ class Zap(RapidastScanner):
 
     def _save_automation_file(self):
         """Save the Automation dictionary as YAML in the container"""
-        af_host_path = self.path_map.workdir.host_path + "/af.yaml"
+        af_host_path = self.host_work_dir + "/af.yaml"
         with open(af_host_path, "w", encoding="utf-8") as f:
             f.write(yaml.dump(self.automation_config))
         logging.info(f"Saved Automation Framework in {af_host_path}")
@@ -642,7 +684,7 @@ class Zap(RapidastScanner):
         client_id = self.my_conf(f"{params_path}.client_id", "cloud-services")
         token_endpoint = self.my_conf(f"{params_path}.token_endpoint", None)
         rtoken = self.my_conf(f"{params_path}.rtoken", None)
-        scripts_dir = self.path_map.scripts.container_path
+        scripts_dir = self.container_scripts_dir
 
         # 1- complete the context: script, verification and user
         context_["authentication"] = {
@@ -726,12 +768,12 @@ class Zap(RapidastScanner):
         changes = [
             Change(
                 "apiScan.apis.apiUrl",
-                f"{self._host_work_dir()}/openapi.json",
+                f"{self.host_work_dir}/openapi.json",
                 "apiScan.apis.apiFile",
             ),
             Change(
                 "graphql.schemaUrl",
-                f"{self._host_work_dir()}/schema.graphql",
+                f"{self.host_work_dir}/schema.graphql",
                 "graphql.schemaFile",
             ),
         ]

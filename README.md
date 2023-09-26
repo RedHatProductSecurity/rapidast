@@ -217,11 +217,6 @@ Accepted values are as follows:
     - Set when you want to run scanners that are installed on the host or you want to build or run the RapiDAST image(scanners are to be built in the same image).
     - __Warning__: without a container layer, RapiDAST may have to modify the host's file system, such as the tools configuration to fit its needs. For example: the ZAP plugin has to copy the policy file used in ZAP's user config directory (`~/.ZAP`)
 
-+ `flatpak`:
-    - Runs the Flatpak version of ZAP (`org.zaproxy.ZAP` on `flathub`)
-    - Flatpak must be installed, as well as `org.zaproxy.ZAP`
-    - __Warning__: Flatpak's ZAP shares the user's home file system with the host, so RapiDAST may have to modify the host's file system, such as the tools configuration to fit its needs. For example: the ZAP plugin has to copy the policy file used in ZAP's user config directory (`~/.ZAP`)
-
 It is also possible to set the container type for each scanner differently by setting `scanners.<name>.container.type` under a certain scanner configuration. Then the scanner will run from its image, regardless of the `general.container.type` value.
 
 ### Additional options
@@ -304,7 +299,7 @@ In order to do that, the user must create the Pod prior to running RapiDAST, and
 However, it is currently necessary to map the host user to UID 1000 / GID 1000 manually during the creation of the Pod using the `--userns=keep-id:uid=1000,gid=1000` option
 Example: `podman pod create --userns=keep-id:uid=1000,gid=1000 myApp_Pod`
 
-+ Enable ZAP's Graphical UI (useful for debugging): set `scanners.zap.miscOptions.enableUI: True` (default: False). The runtime type must support it (only `none` and `flatpak`)
++ Enable ZAP's Graphical UI (useful for debugging): set `scanners.zap.miscOptions.enableUI: True` (default: False). The runtime type must support it (only `none`)
 
 + Disable add-on updates: `scanners.zap.miscOptions.updateAddons: False` (default: True): Prior to running, ZAP will update its addons unless this value is `False`
 

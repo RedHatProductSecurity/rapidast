@@ -1,7 +1,6 @@
 import logging
 import os
 import pprint
-import shutil
 import subprocess
 
 from .zap import MODULE_DIR
@@ -44,20 +43,18 @@ class ZapNone(Zap):
 
         # prepare the host <-> container mapping
         # Because there's no container layer, there's no need to translate anything
-        temp_dir = self._create_temp_dir("workdir")
+        temp_work_dir = self._create_temp_dir("workdir")
 
-        # Generate on the fly a ZAP home dir, which will be filled up with default data.
+        # Similarly: generate on the fly a ZAP home dir, which will be filled up with default data.
         # The policies will be copied inside it.
         # Benefits: don't fiddle with user's ZAP environment, have a predictable base config
-        self.zap_home = self._create_temp_dir("home")
-
-        policies_dir = f"{self.zap_home}/policies"
+        temp_home_dir = self._create_temp_dir("zaphomedir")
 
         self.path_map = make_mapping_for_scanner(
             "Zap",
-            ("workdir", temp_dir, temp_dir),
+            ("workdir", temp_work_dir, temp_work_dir),
             ("scripts", f"{MODULE_DIR}/scripts", f"{MODULE_DIR}/scripts"),
-            ("policies", policies_dir, policies_dir),
+            ("zaphomedir", temp_home_dir, temp_home_dir),
         )
 
     ###############################################################
@@ -82,14 +79,13 @@ class ZapNone(Zap):
 
         super().setup()
 
-        # Without a container layer, can't "mount" the policy directory, and ZAP does not allow changing it
-        # We have to copy it to ZAP's policies directory
+        # Copy the policy to ZAP's policies directory into the temporary home
         if self.my_conf("activeScan", default=False) is not False:
             policy = self.my_conf("activeScan.policy", default="API-scan-minimal")
-            os.mkdir(self.path_map.policies.host_path)
+            os.mkdir(self.host_policies_dir)
             self._include_file(
                 host_path=f"{MODULE_DIR}/policies/{policy}.policy",
-                dest_in_container=f"{self.path_map.policies.container_path}/{policy}.policy",
+                dest_in_container=f"{self.container_policies_dir}/{policy}.policy",
             )
 
         if self.state != State.ERROR:
@@ -107,7 +103,7 @@ class ZapNone(Zap):
 
         # temporary workaround: cleanup addon state
         # see https://github.com/zaproxy/zaproxy/issues/7590#issuecomment-1308909500
-        statefile = f"{self.zap_home}/add-ons-state.xml"
+        statefile = f"{self.host_home_dir}/add-ons-state.xml"
         try:
             os.remove(statefile)
         except FileNotFoundError:
@@ -118,7 +114,7 @@ class ZapNone(Zap):
 
             command = [self.my_conf("container.parameters.executable")]
             command.extend(self._get_standard_options())
-            command.extend(["-dir", self.zap_home])
+            command.extend(["-dir", self.container_home_dir])
             command.append("-cmd")
             command.append("-addonupdate")
 
@@ -130,7 +126,7 @@ class ZapNone(Zap):
                 )
             # temporary workaround: cleanup addon state
             # see https://github.com/zaproxy/zaproxy/issues/7590#issuecomment-1308909500
-            statefile = f"{self.zap_home}/add-ons-state.xml"
+            statefile = f"{self.host_home_dir}/add-ons-state.xml"
             try:
                 os.remove(statefile)
             except FileNotFoundError:
@@ -171,12 +167,6 @@ class ZapNone(Zap):
         if not self.state == State.PROCESSED:
             raise RuntimeError("No cleanning up as ZAP did not processed results.")
 
-        logging.debug(
-            f"Deleting temp directories {self._host_work_dir()} and {self.zap_home}"
-        )
-        shutil.rmtree(self._host_work_dir())
-        shutil.rmtree(self.zap_home)
-
         super().cleanup()
 
         if not self.state == State.ERROR:
@@ -197,7 +187,7 @@ class ZapNone(Zap):
         self.zap_cli = [
             self.my_conf("container.parameters.executable"),
             "-dir",
-            self.zap_home,
+            self.container_home_dir,
         ]
 
         super()._setup_zap_cli()
@@ -230,7 +220,7 @@ class ZapNone(Zap):
 
         command = [self.my_conf("container.parameters.executable")]
         command.extend(self._get_standard_options())
-        command.extend(["-dir", self.zap_home])
+        command.extend(["-dir", self.container_home_dir])
         command.append("-cmd")
 
         logging.debug(f"ZAP create home command: {command}")
@@ -245,19 +235,19 @@ class ZapNone(Zap):
             url_root = "https://github.com/zaproxy/zap-extensions/releases/download"
             anonymous_download(
                 url=f"{url_root}/callhome-v0.6.0/callhome-release-0.6.0.zap",
-                dest=f"{self.zap_home}/plugin/callhome-release-0.6.0.zap",
+                dest=f"{self.host_home_dir}/plugin/callhome-release-0.6.0.zap",
                 proxy=self.my_conf("proxy", default=None),
             )
             anonymous_download(
                 url=f"{url_root}/network-v0.9.0/network-beta-0.9.0.zap",
-                dest=f"{self.zap_home}/plugin/network-beta-0.9.0.zap",
+                dest=f"{self.host_home_dir}/plugin/network-beta-0.9.0.zap",
                 proxy=self.my_conf("proxy", default=None),
             )
             logging.info("Workaround: installing all addons")
 
             command = [self.my_conf("container.parameters.executable")]
             command.extend(self._get_standard_options())
-            command.extend(["-dir", self.zap_home])
+            command.extend(["-dir", self.container_home_dir])
             command.append("-cmd")
             command.append("-addoninstallall")
 

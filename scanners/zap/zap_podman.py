@@ -53,14 +53,17 @@ class ZapPodman(Zap):
 
         # prepare the host <-> container mapping
         # The default location for WORK can be chosen by parent itself (no overide of self._create_temp_dir)
+        # To make things easier:
+        #  - getters are created by the parents as shortcuts: self.(host|container)_(home|work|policies)_dir
+        #  - the policies dir is relative to ZAP's home dir
         self.path_map = make_mapping_for_scanner(
             "Zap",
             ("workdir", self._create_temp_dir("workdir"), "/zap/results"),
             ("scripts", f"{MODULE_DIR}/scripts", "/zap/scripts"),
             ("zaphomedir", self._create_temp_dir("zaphomedir"), "/home/zap/.ZAP"),
         )
-        self.zap_home = self.path_map.zaphomedir.host_path
-        logging.debug(f"zap_home is set: {self.zap_home}")
+        logging.debug(f"ZAP workdir on host: {self.host_work_dir}")
+        logging.debug(f"ZAP home on host: {self.host_home_dir}")
 
     ###############################################################
     # PUBLIC METHODS                                              #
@@ -83,7 +86,7 @@ class ZapPodman(Zap):
             raise RuntimeError(f"ZAP setup encounter an unexpected state: {self.state}")
 
         # copy policy files so that they will be available in the container
-        shutil.copytree(f"{MODULE_DIR}/policies", f"{self.zap_home}/policies")
+        shutil.copytree(f"{MODULE_DIR}/policies", self.host_policies_dir)
 
         self._setup_podman_cli()
 
@@ -154,9 +157,6 @@ class ZapPodman(Zap):
 
         if not self.state == State.PROCESSED:
             raise RuntimeError("No cleanning up as ZAP did not processed results.")
-
-        logging.debug(f"Deleting temp directory {self._host_work_dir()}")
-        shutil.rmtree(self._host_work_dir())
 
         if self.podman.delete_yourself():
             self.state = State.ERROR

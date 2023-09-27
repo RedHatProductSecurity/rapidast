@@ -324,6 +324,8 @@ scanners:
             memMaxHeap: "6144m"
 ```
 
++ `scanners.zap.miscOptions.overrideConfigs` allows to run additional '-config' options when the ZAP cli command is run. This can be used to set values for certain parameters such as `{namespace}` in the API path
+
 #### Generic scanner
 
 It is possible to request RapiDAST to run a command in a podman image, using the `generic` plugin.

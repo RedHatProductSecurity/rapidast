@@ -203,6 +203,12 @@ class Zap(RapidastScanner):
             ["-config", f"network.localServers.mainProxy.port={local_port}"]
         )
 
+        override_cfg = self.my_conf("miscOptions.overrideConfigs")
+        if override_cfg:
+            for cfgitem in override_cfg:
+                logging.debug(f"override_cfg is set: {cfgitem}")
+                standard.extend(["-config", cfgitem])
+
         # By default, ZAP allocates ¼ of the available RAM to the Java process.
         # This is not efficient when RapiDAST is executed in a dedicated environment.
         jmem = self.my_conf("miscOptions.memMaxHeap")

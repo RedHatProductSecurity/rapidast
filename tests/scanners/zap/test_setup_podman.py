@@ -295,3 +295,17 @@ def test_override_memory_allocation(test_config):
     test_zap = ZapPodman(config=test_config)
     test_zap.setup()
     assert "-Xmx8i" not in test_zap.zap_cli
+
+
+def test_override_cfg(test_config):
+    override_cfg1 = "formhandler.fields.field(0).fieldId=namespace"
+    override_cfg2 = "formhandler.fields.field(0).value=default"
+
+    test_config.set(
+        "scanners.zap.miscOptions.overrideConfigs", [override_cfg1, override_cfg2]
+    )
+    test_zap = ZapPodman(config=test_config)
+    test_zap.setup()
+
+    assert override_cfg1 in test_zap.zap_cli
+    assert override_cfg2 in test_zap.zap_cli

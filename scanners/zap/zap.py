@@ -332,12 +332,13 @@ class Zap(RapidastScanner):
         self.authenticated = self.authentication_factory()
 
         # Create the AF configuration
+        # Passive Scan must be configured first, as subsequent jobs may trigger requests
+        self._setup_passive_scan()
         self._setup_spider()
         self._setup_ajax_spider()
         self._setup_api()
         self._setup_graphql()
         self._setup_import_urls()
-        self._setup_passive_scan()
         self._setup_active_scan()
         self._setup_passive_wait()
         self._setup_report()

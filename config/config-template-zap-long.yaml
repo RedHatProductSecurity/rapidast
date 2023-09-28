@@ -114,7 +114,7 @@ scanners:
     passiveScan:
       # Optional comma-separated list of passive rules to disable
       # Use https://www.zaproxy.org/docs/alerts/ to match rule with its ID
-      disabledRules: "2,10015,10027,10096,10024"
+      disabledRules: "2,10015,10024,10027,10054,10096,10109,10112"
 
     activeScan:
       # If no policy is chosen, a default ("API-scan-minimal") will be selected

@@ -205,9 +205,12 @@ class Zap(RapidastScanner):
 
         override_cfg = self.my_conf("miscOptions.overrideConfigs")
         if override_cfg:
-            for cfgitem in override_cfg:
-                logging.debug(f"override_cfg is set: {cfgitem}")
-                standard.extend(["-config", cfgitem])
+            if isinstance(override_cfg, list):
+                for cfgitem in override_cfg:
+                    logging.debug(f"override_cfg is set: {cfgitem}")
+                    standard.extend(["-config", cfgitem])
+            else:
+                raise ValueError("miscOptions.overrideConfigs must be a list")
 
         # By default, ZAP allocates ¼ of the available RAM to the Java process.
         # This is not efficient when RapiDAST is executed in a dedicated environment.

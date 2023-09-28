@@ -309,3 +309,11 @@ def test_override_cfg(test_config):
 
     assert override_cfg1 in test_zap.zap_cli
     assert override_cfg2 in test_zap.zap_cli
+
+
+def test_override_non_list_format(test_config):
+    test_config.set("scanners.zap.miscOptions.overrideConfigs", "non-list-item")
+    test_zap = ZapPodman(config=test_config)
+
+    with pytest.raises(ValueError):
+        test_zap.setup()

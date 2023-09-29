@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <configuration>
-    <policy>API-scan-minimal</policy>
+    <policy>Kubernetes-API-scan</policy>
     <scanner>
         <level>MEDIUM</level>
         <strength>MEDIUM</strength>
@@ -39,16 +39,16 @@
             <level>OFF</level>
         </p40009>
         <p40012>
-            <enabled>true</enabled>
-            <level>DEFAULT</level>
+            <enabled>false</enabled>
+            <level>OFF</level>
         </p40012>
         <p40014>
             <enabled>false</enabled>
             <level>OFF</level>
         </p40014>
         <p40018>
-            <enabled>true</enabled>
-            <level>DEFAULT</level>
+            <enabled>false</enabled>
+            <level>OFF</level>
         </p40018>
         <p40019>
             <enabled>false</enabled>
@@ -110,8 +110,8 @@
             <level>OFF</level>
         </p90034>
         <p90035>
-            <enabled>true</enabled>
-            <level>DEFAULT</level>
+            <enabled>false</enabled>
+            <level>OFF</level>
         </p90035>
         <p90036>
             <enabled>false</enabled>
@@ -134,8 +134,8 @@
             <level>OFF</level>
         </p40003>
         <p40008>
-            <enabled>true</enabled>
-            <level>DEFAULT</level>
+            <enabled>false</enabled>
+            <level>OFF</level>
         </p40008>
         <p40028>
             <enabled>false</enabled>

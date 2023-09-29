@@ -295,3 +295,16 @@ def test_override_memory_allocation(test_config):
     test_zap = ZapPodman(config=test_config)
     test_zap.setup()
     assert "-Xmx8i" not in test_zap.zap_cli
+
+
+def test_install_ascan_beta(test_config):
+    # "regular" test
+    test_config.set("scanners.zap.miscOptions.installAscanRulesBeta", True)
+    test_zap = ZapPodman(config=test_config)
+    test_zap.setup()
+    assert "ascanrulesBeta" in test_zap.zap_cli
+
+    test_config.set("scanners.zap.miscOptions.installAscanRulesBeta", False)
+    test_zap = ZapPodman(config=test_config)
+    test_zap.setup()
+    assert "ascanrulesBeta" not in test_zap.zap_cli

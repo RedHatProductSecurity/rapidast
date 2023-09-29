@@ -151,6 +151,8 @@ scanners:
       enableUI: False
       # Defaults to True, set False to prevent auto update of ZAP plugins
       updateAddons: True
+      # Defaults to True, set False not to install beta status active scan rules plugin
+      installAscanRulesBeta: True
       # If set to True and authentication is oauth2_rtoken: manually download schemas (e.g.: openAPI, GraphQL)
       oauth2ManualDownload: False
 

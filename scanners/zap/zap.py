@@ -177,6 +177,11 @@ class Zap(RapidastScanner):
             # Disable UI
             self.zap_cli.append("-cmd")
 
+        # the 'Beta' status active scan rules is not installed in the ZAP container image by default
+        # For certain active scan rules, the addon needs to be installed
+        if self.my_conf("miscOptions.installAscanRulesBeta", default=True):
+            self.zap_cli.extend(["-addoninstall", "ascanrulesBeta"])
+
         # finally: the Automation Framework:
         self.zap_cli.extend(["-autorun", f"{self.container_work_dir}/af.yaml"])
 

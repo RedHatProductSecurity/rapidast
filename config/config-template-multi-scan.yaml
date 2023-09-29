@@ -47,7 +47,7 @@ scanners:
 
     passiveScan:
       # optional list of passive rules to disable
-      disabledRules: "2,10015,10027,10096,10024"
+      disabledRules: "2,10015,10024,10027,10054,10096,10109,10112"
 
     # Enable activeScan by uncommenting, once scans with the passiveScan only has run successfully
     # If no policy is chosen, a default ("API-scan-minimal") will be selected

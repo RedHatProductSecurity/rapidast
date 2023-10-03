@@ -1,13 +1,13 @@
 # RapiDAST
 
-RapiDAST(Rapid DAST) is an open-source security testing tool that automates the process of DAST(Dynamic application security testing) security testing and streamlines the integration of security into your development workflow. It is designed to help you quickly and effectively identify security vulnerabilities in your applications.
+RapiDAST(Rapid DAST) is an open-source security testing tool that automates the process of DAST(Dynamic Application Security Testing) security testing and streamlines the integration of security into your development workflow. It is designed to help Developers and/or QA engineers rapidly and effectively identify low-hanging security vulnerabilities in your applications, ideally in CI/CD pipelines. This will help your organization to move towards DevSecOps with the shift-left approach.
 
-Taking advantage of [ZAP](https://www.zaproxy.org/) and additional scanners(TBD), RapiDAST provides additional value as follows:
+RapiDAST provides additional value as follows:
 
-- Ease of use and simple automation of HTTP/API scanning, fully working in CLI with a yaml configuration
-- Ability to run automated DAST scanning to suit various users' needs
+- Ease of use and simple automation of HTTP/API scanning, fully working in CLI with a yaml configuration, taking advantage of [ZAP](https://www.zaproxy.org/)
+- Ability to run automated DAST scanning to suit various users' needs via custom container images
 - HTML, JSON and XML report generation
-- Integration with reporting solutions (TBD)
+- Integration with reporting solutions such as [OWASP Defect Dojo](https://owasp.org/www-project-defectdojo/)
 
 # Getting Started
 

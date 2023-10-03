@@ -99,7 +99,7 @@ class ZapNone(Zap):
         if not self.state == State.READY:
             raise RuntimeError("[ZAP SCANNER]: ERROR, not ready to run")
 
-        self.check_plugin_status()
+        self._check_plugin_status()
 
         # temporary workaround: cleanup addon state
         # see https://github.com/zaproxy/zaproxy/issues/7590#issuecomment-1308909500
@@ -109,28 +109,15 @@ class ZapNone(Zap):
         except FileNotFoundError:
             logging.info(f"The addon state file {statefile} was not created")
 
-        if self.my_conf("miscOptions.updateAddons", default=True):
-            logging.info("Zap: Updating addons")
+        self._handle_plugins()
 
-            command = [self.my_conf("container.parameters.executable")]
-            command.extend(self._get_standard_options())
-            command.extend(["-dir", self.container_home_dir])
-            command.append("-cmd")
-            command.append("-addonupdate")
-
-            logging.debug(f"update command: {command}")
-            result = subprocess.run(command, check=False)
-            if result.returncode != 0:
-                logging.warning(
-                    f"The ZAP addon update process did not finish correctly, and exited with code {result.returncode}"
-                )
-            # temporary workaround: cleanup addon state
-            # see https://github.com/zaproxy/zaproxy/issues/7590#issuecomment-1308909500
-            statefile = f"{self.host_home_dir}/add-ons-state.xml"
-            try:
-                os.remove(statefile)
-            except FileNotFoundError:
-                logging.info(f"The addon state file {statefile} was not created")
+        # temporary workaround: cleanup addon state
+        # see https://github.com/zaproxy/zaproxy/issues/7590#issuecomment-1308909500
+        statefile = f"{self.host_home_dir}/add-ons-state.xml"
+        try:
+            os.remove(statefile)
+        except FileNotFoundError:
+            logging.info(f"The addon state file {statefile} was not created")
 
         # Now the real run
         logging.info(f"Running ZAP with the following command:\n{self.zap_cli}")
@@ -213,8 +200,50 @@ class ZapNone(Zap):
     # Accessed by ZapNone only                                    #
     # + MUST be implemented                                       #
     ###############################################################
+    def _handle_plugins(self):
+        """
+        Handle plugins, from these 2 locations:
+        - miscOptions.updateAddons : update all existing plugins
+        - miscOptions.additionalAddons : install new plugins
+        By running a separate instance of ZAP prior to the real scan.
+        This is required because some addons require a restart of ZAP.
+        """
 
-    def check_plugin_status(self):
+        if not (
+            self.my_conf("miscOptions.updateAddons")
+            or self.my_conf("miscOptions.additionalAddons")
+        ):
+            return
+
+        logging.info("Zap: Updating and/or installing addons")
+        command = [self.my_conf("container.parameters.executable")]
+        command.extend(self._get_standard_options())
+        command.extend(["-dir", self.container_home_dir])
+        command.append("-cmd")
+
+        if self.my_conf("miscOptions.updateAddons", default=True):
+            command.append("-addonupdate")
+
+        addons = self.my_conf("miscOptions.additionalAddons", default=[])
+        if isinstance(addons, str):
+            addons = addons.split(",") if len(addons) else []
+        if not isinstance(addons, list):
+            logging.warning(
+                "miscOptions.additionalAddons MUST be either a list or a string of comma-separated values"
+            )
+            addons = []
+
+        for addon in addons:
+            command.extend(["-addoninstall", addon])
+
+        logging.debug(f"Addons setup command: {command}")
+        result = subprocess.run(command, check=False)
+        if result.returncode != 0:
+            logging.warning(
+                f"ZAP did not handle the addon requirements correctly, and exited with code {result.returncode}"
+            )
+
+    def _check_plugin_status(self):
         """MacOS workaround for "The mandatory add-on was not found" error
         See https://github.com/zaproxy/zaproxy/issues/7703
         """

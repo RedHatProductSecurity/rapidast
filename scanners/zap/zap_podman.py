@@ -103,25 +103,7 @@ class ZapPodman(Zap):
         if not self.state == State.READY:
             raise RuntimeError("[ZAP SCANNER]: ERROR, not ready to run")
 
-        if self.my_conf("miscOptions.updateAddons", default=True):
-            # Update scanner as a first command, then actually run ZAP
-            # currently, this is done via a `sh -c` wrapper
-
-            update_command = (
-                self.my_conf("container.parameters.executable")
-                + " "
-                + " ".join(self._get_standard_options())
-                + " -cmd -addonupdate"
-            )
-
-            commands = (
-                update_command + "; " + self._zap_cli_list_to_str_for_sh(self.zap_cli)
-            )
-
-            cli = ["sh", "-c", commands]
-        else:
-            cli = ["sh", "-c", self._zap_cli_list_to_str_for_sh(self.zap_cli)]
-
+        cli = self._handle_plugins()
         cli = self.podman.get_complete_cli(cli)
 
         # DO STUFF
@@ -199,6 +181,54 @@ class ZapPodman(Zap):
     # PRITVATE METHODS                                            #
     # Accessed by this ZapPodman object only                      #
     ###############################################################
+
+    def _handle_plugins(self):
+        """
+        Handle plugins, from these 2 locations:
+        - miscOptions.updateAddons : update all existing plugins
+        - miscOptions.additionalAddons : install new plugins
+        By running a separate instance of ZAP prior to the real scan.
+        This is required because some addons require a restart of ZAP.
+
+        In "podman" mode, we have to run both the plugin command and
+        the scan command in the same run. So we inject that in shell.
+        """
+
+        if not (
+            self.my_conf("miscOptions.updateAddons")
+            or self.my_conf("miscOptions.additionalAddons")
+        ):
+            return ["sh", "-c", self._zap_cli_list_to_str_for_sh(self.zap_cli)]
+
+        logging.info("Zap: Updating and/or installing addons")
+
+        command = [
+            self.my_conf("container.parameters.executable"),
+            self._get_standard_options(),
+            "-cmd",
+        ]
+        if self.my_conf("miscOptions.updateAddons", default=True):
+            command.append("-addonupdate")
+
+        addons = self.my_conf("miscOptions.additionalAddons", default=[])
+        if isinstance(addons, str):
+            addons = addons.split(",") if len(addons) else []
+        if not isinstance(addons, list):
+            logging.warning(
+                "miscOptions.additionalAddons MUST be either a list or a string of comma-separated values"
+            )
+            addons = []
+
+        for addon in addons:
+            command.extend(["-addoninstall", addon])
+
+        return [
+            "sh",
+            "-c",
+            self._zap_cli_list_to_str_for_sh(command)
+            + "; "
+            + self._zap_cli_list_to_str_for_sh(self.zap_cli),
+        ]
 
     def _setup_podman_cli(self):
         """Prepare the podman command.

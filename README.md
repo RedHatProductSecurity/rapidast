@@ -303,6 +303,8 @@ Example: `podman pod create --userns=keep-id:uid=1000,gid=1000 myApp_Pod`
 
 + Disable add-on updates: `scanners.zap.miscOptions.updateAddons: False` (default: True): Prior to running, ZAP will update its addons unless this value is `False`
 
++ Install additional addons: `scanners.zap.miscOptions.additionalAddons: "comma,separated,list,of,addons"` (default: []): Prior to running, ZAP will install a given list of addons. The list can be provided either as a YAML list, or a string of the addons, separated by a comma
+
 + Force maximum heap size for the JVM: `scanners.zap.miscOptions.memMaxHeap` (default: ¼ of the RAM): Java's `-Xmx` option
 
 Example:

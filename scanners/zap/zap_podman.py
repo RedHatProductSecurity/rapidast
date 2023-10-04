@@ -103,16 +103,21 @@ class ZapPodman(Zap):
         if self.my_conf("miscOptions.updateAddons", default=True):
             # Update scanner as a first command, then actually run ZAP
             # currently, this is done via a `sh -c` wrapper
-            commands = (
+
+            update_command = (
                 self.my_conf("container.parameters.executable")
                 + " "
                 + " ".join(self._get_standard_options())
-                + " -cmd -addonupdate; "
-                + " ".join(self.zap_cli)
+                + " -cmd -addonupdate"
             )
+
+            commands = (
+                update_command + "; " + self._zap_cli_list_to_str_for_sh(self.zap_cli)
+            )
+
             cli = ["sh", "-c", commands]
         else:
-            cli = self.zap_cli
+            cli = ["sh", "-c", self._zap_cli_list_to_str_for_sh(self.zap_cli)]
 
         cli = self.podman.get_complete_cli(cli)
 

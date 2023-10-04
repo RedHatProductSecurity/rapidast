@@ -307,8 +307,12 @@ def test_override_cfg(test_config):
     test_zap = ZapPodman(config=test_config)
     test_zap.setup()
 
-    assert override_cfg1 in test_zap.zap_cli
-    assert override_cfg2 in test_zap.zap_cli
+    assert f"{override_cfg1}" in test_zap.zap_cli
+    assert f"{override_cfg2}" in test_zap.zap_cli
+
+    assert r"formhandler.fields.field\(0\)" in test_zap._zap_cli_list_to_str_for_sh(
+        test_zap.zap_cli
+    )
 
 
 def test_override_non_list_format(test_config):

@@ -129,7 +129,6 @@ scanners:
         executable: "zap.sh"  # for Linux
         #executable: "/Applications/OWASP ZAP.app/Contents/Java/zap.sh"    # for MacOS, when general.container.type is 'none' only
 
-
     report:
       format: ["json"]
       #format: ["json","html","sarif","xml"]  # default: "json" only
@@ -160,6 +159,11 @@ scanners:
       # Maximum heap size of the JVM. Default: ¼ of the RAM. acceptable values: [0-9]+[kKmMgG]?
       # This may be required for large OpenAPI definition
       memMaxHeap: "6144m"
+
+      overrideConfigs:
+        - formhandler.fields.field(0).fieldId=namespace
+        - formhandler.fields.field(0).value=default
+
 
     # (Optional) configure to export scan results to OWASP Defect Dojo.
     # `config.defectDojo` must be configured first.

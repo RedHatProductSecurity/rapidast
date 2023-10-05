@@ -160,6 +160,17 @@ class Zap(RapidastScanner):
     # May be overloaded by inheriting classes                     #
     ###############################################################
 
+    def _zap_cli_list_to_str_for_sh(self, l_zap_cli):
+        # reserved_chars: space is also included
+        reserved_chars = "\"' (),+$!&?|[]"
+
+        # the escaping logic
+        mapper = ["\\" + ele for ele in reserved_chars]
+        result_mapping = str.maketrans(dict(zip(reserved_chars, mapper)))
+
+        # reforming result
+        return " ".join([sub.translate(result_mapping) for sub in l_zap_cli])
+
     def _setup_zap_cli(self):
         """
         Complete the zap_cli list of ZAP argument.
@@ -176,6 +187,16 @@ class Zap(RapidastScanner):
         if not self.my_conf("miscOptions.enableUI", default=False):
             # Disable UI
             self.zap_cli.append("-cmd")
+
+        override_cfg = self.my_conf("miscOptions.overrideConfigs")
+        if override_cfg:
+            if isinstance(override_cfg, list):
+                for cfgitem in override_cfg:
+                    logging.debug(f"override_cfg is set: {cfgitem}")
+
+                    self.zap_cli.extend(["-config", cfgitem])
+            else:
+                raise ValueError("miscOptions.overrideConfigs must be a list")
 
         # finally: the Automation Framework:
         self.zap_cli.extend(["-autorun", f"{self.container_work_dir}/af.yaml"])

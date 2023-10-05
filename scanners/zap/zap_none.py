@@ -134,7 +134,9 @@ class ZapNone(Zap):
 
         # Now the real run
         logging.info(f"Running ZAP with the following command:\n{self.zap_cli}")
-        result = subprocess.run(self.zap_cli, check=False)
+
+        cli = ["sh", "-c", self._zap_cli_list_to_str_for_sh(self.zap_cli)]
+        result = subprocess.run(cli, check=False)
         logging.debug(
             f"ZAP returned the following:\n=====\n{pp.pformat(result)}\n====="
         )

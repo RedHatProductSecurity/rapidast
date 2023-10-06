@@ -209,35 +209,16 @@ class ZapNone(Zap):
         This is required because some addons require a restart of ZAP.
         """
 
-        if not (
-            self.my_conf("miscOptions.updateAddons")
-            or self.my_conf("miscOptions.additionalAddons")
-        ):
+        command = self.get_update_command()
+        if not command:
+            logging.debug("Skpping addon handling: no install, no update")
             return
-
-        logging.info("Zap: Updating and/or installing addons")
-        command = [self.my_conf("container.parameters.executable")]
-        command.extend(self._get_standard_options())
+        # manually specify directory
         command.extend(["-dir", self.container_home_dir])
-        command.append("-cmd")
+        shell = ["sh", "-c", self._zap_cli_list_to_str_for_sh(command)]
 
-        if self.my_conf("miscOptions.updateAddons", default=True):
-            command.append("-addonupdate")
-
-        addons = self.my_conf("miscOptions.additionalAddons", default=[])
-        if isinstance(addons, str):
-            addons = addons.split(",") if len(addons) else []
-        if not isinstance(addons, list):
-            logging.warning(
-                "miscOptions.additionalAddons MUST be either a list or a string of comma-separated values"
-            )
-            addons = []
-
-        for addon in addons:
-            command.extend(["-addoninstall", addon])
-
-        logging.debug(f"Addons setup command: {command}")
-        result = subprocess.run(command, check=False)
+        logging.debug(f"Addons setup command: {shell}")
+        result = subprocess.run(shell, check=False)
         if result.returncode != 0:
             logging.warning(
                 f"ZAP did not handle the addon requirements correctly, and exited with code {result.returncode}"

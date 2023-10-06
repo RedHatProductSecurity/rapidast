@@ -194,41 +194,15 @@ class ZapPodman(Zap):
         the scan command in the same run. So we inject that in shell.
         """
 
-        if not (
-            self.my_conf("miscOptions.updateAddons")
-            or self.my_conf("miscOptions.additionalAddons")
-        ):
-            return ["sh", "-c", self._zap_cli_list_to_str_for_sh(self.zap_cli)]
+        shell = ["sh", "-c"]
+        update_cmd = self._zap_cli_list_to_str_for_sh(self.get_update_command())
+        if update_cmd:
+            update_cmd += "; "
+        update_cmd += self._zap_cli_list_to_str_for_sh(self.zap_cli)
+        shell.append(update_cmd)
 
-        logging.info("Zap: Updating and/or installing addons")
-
-        command = [
-            self.my_conf("container.parameters.executable"),
-            self._get_standard_options(),
-            "-cmd",
-        ]
-        if self.my_conf("miscOptions.updateAddons", default=True):
-            command.append("-addonupdate")
-
-        addons = self.my_conf("miscOptions.additionalAddons", default=[])
-        if isinstance(addons, str):
-            addons = addons.split(",") if len(addons) else []
-        if not isinstance(addons, list):
-            logging.warning(
-                "miscOptions.additionalAddons MUST be either a list or a string of comma-separated values"
-            )
-            addons = []
-
-        for addon in addons:
-            command.extend(["-addoninstall", addon])
-
-        return [
-            "sh",
-            "-c",
-            self._zap_cli_list_to_str_for_sh(command)
-            + "; "
-            + self._zap_cli_list_to_str_for_sh(self.zap_cli),
-        ]
+        logging.debug(f"Update command: {shell}")
+        return shell
 
     def _setup_podman_cli(self):
         """Prepare the podman command.

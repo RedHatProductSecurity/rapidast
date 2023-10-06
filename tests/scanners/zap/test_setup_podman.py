@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 import pytest
@@ -321,3 +322,22 @@ def test_override_non_list_format(test_config):
 
     with pytest.raises(ValueError):
         test_zap.setup()
+
+
+def test_handling_plugins(test_config):
+    test_config.set("scanners.zap.miscOptions.updateAddons", True)
+    test_config.set("scanners.zap.miscOptions.additionalAddons", "pluginA,pluginB")
+    test_zap = ZapPodman(config=test_config)
+
+    assert "-addonupdate" in test_zap.get_update_command()
+    assert "pluginA" in test_zap.get_update_command()
+    assert "pluginB" in test_zap.get_update_command()
+
+    shell = test_zap._handle_plugins()
+    assert len(shell) == 3
+    assert shell[0] == "sh"
+    assert shell[1] == "-c"
+    assert re.search(
+        "^zap.sh .* -cmd -addonupdate -addoninstall pluginA -addoninstall pluginB; .*",
+        shell[2],
+    )

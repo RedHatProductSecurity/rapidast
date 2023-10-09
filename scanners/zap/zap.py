@@ -154,6 +154,37 @@ class Zap(RapidastScanner):
 
         return data, filename
 
+    def get_update_command(self):
+        """Returns a list of all options required to update ZAP plugins"""
+
+        if not (
+            self.my_conf("miscOptions.updateAddons")
+            or self.my_conf("miscOptions.additionalAddons")
+        ):
+            return []
+
+        command = [
+            self.my_conf("container.parameters.executable"),
+            *self._get_standard_options(),
+            "-cmd",
+        ]
+        if self.my_conf("miscOptions.updateAddons", default=True):
+            command.append("-addonupdate")
+
+        addons = self.my_conf("miscOptions.additionalAddons", default=[])
+        if isinstance(addons, str):
+            addons = addons.split(",") if len(addons) else []
+        if not isinstance(addons, list):
+            logging.warning(
+                "miscOptions.additionalAddons MUST be either a list or a string of comma-separated values"
+            )
+            addons = []
+
+        for addon in addons:
+            command.extend(["-addoninstall", addon])
+
+        return command
+
     ###############################################################
     # PROTECTED METHODS                                           #
     # Called via Zap or inheritence only                          #

@@ -103,25 +103,7 @@ class ZapPodman(Zap):
         if not self.state == State.READY:
             raise RuntimeError("[ZAP SCANNER]: ERROR, not ready to run")
 
-        if self.my_conf("miscOptions.updateAddons", default=True):
-            # Update scanner as a first command, then actually run ZAP
-            # currently, this is done via a `sh -c` wrapper
-
-            update_command = (
-                self.my_conf("container.parameters.executable")
-                + " "
-                + " ".join(self._get_standard_options())
-                + " -cmd -addonupdate"
-            )
-
-            commands = (
-                update_command + "; " + self._zap_cli_list_to_str_for_sh(self.zap_cli)
-            )
-
-            cli = ["sh", "-c", commands]
-        else:
-            cli = ["sh", "-c", self._zap_cli_list_to_str_for_sh(self.zap_cli)]
-
+        cli = self._handle_plugins()
         cli = self.podman.get_complete_cli(cli)
 
         # DO STUFF
@@ -199,6 +181,28 @@ class ZapPodman(Zap):
     # PRITVATE METHODS                                            #
     # Accessed by this ZapPodman object only                      #
     ###############################################################
+
+    def _handle_plugins(self):
+        """
+        Handle plugins, from these 2 locations:
+        - miscOptions.updateAddons : update all existing plugins
+        - miscOptions.additionalAddons : install new plugins
+        By running a separate instance of ZAP prior to the real scan.
+        This is required because some addons require a restart of ZAP.
+
+        In "podman" mode, we have to run both the plugin command and
+        the scan command in the same run. So we inject that in shell.
+        """
+
+        shell = ["sh", "-c"]
+        update_cmd = self._zap_cli_list_to_str_for_sh(self.get_update_command())
+        if update_cmd:
+            update_cmd += "; "
+        update_cmd += self._zap_cli_list_to_str_for_sh(self.zap_cli)
+        shell.append(update_cmd)
+
+        logging.debug(f"Update command: {shell}")
+        return shell
 
     def _setup_podman_cli(self):
         """Prepare the podman command.

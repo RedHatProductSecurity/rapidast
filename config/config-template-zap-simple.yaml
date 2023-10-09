@@ -54,3 +54,7 @@ scanners:
     # The list of policies can be found in scanners/zap/policies/
     #activeScan:
     #  policy: "API-scan-minimal"
+
+    miscOptions:
+      # List (comma-separated string or list) of additional addons to install
+      additionalAddons: "ascanrulesBeta"

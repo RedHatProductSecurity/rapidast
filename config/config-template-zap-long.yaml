@@ -146,10 +146,15 @@ scanners:
       #  - "^https?://example.com:3000/do-not-descend-here/.*$"
 
     miscOptions:
-      # EnableUI (default: false), requires a compatible runtime (e.g.: flatpak or no containment)
+      # EnableUI (default: false), requires a compatible runtime (e.g.: `type: none`)
       enableUI: False
+
       # Defaults to True, set False to prevent auto update of ZAP plugins
       updateAddons: True
+
+      # List (comma-separated string or list) of additional addons to install
+      additionalAddons: "ascanrulesBeta"
+
       # If set to True and authentication is oauth2_rtoken: manually download schemas (e.g.: openAPI, GraphQL)
       oauth2ManualDownload: False
 

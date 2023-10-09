@@ -21,7 +21,23 @@ def test_dd_auth_and_set_token_no_username():
 def test_dd_auth_and_set_token_non_existent_url():
     # assuming 127.0.0.1:12345 is non-existent
     defect_d = DefectDojo(
-        "https://127.0.0.1:12345", "random_username", "random_password", "random_token"
+        "https://127.0.0.1:12345",
+        {"username": "random_username", "password": "random_password"},
+        "random_token",
     )
     with pytest.raises(requests.exceptions.ConnectionError):
         defect_d._auth_and_set_token()
+
+
+def test_dd_parameters():
+    defect_d = DefectDojo("https://127.0.0.1:12345", token="random_token")
+
+    assert defect_d.params["timeout"] == DefectDojo.DD_CONNECT_TIMEOUT
+    with pytest.raises(KeyError):
+        defect_d.params["verify"]
+
+    defect_d = DefectDojo(
+        "https://127.0.0.1:12345", token="random_token", ssl="CAbundle"
+    )
+    assert defect_d.params["timeout"] == DefectDojo.DD_CONNECT_TIMEOUT
+    assert defect_d.params["verify"] == "CAbundle"

@@ -9,7 +9,7 @@ class DefectDojo:
 
     DD_CONNECT_TIMEOUT = 10  # in seconds
 
-    def __init__(self, base_url, username=None, password=None, token=None):
+    def __init__(self, base_url, login=None, token=None, ssl=None):
         if not base_url:
             raise ValueError(
                 "Defect Dojo invalid configuration: URL is a mandatory value"
@@ -19,12 +19,29 @@ class DefectDojo:
             raise ValueError("Defect Dojo invalid configuration: URL is not correct")
 
         self.base_url = base_url
-        self.username = username
-        self.password = password
+
+        self.username = None
+        self.password = None
+        if login:
+            try:
+                self.username = login["username"]
+                self.password = login["password"]
+            except KeyError:
+                logging.error(
+                    "RapiDAST BUG: DefectDojo was created with invalid login information..."
+                )
+                logging.error("RapiDAST BUG: ...[continuing without credentials]")
+
         self.token = token
         self.headers = {}
         if token:
             self.headers["Authorization"] = f"Token {token}"
+
+        # params is injected as a **kwargs to each request
+        # this is to prevent `verify` to override REQUESTS_CA_BUNDLE
+        self.params = {"timeout": self.DD_CONNECT_TIMEOUT}
+        if ssl is not None:
+            self.params["verify"] = ssl
 
     def _auth_and_set_token(self):
         """Force a refresh of the token using the username/password"""
@@ -37,7 +54,7 @@ class DefectDojo:
         data = {"username": self.username, "password": self.password}
 
         try:
-            resp = requests.post(url, timeout=self.DD_CONNECT_TIMEOUT, data=data)
+            resp = requests.post(url, data=data, **self.params)
             resp.raise_for_status()
 
             logging.debug(f"resp: {resp.json()}")
@@ -66,14 +83,14 @@ class DefectDojo:
         if engagement_id:
             resp = requests.get(
                 f"{self.base_url}/api/v2/engagements/?engagment={engagement_id}",
-                timeout=self.DD_CONNECT_TIMEOUT,
                 headers=self.headers,
+                **self.params,
             )
         elif name:
             resp = requests.get(
                 f"{self.base_url}/api/v2/engagements/?name={parse.quote_plus(name)}",
-                timeout=self.DD_CONNECT_TIMEOUT,
                 headers=self.headers,
+                **self.params,
             )
         else:
             raise ValueError("Either an engagement name or ID must be provided")
@@ -106,10 +123,10 @@ class DefectDojo:
 
         resp = requests.post(
             endpoint,
-            timeout=self.DD_CONNECT_TIMEOUT,
             headers=self.headers,
             data=data,
             files={"file": open(filename, "rb")},  # pylint: disable=consider-using-with
+            **self.params,
         )
         if resp.status_code >= 400:
             logging.debug(vars(resp))

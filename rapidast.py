@@ -196,9 +196,16 @@ def run():
     if config.get("config.defectDojo.url"):
         defect_d = DefectDojo(
             config.get("config.defectDojo.url"),
-            config.get("config.defectDojo.authorization.username"),
-            config.get("config.defectDojo.authorization.password"),
+            {
+                "username": config.get(
+                    "config.defectDojo.authorization.username", default=""
+                ),
+                "password": config.get(
+                    "config.defectDojo.authorization.password", default=""
+                ),
+            },
             config.get("config.defectDojo.authorization.token"),
+            config.get("config.defectDojo.ssl", default=True),
         )
 
     # Run all scanners

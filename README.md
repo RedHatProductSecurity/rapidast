@@ -147,11 +147,18 @@ config:
   # Defect dojo configuration
   defectDojo:
     url: "https://mydefectdojo.example.com/"
+    ssl: [True | False | "/path/to/CA"]
     authorization:
       username: "rapidast_productname"
       password: "password"
       # alternatively, a `token` entry can be set in place of username/password
 ```
+
+the `ssl` parameter is provided as Requests' `verify` parameter. It can be either:
+- True: SSL verification is mandatory, against the default CA bundle
+- False: SSL verification is not mandatory (but prints a warning if it fails)
+- /path/to/CA: a bundle of CAs to verify from
+Alternatively, the `REQUESTS_CA_BUNDLE` environment variable can be used to select a CA bundle file. If nothing is provided, the default value will be `True`
 
 You can either authenticate using a username/password combination, or a token (make sure it is not expired). In either case, you can use the `_from_var` method described in previous chapter to avoid hardcoding the value in the configuration.
 

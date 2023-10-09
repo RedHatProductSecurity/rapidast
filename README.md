@@ -2,12 +2,12 @@
 
 RapiDAST(Rapid DAST) is an open-source security testing tool that automates the process of DAST(Dynamic Application Security Testing) security testing and streamlines the integration of security into your development workflow. It is designed to help Developers and/or QA engineers rapidly and effectively identify low-hanging security vulnerabilities in your applications, ideally in CI/CD pipelines. This will help your organization to move towards DevSecOps with the shift-left approach.
 
-RapiDAST provides additional value as follows:
+RapiDAST provides values as follows:
 
 - Ease of use and simple automation of HTTP/API scanning, fully working in CLI with a yaml configuration, taking advantage of [ZAP](https://www.zaproxy.org/)
 - Ability to run automated DAST scanning to suit various users' needs via custom container images
 - HTML, JSON and XML report generation
-- Integration with reporting solutions such as [OWASP Defect Dojo](https://owasp.org/www-project-defectdojo/)
+- Integration with reporting solutions such as [OWASP DefectDojo](https://owasp.org/www-project-defectdojo/)
 
 # Getting Started
 
@@ -20,13 +20,16 @@ RapiDAST provides additional value as follows:
 
 ### OS Support
 
-Linux and MacOS are supported.
+Linux and MacOS`*` are supported.
 
 #### Note regarding MacOS and ZAP
 
-RapiDAST supports executing ZAP on the host directly, or, experimentally, in podman. See [Choosing the execution environment](#choosing-the-execution-environment) for further information on configuring execution environments.
+RapiDAST supports executing ZAP on the MacOS host directly only.
 
-* When using ZAP directly on the host (`general.container.type: "none"` or `scanners.zap.container.type: "none"` in the configuration): you will need to configure `scanners.zap.container.parameters.executable` to the installation path of the `zap.sh` command, because it is not available in the PATH. Usually, its path is `/Applications/OWASP ZAP.app/Contents/Java/zap.sh`
+To run RapiDAST on MacOS(See the Configuration section below for more details on configuration):
+
+* Set `general.container.type: "none"` or `scanners.zap.container.type: "none"` in the configuration.
+* Configure `scanners.zap.container.parameters.executable` to the installation path of the `zap.sh` command, because it is not available in the PATH. Usually, its path is `/Applications/OWASP ZAP.app/Contents/Java/zap.sh` on MacOS.
 
 Example:
 
@@ -39,25 +42,15 @@ scanners:
         executable: "/Applications/OWASP ZAP.app/Contents/Java/zap.sh"
 ```
 
-* When using "podman" as execution environemtn (`general.container.type: "podman"` or `scanners.zap.container.type: "podman"` in the configuration): This mode is currently experimental. You will need to start the podman virtual machine sharing both the `rapidast` directory as well as the current temporary directory.
-
-Example:
-
-```sh
-podman machine init -v "$PWD:$PWD" -v "$TMPDIR:$TMPDIR" rapidast
-podman machine start rapidast
-./rapidast --config ./config/<config-file>
-
- # after successful run, when the VM is no longer needed:
-podman machine stop rapidast
-podman machine rm rapidast
-```
-
-
-
 ## Installation
 
-It is recommended to create a virtual environment.
+Clone the repository.
+```
+$ git clone https://github.com/RedHatProductSecurity/rapidast.git
+$ cd rapidast
+```
+
+Create a virtual environment.
 ```
 $ python3 -m venv venv
 $ source venv/bin/activate
@@ -91,6 +84,38 @@ The configuration file is presented as YAML, and contains several main entries:
 
 See `config/config-template.yaml`(a simple version) and `config/config-template-long.yaml`(an exhaustive version) for examples. Each can be used.
 
+### Authentication
+
+Authentication is configured in the `general` entry, as it can be applied to multiple scanning options. Currently, Authentication is applied to ZAP scanning only. In the long term it may be applied to other scanning configurations.
+
+Supported options:
+
+- No authentication:
+The scanners will communicate anonymously with the application
+
+- OAuth2 using a Refresh Token:
+This method describes required parameters needed to retrieve an access token, using a refresh token as a secret.
+    + authentication type : `oauth2_rtoken`
+    + parameters :
+        * `token_endpoint` : the URL to which send the refresh token
+        * `client_id` : the client ID
+        * `rtoken_var_name`: for practical reasons, the refresh token is provided using environment variables. This entry describes the name of the variable containing the secret refresh token
+
+- HTTP Basic:
+This method describes the HTTP Basic Authorization Header. The username and password must be provided in plaintext and will be encoded by the scanners
+    + authentication type: `http_basic`
+    + parameters:
+        * `username`
+        * `password`
+
+- Cookie Authentication:
+This method describes authentication via Cookie header. The cookie name and value must be provided in plaintext.
+    + authentication type: `cookie`
+    + parameters:
+        * `name`
+        * `value`
+
+
 ### Advanced configuration
 
 You may not want to directly have configuration values inside the configuration. Typically: either the entry is a secret (such as a password), but the configuration needs to be public, or the entry needs to be dynamically generated (e.g.: a cookie, a uniquely generated URL, etc.) at the time of running RapiDAST, and it's an inconvenient to always having to modify the configuration file for each run.
@@ -102,7 +127,7 @@ To avoid this, RapiDAST proposes 2 ways to provide a value for a given configura
 
 #### Running several instance of a scanner
 
-It is possible to run a scanner several times with different configurations. This is done by giving adding a different identifier to each scan, by appending `_<id>` to the scanner name.
+It is possible to run a scanner several times with different configurations. This is done by adding a different identifier to each scan, by appending `_<id>` to the scanner name.
 
 For example :
 
@@ -127,20 +152,24 @@ scanners:
 In the example above, the ZAP scanner will first run without authentication, and then rerun again with a basic HTTP authentication.
 The results will be stored in their respective names (i.e.: `zap_unauthenticated` and `zap_authenticated` in the example above).
 
-### Defect Dojo integration
+### DefectDojo integration
 
-#### Preamble: creating Defect Dojo user
+RapiDAST supports integration with OWASP DefectDojo which is an open source vulnerability management tool.
 
-RapiDAST needs to be able to authenticate to Defect Dojo. However, ideally, it should have the minimum set of permissions, such that it will not be allow to modify products other than the one(s) it is supposed to.
+#### Preamble: creating DefectDojo user
+
+RapiDAST needs to be able to authenticate to your DefectDojo instance. However, ideally, it should have the minimum set of permissions, such that it will not be allowed to modify products other than the one(s) it is supposed to.
+
 In order to do that:
 * create a user without any global role
 * add that user as a "writer" for the product(s) it is supposed to scan
 
-Then the product, as well as an engagement for that product, must be created in Defect Dojo. It would not be advised to give the RapiDAST user an "admin" role and simply set `auto_create_context` to True, as it would be both insecure and accident prone (a typo in the product name would let RapiDAST create a new product)
+Then the product, as well as an engagement for that product, must be created in your DefectDojo instance. It would not be advised to give the RapiDAST user an "admin" role and simply set `auto_create_context` to True, as it would be both insecure and accident prone (a typo in the product name would let RapiDAST create a new product)
 
-#### Defect Dojo configuration in RapiDAST
+#### DefectDojo configuration in RapiDAST
 
-First, RapiDAST needs to be able to authenticate itself to a Defect Dojo service. This is a typical configuration:
+##### Authentication
+First, RapiDAST needs to be able to authenticate itself to a DefectDojo service. This is a typical configuration:
 
 ```yaml
 config:
@@ -154,18 +183,20 @@ config:
       # alternatively, a `token` entry can be set in place of username/password
 ```
 
-the `ssl` parameter is provided as Requests' `verify` parameter. It can be either:
+The `ssl` parameter is provided as the Python Requests module's `verify` parameter. It can be either:
 - True: SSL verification is mandatory, against the default CA bundle
 - False: SSL verification is not mandatory (but prints a warning if it fails)
 - /path/to/CA: a bundle of CAs to verify from
 Alternatively, the `REQUESTS_CA_BUNDLE` environment variable can be used to select a CA bundle file. If nothing is provided, the default value will be `True`
 
-You can either authenticate using a username/password combination, or a token (make sure it is not expired). In either case, you can use the `_from_var` method described in previous chapter to avoid hardcoding the value in the configuration.
+You can either authenticate using a username/password combination, or a token (make sure it is not expired). In either case, you can use the `_from_var` method described in the previous chapter to avoid hardcoding the value in the configuration.
+
+##### Product/engagement/test
 
 Then, RapiDAST needs to know, for each scanner, sufficient information such that it can identify which product/engagement/test to match.
 This is configured in the `zap.scanner.defectDojoExport.parameters` entry. See the `import-scan` or  `reimport-scan` parameters at https://demo.defectdojo.org/api/v2/doc/ for a list of accepted entries.
 Notes:
-    * `engagement` and `test` refer to identifiers, and should be integers (as opposed to `engagement_name` and `test_title`
+    * `engagement` and `test` refer to identifiers, and should be integers (as opposed to `engagement_name` and `test_title`)
     * If a `test` identifier is provided, RapiDAST will reimport the result to that test. The existing test must be compatible (same file schema, such as ZAP Scan, for example)
     * If the `product_name` does not exist, the scanner should default to `application.productName`, or `application.shortName`
     * Tip: the entries common to all scanners can be added to `general.defectDojoExport.parameters`, while the scanner-dependant entries (e.g.: test identifier) can be set in the scanner's configuration (e.g.: `scanners.zap.defectDojoExport.parameters`)
@@ -207,7 +238,7 @@ options:
                         Level of verbosity
   --config CONFIG_FILE  Path to YAML config file
   --no-cleanup          Scanners to not cleanup their environment. (might be
-                        useful for debugging purpose).
+                        useful for debugging purposes).
 ```
 
 ### Choosing the execution environment
@@ -221,15 +252,13 @@ Accepted values are as follows:
     - Select the image to load from `scanner.<name>.container.image` (sensible default are provided for each scanner)
 
 + `none`:
-    - Set when you want to run scanners that are installed on the host or you want to build or run the RapiDAST image(scanners are to be built in the same image).
+    - Set when you want to run a RapiDAST scan with scanners that are installed on the host or you want to build the RapiDAST container image(scanners are to be built in the same image) and run a scan with it.
     - __Warning__: without a container layer, RapiDAST may have to modify the host's file system, such as the tools configuration to fit its needs. For example: the ZAP plugin has to copy the policy file used in ZAP's user config directory (`~/.ZAP`)
 
 It is also possible to set the container type for each scanner differently by setting `scanners.<name>.container.type` under a certain scanner configuration. Then the scanner will run from its image, regardless of the `general.container.type` value.
 
-### Additional options
 
-
-### Build a RapiDAST image
+## Build a RapiDAST image
 
 If you want to build your own RapiDAST image, run the following command.
 
@@ -238,8 +267,6 @@ $ podman build . -f containerize/Containerfile -t <image-tag>
 ```
 
 Disclaimer: This tool is not intended to be run as a long-running service. Instead, it is designed to be run for a short period of time while a scan is being invoked and executed in a separate test environment. If this tool is used solely for the scanning purposes, vulnerabilities that may be indicated to exist in the image will not have a chance to be exploited. The user assumes all risks and liability associated with its use.
-
-The `Containerfile.multiuser` image can be used with additional freedom, such as creating additional users. Members of the `dast` group will also have the ability to modify rapidast (such as: adding new policies and writing results in the default location)
 
 ### Running on Kubernetes or OpenShift
 
@@ -259,29 +286,29 @@ See https://www.zaproxy.org/ for more information.
 
 ZAP needs to be pointed to a list of endpoints to the tested application. Those can be:
 
-* A regular HTLM page
+* A regular HTML page
 * A REST endpoint
 * A GraphQL interface
 
-The GraphQL interface can be provided to RapiDAST via the `graphql` configuration entry. It requires the URL of the GraphQL interface and the GraphQL schema, in order to be scanned. Additional options are available (see the long ZAP configuration template for a list of options).
+The GraphQL interface can be provided to RapiDAST via the `graphql` configuration entry. It requires the URL of the GraphQL interface and the GraphQL schema(if available), in order to be scanned. Additional options are available. See the `config-template-zap-long.yaml` configuration template file for a list of options.
 
 The other endpoints can be provided via several methods, discussed in the chapters below.
 
 ###### an OpenAPI schema
 
 This is the prefered method, to be used whenever possible.
-RapiDAST accepts openAPI v2 and v3 schemas (tools are available to convert older schemas into v3). These schemas will describe a list of endpoints, and for each of them, a list of parameters accepted by the application.
+RapiDAST accepts OpenAPI v2(formerly known as Swagger) and v3 schemas. These schemas will describe a list of endpoints, and for each of them, a list of parameters accepted by the application.
 
 ###### Build the endpoint list using a spider/crawler
 
-In this method, RapiDAST is given a Web entrypoint. The crawler will download that page, extract a list of URL and recursively crawl all of them. The entire list of URLs found is then provided to the scanner.
+In this method, RapiDAST is given a Web entrypoint. The crawler will download that page, extract a list of URLs and recursively crawl all of them. The entire list of URLs found is then provided to the scanner.
 
-There are 2 crawlers available:
+There are two crawlers available:
 
-- basic spider: the list of URLs will be searched in the HTML tags (e.g.: `<a>`, `<img>`, etc.)
+- Basic spider: the list of URLs will be searched in the HTML tags (e.g.: `<a>`, `<img>`, etc.)
 - Ajax spider: this crawler will run a real browser (by default: firefox headless), allowing the dynamic execution of Javascripts from each page found. This method will find URLs generated dynamically.
 
-See the `spider` and `spiderAjax` configuration entries in the long ZAP configuration template for a list of options available.
+See the `spider` and `spiderAjax` configuration entries in the `config-template-zap-long.yaml` configuration template file for a list of options available.
 
 ###### A list of endpoints
 
@@ -294,25 +321,34 @@ https://example.com/api/v3/groupA/functionA?parameter1=abc&parameter2=123
 https://example.com/api/v3/groupB/functionB?parameter1=def&parameter2=456
 ```
 
-Only GET requests will be scanned
+Only GET requests will be scanned.
 
 ##### ZAP scanner specific options
 
-Below are some configuration tips related to the ZAP scanner.
+Below are some configuration options that are worth noting, when running a RapiDAST scan with the ZAP scanner.
 
-* Podman only: inject the ZAP container in an existing Pod.
-It is possible to gather both RapiDAST and the tested application into the same podman Pod. This might help CI/CD automation & clean-up.
+* (`*.container.type: podman` only) Inject the ZAP container in an existing Pod:
+
+It is possible to gather both RapiDAST and the tested application into the same podman Pod and run a scan against the application. This might help CI/CD automation & clean-up.
 In order to do that, the user must create the Pod prior to running RapiDAST, and indicate its name in the RapiDAST configuration: `scanners.zap.container.parameters.podName`.
 However, it is currently necessary to map the host user to UID 1000 / GID 1000 manually during the creation of the Pod using the `--userns=keep-id:uid=1000,gid=1000` option
 Example: `podman pod create --userns=keep-id:uid=1000,gid=1000 myApp_Pod`
 
-+ Enable ZAP's Graphical UI (useful for debugging): set `scanners.zap.miscOptions.enableUI: True` (default: False). The runtime type must support it (only `none`)
++ (when running scans on the desktop with the `*.container.type: none` configuration only) Enable ZAP's Graphical UI:
 
-+ Disable add-on updates: `scanners.zap.miscOptions.updateAddons: False` (default: True): Prior to running, ZAP will update its addons unless this value is `False`
+This is useful for debugging.  Set `scanners.zap.miscOptions.enableUI: True` (default: False).  Then, the ZAP desktop will run with GUI on your host and show the progress of scanning.
 
-+ Install additional addons: `scanners.zap.miscOptions.additionalAddons: "comma,separated,list,of,addons"` (default: []): Prior to running, ZAP will install a given list of addons. The list can be provided either as a YAML list, or a string of the addons, separated by a comma
++ Disable add-on updates:
 
-+ Force maximum heap size for the JVM: `scanners.zap.miscOptions.memMaxHeap` (default: ¼ of the RAM): Java's `-Xmx` option
+Set `scanners.zap.miscOptions.updateAddons: False` (default: True). Then, ZAP will update its addons first and run the scan.
+
++ Install additional addons:
+
+Set `scanners.zap.miscOptions.additionalAddons: "comma,separated,list,of,addons"` (default: []). Prior to running a scan, ZAP will install a given list of addons. The list can be provided either as a YAML list, or a string of the addons, separated by a comma.
+
++ Force maximum heap size for the JVM:
+
+Set `scanners.zap.miscOptions.memMaxHeap` (default: ¼ of the RAM), similarly to Java's `-Xmx` option.
 
 Example:
 
@@ -328,13 +364,25 @@ scanners:
             memMaxHeap: "6144m"
 ```
 
-+ `scanners.zap.miscOptions.overrideConfigs` allows to run additional '-config' options when the ZAP cli command is run. This can be used to set values for certain parameters such as `{namespace}` in the API path
++ To use ZAP's '-config' option:
+
+Set `scanners.zap.miscOptions.overrideConfigs` with the same value as you would run with ZAP's '-config' option. It allows RapiDAST to run additional '-config' options when it invokes the ZAP cli command. This can be useful to set a value for Path parameters of the OpenAPI specification. The following example will allow RapiDAST to send the 'default' value to the `{namespace}` parameter in your OpenAPI file.
+
+Example:
+```yaml
+scanners:
+    zap:
+    	overrideConfigs:
+        	- formhandler.fields.field(0).fieldId=namespace
+        	- formhandler.fields.field(0).value=default
+```
+
 
 #### Generic scanner
 
-It is possible to request RapiDAST to run a command in a podman image, using the `generic` plugin.
+(`*.container.type: podman` type only) RapiDAST can run other scanning tools as well as ZAP when running RapiDAST with podman.  It is possible to request RapiDAST to run a command in a podman image, using the `generic` plugin.
 
-For example, to run trivy and make it scan itself, and store its output as a result:
+For example, to run [Trivy](https://github.com/aquasecurity/trivy) and make it scan itself, and store its output as a result:
 
 ```yaml
 scanners:
@@ -349,45 +397,13 @@ scanners:
 ```
 
 The `results` entry works as follow:
-* if it is missing or `*stdout`, the output of the command will be chosen and stored as `stdout-report.txt` in the standard result directory
-* if it is a directory, it will be recursively copied into the standard result directory
-* if it is a file, it will be copied into the standard result directory
+* if it is missing or `*stdout`, the output of the command will be chosen and stored as `stdout-report.txt` in the result directory
+* if it is a directory, it will be recursively copied into the result directory
+* if it is a file, it will be copied into the result directory
 
 __Notes__:
-- `command` can be either a list of string, or a single string which will be split using `shlex.split()`
-- when using `type: podman`, the results (if different from stdout) must be present on the host after podman has run, which likely means you will need to use the `container.parameters.volumes` entry to share the results between the container and the host.
-- See `config/config-template-long.yaml` for additional options.
-
-### Authentication
-
-Authentication is common to all scanners. Authentication is configured in the `general` entry. Not all scanners may support all authentication types.
-
-Currently supported :
-
-- No authentication: the scanners will communicate anonymously with the application
-
-- OAuth2 using a Refresh Token:
-This method describes required parameters needed to retrieve an access token, using a refresh token as a secret.
-    + authentication type : `oauth2_rtoken`
-    + parameters :
-        * `token_endpoint` : the URL to which send the refresh token
-        * `client_id` : the client ID
-        * `rtoken_var_name`: for practical reasons, the refresh token is provided using environment variables. This entry describes the name of the variable containing the secret refresh token
-
-- HTTP Basic:
-This method describes the HTTP Basic Authorization Header. The username and password must be provided in plaintext and will be encoded by the scanners
-    + authentication type: `http_basic`
-    + parameters:
-        * `username`
-        * `password`
-
-- Cookie Authentication:
-This method describes authentication via Cookie header. The cookie name and value must be provided in plaintext.
-    + authentication type: `cookie`
-    + parameters:
-        * `name`
-        * `value`
-
+- `command` can be either a list of string, or a single string which will be split using `shlex.split()` - when using `*.container.type: podman`, the results (if different from stdout) must be present on the host after podman has run, which likely means you will need to use the `container.parameters.volumes` entry to share the results between the container and the host.
+- See `config/config-template-generic-scan.yaml` for additional options.
 
 # Troubleshooting
 
@@ -430,7 +446,7 @@ org.zaproxy.zap.extension.openapi.converter.swagger.SwaggerException: Failed to 
 
 ### ZAP's plugins are missing from the host installation
 
-Only when using the host's ZAP (`type: none`)
+This happens only when using the host's ZAP (with the `*.container.type: none` option).
 
 If you see a message such as `Missing mandatory plugins. Fixing`, or ZAP fails with an error containing the string `The mandatory add-on was not found:`, this is because ZAP deleted the application's plugin.
 See https://github.com/zaproxy/zaproxy/issues/7703 for additional information.

@@ -22,6 +22,8 @@ config:
   # (Optional) configure to export scan results to OWASP Defect Dojo
   defectDojo:
     url: "https://mydefectdojo.example.com/"
+    # ssl: True|False|/path/to/CA/bundle (default: True). for SSL verification
+    ssl: True
     authorization:
       username: "rapidast"
       password: "password"

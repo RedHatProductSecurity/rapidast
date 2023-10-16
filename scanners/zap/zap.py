@@ -513,10 +513,7 @@ class Zap(RapidastScanner):
         self.automation_config["jobs"].append(af_graphql)
 
     def _setup_passive_scan(self):
-        """Adds the passive scan to the job list. Needs to be done prior to Active scan"""
-
-        if self.my_conf("passiveScan", default=False) is False:
-            return
+        """Adds the passive scan to the job list. Needs to be done prior to any request (such as openapi query)"""
 
         # passive AF schema
         passive = {
@@ -531,13 +528,18 @@ class Zap(RapidastScanner):
             "rules": [],
         }
 
-        # Fetch the list of disabled passive scan as policy.disabledPassiveScan
-        disabled = self.my_conf("passiveScan.disabledRules", default="")
-        # ''.split('.') returns [''], which is a non-empty list (which would erroneously get into the loop later)
-        disabled = disabled.split(",") if len(disabled) else []
-        logging.debug(f"disabling the following passive scans: {disabled}")
-        for rulenum in disabled:
-            passive["rules"].append({"id": int(rulenum), "threshold": "off"})
+        # passive scan is *ALWAYS* enabled in ZAP. To disable it, we simply disable all rules
+        if self.my_conf("passiveScan", default=False) is False:
+            passive["parameters"]["disableAllRules"] = True
+
+        else:
+            # Fetch the list of disabled passive scan as policy.disabledPassiveScan
+            disabled = self.my_conf("passiveScan.disabledRules", default="")
+            # ''.split('.') returns [''], which is a non-empty list (which would erroneously get into the loop later)
+            disabled = disabled.split(",") if len(disabled) else []
+            logging.debug(f"disabling the following passive scans: {disabled}")
+            for rulenum in disabled:
+                passive["rules"].append({"id": int(rulenum), "threshold": "off"})
 
         self.automation_config["jobs"].append(passive)
 

@@ -2,6 +2,7 @@ import re
 from pathlib import Path
 
 import pytest
+import requests
 
 import configmodel.converter
 from scanners.zap.zap import find_context
@@ -158,6 +159,31 @@ def test_setup_authentication_auth_rtoken_configured(test_config):
         test_zap.automation_config["jobs"][0]["parameters"]["name"]
         == "add-bearer-token"
     )
+
+
+def test_setup_authentication_auth_rtoken_preauth(test_config):
+    # Verify that preauth changes the oauth2_rtoken to http_header
+    authentication = {
+        "type": "oauth2_rtoken",
+        "parameters": {
+            "client_id": "cloud-services",
+            "token_endpoint": "<token retrieval URL>",
+            "rtoken_var_name": "RTOKEN",
+            "preauth": True,
+        },
+    }
+
+    test_config.set("general.authentication", authentication)
+
+    test_config.merge(
+        test_config.get("general", default={}), preserve=False, root=f"scanners.zap"
+    )
+
+    test_zap = ZapPodman(config=test_config)
+
+    with pytest.raises(requests.exceptions.MissingSchema) as e_info:
+        test_zap.setup()
+    assert "Invalid URL '<token retrieval URL>'" in str(e_info.value)
 
 
 ## Testing APIs & URLs ##

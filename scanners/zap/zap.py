@@ -13,7 +13,7 @@ import yaml
 from scanners import RapidastScanner
 from scanners.authentication_factory import generic_authentication_factory
 from scanners.downloaders import authenticated_download_with_rtoken
-
+from scanners.downloaders import oauth2_get_token_from_rtoken
 
 CLASSNAME = "Zap"
 
@@ -729,6 +729,9 @@ class Zap(RapidastScanner):
         - Sets a "script" (httpsender) job, which will inject the latest
           token retrieved
 
+        Except if `preauth` is set. In that case, generate a token, and
+        enforce its use (warning: it will not be regenerated after expiration)
+
         Returns True as it creates a ZAP user
         """
 
@@ -738,6 +741,33 @@ class Zap(RapidastScanner):
         token_endpoint = self.my_conf(f"{params_path}.token_endpoint", None)
         rtoken = self.my_conf(f"{params_path}.rtoken", None)
         scripts_dir = self.container_scripts_dir
+
+        # Sometimes, rtoken causes issues
+        # workaround: pre-generate 1 token, and enforce its use
+        # Downside: it will not be refreshed after expiring
+        if self.my_conf(f"{params_path}.preauth"):
+            logging.debug("Oauth2/rtoken: preauthenticating mode")
+            auth = {
+                "client_id": client_id,
+                "rtoken": rtoken,
+                "url": token_endpoint,
+            }
+            token = oauth2_get_token_from_rtoken(auth, proxy=self.my_conf("proxy"))
+            if token:
+                # Delete previous config, and creating a new one
+                logging.debug(
+                    "successfully retrieved a token, hijacking authentication"
+                )
+                self.set_my_conf("authentication.type", "http_header")
+                self.set_my_conf(f"{params_path}", {})
+                self.set_my_conf(f"{params_path}.name", "Authorization")
+                self.set_my_conf(f"{params_path}.value", f"Bearer {token}")
+                # re-run authentication
+                return self.authentication_factory()
+            else:
+                logging.warning(
+                    "Preauthentication failed, continuing with regular oauth2"
+                )
 
         # 1- complete the context: script, verification and user
         context_["authentication"] = {

@@ -29,12 +29,15 @@ def anonymous_download(url, dest=None, proxy=None):
         return resp.content
 
 
-def authenticated_download_with_rtoken(url, dest, auth, proxy=None):
-    """Given a URL and Oauth2 authentication parameters, download the URL and store it at `dest`"""
+def oauth2_get_token_from_rtoken(auth, proxy=None, session=None):
+    """Given a rtoken, retrieve and return a Bearer token
+    auth is in the form { url, client_id, rtoken }
 
-    session = requests.Session()
+    """
 
-    # get a token
+    if session is None:
+        session = requests.Session()
+
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/x-www-form-urlencoded",
@@ -50,20 +53,44 @@ def authenticated_download_with_rtoken(url, dest, auth, proxy=None):
             "http": f"http://{proxy['proxyHost']}:{proxy['proxyPort']}",
         }
 
-    resp = session.post(auth["url"], data=payload, headers=headers, proxies=proxy)
-
-    if resp.status_code != 200:
-        logging.warning(
-            f"Unable to get a bearer token. Aborting manual download for {url}"
+    try:
+        resp = session.post(auth["url"], data=payload, headers=headers, proxies=proxy)
+        resp.raise_for_status()
+    except requests.exceptions.ConnectTimeout:
+        logging.error(
+            "Getting oauth2 token failed: server unresponsive. Check the Authentication URL parameters"
         )
+        return False
+    except requests.exceptions.HTTPError as e:
+        logging.error(f"Getting token failed: Check the RTOKEN. err details: {e}")
         return False
 
     try:
         token = yaml.safe_load(resp.text)["access_token"]
-    except Exception as exc:
-        raise RuntimeError(
+    except KeyError as exc:
+        logging.error(
             f"Unable to extract access token from OAuth2 authentication:\n {str(exc)}"
-        ) from exc
+        )
+        return False
+
+    return token
+
+
+def authenticated_download_with_rtoken(url, dest, auth, proxy=None):
+    """Given a URL and Oauth2 authentication parameters, download the URL and store it at `dest`"""
+
+    session = requests.Session()
+
+    # get a token
+    if proxy:
+        proxy = {
+            "https": f"http://{proxy['proxyHost']}:{proxy['proxyPort']}",
+            "http": f"http://{proxy['proxyHost']}:{proxy['proxyPort']}",
+        }
+    token = oauth2_get_token_from_rtoken(auth, proxy, session)
+    if not token:
+        return False
+
     authenticated_headers = {"Authorization": f"Bearer {token}"}
 
     resp = session.get(url, proxies=proxy, headers=authenticated_headers)

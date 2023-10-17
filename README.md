@@ -97,9 +97,10 @@ The scanners will communicate anonymously with the application
 This method describes required parameters needed to retrieve an access token, using a refresh token as a secret.
     + authentication type : `oauth2_rtoken`
     + parameters :
-        * `token_endpoint` : the URL to which send the refresh token
+        * `token_endpoint`: the URL to which send the refresh token
         * `client_id` : the client ID
         * `rtoken_var_name`: for practical reasons, the refresh token is provided using environment variables. This entry describes the name of the variable containing the secret refresh token
+        * `preauth`: Pre-generate a token and force ZAP to use it throughout the session (the session token will not be refreshed after it's expired). Default: False. This is only useful for scans sufficiently short that it will be finished before the token expires
 
 - HTTP Basic:
 This method describes the HTTP Basic Authorization Header. The username and password must be provided in plaintext and will be encoded by the scanners

@@ -116,7 +116,11 @@ class RapidastConfigModel:
                 walk = walk[key]
                 continue
             tmp = walk[key]
-            # case 2: not a "dictionary" type: warn and overwrite (if True)
+            # case 2: the value is None (path partially exists): initialize a dictionary
+            if tmp is None:
+                walk[key] = {}
+                tmp = walk[key]
+            # case 3: not a "dictionary" type: warn and overwrite (if True)
             if not isinstance(tmp, dict):
                 logging.warning(
                     f"RapidastConfigModel.set: Incompatible {path} at {tmp}"

@@ -27,6 +27,7 @@ def generate_some_nested_config():
         "key4": "value4",
         "nested": {"morenested": {"key3": "nestedvalue"}},
         "nothing": None,
+        "falsekey": False,
     }
 
 
@@ -86,6 +87,18 @@ def test_configmodel_set(some_nested_config):
     # incompatible set, with overwrite
     myconf.set("nested.morenested", "mynewval", overwrite=True)
     assert myconf.get("nested.morenested") == "mynewval"
+
+    # deep sets
+    # `set` should rewrite a `None` value even on `overwrite=False`
+    myconf.set("nothing.some.more.nested", "newval", overwrite=False)
+    assert myconf.get("nothing.some.more.nested") == "newval"
+    # but should not rewrite a value set to False value
+    myconf.set("falsekey.some.more.nested", "newval", overwrite=False)
+    assert not myconf.exists("falsekey.some.more.nested")
+    # unless we overwrite
+    myconf.set("falsekey.some.more.nested", "newval", overwrite=True)
+    assert myconf.exists("falsekey.some.more.nested")
+    assert myconf.get("falsekey.some.more.nested") == "newval"
 
 
 def test_configmodel_move(some_nested_config):

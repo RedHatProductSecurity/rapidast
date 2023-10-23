@@ -366,10 +366,7 @@ class Zap(RapidastScanner):
             af_context = find_context(self.automation_config)
             app_url = self.config.get("application.url")
             if app_url and isinstance(app_url, str):
-                if not app_url.endswith("/"):
-                    # For some unknonw reason, ZAP appears to behave weirdly if the URL is just the hostname without '/'
-                    app_url = app_url + "/"
-                af_context["urls"].append(app_url)
+                af_context["urls"].append(self._append_slash_to_url(app_url))
             else:
                 logging.error("Configuration: ZAP requires an application.url entry")
                 raise KeyError("Missing `application.url` in configuration")
@@ -413,6 +410,12 @@ class Zap(RapidastScanner):
         job["parameters"]["fileName"] = dest
         self.automation_config["jobs"].append(job)
 
+    def _append_slash_to_url(self, url):
+        # For some unknown reason, ZAP appears to behave weirdly if the URL is just the hostname without '/'
+        if not url.endswith("/"):
+            url = url + "/"
+        return url
+
     def _setup_api(self):
         """Prepare an openapi job and append it to the job list"""
 
@@ -433,9 +436,11 @@ class Zap(RapidastScanner):
         else:
             logging.warning("No API defined in the config, in apiScan.api")
         # default target: main URL, or can be overridden in apiScan
-        openapi["parameters"]["targetUrl"] = self.my_conf(
-            "apiScan.target"
-        ) or self.config.get("application.url")
+
+        openapi["parameters"]["targetUrl"] = self._append_slash_to_url(
+            self.my_conf("apiScan.target") or self.config.get("application.url")
+        )
+
         openapi["parameters"]["context"] = Zap.DEFAULT_CONTEXT
 
         self.automation_config["jobs"].append(openapi)

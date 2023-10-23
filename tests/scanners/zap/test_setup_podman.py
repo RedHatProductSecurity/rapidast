@@ -33,6 +33,11 @@ def test_setup_basic(test_config):
         == "http://example.com/"
     )
 
+    for item in test_zap.automation_config["jobs"]:
+        if item["type"] == "openapi":
+            assert item["parameters"]["targetUrl"] == "http://example.com/"
+            break
+
     # Test that a passive scan is added with all rules actively disabled
     for item in test_zap.automation_config["jobs"]:
         if item["type"] == "passiveScan-config":

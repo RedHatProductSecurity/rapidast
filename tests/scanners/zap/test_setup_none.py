@@ -1,3 +1,4 @@
+import os
 import re
 from pathlib import Path
 
@@ -6,7 +7,7 @@ import requests
 
 import configmodel.converter
 from scanners.zap.zap import find_context
-from scanners.zap.zap_podman import ZapPodman
+from scanners.zap.zap_none import ZapNone
 
 # from pytest_mock import mocker
 
@@ -23,8 +24,8 @@ def test_config():
 ## Basic test
 
 
-def test_setup_podman_basic(test_config):
-    test_zap = ZapPodman(config=test_config)
+def test_setup_none_basic(test_config):
+    test_zap = ZapNone(config=test_config)
     test_zap.setup()
 
     # a '/' should have been appended
@@ -50,15 +51,15 @@ def test_setup_podman_basic(test_config):
 ## Testing Authentication methods ##
 
 
-def test_setup_podman_authentication_no_auth_configured(test_config):
+def test_setup_none_authentication_no_auth_configured(test_config):
     print(test_config.get("general"))
 
-    test_zap = ZapPodman(config=test_config)
+    test_zap = ZapNone(config=test_config)
     test_zap.setup()
     assert test_zap.authenticated == False
 
 
-def test_setup_podman_authentication_invalid_auth_configured(test_config):
+def test_setup_none_authentication_invalid_auth_configured(test_config):
     authentication = {"type": "invalid", "parameters": {"dummy": "value"}}
 
     test_config.set("general.authentication", authentication)
@@ -69,14 +70,14 @@ def test_setup_podman_authentication_invalid_auth_configured(test_config):
 
     print(test_config)
 
-    test_zap = ZapPodman(config=test_config)
+    test_zap = ZapNone(config=test_config)
 
     # Currently, misconfigured authentication type is expected to raise exception
     with pytest.raises(Exception) as e_info:
         test_zap.setup()
 
 
-def test_setup_podman_authentication_http_header(test_config):
+def test_setup_none_authentication_http_header(test_config):
     authentication = {
         "type": "http_header",
         "parameters": {"name": "myheadername", "value": "myheaderval"},
@@ -89,14 +90,14 @@ def test_setup_podman_authentication_http_header(test_config):
 
     print(test_config)
 
-    test_zap = ZapPodman(config=test_config)
+    test_zap = ZapNone(config=test_config)
     test_zap.setup()
     assert test_zap.authenticated == False
-    assert "ZAP_AUTH_HEADER_VALUE=myheaderval" in test_zap.podman.get_complete_cli()
-    assert "ZAP_AUTH_HEADER=myheadername" in test_zap.podman.get_complete_cli()
+    assert os.environ["ZAP_AUTH_HEADER"] == "myheadername"
+    assert os.environ["ZAP_AUTH_HEADER_VALUE"] == "myheaderval"
 
 
-def test_setup_podman_authentication_cookie(test_config):
+def test_setup_none_authentication_cookie(test_config):
     authentication = {
         "type": "cookie",
         "parameters": {"name": "mycookiename", "value": "mycookieval"},
@@ -109,16 +110,13 @@ def test_setup_podman_authentication_cookie(test_config):
 
     print(test_config)
 
-    test_zap = ZapPodman(config=test_config)
+    test_zap = ZapNone(config=test_config)
     test_zap.setup()
     assert test_zap.authenticated == False
-    assert (
-        "ZAP_AUTH_HEADER_VALUE=mycookiename=mycookieval"
-        in test_zap.podman.get_complete_cli()
-    )
+    assert os.environ["ZAP_AUTH_HEADER_VALUE"] == "mycookiename=mycookieval"
 
 
-def test_setup_podman_authentication_http_basic(test_config):
+def test_setup_none_authentication_http_basic(test_config):
     authentication = {
         "type": "http_basic",
         "parameters": {"username": "Aladdin", "password": "open sesame"},
@@ -131,21 +129,13 @@ def test_setup_podman_authentication_http_basic(test_config):
 
     print(test_config)
 
-    test_zap = ZapPodman(config=test_config)
+    test_zap = ZapNone(config=test_config)
     test_zap.setup()
     assert test_zap.authenticated == False
-    assert (
-        "ZAP_AUTH_HEADER_VALUE=Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=="
-        in test_zap.podman.get_complete_cli()
-    )
+    assert os.environ["ZAP_AUTH_HEADER_VALUE"] == "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=="
 
 
-def test_setup_podman_authentication_auth_rtoken_configured(test_config):
-    # with open(CONFIG_TEMPLATE_LONG) as f:
-    #    test_config = configmodel.RapidastConfigModel(
-    #        yaml.safe_load(f)
-    #    )
-
+def test_setup_none_authentication_auth_rtoken_configured(test_config):
     authentication = {
         "type": "oauth2_rtoken",
         "parameters": {
@@ -163,18 +153,18 @@ def test_setup_podman_authentication_auth_rtoken_configured(test_config):
 
     print(test_config)
 
-    test_zap = ZapPodman(config=test_config)
+    test_zap = ZapNone(config=test_config)
 
     test_zap.setup()
     assert test_zap.authenticated == True
-    assert "RTOKEN" in test_zap.podman.get_complete_cli()
+    # assert "RTOKEN" in os.environ
     assert (
         test_zap.automation_config["jobs"][0]["parameters"]["name"]
         == "add-bearer-token"
     )
 
 
-def test_setup_podman_authentication_auth_rtoken_preauth(test_config):
+def test_setup_none_authentication_auth_rtoken_preauth(test_config):
     # Verify that preauth changes the oauth2_rtoken to http_header
     authentication = {
         "type": "oauth2_rtoken",
@@ -192,7 +182,7 @@ def test_setup_podman_authentication_auth_rtoken_preauth(test_config):
         test_config.get("general", default={}), preserve=False, root=f"scanners.zap"
     )
 
-    test_zap = ZapPodman(config=test_config)
+    test_zap = ZapNone(config=test_config)
 
     with pytest.raises(requests.exceptions.MissingSchema) as e_info:
         test_zap.setup()
@@ -202,47 +192,47 @@ def test_setup_podman_authentication_auth_rtoken_preauth(test_config):
 ## Testing APIs & URLs ##
 
 
-def test_setup_podman_import_urls(test_config):
+def test_setup_none_import_urls(test_config):
     # trick: set this very file as import
     test_config.set("scanners.zap.importUrlsFromFile", __file__)
 
-    test_zap = ZapPodman(config=test_config)
+    test_zap = ZapNone(config=test_config)
     test_zap.setup()
     assert Path(test_zap.host_work_dir, "importUrls.txt").is_file()
 
 
-def test_setup_podman_exclude_urls(test_config):
+def test_setup_none_exclude_urls(test_config):
     test_config.set("scanners.zap.urls.excludes", ["abc", "def"])
     test_config.merge(
         test_config.get("general", default={}), preserve=False, root=f"scanners.zap"
     )
 
-    test_zap = ZapPodman(config=test_config)
+    test_zap = ZapNone(config=test_config)
     test_zap.setup()
 
     assert "abc" in find_context(test_zap.automation_config)["excludePaths"]
     assert "def" in find_context(test_zap.automation_config)["excludePaths"]
 
 
-def test_setup_podman_include_urls(test_config):
+def test_setup_none_include_urls(test_config):
     test_config.set("scanners.zap.urls.includes", ["abc", "def"])
     test_config.merge(
         test_config.get("general", default={}), preserve=False, root=f"scanners.zap"
     )
 
-    test_zap = ZapPodman(config=test_config)
+    test_zap = ZapNone(config=test_config)
     test_zap.setup()
 
     assert "abc" in find_context(test_zap.automation_config)["includePaths"]
     assert "def" in find_context(test_zap.automation_config)["includePaths"]
 
 
-def test_setup_podman_ajax(test_config):
+def test_setup_none_ajax(test_config):
     test_config.set("scanners.zap.spiderAjax.maxDuration", 10)
     test_config.set("scanners.zap.spiderAjax.url", "http://test.com")
     test_config.set("scanners.zap.spiderAjax.browserId", "chrome-headless")
 
-    test_zap = ZapPodman(config=test_config)
+    test_zap = ZapNone(config=test_config)
     test_zap.setup()
 
     for item in test_zap.automation_config["jobs"]:
@@ -255,7 +245,7 @@ def test_setup_podman_ajax(test_config):
         assert False
 
 
-def test_setup_podman_graphql(test_config):
+def test_setup_none_graphql(test_config):
     TEST_GRAPHQL_ENDPOINT = "http://test.com/graphql"
     TEST_GRAPHQL_SCHEMA_URL = "http://test.com/schema.graphql"
 
@@ -263,7 +253,7 @@ def test_setup_podman_graphql(test_config):
     test_config.set("scanners.zap.graphql.schemaUrl", TEST_GRAPHQL_SCHEMA_URL)
     test_config.set("scanners.zap.graphql.schemaFile", __file__)
 
-    test_zap = ZapPodman(config=test_config)
+    test_zap = ZapNone(config=test_config)
     test_zap.setup()
 
     for item in test_zap.automation_config["jobs"]:
@@ -279,19 +269,6 @@ def test_setup_podman_graphql(test_config):
         assert False, "graphql job not found"
 
 
-def test_setup_podman_pod_injection(test_config):
-    test_config.set("scanners.zap.container.parameters.podName", "podABC")
-
-    test_zap = ZapPodman(config=test_config)
-    test_zap.setup()
-
-    assert "--pod" in test_zap.podman.get_complete_cli()
-    assert "podABC" in test_zap.podman.get_complete_cli()
-
-    # Also assert that there is no uid mapping
-    assert not "--uidmap" in test_zap.podman.get_complete_cli()
-
-
 ## Testing report format ##
 
 
@@ -304,12 +281,12 @@ def test_setup_podman_pod_injection(test_config):
         ("xml", "traditional-xml-plus"),
     ],
 )
-def test_setup_podman_report_format(test_config, result_format, expected_template):
+def test_setup_none_report_format(test_config, result_format, expected_template):
     test_config.set("scanners.zap.report.format", [result_format])
 
     print(test_config)
 
-    test_zap = ZapPodman(config=test_config)
+    test_zap = ZapNone(config=test_config)
     test_zap.setup()
 
     for item in test_zap.automation_config["jobs"]:
@@ -323,28 +300,28 @@ def test_setup_podman_report_format(test_config, result_format, expected_templat
 # Misc tests
 
 
-def test_setup_podman_override_memory_allocation(test_config):
+def test_setup_none_override_memory_allocation(test_config):
     # "regular" test
     test_config.set("scanners.zap.miscOptions.memMaxHeap", "8G")
-    test_zap = ZapPodman(config=test_config)
+    test_zap = ZapNone(config=test_config)
     test_zap.setup()
     assert "-Xmx8G" in test_zap.zap_cli
 
     # Fail match
     test_config.set("scanners.zap.miscOptions.memMaxHeap", "8i")
-    test_zap = ZapPodman(config=test_config)
+    test_zap = ZapNone(config=test_config)
     test_zap.setup()
     assert "-Xmx8i" not in test_zap.zap_cli
 
 
-def test_setup_podman_override_cfg(test_config):
+def test_setup_none_override_cfg(test_config):
     override_cfg1 = "formhandler.fields.field(0).fieldId=namespace"
     override_cfg2 = "formhandler.fields.field(0).value=default"
 
     test_config.set(
         "scanners.zap.miscOptions.overrideConfigs", [override_cfg1, override_cfg2]
     )
-    test_zap = ZapPodman(config=test_config)
+    test_zap = ZapNone(config=test_config)
     test_zap.setup()
 
     assert f"{override_cfg1}" in test_zap.zap_cli
@@ -355,28 +332,19 @@ def test_setup_podman_override_cfg(test_config):
     )
 
 
-def test_setup_podman_override_non_list_format(test_config):
+def test_setup_none_override_non_list_format(test_config):
     test_config.set("scanners.zap.miscOptions.overrideConfigs", "non-list-item")
-    test_zap = ZapPodman(config=test_config)
+    test_zap = ZapNone(config=test_config)
 
     with pytest.raises(ValueError):
         test_zap.setup()
 
 
-def test_setup_podman_handling_plugins(test_config):
+def test_setup_none_handling_plugins(test_config):
     test_config.set("scanners.zap.miscOptions.updateAddons", True)
     test_config.set("scanners.zap.miscOptions.additionalAddons", "pluginA,pluginB")
-    test_zap = ZapPodman(config=test_config)
+    test_zap = ZapNone(config=test_config)
 
     assert "-addonupdate" in test_zap.get_update_command()
     assert "pluginA" in test_zap.get_update_command()
     assert "pluginB" in test_zap.get_update_command()
-
-    shell = test_zap._handle_plugins()
-    assert len(shell) == 3
-    assert shell[0] == "sh"
-    assert shell[1] == "-c"
-    assert re.search(
-        "^zap.sh .* -cmd -addonupdate -addoninstall pluginA -addoninstall pluginB; .*",
-        shell[2],
-    )

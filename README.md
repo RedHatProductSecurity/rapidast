@@ -244,7 +244,7 @@ options:
 
 ### Choosing the execution environment
 
-Set `general.container.type` to select a runtime (default: podman)
+Set `general.container.type` to select a runtime (default: 'none')
 
 Accepted values are as follows:
 + `podman`:

@@ -19,12 +19,11 @@ general:
 
   container:
     # This configures what technology is to be used for RapiDAST to run each scanner.
-    # Currently supported: `podman`, `flatpak` and `none`
-    #   podman: RapiDAST runs each scanner using podman
-    #   flatpak: RapiDAST runs each scanner using flatpak
-    #   none: RapiDAST runs each scanner in the same host or container (where RapiDAST itself is running in a container)
-    # When undefined, relies on rapidast-defaults.yaml, or `podman` if nothing is set
-    #type: "podman"
+    # Currently supported: `podman`  and `none`
+    #   none: Default. RapiDAST runs each scanner in the same host or inside the RapiDAST image container
+    #   podman: RapiDAST orchestrates each scanner on its own using podman
+    # When undefined, relies on rapidast-defaults.yaml, or `none` if nothing is set
+    #type: "none"
 
 # `scanners' is a section that configures scanning options
 scanners:

@@ -31,8 +31,6 @@ class Zap(RapidastScanner):
     AF_TEMPLATE = "af-template.yaml"
     USER = "test1"
 
-    DEFAULT_CONTAINER = "podman"
-
     REPORTS_SUBDIR = "reports"
 
     ## FUNCTIONS

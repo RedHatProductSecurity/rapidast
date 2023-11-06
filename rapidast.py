@@ -72,7 +72,7 @@ def run_scanner(name, config, args, defect_d):
         root=f"scanners.{name}",
     )
 
-    typ = config.get(f"scanners.{name}.container.type", default="podman")
+    typ = config.get(f"scanners.{name}.container.type", default="none")
     try:
         class_ = scanners.str_to_scanner(name, typ)
     except ModuleNotFoundError:

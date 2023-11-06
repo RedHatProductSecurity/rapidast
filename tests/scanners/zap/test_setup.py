@@ -24,7 +24,7 @@ def test_config():
 ## Basic test
 
 
-def test_setup_none_basic(test_config):
+def test_setup_openapi(test_config):
     test_zap = ZapNone(config=test_config)
     test_zap.setup()
 
@@ -49,9 +49,10 @@ def test_setup_none_basic(test_config):
 
 
 ## Testing Authentication methods ##
+### Handling Authentication is different depending on the container.type so it'd be better to have test cases separately
 
 
-def test_setup_none_authentication_no_auth_configured(test_config):
+def test_setup_authentication_no_auth_configured(test_config):
     print(test_config.get("general"))
 
     test_zap = ZapNone(config=test_config)
@@ -59,7 +60,7 @@ def test_setup_none_authentication_no_auth_configured(test_config):
     assert test_zap.authenticated == False
 
 
-def test_setup_none_authentication_invalid_auth_configured(test_config):
+def test_setup_authentication_invalid_auth_configured(test_config):
     authentication = {"type": "invalid", "parameters": {"dummy": "value"}}
 
     test_config.set("general.authentication", authentication)
@@ -77,7 +78,7 @@ def test_setup_none_authentication_invalid_auth_configured(test_config):
         test_zap.setup()
 
 
-def test_setup_none_authentication_http_header(test_config):
+def test_setup_authentication_http_header(test_config):
     authentication = {
         "type": "http_header",
         "parameters": {"name": "myheadername", "value": "myheaderval"},
@@ -97,7 +98,7 @@ def test_setup_none_authentication_http_header(test_config):
     assert os.environ["ZAP_AUTH_HEADER_VALUE"] == "myheaderval"
 
 
-def test_setup_none_authentication_cookie(test_config):
+def test_setup_authentication_cookie(test_config):
     authentication = {
         "type": "cookie",
         "parameters": {"name": "mycookiename", "value": "mycookieval"},
@@ -116,7 +117,7 @@ def test_setup_none_authentication_cookie(test_config):
     assert os.environ["ZAP_AUTH_HEADER_VALUE"] == "mycookiename=mycookieval"
 
 
-def test_setup_none_authentication_http_basic(test_config):
+def test_setup_authentication_http_basic(test_config):
     authentication = {
         "type": "http_basic",
         "parameters": {"username": "Aladdin", "password": "open sesame"},
@@ -135,7 +136,7 @@ def test_setup_none_authentication_http_basic(test_config):
     assert os.environ["ZAP_AUTH_HEADER_VALUE"] == "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=="
 
 
-def test_setup_none_authentication_auth_rtoken_configured(test_config):
+def test_setup_authentication_auth_rtoken_configured(test_config):
     authentication = {
         "type": "oauth2_rtoken",
         "parameters": {
@@ -157,14 +158,14 @@ def test_setup_none_authentication_auth_rtoken_configured(test_config):
 
     test_zap.setup()
     assert test_zap.authenticated == True
-    # assert "RTOKEN" in os.environ
+    # TODO: check "RTOKEN"
     assert (
         test_zap.automation_config["jobs"][0]["parameters"]["name"]
         == "add-bearer-token"
     )
 
 
-def test_setup_none_authentication_auth_rtoken_preauth(test_config):
+def test_setup_authentication_auth_rtoken_preauth(test_config):
     # Verify that preauth changes the oauth2_rtoken to http_header
     authentication = {
         "type": "oauth2_rtoken",
@@ -192,7 +193,7 @@ def test_setup_none_authentication_auth_rtoken_preauth(test_config):
 ## Testing APIs & URLs ##
 
 
-def test_setup_none_import_urls(test_config):
+def test_setup_import_urls(test_config):
     # trick: set this very file as import
     test_config.set("scanners.zap.importUrlsFromFile", __file__)
 
@@ -201,7 +202,7 @@ def test_setup_none_import_urls(test_config):
     assert Path(test_zap.host_work_dir, "importUrls.txt").is_file()
 
 
-def test_setup_none_exclude_urls(test_config):
+def test_setup_exclude_urls(test_config):
     test_config.set("scanners.zap.urls.excludes", ["abc", "def"])
     test_config.merge(
         test_config.get("general", default={}), preserve=False, root=f"scanners.zap"
@@ -214,7 +215,7 @@ def test_setup_none_exclude_urls(test_config):
     assert "def" in find_context(test_zap.automation_config)["excludePaths"]
 
 
-def test_setup_none_include_urls(test_config):
+def test_setup_include_urls(test_config):
     test_config.set("scanners.zap.urls.includes", ["abc", "def"])
     test_config.merge(
         test_config.get("general", default={}), preserve=False, root=f"scanners.zap"
@@ -227,7 +228,7 @@ def test_setup_none_include_urls(test_config):
     assert "def" in find_context(test_zap.automation_config)["includePaths"]
 
 
-def test_setup_none_ajax(test_config):
+def test_setup_ajax(test_config):
     test_config.set("scanners.zap.spiderAjax.maxDuration", 10)
     test_config.set("scanners.zap.spiderAjax.url", "http://test.com")
     test_config.set("scanners.zap.spiderAjax.browserId", "chrome-headless")
@@ -245,7 +246,7 @@ def test_setup_none_ajax(test_config):
         assert False
 
 
-def test_setup_none_graphql(test_config):
+def test_setup_graphql(test_config):
     TEST_GRAPHQL_ENDPOINT = "http://test.com/graphql"
     TEST_GRAPHQL_SCHEMA_URL = "http://test.com/schema.graphql"
 
@@ -281,7 +282,7 @@ def test_setup_none_graphql(test_config):
         ("xml", "traditional-xml-plus"),
     ],
 )
-def test_setup_none_report_format(test_config, result_format, expected_template):
+def test_setup_report_format(test_config, result_format, expected_template):
     test_config.set("scanners.zap.report.format", [result_format])
 
     print(test_config)
@@ -300,7 +301,7 @@ def test_setup_none_report_format(test_config, result_format, expected_template)
 # Misc tests
 
 
-def test_setup_none_override_memory_allocation(test_config):
+def test_setup_override_memory_allocation(test_config):
     # "regular" test
     test_config.set("scanners.zap.miscOptions.memMaxHeap", "8G")
     test_zap = ZapNone(config=test_config)
@@ -314,7 +315,7 @@ def test_setup_none_override_memory_allocation(test_config):
     assert "-Xmx8i" not in test_zap.zap_cli
 
 
-def test_setup_none_override_cfg(test_config):
+def test_setup_override_cfg(test_config):
     override_cfg1 = "formhandler.fields.field(0).fieldId=namespace"
     override_cfg2 = "formhandler.fields.field(0).value=default"
 
@@ -332,7 +333,7 @@ def test_setup_none_override_cfg(test_config):
     )
 
 
-def test_setup_none_override_non_list_format(test_config):
+def test_setup_override_non_list_format(test_config):
     test_config.set("scanners.zap.miscOptions.overrideConfigs", "non-list-item")
     test_zap = ZapNone(config=test_config)
 
@@ -340,7 +341,7 @@ def test_setup_none_override_non_list_format(test_config):
         test_zap.setup()
 
 
-def test_setup_none_handling_plugins(test_config):
+def test_get_update_command(test_config):
     test_config.set("scanners.zap.miscOptions.updateAddons", True)
     test_config.set("scanners.zap.miscOptions.additionalAddons", "pluginA,pluginB")
     test_zap = ZapNone(config=test_config)

@@ -46,7 +46,7 @@ template:
       # Since Helm configmap cannot handle the dash character but the policy name undner  scanPolicyXML' in 'values.yaml' is 'helm-custom-scan', the dest file name of the copy command is 'helm-custom-scan.policy'.
       # This file will be used if the rapidast config specifies 'helm-custom-scan' for the activeScan policy.
       # Otherwise, '/home/rapidast/.ZAP/policies/API-scan-minimal.policy' will be used by default.
-      command: ["sh", "-c", "cp /helm/config/helmcustomscan.policy /home/rapidast/.ZAP/policies/helm-custom-scan.policy && rapidast.py --config /helm/config/rapidastconfig.yaml"]
+      command: ["sh", "-c", "cp /helm/config/helmcustomscan.policy /opt/rapidast/scanners/zap/policies/helm-custom-scan.policy && rapidast.py --config /helm/config/rapidastconfig.yaml"]
       imagePullPolicy: {{ .Values.image.pullPolicy }}
       resources:
         {{- toYaml .Values.resources | nindent 8 }}

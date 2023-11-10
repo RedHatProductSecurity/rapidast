@@ -58,10 +58,5 @@ RUN chmod -R g+w /opt/rapidast
 RUN useradd -u 1000 -d /home/rapidast -m -s /bin/bash -G dast rapidast
 RUN echo rapidast:rapidast | chpasswd
 
-# for compability to run with latest Helm chart with RapiDAST v2.2.0 or before
-RUN mkdir /home/rapidast/.ZAP
-RUN ln -sfn  /opt/rapidast/scanners/zap/policies /home/rapidast/.ZAP/policies
-RUN chown -R rapidast:rapidast /home/rapidast
-
 USER rapidast
-WORKDIR /home/rapidast
+WORKDIR /opt/rapidast

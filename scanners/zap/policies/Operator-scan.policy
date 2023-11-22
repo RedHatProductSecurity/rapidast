@@ -91,8 +91,8 @@
             <level>OFF</level>
         </p90019>
         <p90020>
-            <enabled>true</enabled>
-            <level>DEFAULT</level>
+            <enabled>false</enabled>
+            <level>OFF</level>
         </p90020>
         <p90021>
             <enabled>false</enabled>

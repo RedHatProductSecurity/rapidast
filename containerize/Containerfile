@@ -54,6 +54,9 @@ RUN groupadd dast
 RUN chown -R :dast /opt/rapidast
 RUN chmod -R g+w /opt/rapidast
 
+# Allow a user of random UID(e.g. on OpenShift) to create a custom scan policy file
+RUN chmod -R a+w /opt/rapidast/scanners/zap/policies
+
 
 RUN useradd -u 1000 -d /home/rapidast -m -s /bin/bash -G dast rapidast
 RUN echo rapidast:rapidast | chpasswd

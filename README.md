@@ -82,7 +82,12 @@ The configuration file is presented as YAML, and contains several main entries:
     + Each scanner can override an entry from `general` by creating an entry with the same name
 - `scanners` : list of scanners, and their configuration
 
-See `config/config-template.yaml`(a simple version) and `config/config-template-long.yaml`(an exhaustive version) for examples. Each can be used.
+See templates in the `config/` directory for examples and ideas.
+- `config-template-zap-simple.yaml` : describes a generic/minimal use of the ZAP scanner (i.e.: the minimum set of option to get a ZAP scan from RapiDAST)
+- `config-template-zap-mac.yaml` : describes a minimal use of the ZAP scanner on a Apple Mac environment
+- `config-template-zap-long.yaml` : describes a more extensive use of ZAP (all configuration options are presented)
+- `config-template-multi-scan.yaml` : describes how to combine multiple scanners in a single configuration
+- `config-template-generic-scan.yaml` : describes the use of the generic scanner
 
 ### Authentication
 

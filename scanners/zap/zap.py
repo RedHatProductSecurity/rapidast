@@ -417,6 +417,13 @@ class Zap(RapidastScanner):
     def _setup_api(self):
         """Prepare an openapi job and append it to the job list"""
 
+        api_scan = self.my_conf("apiScan")
+
+        if not api_scan:
+            # this case is normal when a user wants to test with spider, without openapi files
+            logging.debug("No API scan config exists")
+            return
+
         openapi = {"name": "openapi", "type": "openapi", "parameters": {}}
         api_url = self.my_conf("apiScan.apis.apiUrl")
         api_file = self.my_conf("apiScan.apis.apiFile")
@@ -432,9 +439,11 @@ class Zap(RapidastScanner):
 
             openapi["parameters"]["apiFile"] = container_openapi_file
         else:
-            logging.warning("No API defined in the config, in apiScan.api")
-        # default target: main URL, or can be overridden in apiScan
+            raise ValueError(
+                "No apiUrl or apiFile is defined in the config, in apiScan.apis"
+            )
 
+        # default target: main URL, or can be overridden in apiScan
         openapi["parameters"]["targetUrl"] = self._append_slash_to_url(
             self.my_conf("apiScan.target") or self.config.get("application.url")
         )

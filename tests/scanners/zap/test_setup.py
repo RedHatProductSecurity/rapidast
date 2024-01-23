@@ -318,6 +318,51 @@ def test_setup_report_format(test_config, result_format, expected_template):
         assert False
 
 
+def test_setup_report_string_format(test_config):
+    test_config.set("scanners.zap.report.format", "xml")
+
+    test_zap = ZapNone(config=test_config)
+    test_zap.setup()
+
+    count = 0
+    for item in test_zap.automation_config["jobs"]:
+        if item["type"] == "report":
+            assert item["parameters"]["template"] == "traditional-xml-plus"
+            count += 1
+
+    assert count == 1
+
+
+def test_setup_report_default_format(test_config):
+    test_zap = ZapNone(config=test_config)
+    test_zap.setup()
+
+    count = 0
+    for item in test_zap.automation_config["jobs"]:
+        if item["type"] == "report":
+            assert item["parameters"]["template"] == "traditional-json-plus"
+            count += 1
+
+    assert count == 1
+
+
+def test_setup_report_several_formats(test_config):
+    test_config.set("scanners.zap.report.format", ["xml", "json"])
+    test_zap = ZapNone(config=test_config)
+    test_zap.setup()
+
+    count = 0
+    for item in test_zap.automation_config["jobs"]:
+        if item["type"] == "report":
+            assert item["parameters"]["template"] in {
+                "traditional-json-plus",
+                "traditional-xml-plus",
+            }
+            count += 1
+
+    assert count == 2
+
+
 # Misc tests
 
 

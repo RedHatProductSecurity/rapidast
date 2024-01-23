@@ -622,7 +622,13 @@ class Zap(RapidastScanner):
             "xml": ReportFormat("traditional-xml-plus", "zap-report.xml"),
         }
 
-        formats = set(self.my_conf("report.format", {"json"}))
+        formats = self.my_conf("report.format", {"json"})
+        # handle case where user provides a string
+        if isinstance(formats, str):
+            formats = [formats]
+        # remove duplicates
+        formats = set(formats)
+
         # DefectDojo requires XML report type
         if self._should_export_to_defect_dojo():
             logging.debug("ZAP report: ensures XML report for Defect Dojo")

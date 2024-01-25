@@ -48,6 +48,26 @@ def test_setup_openapi(test_config):
         assert False
 
 
+def test_setup_no_api_config(test_config):
+    # test ValueError is raised when neither apiUrl nor apiFile exists
+    test_config.set("scanners.zap.apiScan", "target")
+    test_zap = ZapNone(config=test_config)
+
+    with pytest.raises(ValueError):
+        test_zap.setup()
+
+    # the following must not raise error as apiUrl has been now defined
+    test_config.set("scanners.zap.apiScan.apis.apiUrl", "http://random.com")
+    test_zap = ZapNone(config=test_config)
+
+    test_zap.setup()
+
+    test_config.set("scanners.zap.apiScan.apis.apiFile", "api_file")
+    test_zap = ZapNone(config=test_config)
+
+    test_zap.setup()
+
+
 ## Testing Authentication methods ##
 ### Handling Authentication is different depending on the container.type so it'd be better to have test cases separately
 
@@ -296,6 +316,51 @@ def test_setup_report_format(test_config, result_format, expected_template):
             break
     else:
         assert False
+
+
+def test_setup_report_string_format(test_config):
+    test_config.set("scanners.zap.report.format", "xml")
+
+    test_zap = ZapNone(config=test_config)
+    test_zap.setup()
+
+    count = 0
+    for item in test_zap.automation_config["jobs"]:
+        if item["type"] == "report":
+            assert item["parameters"]["template"] == "traditional-xml-plus"
+            count += 1
+
+    assert count == 1
+
+
+def test_setup_report_default_format(test_config):
+    test_zap = ZapNone(config=test_config)
+    test_zap.setup()
+
+    count = 0
+    for item in test_zap.automation_config["jobs"]:
+        if item["type"] == "report":
+            assert item["parameters"]["template"] == "traditional-json-plus"
+            count += 1
+
+    assert count == 1
+
+
+def test_setup_report_several_formats(test_config):
+    test_config.set("scanners.zap.report.format", ["xml", "json"])
+    test_zap = ZapNone(config=test_config)
+    test_zap.setup()
+
+    count = 0
+    for item in test_zap.automation_config["jobs"]:
+        if item["type"] == "report":
+            assert item["parameters"]["template"] in {
+                "traditional-json-plus",
+                "traditional-xml-plus",
+            }
+            count += 1
+
+    assert count == 2
 
 
 # Misc tests

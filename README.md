@@ -386,9 +386,21 @@ scanners:
 
 #### Generic scanner
 
-(`*.container.type: podman` type only) RapiDAST can run other scanning tools as well as ZAP when running RapiDAST with podman.  It is possible to request RapiDAST to run a command in a podman image, using the `generic` plugin.
+RapiDAST can run other scanning tools as well as ZAP. It is possible to request RapiDAST to run a command and process stdout results, using the `generic` plugin.
 
-For example, to run [Trivy](https://github.com/aquasecurity/trivy) and make it scan itself, and store its output as a result:
+The following is an example to run a command or a tool in the host where a RapiDAST scan runs:
+
+```yaml
+scanners:
+  generic:
+    results: "*stdout"
+
+    # this config is used when container.type is not 'podman'
+    toolDir: scanners/generic/tools
+    inline: "echo 'any scan'"
+```
+
+The following is another example to run a [Trivy](https://github.com/aquasecurity/trivy) scan using the container image:
 
 ```yaml
 scanners:

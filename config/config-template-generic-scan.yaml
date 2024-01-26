@@ -33,13 +33,17 @@ scanners:
     # This config can be combined into ZAP scan config file if the 'podman' container type is used for it too
 
     # A path to file or directory where results are stored on the host. Note this needs to be used along with the 'volumes' configuration
-    results: "/path/to/results"   # if None or "*stdout", the command's standard output is selected
+    # results: "/path/to/results"   # if None or "*stdout", the command's standard output is selected
 
-    container:
-      type: "podman"    # currently, only "podman" type is supported
-      parameters:
+    # this config is used when container.type is not 'podman'
+    # toolDir: scanners/generic/tools
+    # inline: "<command to run>"
+
+    # this config is only used when container.type is 'podman'
+    # container:
+        #parameters:
         # Mandatory: image name to run
-        image: "<container image name>"
+        #image: "<container image name>"
 
         # Optional: command to run. By default, the image's ENTRYPOINT will be run
         #command: "<command to run in the container>"

@@ -61,9 +61,14 @@ scanners:
     # A path to file or directory where results are stored on the host. Note this needs to be used along with the 'volumes' configuration
     results: "*stdout"   # if None or "*stdout", the command's standard output is selected
 
-    container:
-      type: "podman"    # currently, only "podman" type is supported
-      parameters:
+    # this config is used when container.type is not 'podman'
+    # toolDir: scanners/generic/tools
+    # inline: "<command to run>"
+
+    # this config is only used when container.type is 'podman'
+    #container:
+      #type: "podman"    # currently, only "podman" type is supported
+      #parameters:
         # Mandatory: image name to run
-        image: "<container image name>"
-        command: "<command to run in the container>" # Optional: By default, the image's ENTRYPOINT will be run
+        #image: "<container image name>"
+        #command: "<command to run in the container>" # Optional: By default, the image's ENTRYPOINT will be run

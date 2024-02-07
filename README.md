@@ -400,6 +400,20 @@ scanners:
     inline: "echo 'any scan'"
 ```
 
+(an experimental feature) The following example is to scan a Kubernetes Operator's controller code for a command injection attack:
+
+```yaml
+scanners:
+  generic:
+    results: "*stdout"
+
+    # this config is used when container.type is not 'podman'
+    # toolDir: scanners/generic/tools
+    inline: "python3 oobtkube.py -d 300 -p <port> -i <ipaddr> -f <cr_example>.yaml"
+```
+
+
+
 The following is another example to run a [Trivy](https://github.com/aquasecurity/trivy) scan using the container image:
 
 ```yaml

@@ -39,8 +39,6 @@ repos:
   # R0801: Similar lines in 2 files. Disabled because it flags any file even those which are unrelated
   # R1705: Unnecessary "elif" after "return", remove the leading "el" from "elif" (no-else-return)
   # R1710: Either all return statements in a function should return an expression, or none of them should. (inconsistent-return-statements)
-  # W0718: Catching too general exception Exception (broad-exception-caught)
-  # W0719: Raising too general exception: Exception (broad-exception-raised)
 
   - repo: https://github.com/PyCQA/pylint
     #rev: v3.0.3
@@ -52,5 +50,5 @@ repos:
           - --max-line-length=120
           - --min-public-methods=0
           - --good-names=q,f,fp,i,e
-          - --disable=E0401,W1201,W1203,C0114,C0115,C0116,C0411,W0107,W0702,R0801,R1705,R1710,W0718,W0719
+          - --disable=E0401,W1201,W1203,C0114,C0115,C0116,C0411,W0107,W0702,R0801,R1705,R1710
         language_version: python3

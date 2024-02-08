@@ -47,7 +47,7 @@ def get_spec_from_yaml(yaml_file):
 
 def scan_with_k8s_config(cfg_file_path, ipaddr, port):
     # Apply Kubernetes config (e.g. CR for Operator, or Pod/resource for webhook)
-    tmp_filename_to_be_applied = "/tmp/oobtkube-test.yaml"
+    tmp_file = "/tmp/oobtkube-test.yaml"
 
     spec = get_spec_from_yaml(cfg_file_path)
     if not spec:
@@ -56,12 +56,11 @@ def scan_with_k8s_config(cfg_file_path, ipaddr, port):
 
     # test each spec
     for sitem in spec.keys():
-        cmd = f"""sed 's/{sitem}:.*/{sitem}: \"curl {ipaddr}:{port}\\/{sitem}\"/g' {cfg_file_path} >
-            {tmp_filename_to_be_applied}"""
+        cmd = f"sed 's/{sitem}:.*/{sitem}: \"curl {ipaddr}:{port}\\/{sitem}\"/g' {cfg_file_path} > {tmp_file}"
         print(f"Command run: {cmd}")
         os.system(cmd)
 
-        kube_cmd = f"kubectl apply -f {tmp_filename_to_be_applied}"
+        kube_cmd = f"kubectl apply -f {tmp_file}"
 
         print(f"Command run: {kube_cmd}")
         os.system(kube_cmd)

@@ -55,7 +55,8 @@ def scan_with_k8s_config(cfg_file_path, ipaddr, port):
 
     # test each spec
     for sitem in spec.keys():
-        cmd = f"sed 's/{sitem}:.*/{sitem}: \"curl {ipaddr}:{port}\"/g' {cfg_file_path} > {tmp_filename_to_be_applied}"
+        cmd = f"""sed 's/{sitem}:.*/{sitem}: \"curl {ipaddr}:{port}\\/{sitem}\"/g' {cfg_file_path} >
+            {tmp_filename_to_be_applied}"""
         print(f"Command run: {cmd}")
         os.system(cmd)
 

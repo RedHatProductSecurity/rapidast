@@ -51,6 +51,7 @@ def scan_with_k8s_config(cfg_file_path, ipaddr, port):
 
     spec = get_spec_from_yaml(cfg_file_path)
     if not spec:
+        # pylint: disable=W0719
         raise Exception("no spec found")
 
     # test each spec
@@ -100,7 +101,7 @@ def start_socket_listener(port, data_received, stop_event, duration):
                 pass
 
     except Exception as e:
-        print(f"Error: {str(e)}")
+        raise RuntimeError("An error occurred. See logs for details.") from e
 
     finally:
         client_socket.close()

@@ -1,7 +1,6 @@
-# This is a configuration template file to perform scans using user-defined container images
+# This is a configuration template file to perform scans using user-defined container images or scripts
 #
 # Author: Red Hat Product Security
-#
 
 config:
   # WARNING: `configVersion` indicates the schema version of the config file.
@@ -16,45 +15,46 @@ application:
 
 # `general` is a section that will be applied to all scanners.
 general:
-
   container:
     # This configures what technology is to be used for RapiDAST to run each scanner.
     # Currently supported: `podman`  and `none`
     #   none: Default. RapiDAST runs each scanner in the same host or inside the RapiDAST image container
     #   podman: RapiDAST orchestrates each scanner on its own using podman
     # When undefined, relies on rapidast-defaults.yaml, or `none` if nothing is set
-    #type: "none"
+    type: "none"
 
 # `scanners' is a section that configures scanning options
 scanners:
   generic_1:
     # This is a generic scanner configuration, defined by the user
     # Multiple items can be defined with "generic_<random_str>" named
-    # This config can be combined into ZAP scan config file if the 'podman' container type is used for it too
 
-    # A path to file or directory where results are stored on the host. Note this needs to be used along with the 'volumes' configuration
-    # results: "/path/to/results"   # if None or "*stdout", the command's standard output is selected
+    # results:
+    #   An absolute path to file or directory where results are stored on the host.
+    #   if it is "*stdout" or unspecified, the command's standard output will be selected
+    #   When container.type is 'podman', this needs to be used along with the container.volumes configuration below
+    #results: "/path/to/results"
 
     # this config is used when container.type is not 'podman'
-    # toolDir: scanners/generic/tools
-    # inline: "<command to run>"
+    #toolDir: scanners/generic/tools
+    inline: "<command to run>"
 
     # this config is only used when container.type is 'podman'
-    # container:
-        #parameters:
-        # Mandatory: image name to run
-        #image: "<container image name>"
+    #container:
+      #parameters:
+      # Mandatory: image name to run
+      #image: "<container image name>"
 
-        # Optional: command to run. By default, the image's ENTRYPOINT will be run
-        #command: "<command to run in the container>"
+      # Optional: command to run. By default, the image's ENTRYPOINT will be run
+      #command: "<command to run in the container>"
 
-        # Optional: inject into an existing Pod
-        #podName: "mypod"
+      # Optional: inject into an existing Pod
+      #podName: "mypod"
 
-        # Optional: list of expected return codes, anything else will be considered as an error. by default: [0]
-        #validReturns: [ 0, 1 ]
+      # Optional: list of expected return codes, anything else will be considered as an error. by default: [0]
+      #validReturns: [ 0, 1 ]
 
-        # Optional: list of volume to mount, e.g.: to retrieve results on the host
-        #volumes:
-        #  - "<host/path>:<guest/path>:Z"   # for Linux
-        #  - "<host/path>:<guest/path>"     # for Mac
+      # Optional: list of volume to mount, e.g.: to retrieve results on the host
+      #volumes:
+      #  - "<host/path>:<guest/path>:Z"   # for Linux
+      #  - "<host/path>:<guest/path>"     # for Mac

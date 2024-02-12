@@ -9,6 +9,17 @@ config:
   # It is intended to keep backward compatibility (newer RapiDAST running an older config)
   configVersion: 5
 
+  # (Optional) configure to export scan results to OWASP Defect Dojo
+  #defectDojo:
+    #url: "https://mydefectdojo.example.com/"
+    # ssl: True|False|/path/to/CA/bundle (default: True). for SSL verification
+    #ssl: True
+    #authorization:
+      #username: "rapidast"
+      #password: "password"
+        # or
+      #token: "abc"
+
 # `application` contains data related to the application, not to the scans.
 application:
   shortName: "MyApp-1.0"
@@ -33,6 +44,7 @@ scanners:
     #   An absolute path to file or directory where results are stored on the host.
     #   if it is "*stdout" or unspecified, the command's standard output will be selected
     #   When container.type is 'podman', this needs to be used along with the container.volumes configuration below
+    #   If the result needs to be sent to DefectDojo, this must be a SARIF format file
     #results: "/path/to/results"
 
     # this config is used when container.type is not 'podman'
@@ -58,3 +70,26 @@ scanners:
       #volumes:
       #  - "<host/path>:<guest/path>:Z"   # for Linux
       #  - "<host/path>:<guest/path>"     # for Mac
+
+    # (Optional) configure to export scan results to OWASP Defect Dojo.
+    # `config.defectDojo` must be configured first.
+    #defectDojoExport:
+      #type: "reimport" # choose between: import, reimport, False (disable export). Default (or other content): re-import if test is set
+      # Parameters contain data that will directly be sent as parameters to DefectDojo's import/reimport endpoints.
+      # For example: commit tag, version, push_to_jira, etc.
+      # See https://demo.defectdojo.org/api/v2/doc/ for a list of possibilities
+      # The minimum set of data is whatever is needed to identify which engagement/test needs to be chosen.
+      # If neither a test ID (`test` parameter), nor product_name and engagement_name were provided, sane default will be attempted:
+      #   - product_name chosen from either application.productName or application.shortName
+      #   - engagement_name:  "RapiDAST" [this way the same engagement will always be chosen, regardless of the scanner]
+      #parameters:
+        #product_name: "My Product"
+        #engagement_name: "RapiDAST"
+        # - or -
+        #engagement: 3   # engagement ID
+        # - or -
+        #test_title: "generic"
+        # - or -
+        #test: 5       # test ID, that will force "reimport" mode
+        # additional options, see https://demo.defectdojo.org/api/v2/doc/ for list
+        #auto_create_context: False  # Optional. set to True to auto-create engagement (requires pr

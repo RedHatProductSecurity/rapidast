@@ -37,7 +37,7 @@ def test_generic_none_inline(test_config):
 
     scanner = GenericNone(config=test_config)
     scanner.setup()
-    assert scanner.generic_cli[0] == "tmp_cmd"
+    assert scanner.generic_cli == "tmp_cmd"
 
 
 def test_generic_none_tool_dir(test_config):

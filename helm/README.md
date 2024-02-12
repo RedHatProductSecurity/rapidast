@@ -2,7 +2,7 @@ RapiDAST scans can be performed by using the Helm chart included in the reposito
 
 The Helm chart uses the official RapiDAST image: `quay.io/redhatproductsecurity/rapidast:latest` based on the code in the `main` branch.
 
-If you want to run a scan with the custom RapiDAST image(e.g. using the latest code in the `development` branch), you'll need to [build your own image](https://github.com/RedHatProductSecurity/rapidast#build-a-rapidast-image) and push it to your container registry. And update [the image section](https://github.com/RedHatProductSecurity/rapidast/blob/development/helm/chart/values.yaml#L5) of your `chart/values.yaml` file, according to your image name and tag. 
+If you want to run a scan with the custom RapiDAST image(e.g. using the latest code in the `development` branch), you'll need to [build your own image](https://github.com/RedHatProductSecurity/rapidast#build-a-rapidast-image) and push it to your container registry. And update [the image section](https://github.com/RedHatProductSecurity/rapidast/blob/development/helm/chart/values.yaml#L5) of your `chart/values.yaml` file, according to your image name and tag.
 
 In addition, `values.yaml` contains various configuration items including a RapiDAST config template and default scan policy. Either you modify it for your environment or override by using `--set-file`, `--set` or `-f`.
 
@@ -45,4 +45,3 @@ rapidast]$ bash helm/results.sh rapidast-pvc /tmp/results/
 When running on OpenShift, make sure that your namespace you are running on has proper privileges for running a pod/container
 
 You'll need to set `secContext: '{"privileged": true}'` at [https://github.com/RedHatProductSecurity/rapidast/blob/development/helm/chart/values.yaml#L14](https://github.com/RedHatProductSecurity/rapidast/blob/development/helm/chart/values.yaml#L14)
-

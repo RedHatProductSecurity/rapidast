@@ -1,6 +1,5 @@
 import logging
 import pprint
-import shlex
 import subprocess
 
 from scanners import State
@@ -89,7 +88,8 @@ class GenericNone(Generic):
 
         logging.info(f"Running a generic scan with the following command:\n{cli}")
 
-        # run the command in the tool_dir
+        # run the command in the tool_dir(cwd)
+        # shell=True is required to run the command in case it contains shell metacharacters such as redirectons
 
         scanning_stdout_results = ""
         with subprocess.Popen(
@@ -98,6 +98,7 @@ class GenericNone(Generic):
             stdout=stdout_store,
             bufsize=1,
             universal_newlines=True,
+            shell=True,
         ) as scanning:
             if stdout_store:
                 logging.debug("Storing standard output")
@@ -168,7 +169,5 @@ class GenericNone(Generic):
         """
 
         self.generic_cli = self.my_conf("inline")
-        if isinstance(self.generic_cli, str):
-            self.generic_cli = shlex.split(self.generic_cli)
 
         logging.debug(f"generic will run with: {self.generic_cli}")

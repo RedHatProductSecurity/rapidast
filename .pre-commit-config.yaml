@@ -39,6 +39,7 @@ repos:
   # R0801: Similar lines in 2 files. Disabled because it flags any file even those which are unrelated
   # R1705: Unnecessary "elif" after "return", remove the leading "el" from "elif" (no-else-return)
   # R1710: Either all return statements in a function should return an expression, or none of them should. (inconsistent-return-statements)
+
   - repo: https://github.com/PyCQA/pylint
     #rev: v3.0.3
     rev: v2.17.4

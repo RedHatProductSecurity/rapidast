@@ -59,8 +59,8 @@ def scan_with_k8s_config(cfg_file_path, ipaddr, port):
         raise Exception("no spec found")
 
     # test each spec
-    for sitem in spec.keys():
-        cmd = f"sed 's/{sitem}:.*/{sitem}: \"curl {ipaddr}:{port}\\/{sitem}\"/g' {cfg_file_path} > {tmp_file}"
+    for item in spec.keys():
+        cmd = f"sed 's/{item}:.*/{item}: \"echo oobt; curl {ipaddr}:{port}\\/{item}\"/g' {cfg_file_path} > {tmp_file}"
         print(f"Command run: {cmd}")
         os.system(cmd)
 
@@ -106,8 +106,6 @@ def start_socket_listener(port, shared_queue, data_received, stop_event, duratio
 
             data_received.set()
 
-            # Stop the listener after the first request
-            stop_event.set()
             break
 
     except TimeoutError:
@@ -124,7 +122,7 @@ def start_socket_listener(port, shared_queue, data_received, stop_event, duratio
             server_socket.close()
 
 
-def convert_to_sarif_json(result_message, tool_name, artifact_url="", snippet=""):
+def _convert_to_sarif_json(result_message, tool_name, artifact_url="", snippet=""):
     sarif_output = {
         "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
         "version": "2.1.0",
@@ -159,6 +157,24 @@ def convert_to_sarif_json(result_message, tool_name, artifact_url="", snippet=""
     return json.dumps(sarif_output)
 
 
+def get_sarif_output(shared_queue):
+    result_message = f"{MESSAGE_DETECTED}"
+    tool = "RapiDAST-oobtkube"
+
+    kubernetes_api_url = get_kubernetes_api_url()
+    if kubernetes_api_url:
+        print("Kubernetes API URL:", kubernetes_api_url)
+        artifact_url = kubernetes_api_url
+    else:
+        print("Failed to retrieve Kubernetes API URL.")
+        artifact_url = "a target k8s operator"
+
+    snippet = "\n".join(get_all_items_in_queue(shared_queue))
+    print("Request received:", snippet)
+
+    return _convert_to_sarif_json(result_message, tool, artifact_url, snippet)
+
+
 def get_kubernetes_api_url():
     try:
         # Run kubectl cluster-info command and capture the output
@@ -182,6 +198,13 @@ def get_kubernetes_api_url():
         # Handle error if kubectl command fails
         print("Error:", e)
         return None
+
+
+def get_all_items_in_queue(q):
+    items = []
+    while not q.empty():
+        items.append(q.get())
+    return items
 
 
 # pylint: disable=R0915
@@ -221,6 +244,11 @@ def main():
         type=str,
         help="Output result to a file in the SARIF format (default: stdout)",
     )
+    parser.add_argument(
+        "--find-all",
+        action="store_true",
+        help="Test all the parameters even if one is found vulnerable",
+    )
 
     args = parser.parse_args()
 
@@ -232,10 +260,13 @@ def main():
     if not os.path.exists(args.filename):
         raise FileNotFoundError(f"The file '{args.filename}' does not exist.")
 
+    # Init variables
+    data_has_been_received = False
+    shared_queue = queue.Queue()
+
     # Create a few threading events
     data_received = threading.Event()
     stop_event = threading.Event()
-    shared_queue = queue.Queue()
 
     # Start socket listener in a separate thread
     socket_listener_thread = threading.Thread(
@@ -265,40 +296,35 @@ def main():
         time.sleep(1)  # Adjust the sleep duration as needed
         elapsed_time_main = time.time() - start_time_main
         if elapsed_time_main >= args.duration:
-            print(f"Program running for {elapsed_time_main} seconds. Exiting...")
+            print(f"The duration of {args.duration} seconds has reached. Exiting...")
             stop_event.set()
+
+        if data_received.is_set():
+            sarif_output = get_sarif_output(shared_queue)
+
+            if args.output:
+                with open(args.output, "w", encoding="utf-8") as f:
+                    f.write(sarif_output)
+            else:
+                print(f"OOBTKUBE RESULT: {MESSAGE_DETECTED}")
+                print(sarif_output)
+
+            data_has_been_received = True
+
+            if args.find_all:
+                data_received.clear()
+            else:
+                stop_event.set()
+                break
 
     # Wait for the socket listener thread to finish or timeout
     socket_listener_thread.join()
 
-    if data_received.is_set():
-        result_message = f"{MESSAGE_DETECTED}"
-        tool = "RapiDAST-oobtkube"
-
-        kubernetes_api_url = get_kubernetes_api_url()
-        if kubernetes_api_url:
-            print("Kubernetes API URL:", kubernetes_api_url)
-            artifact_url = kubernetes_api_url
-        else:
-            print("Failed to retrieve Kubernetes API URL.")
-            artifact_url = "a target k8s operator"
-
-        snippet = shared_queue.get()
-        print("Request received:", snippet)
-
-        sarif_output = convert_to_sarif_json(
-            result_message, tool, artifact_url, snippet
-        )
-
-        if args.output:
-            with open(args.output, "w", encoding="utf-8") as f:
-                f.write(sarif_output)
-        else:
-            print(f"OOBTKUBE RESULT: {MESSAGE_DETECTED}")
-            print(sarif_output)
-    else:
+    if not data_has_been_received:
         print(f"OOBTKUBE RESULT: {MESSAGE_NOT_DETECTED}")
-        sys.exit(0)
+
+    print(f"The test ran for {elapsed_time_main} seconds.")
+    sys.exit(0)
 
 
 if __name__ == "__main__":

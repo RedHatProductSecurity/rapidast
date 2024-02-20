@@ -39,37 +39,37 @@ MESSAGE_DETECTED = "OOB REQUEST DETECTED!!"
 MESSAGE_NOT_DETECTED = "No OOB request detected"
 
 
-def get_spec_from_yaml(yaml_file):
-    with open(yaml_file, "r", encoding="utf-8") as file:
-        data = yaml.safe_load(file)
+def find_leaf_keys_and_test(data, original_file, ipaddr, port):
+    tmp_file = "/tmp/oobtkube-test.yaml"
+    for key, value in data.items():
+        if isinstance(value, dict):
+            find_leaf_keys_and_test(value, original_file, ipaddr, port)
+        else:
+            print(f"Testing a leaf key found: '{key}'")
+            cmd = f"sed 's/{key}:.*/{key}: \"echo oobt; curl {ipaddr}:{port}\\/{key}\"/g' {original_file} > {tmp_file}"
+            print(f"Command run: {cmd}")
+            os.system(cmd)
 
-        spec = data.get(
-            "spec", {}
-        )  # If 'spec' key is not present, return an empty dictionary
-        return spec
+            # if using 'apply' and a resource already exists, the command won't run as it returns as 'unchanged'
+            # therefore 'create' and 'replace' are used
+            kube_cmd = f"kubectl create -f {tmp_file} > /dev/null 2>&1; kubectl replace -f {tmp_file}"
+
+            print(f"Command run: {kube_cmd}")
+            os.system(kube_cmd)
 
 
 def scan_with_k8s_config(cfg_file_path, ipaddr, port):
     # Apply Kubernetes config (e.g. CR for Operator, or Pod/resource for webhook)
-    tmp_file = "/tmp/oobtkube-test.yaml"
 
-    spec = get_spec_from_yaml(cfg_file_path)
-    if not spec:
-        # pylint: disable=W0719
-        raise Exception("no spec found")
+    with open(cfg_file_path, "r", encoding="utf-8") as file:
+        yaml_data = yaml.safe_load(file)
+        try:
+            spec_data = yaml_data.get("spec", {})
+            find_leaf_keys_and_test(spec_data, cfg_file_path, ipaddr, port)
 
-    # test each spec
-    for item in spec.keys():
-        cmd = f"sed 's/{item}:.*/{item}: \"echo oobt; curl {ipaddr}:{port}\\/{item}\"/g' {cfg_file_path} > {tmp_file}"
-        print(f"Command run: {cmd}")
-        os.system(cmd)
-
-        # if using 'apply' and a resource already exists, the command won't run as it returns as 'unchanged'
-        # therefore 'create' and 'replace' are used
-        kube_cmd = f"kubectl create -f {tmp_file} > /dev/null 2>&1; kubectl replace -f {tmp_file}"
-
-        print(f"Command run: {kube_cmd}")
-        os.system(kube_cmd)
+        except yaml.YAMLError as e:
+            print("Error parsing YAML:", e)
+            return []
 
 
 def start_socket_listener(port, shared_queue, data_received, stop_event, duration):
@@ -207,6 +207,19 @@ def get_all_items_in_queue(q):
     return items
 
 
+def print_result(sarif_output, file_output=False, message_detected=False):
+    if file_output:
+        with open(file_output, "w", encoding="utf-8") as f:
+            f.write(sarif_output)
+    else:
+        if message_detected:
+            print(f"OOBTKUBE RESULT: {MESSAGE_DETECTED}")
+        else:
+            print(f"OOBTKUBE RESULT: {MESSAGE_NOT_DETECTED}")
+
+        print(sarif_output)
+
+
 # pylint: disable=R0915
 def main():
     # Parse command-line arguments
@@ -302,12 +315,7 @@ def main():
         if data_received.is_set():
             sarif_output = get_sarif_output(shared_queue)
 
-            if args.output:
-                with open(args.output, "w", encoding="utf-8") as f:
-                    f.write(sarif_output)
-            else:
-                print(f"OOBTKUBE RESULT: {MESSAGE_DETECTED}")
-                print(sarif_output)
+            print_result(sarif_output, args.output, True)
 
             data_has_been_received = True
 
@@ -321,7 +329,7 @@ def main():
     socket_listener_thread.join()
 
     if not data_has_been_received:
-        print(f"OOBTKUBE RESULT: {MESSAGE_NOT_DETECTED}")
+        print_result("{}", args.output, False)
 
     print(f"The test ran for {elapsed_time_main} seconds.")
     sys.exit(0)

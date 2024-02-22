@@ -9,6 +9,10 @@ from scanners.generic.tools import oobtkube
 
 @patch("scanners.generic.tools.oobtkube.os.system")
 def test_find_leaf_keys_and_test(mock_system):
+    """
+    Ensure all the leaves are navigated through
+    """
+
     data = {
         "root": {
             "branch": {

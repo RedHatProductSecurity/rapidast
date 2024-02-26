@@ -26,12 +26,18 @@ RUN mkdir -p /opt/firefox /tmp/firefox && \
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
   install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
+## Trivy (https://github.com/aquasecurity/trivy/)
+# Use install.sh to easily specify a particular version & implicitely verify integrity
+RUN curl -LO --create-dirs --output-dir /tmp/trivy/  https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh && \
+  bash /tmp/trivy/install.sh -b /tmp/trivy/ v0.49.1
+
 # Copy artifacts from deps to build RapiDAST
 FROM registry.access.redhat.com/ubi9-minimal
 
 COPY --from=deps /opt/zap /opt/zap
 COPY --from=deps /opt/firefox /opt/firefox
 COPY --from=deps /usr/local/bin/kubectl /usr/local/bin/kubectl
+COPY --from=deps /tmp/trivy/trivy /usr/local/bin/trivy
 
 ENV PATH $PATH:/opt/zap/:/opt/rapidast/:/opt/firefox/
 

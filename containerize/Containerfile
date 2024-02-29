@@ -9,8 +9,8 @@ RUN microdnf install -y tar gzip bzip2 java-11-openjdk nodejs
 
 ## ZAP, build and install scanners in advance (more scanners will be added)
 RUN mkdir -p /opt/zap /tmp/zap && \
-  curl -sfL 'https://github.com/zaproxy/zaproxy/releases/download/v2.13.0/ZAP_2.13.0_Linux.tar.gz' | tar zxvf - -C /tmp/zap && \
-  mv -T /tmp/zap/ZAP_2.13.0 /opt/zap && \
+  curl -sfL 'https://github.com/zaproxy/zaproxy/releases/download/v2.14.0/ZAP_2.14.0_Linux.tar.gz' | tar zxvf - -C /tmp/zap && \
+  mv -T /tmp/zap/ZAP_2.14.0 /opt/zap && \
   ### Update add-ons
   /opt/zap/zap.sh -cmd -silent -addonupdate && \
   ### Copy them to installation directory

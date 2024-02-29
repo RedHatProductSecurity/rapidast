@@ -5,7 +5,7 @@
 # Prepare dependencies
 FROM registry.access.redhat.com/ubi9-minimal AS deps
 
-RUN microdnf install -y tar gzip bzip2 java-11-openjdk
+RUN microdnf install -y tar gzip bzip2 java-11-openjdk nodejs
 
 ## ZAP, build and install scanners in advance (more scanners will be added)
 RUN mkdir -p /opt/zap /tmp/zap && \
@@ -31,6 +31,9 @@ RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/s
 RUN curl -LO --create-dirs --output-dir /tmp/trivy/  https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh && \
   bash /tmp/trivy/install.sh -b /tmp/trivy/ v0.49.1
 
+## redocly (https://github.com/Redocly/redocly-cli)
+RUN mkdir -p /tmp/redocly/node_modules && npm install --prefix /tmp/redocly @redocly/cli@1.9.1
+
 # Copy artifacts from deps to build RapiDAST
 FROM registry.access.redhat.com/ubi9-minimal
 
@@ -38,6 +41,7 @@ COPY --from=deps /opt/zap /opt/zap
 COPY --from=deps /opt/firefox /opt/firefox
 COPY --from=deps /usr/local/bin/kubectl /usr/local/bin/kubectl
 COPY --from=deps /tmp/trivy/trivy /usr/local/bin/trivy
+COPY --from=deps /tmp/redocly/node_modules /opt/redocly/node_modules
 
 ENV PATH $PATH:/opt/zap/:/opt/rapidast/:/opt/firefox/
 
@@ -58,10 +62,11 @@ COPY ./containerize/container_default_config.yaml /opt/rapidast/rapidast-default
 COPY ./containerize/path_rapidast.sh /etc/profile.d/rapidast.sh
 
 ### Install RapiDAST requirements, globally, so that it's available to any user
-RUN microdnf install -y --setopt=install_weak_deps=0 java-11-openjdk shadow-utils gtk3 dbus-glib procps git && \
+RUN microdnf install -y --setopt=install_weak_deps=0 java-11-openjdk shadow-utils gtk3 dbus-glib procps git nodejs npm && \
   microdnf clean all -y && rm -rf /var/cache/dnf /tmp/*  && \
   python3 -m ensurepip --upgrade && \
-  pip3 install --no-cache-dir -r /opt/rapidast/requirements.txt
+  pip3 install --no-cache-dir -r /opt/rapidast/requirements.txt && \
+  ln -s /opt/redocly/node_modules/@redocly/cli/bin/cli.js /usr/local/bin/redocly
 
 ### Allow the `dast` usergroup to make modifications to rapidast
 RUN groupadd dast && \

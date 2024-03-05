@@ -54,7 +54,7 @@ template:
       - name: config-volume
         mountPath: /helm/config
       - name: results-volume
-        mountPath: /home/rapidast/results/
+        mountPath: /zap/results/
     volumes:
       - name: config-volume
         configMap:

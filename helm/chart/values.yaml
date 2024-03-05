@@ -39,6 +39,9 @@ rapidastConfig: |
     # It is intended to keep backward compatibility (newer RapiDAST running an older config)
     configVersion: 4
 
+    # all the results of all scanners will be stored under that location
+    base_results_dir: "/zap/results"
+
   # `application` contains data related to the application, not to the scans.
   application:
     shortName: "MyApp-1.0"

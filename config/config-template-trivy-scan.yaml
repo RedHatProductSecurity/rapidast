@@ -1,0 +1,42 @@
+# This is a configuration template file to perform scans using user-defined container images or scripts
+#
+# Author: Red Hat Product Security
+
+config:
+  # WARNING: `configVersion` indicates the schema version of the config file.
+  # This value tells RapiDAST what schema should be used to read this configuration.
+  # Therefore you should only change it if you update the configuration to a newer schema
+  # It is intended to keep backward compatibility (newer RapiDAST running an older config)
+  configVersion: 5
+
+# `application` contains data related to the application, not to the scans.
+application:
+  shortName: "MyApp-1.0"
+
+# `general` is a section that will be applied to all scanners.
+general:
+  container:
+    # This configures what technology is to be used for RapiDAST to run each scanner.
+    # Currently supported: `podman`  and `none`
+    #   none: Default. RapiDAST runs each scanner in the same host or inside the RapiDAST image container
+    #   podman: RapiDAST orchestrates each scanner on its own using podman
+    # When undefined, relies on rapidast-defaults.yaml, or `none` if nothing is set
+    type: "none"
+
+# `scanners' is a section that configures scanning options
+scanners:
+  generic_trivy:
+    # results:
+    #   An absolute path to file or directory where results are stored on the host.
+    #   if it is "*stdout" or unspecified, the command's standard output will be selected
+    #   When container.type is 'podman', this needs to be used along with the container.volumes configuration below
+    #   If the result needs to be sent to DefectDojo, this must be a SARIF format file
+    #results: "/path/to/results"
+
+    # Example: scan the RapiDAST image
+    inline: "trivy image quay.io/redhatproductsecurity/rapidast"
+
+    container:
+      parameters:
+        # Optional: list of expected return codes, anything else will be considered as an error. by default: [0]
+        validReturns: [ 0 ]

@@ -33,7 +33,7 @@ scanners:
     #   If the result needs to be sent to DefectDojo, this must be a SARIF format file
     #results: "/path/to/results"
 
-    # Example: scan the RapiDAST image
+    # Example: scan the alpine image
     inline: "trivy image alpine:latest"
 
     container:

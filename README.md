@@ -515,6 +515,30 @@ java.lang.OutOfMemoryError: Java heap space
         at org.zaproxy.zap.ZAP.main(ZAP.java:94) ~[zap-2.13.0.jar:2.13.0]
 ```
 
+### ZAP crashed while parsing the OpenAPI due to its size
+
+```
+2024-02-29 19:35:24,526 [main ] INFO  CommandLine - Job openapi started
+2024-02-29 19:35:25,576 [main ] WARN  DeserializationUtils - Error snake-parsing yaml content
+io.swagger.v3.parser.util.DeserializationUtils$SnakeException: Exception safe-checking yaml content  (maxDepth 2000, maxYamlAliasesForCollections 2147483647)
+    at io.swagger.v3.parser.util.DeserializationUtils$CustomSnakeYamlConstructor.getSingleData(DeserializationUtils.java:483) ~[openapi-beta-37.zap:?]
+    at org.yaml.snakeyaml.Yaml.loadFromReader(Yaml.java:493) ~[openapi-beta-37.zap:?]
+.........
+
+2024-02-29 19:35:25,639 [main ] ERROR DeserializationUtils - Error parsing content
+com.fasterxml.jackson.dataformat.yaml.JacksonYAMLParseException: The incoming YAML document exceeds the limit: 3145728 code points.
+ at [Source: (StringReader); line: 49813, column: 50]
+..........
+
+2024-02-29 19:35:25,702 [main ] WARN  OpenAPIV3Parser - Exception while parsing:
+com.fasterxml.jackson.dataformat.yaml.JacksonYAMLParseException: The incoming YAML document exceeds the limit: 3145728 code points.
+ at [Source: (StringReader); line: 49813, column: 50]
+```
+
+Solutions: 
+* If you are using a Swagger v2 definition, try converting it to v3 (OpenAPI)
+* Set a `maxYamlCodePoints` Java proprety with a big value, which can be passed using environment variables (via the `config.environ.envFile` config entry): `_JAVA_OPTIONS=-DmaxYamlCodePoints=99999999`
+
 
 ## Caveats
 

@@ -34,7 +34,7 @@ scanners:
     #results: "/path/to/results"
 
     # Example: scan the RapiDAST image
-    inline: "trivy image quay.io/redhatproductsecurity/rapidast"
+    inline: "trivy image alpine:latest"
 
     container:
       parameters:

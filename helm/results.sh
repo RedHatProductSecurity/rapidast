@@ -29,7 +29,7 @@ spec:
       imagePullPolicy: Always
       volumeMounts:
         - name: results-volume
-          mountPath: /zap/results/
+          mountPath: /opt/rapidast/results
       resources:
         limits:
           cpu: 100m
@@ -46,5 +46,5 @@ EOF
 kubectl --kubeconfig=./kubeconfig apply -f $TMP_DIR/$RANDOM_NAME
 rm $TMP_DIR/$RANDOM_NAME
 kubectl --kubeconfig=./kubeconfig wait --for=condition=Ready pod/$RANDOM_NAME
-kubectl --kubeconfig=./kubeconfig cp $RANDOM_NAME:/zap/results $RESULTS_DIR
+kubectl --kubeconfig=./kubeconfig cp $RANDOM_NAME:/opt/rapidast/results $RESULTS_DIR
 kubectl --kubeconfig=./kubeconfig delete pod $RANDOM_NAME

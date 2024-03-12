@@ -1,0 +1,48 @@
+# This is a configuration template file to perform scans using user-defined container images or scripts
+#
+# Author: Red Hat Product Security
+
+config:
+  # WARNING: `configVersion` indicates the schema version of the config file.
+  # This value tells RapiDAST what schema should be used to read this configuration.
+  # Therefore you should only change it if you update the configuration to a newer schema
+  # It is intended to keep backward compatibility (newer RapiDAST running an older config)
+  configVersion: 5
+
+# `application` contains data related to the application, not to the scans.
+application:
+  shortName: "my-cluster"
+
+# `general` is a section that will be applied to all scanners.
+general:
+  container:
+    # This configures what technology is to be used for RapiDAST to run each scanner.
+    # Currently supported: `podman`  and `none`
+    #   none: Default. RapiDAST runs each scanner in the same host or inside the RapiDAST image container
+    #   podman: RapiDAST orchestrates each scanner on its own using podman
+    # When undefined, relies on rapidast-defaults.yaml, or `none` if nothing is set
+    type: "none"
+
+# `scanners' is a section that configures scanning options
+scanners:
+  generic_trivy:
+    # results:
+    #   An absolute path to file or directory where results are stored on the host.
+    #   if it is "*stdout" or unspecified, the command's standard output will be selected
+    #   When container.type is 'podman', this needs to be used along with the container.volumes configuration below
+    #   If the result needs to be sent to DefectDojo, this must be a SARIF format file
+    #results: "/path/to/results"
+
+    # Example: scan a k8s cluster for misconfiguration issue
+    #  - kubeconfig file for the cluster is required
+    #  - See https://aquasecurity.github.io/trivy/v0.49/docs/target/kubernetes/ for more information on 'trivy k8s' scan
+    #  - scanners/generic/tools/convert_trivy_k8s_to_sarif.py converts the Trivy json result to the SARIF format
+    # 'inline' is used when container.type is not 'podman'
+    # 'toolDir' specifies the default directory where inline scripts are located
+    #toolDir: scanners/generic/tools
+    inline: "trivy k8s --kubeconfig=/home/rapidast/.kube/config -n default pod --scanners=misconfig --report all --format json -o /tmp/k8s_result.json && python3 convert_trivy_k8s_to_sarif.py -f /tmp/k8s_result.json"
+
+    container:
+      parameters:
+        # Optional: list of expected return codes, anything else will be considered as an error. by default: [0]
+        validReturns: [ 0 ]

@@ -1,0 +1,132 @@
+{
+  "ClusterName": "cluster1",
+  "Resources": [
+    {
+      "Namespace": "default",
+      "Kind": "Pod",
+      "Name": "memcached-sample-68948bc74-5f8sf",
+      "Metadata": {
+        "ImageConfig": {
+          "architecture": "",
+          "created": "0001-01-01T00:00:00Z",
+          "os": "",
+          "rootfs": {
+            "type": "",
+            "diff_ids": null
+          },
+          "config": {}
+        }
+      },
+      "Results": [
+        {
+          "Target": "Pod/memcached-sample-68948bc74-5f8sf",
+          "Class": "config",
+          "Type": "kubernetes",
+          "MisconfSummary": {
+            "Successes": 127,
+            "Failures": 2,
+            "Exceptions": 0
+          },
+          "Misconfigurations": [
+            {
+              "Type": "Kubernetes Security Check",
+              "ID": "KSV001",
+              "AVDID": "AVD-KSV-0014",
+              "Title": "Root file system is not read-only",
+              "Description": "An immutable root file system prevents applications from writing to their local disk. This can limit intrusions, as attackers will not be able to tamper with the file system or write foreign executables to disk.",
+              "Message": "Container 'memcached' of Pod 'memcached-sample-68948bc74-5f8sf' should set 'securityContext.readOnlyRootFilesystem' to true",
+              "Namespace": "builtin.kubernetes.KSV014",
+              "Query": "data.builtin.kubernetes.KSV014.deny",
+              "Resolution": "Change 'containers[].securityContext.readOnlyRootFilesystem' to 'true'.",
+              "Severity": "HIGH",
+              "PrimaryURL": "https://avd.aquasec.com/misconfig/ksv014",
+              "References": [
+                "https://kubesec.io/basics/containers-securitycontext-readonlyrootfilesystem-true/",
+                "https://avd.aquasec.com/misconfig/ksv014"
+              ],
+              "Status": "FAIL",
+              "Layer": {},
+              "CauseMetadata": {
+                "Provider": "Kubernetes",
+                "Service": "general",
+                "StartLine": 37,
+                "EndLine": 63,
+                "Code": {
+                  "Lines": [
+                    {
+                      "Number": 45,
+                      "Content": "          name: memcached",
+                      "IsCause": true,
+                      "Annotation": "",
+                      "Truncated": false,
+                      "Highlighted": "          \u001b[38;5;33mname\u001b[0m: memcached",
+                      "FirstCause": false,
+                      "LastCause": true
+                    },
+                    {
+                      "Number": 46,
+                      "Content": "",
+                      "IsCause": false,
+                      "Annotation": "",
+                      "Truncated": true,
+                      "FirstCause": false,
+                      "LastCause": false
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "Type": "Kubernetes Security Check",
+              "ID": "KSV002",
+              "AVDID": "AVD-KSV-0020",
+              "Title": "Runs with UID \u003c= 10000",
+              "Description": "Force the container to run with user ID \u003e 10000 to avoid conflicts with the host’s user table.",
+              "Message": "Container 'memcached' of Pod 'memcached-sample8-84984bb64b-4b5gf' should set 'securityContext.runAsUser' \u003e 10000",
+              "Namespace": "builtin.kubernetes.KSV020",
+              "Query": "data.builtin.kubernetes.KSV020.deny",
+              "Resolution": "Set 'containers[].securityContext.runAsUser' to an integer \u003e 10000.",
+              "Severity": "LOW",
+              "PrimaryURL": "https://avd.aquasec.com/misconfig/ksv020",
+              "References": [
+                "https://kubesec.io/basics/containers-securitycontext-runasuser/",
+                "https://avd.aquasec.com/misconfig/ksv020"
+              ],
+              "Status": "FAIL",
+              "Layer": {},
+              "CauseMetadata": {
+                "Provider": "Kubernetes",
+                "Service": "general",
+                "StartLine": 37,
+                "EndLine": 63,
+                "Code": {
+                  "Lines": [
+                    {
+                      "Number": 45,
+                      "Content": "          name: memcached",
+                      "IsCause": true,
+                      "Annotation": "",
+                      "Truncated": false,
+                      "Highlighted": "          \u001b[38;5;33mname\u001b[0m: memcached",
+                      "FirstCause": false,
+                      "LastCause": true
+                    },
+                    {
+                      "Number": 46,
+                      "Content": "",
+                      "IsCause": false,
+                      "Annotation": "",
+                      "Truncated": true,
+                      "FirstCause": false,
+                      "LastCause": false
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

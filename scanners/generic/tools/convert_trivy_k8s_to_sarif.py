@@ -37,8 +37,17 @@ def convert_json_to_sarif(json_data):
         ],
     }
 
+    if "Resources" not in json_data:
+        return sarif_template
+
     for res in json_data["Resources"]:
+        if "Results" not in res:
+            continue
+
         for result in res["Results"]:
+            if "Misconfigurations" not in result:
+                continue
+
             artifact_location = result["Target"]
             for misconf in result["Misconfigurations"]:
                 new_report = {

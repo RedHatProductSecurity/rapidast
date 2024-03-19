@@ -1,0 +1,34 @@
+{
+  "ClusterName": "cluster1",
+  "Resources": [
+    {
+      "Namespace": "default",
+      "Kind": "Pod",
+      "Name": "memcached-sample-68948bc74-5f8sf",
+      "Metadata": {
+        "ImageConfig": {
+          "architecture": "",
+          "created": "0001-01-01T00:00:00Z",
+          "os": "",
+          "rootfs": {
+            "type": "",
+            "diff_ids": null
+          },
+          "config": {}
+        }
+      },
+      "Results": [
+        {
+          "Target": "Pod/memcached-sample-68948bc74-5f8sf",
+          "Class": "config",
+          "Type": "kubernetes",
+          "MisconfSummary": {
+            "Successes": 127,
+            "Failures": 0,
+            "Exceptions": 0
+          }
+        }
+      ]
+    }
+  ]
+}

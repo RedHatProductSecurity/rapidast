@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #######################################
 #
-# [POC v0.0.1] OOBT(Out of Band testing) for Kubernetes.
+# [v0.1.0] OOBT(Out of Band testing) for Kubernetes.
 # This is to detect vulnerabilites that can be detected with OOBT such as blind command injection.
 #
 # Current internal workflow:
@@ -23,6 +23,7 @@
 ######################################
 import argparse
 import json
+import logging
 import os
 import queue
 import re
@@ -39,22 +40,87 @@ MESSAGE_DETECTED = "OOB REQUEST DETECTED!!"
 MESSAGE_NOT_DETECTED = "No OOB request detected"
 
 
+class SarifConverter:
+    TOOL_NAME = "RapiDAST-oobtkube"
+    TOOL_VERSION = "0.1.0"
+
+    base_sarif_output = {
+        "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+        "version": "2.1.0",
+        "runs": [
+            {
+                "tool": {"driver": {"name": TOOL_NAME, "version": TOOL_VERSION}},
+                "results": [],
+            }
+        ],
+    }
+
+    def convert_to_sarif_json(self, result_message, artifact_url="", snippet=""):
+        sarif_output = self.base_sarif_output
+        sarif_output["runs"][0]["results"] = [
+            {
+                "level": "error",
+                "locations": [
+                    {
+                        "physicalLocation": {
+                            "artifactLocation": {"uri": artifact_url},
+                            "region": {
+                                "startLine": 1,
+                                "properties": {
+                                    # pylint: disable=C0301
+                                    "startLineFailure": "Resolved invalid start line: 0 - used fallback value instead."
+                                },
+                                "snippet": {"text": snippet},
+                            },
+                        }
+                    }
+                ],
+                "message": {"text": result_message},
+                "ruleId": "RAPIDAST-OOBTKUBE-00001",
+            }
+        ]
+
+        return json.dumps(sarif_output)
+
+    def get_no_result_sarif(self):
+        return json.dumps(self.base_sarif_output)
+
+
+def get_sarif_output(shared_queue):
+    result_message = f"{MESSAGE_DETECTED}"
+
+    kubernetes_api_url = get_kubernetes_api_url()
+    if kubernetes_api_url:
+        logging.debug(f"Kubernetes API URL: {kubernetes_api_url}")
+        artifact_url = kubernetes_api_url
+    else:
+        logging.error("Failed to retrieve Kubernetes API URL.")
+        artifact_url = "a target k8s operator"
+
+    snippet = "\n".join(get_all_items_in_queue(shared_queue))
+    logging.info(f"Request received: {snippet}")
+
+    sarif_conv = SarifConverter()
+
+    return sarif_conv.convert_to_sarif_json(result_message, artifact_url, snippet)
+
+
 def find_leaf_keys_and_test(data, original_file, ipaddr, port):
     tmp_file = "/tmp/oobtkube-test.yaml"
     for key, value in data.items():
         if isinstance(value, dict):
             find_leaf_keys_and_test(value, original_file, ipaddr, port)
         else:
-            print(f"Testing a leaf key found: '{key}'")
+            logging.debug(f"Testing a leaf key found: '{key}'")
             cmd = f"sed 's/{key}:.*/{key}: \"echo oobt; curl {ipaddr}:{port}\\/{key}\"/g' {original_file} > {tmp_file}"
-            print(f"Command run: {cmd}")
+            logging.debug(f"Command run: {cmd}")
             os.system(cmd)
 
             # if using 'apply' and a resource already exists, the command won't run as it returns as 'unchanged'
             # therefore 'create' and 'replace' are used
             kube_cmd = f"kubectl create -f {tmp_file} > /dev/null 2>&1; kubectl replace -f {tmp_file}"
 
-            print(f"Command run: {kube_cmd}")
+            logging.debug(f"Command run: {kube_cmd}")
             os.system(kube_cmd)
 
 
@@ -68,7 +134,7 @@ def scan_with_k8s_config(cfg_file_path, ipaddr, port):
             find_leaf_keys_and_test(spec_data, cfg_file_path, ipaddr, port)
 
         except yaml.YAMLError as e:
-            print("Error parsing YAML:", e)
+            logging.error(f"Error parsing YAML: {e}")
             return []
 
 
@@ -77,7 +143,7 @@ def start_socket_listener(port, shared_queue, data_received, stop_event, duratio
     try:
         server_socket.bind((SERVER_HOST, port))
     except OSError as e:
-        print(
+        logging.error(
             f"{e}. Stopping the server. It might take a few seconds. Please try again later."
         )
         stop_event.set()
@@ -86,12 +152,12 @@ def start_socket_listener(port, shared_queue, data_received, stop_event, duratio
     server_socket.settimeout(duration)
     server_socket.listen(1)
 
-    print(f"Listening on port {port}")
+    logging.info(f"Listening on port {port}")
 
     try:
         client_socket = None
         client_socket, client_address = server_socket.accept()
-        print(f"Accepted connection from {client_address}")
+        logging.info(f"Accepted connection from {client_address}")
 
         while not stop_event.is_set():
             data = client_socket.recv(1024)
@@ -109,7 +175,7 @@ def start_socket_listener(port, shared_queue, data_received, stop_event, duratio
             break
 
     except TimeoutError:
-        print("Timeout reached. Stopping the server.")
+        logging.debug("Timeout reached. Stopping the server.")
         pass
 
     except Exception as e:
@@ -120,59 +186,6 @@ def start_socket_listener(port, shared_queue, data_received, stop_event, duratio
             client_socket.close()
         if server_socket:
             server_socket.close()
-
-
-def _convert_to_sarif_json(result_message, tool_name, artifact_url="", snippet=""):
-    sarif_output = {
-        "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
-        "version": "2.1.0",
-        "runs": [
-            {
-                "tool": {"driver": {"name": tool_name, "version": "1.0.0"}},
-                "results": [
-                    {
-                        "level": "error",
-                        "locations": [
-                            {
-                                "physicalLocation": {
-                                    "artifactLocation": {"uri": artifact_url},
-                                    "region": {
-                                        "startLine": 1,
-                                        "properties": {
-                                            # pylint: disable=C0301
-                                            "startLineFailure": "Resolved invalid start line: 0 - used fallback value instead."
-                                        },
-                                        "snippet": {"text": snippet},
-                                    },
-                                }
-                            }
-                        ],
-                        "message": {"text": result_message},
-                        "ruleId": "RAPIDAST-OOBTKUBE-00001",
-                    }
-                ],
-            }
-        ],
-    }
-    return json.dumps(sarif_output)
-
-
-def get_sarif_output(shared_queue):
-    result_message = f"{MESSAGE_DETECTED}"
-    tool = "RapiDAST-oobtkube"
-
-    kubernetes_api_url = get_kubernetes_api_url()
-    if kubernetes_api_url:
-        print("Kubernetes API URL:", kubernetes_api_url)
-        artifact_url = kubernetes_api_url
-    else:
-        print("Failed to retrieve Kubernetes API URL.")
-        artifact_url = "a target k8s operator"
-
-    snippet = "\n".join(get_all_items_in_queue(shared_queue))
-    print("Request received:", snippet)
-
-    return _convert_to_sarif_json(result_message, tool, artifact_url, snippet)
 
 
 def get_kubernetes_api_url():
@@ -190,13 +203,13 @@ def get_kubernetes_api_url():
                 if url_match:
                     # Extract and print the URL
                     api_url = url_match.group(1)
-                    print("Kubernetes API server URL:", api_url)
+                    logging.debug(f"Kubernetes API server URL: {api_url}")
                     return api_url
         # Return None if URL is not found
         return None
     except subprocess.CalledProcessError as e:
         # Handle error if kubectl command fails
-        print("Error:", e)
+        logging.error(f"Error: {e}")
         return None
 
 
@@ -213,11 +226,11 @@ def print_result(sarif_output, file_output=False, message_detected=False):
             f.write(sarif_output)
     else:
         if message_detected:
-            print(f"OOBTKUBE RESULT: {MESSAGE_DETECTED}")
+            logging.info(f"OOBTKUBE RESULT: {MESSAGE_DETECTED}")
         else:
-            print(f"OOBTKUBE RESULT: {MESSAGE_NOT_DETECTED}")
+            logging.info(f"OOBTKUBE RESULT: {MESSAGE_NOT_DETECTED}")
 
-        print(sarif_output)
+        logging.info(sarif_output)
 
 
 # pylint: disable=R0915
@@ -262,11 +275,20 @@ def main():
         action="store_true",
         help="Test all the parameters even if one is found vulnerable",
     )
+    parser.add_argument(
+        "--log-level",
+        dest="loglevel",
+        choices=["debug", "info", "warning", "error"],
+        default="info",
+        help="Level of verbosity",
+    )
 
     args = parser.parse_args()
+    args.loglevel = args.loglevel.upper()
+    logging.basicConfig(format="%(levelname)s: %(message)s", level=args.loglevel)
 
     if not args.filename:
-        print("Error: Please provide a filename using the --filename option.")
+        logging.error("Error: Please provide a filename using the --filename option.")
         sys.exit(1)
 
     # Check if the file exists before creating a thread
@@ -288,15 +310,17 @@ def main():
     )
     socket_listener_thread.start()
 
+    logging.info(f"OOBTKUBE test started, with duration set to {args.duration} seconds")
+
     # Wait for a while to ensure the socket listener is up
     # You may need to adjust this delay based on your system
     time.sleep(5)
 
     if stop_event.is_set():
-        print("Socket listener failed to start. Exiting...")
+        logging.error("Socket listener failed to start. Exiting...")
         sys.exit(1)
 
-    print("Listener thread started")
+    logging.debug("Listener thread started")
 
     # Record the start time for the main function
     start_time_main = time.time()
@@ -309,7 +333,9 @@ def main():
         time.sleep(1)  # Adjust the sleep duration as needed
         elapsed_time_main = time.time() - start_time_main
         if elapsed_time_main >= args.duration:
-            print(f"The duration of {args.duration} seconds has reached. Exiting...")
+            logging.debug(
+                f"The duration of {args.duration} seconds has reached. Exiting..."
+            )
             stop_event.set()
 
         if data_received.is_set():
@@ -329,9 +355,10 @@ def main():
     socket_listener_thread.join()
 
     if not data_has_been_received:
-        print_result("{}", args.output, False)
+        sarif_converter = SarifConverter()
+        print_result(sarif_converter.get_no_result_sarif(), args.output, False)
 
-    print(f"The test ran for {elapsed_time_main} seconds.")
+    logging.info(f"The test ran for {elapsed_time_main} seconds.")
     sys.exit(0)
 
 

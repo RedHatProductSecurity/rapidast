@@ -82,16 +82,16 @@ def authenticated_download_with_rtoken(url, dest, auth, proxy=None):
     session = requests.Session()
 
     # get a token
+    token = oauth2_get_token_from_rtoken(auth, proxy, session)
+    if not token:
+        return False
+    authenticated_headers = {"Authorization": f"Bearer {token}"}
+
     if proxy:
         proxy = {
             "https": f"http://{proxy['proxyHost']}:{proxy['proxyPort']}",
             "http": f"http://{proxy['proxyHost']}:{proxy['proxyPort']}",
         }
-    token = oauth2_get_token_from_rtoken(auth, proxy, session)
-    if not token:
-        return False
-
-    authenticated_headers = {"Authorization": f"Bearer {token}"}
 
     resp = session.get(url, proxies=proxy, headers=authenticated_headers)
 

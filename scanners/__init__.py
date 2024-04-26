@@ -1,6 +1,7 @@
 import importlib
 import logging
 import os
+import shutil
 import tempfile
 from enum import Enum
 from pprint import pformat
@@ -27,6 +28,10 @@ class RapidastScanner:
             self.config.get("config.results_dir", default="results"), self.ident
         )
 
+        # When requested to create a temporary file or directory, it will be a subdir of
+        # this temporary directory
+        self.main_temp_dir = None
+
     def my_conf(self, path, *args, **kwargs):
         """Handy shortcut to get the scanner's configuration.
         Only for within `scanners.<scanner>`
@@ -43,13 +48,37 @@ class RapidastScanner:
         return pformat(vars(self), indent=4, width=1)
 
     def _create_temp_dir(self, name="X"):
-        """This function simply creates a temporary directory aiming at storing data in transit.
-        This directory must be manually deleted by the caller during cleanup.
-        Descendent classes *may* overload this directory (e.g.: if they can't map /tmp)
         """
-        temp_dir = tempfile.mkdtemp(prefix=f"rapidast_{self.ident}_{name}_")
-        logging.debug(f"Temporary directory created in host: {temp_dir}")
+        This function creates a temporary directory aiming at storing data used by the scanner
+        Then create subdirectories based on the name given, under that temporary
+        Return the full path to that location.
+
+        Example:
+        -> on first call, `zap._create_temp_dir(name="home")`
+           will create /tmp/rapidast_zap_RanD0m/home/
+        -> on second call, `zap._create_temp_dir(name="work")`
+           will create /tmp/rapidast_zap_RanD0m/work/
+
+        The /tmp/rapidast_zap_RanD0m/ directory will be removed in cleanup()
+        """
+        # first call: create a temporary dir
+        if not self.main_temp_dir:
+            self.main_temp_dir = tempfile.mkdtemp(prefix=f"rapidast_{self.ident}_")
+            logging.debug(f"Temporary directory created in host: {self.main_temp_dir}")
+
+        temp_dir = os.path.join(self.main_temp_dir, name)
+        os.mkdir(temp_dir)
         return temp_dir
+
+    def cleanup(self):
+        """Generic Scanner cleanup: should be called only via super() inheritance
+        Deletes the _create_temp_dir() parent directory
+        """
+        if self.main_temp_dir:
+            logging.debug(f"Deleting temp directories {self.main_temp_dir}")
+            shutil.rmtree(self.main_temp_dir)
+        else:
+            logging.debug("No temporary file to cleanup")
 
 
 def str_to_scanner(name, method):

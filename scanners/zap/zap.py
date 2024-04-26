@@ -98,17 +98,6 @@ class Zap(RapidastScanner):
                 # log path is like '/tmp/rapidast_*/zap.log'
                 tar.add(log, f"evidences/zap_logs/{log.split('/')[-1]}")
 
-    def cleanup(self):
-        """Generic ZAP cleanup: should be called only via super() inheritance
-        Deletes home and work directory
-        """
-
-        logging.debug(
-            f"Deleting temp directories {self.host_work_dir} and {self.host_home_dir}"
-        )
-        shutil.rmtree(self.host_work_dir)
-        shutil.rmtree(self.host_home_dir)
-
     def data_for_defect_dojo(self):
         """Return a tuple containing:
         1) Metadata for the test (dictionary)

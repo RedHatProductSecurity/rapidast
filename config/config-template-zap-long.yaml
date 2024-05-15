@@ -123,7 +123,7 @@ scanners:
 
     container:
       parameters:
-        image: "docker.io/owasp/zap2docker-stable:latest" # for type such as podman
+        image: "ghcr.io/zaproxy/zaproxy:stable" # for type such as podman
         #podName: "mypod"  # optional: inject ZAP in an existing Pod
 
         executable: "zap.sh"  # for Linux

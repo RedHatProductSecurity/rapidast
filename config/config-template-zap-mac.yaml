@@ -52,7 +52,7 @@ scanners:
 
     container:
       parameters:
-        image: "docker.io/owasp/zap2docker-stable:latest" # for type such as podman
+        image: "ghcr.io/zaproxy/zaproxy:stable" # for type such as podman
         executable: "/Applications/OWASP ZAP.app/Contents/Java/zap.sh"    # for MacOS, when general.container.type is 'none' only, need to download OWASP ZAP https://www.zaproxy.org/download/
 
     miscOptions:

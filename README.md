@@ -174,8 +174,30 @@ Then the product, as well as an engagement for that product, must be created in 
 
 #### DefectDojo configuration in RapiDAST
 
-##### Authentication
-First, RapiDAST needs to be able to authenticate itself to a DefectDojo service. This is a typical configuration:
+There are 2 parts to this:
+- First: choose the exporter and configure an authenticating method
+- Second: choose what data to export
+
+The next 2 chapters will describe the 2 exports, and the 3rd one the data to be exported
+
+
+##### Using Google Cloud Storage export
+
+This simply stores the data as a compressed tarball in a Google Cloud Storage bucket.
+
+```yaml
+config:
+  # Defect dojo configuration
+  googleCloudStorage:
+    keyFile: "/path/to/GCS/key"                           # optional: path to the GCS key file (alternatively: use GOOGLE_APPLICATION_CREDENTIALS)
+    bucketName: "<name-of-GCS-bucket-to-export-to>"       # Mandatory
+    directory: "<override-of-default-directory>"          # Optional directory where the credentials have write access, defaults to `RapiDAST-<product>`
+```
+
+
+##### Directly to Defect Dojo
+
+RapiDAST will send the results directly to a DefectDojo service. This is a typical configuration:
 
 ```yaml
 config:
@@ -226,8 +248,8 @@ scanners:
 ## Execution
 
 Once you have created a configuration file, you can run a scan with it.
-```
-$ rapidast.py --config <your-config.yaml>
+```sh
+$ rapidast.py --config "<your-config.yaml>"
 ```
 
 There are more options.
@@ -535,7 +557,7 @@ com.fasterxml.jackson.dataformat.yaml.JacksonYAMLParseException: The incoming YA
  at [Source: (StringReader); line: 49813, column: 50]
 ```
 
-Solutions: 
+Solutions:
 * If you are using a Swagger v2 definition, try converting it to v3 (OpenAPI)
 * Set a `maxYamlCodePoints` Java proprety with a big value, which can be passed using environment variables (via the `config.environ.envFile` config entry): `_JAVA_OPTIONS=-DmaxYamlCodePoints=99999999`
 

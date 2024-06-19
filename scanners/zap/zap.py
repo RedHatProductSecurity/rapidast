@@ -133,9 +133,7 @@ class Zap(RapidastScanner):
             # No test ID provided, so we need to make sure there is enough info
             # But we can't make it default (they should not be filled if there is a test ID
             if not data.get("product_name"):
-                data["product_name"] = self.config.get(
-                    "application.ProductName"
-                ) or self.config.get("application.shortName")
+                data["product_name"] = self.config.get_official_app_name()
             if not data.get("engagement_name"):
                 data["engagement_name"] = "RapiDAST"
 
@@ -595,8 +593,13 @@ class Zap(RapidastScanner):
     def _should_export_to_defect_dojo(self):
         """Return a truthful value if Defect Dojo export is configured and not disbaled"""
         return (
-            self.my_conf("defectDojoExport", default=False) is not False
-            and self.my_conf("defectDojoExport.type", default=False) is not False
+            ( (self.my_conf("defectDojoExport.parameters.product_name") or
+               self.config.get_official_app_name())
+               and
+              self.my_conf("defectDojoExport.parameters.engagement_name") 
+            ) or
+            self.my_conf("defectDojoExport.parameters.engagement") or
+            self.my_conf("defectDojoExport.parameters.test")
         )
 
     def _setup_report(self):

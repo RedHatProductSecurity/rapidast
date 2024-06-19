@@ -159,7 +159,7 @@ class DefectDojo:
         )
 
     def import_scan(self, data, filename):
-        """Import to an existing engagement."""
+        """export to an existing engagement, via the `import-scan` endpoint."""
 
         if not data.get("engagement") and not (
             data.get("engagement_name") and data.get("product_name")
@@ -172,7 +172,7 @@ class DefectDojo:
             f"{self.base_url}/api/v2/import-scan/", data, filename
         )
 
-    def import_or_reimport_scan(self, data, filename):
+    def export_scan(self, data, filename):
         """Decide wether to import or reimport. Based on:
         - If the data contains a test ID ("test"): it's a reimport
         - Otherwise import

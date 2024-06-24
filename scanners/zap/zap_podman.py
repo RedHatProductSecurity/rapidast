@@ -21,7 +21,7 @@ class ZapPodman(Zap):
     # PRIVATE CONSTANTS                                           #
     # Accessed by ZapPodman only                                  #
     ###############################################################
-    DEFAULT_IMAGE = "docker.io/owasp/zap2docker-stable:latest"
+    DEFAULT_IMAGE = "ghcr.io/zaproxy/zaproxy:stable"
 
     ###############################################################
     # PROTECTED CONSTANTS                                         #

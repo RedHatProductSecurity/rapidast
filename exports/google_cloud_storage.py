@@ -35,7 +35,6 @@ class GoogleCloudStorage:
         metadata = {
             "scan_type": data["scan_type"],
             "uuid": str(uuid.uuid1()),
-            "test_description": "This test was executed by RapiDAST",
             "import_data": data,
         }
 

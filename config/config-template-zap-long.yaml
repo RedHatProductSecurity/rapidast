@@ -23,7 +23,7 @@ config:
   googleCloudStorage:
     keyFile: "/path/to/GCS/key"                           # optional: path to the GCS key file (alt.: use GOOGLE_APPLICATION_CREDENTIALS)
     bucketName: "<name-of-GCS-bucket-to-export-to>"       # Mandatory
-    directory: "<override-of-default-directory>"          # Optional, default will be computed if empty
+    directory: "<override-of-default-directory>"          # Optional, defaults to `RapiDAST-{app_name}`
 
 
 

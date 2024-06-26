@@ -15,7 +15,7 @@ from google.cloud import storage
 
 class GoogleCloudStorage:
     """
-    Sends the results to a Google Cloud Storage bucket, for future use in DefectDojo
+    Sends the results to a Google Cloud Storage bucket
     """
 
     def __init__(self, bucket_name, app_name, directory=None, keyfile=None):
@@ -51,7 +51,7 @@ class GoogleCloudStorage:
         """
         if not data or not filename:
             # missing data means nothing to do
-            logging.debug("Insufficient data for Defect Dojo")
+            logging.debug("Insufficient data")
             return 1
 
         metadata = self.create_metadata(data)

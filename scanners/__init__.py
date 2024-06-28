@@ -1,3 +1,4 @@
+import datetime
 import importlib
 import logging
 import os
@@ -43,6 +44,66 @@ class RapidastScanner:
         Only for within `scanners.<scanner>`
         """
         return self.config.set(f"scanners.{self.ident}.{path}", *args, **kwargs)
+
+    def _should_export_to_defect_dojo(self):
+        """Return a truthful value if Defect Dojo export is configured and not disbaled
+        Returns True if:
+        - an global export is configured (config.googleCloudStorage or config.defectDojo)
+        - this particular scanner's export is not explicitely disabled (`defectDojoExport` is not False)
+        """
+        return self.my_conf("defectDojoExport") is not False and (
+            self.config.get("config.googleCloudStorage")
+            or self.config.get("config.defectDojo")
+        )
+
+    def _fill_up_data_for_defect_dojo(self, data):
+        """
+        Parent / common code for extracting data for defectdojo.
+        This code should be called by the scanner's data_for_defect_dojo()
+        Assumptions:
+        - data["scan_type"] is already set
+        """
+        # default values
+        default = {
+            "product_name": self.config.get_official_app_name(),
+            "active": True,
+            "verified": False,
+        }
+        for key, value in default.items():
+            if key not in data:
+                data[key] = value
+
+        # lists of configured import parameters
+        params_root = "defectDojoExport.parameters"
+        import_params = self.my_conf(params_root, default={}).keys()
+
+        # overload that list onto the defaults
+        for param in import_params:
+            data[param] = self.my_conf(f"{params_root}.{param}")
+
+        if data.get("test") is not None:
+            # A test ID is provided: it takes precedence.
+            # This is a reimport
+            # remove unnecessary data
+            for e in ("product_name", "engagement_name", "engagement"):
+                if e in data:
+                    del data[e]
+        elif data.get("engagement") is not None:
+            # An engagement ID is provided
+            # remove unnecessary data
+            for e in ("product_name", "engagement_name"):
+                if e in data:
+                    del data[e]
+        else:
+            # Neither test of engagement IDs provided: make sure there is enough data for import
+            # A default product name was chosen as part of `self.get_default_defectdojo_data()`
+            # Generate an engagement name if none are set
+            if not data.get("engagement_name"):
+                data[
+                    "engagement_name"
+                ] = f"RapiDAST-{data['product_name']}-{datetime.date.today()}"
+
+        return data
 
     def __repr__(self):
         return pformat(vars(self), indent=4, width=1)

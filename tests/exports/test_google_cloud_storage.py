@@ -1,9 +1,8 @@
 import pytest
 
-from unittest.mock import Mock
-from unittest.mock import MagicMock
-from unittest.mock import patch
-from unittest import TestCase
+from unittest.mock import Mock, MagicMock, patch, mock_open
+
+import datetime
 
 from exports.google_cloud_storage import GoogleCloudStorage
 
@@ -52,7 +51,17 @@ def test_GCS_create_metadata(mock_uuid, mock_client):
 
 
 @patch("exports.google_cloud_storage.storage.Client")
-def test_GCS_export_scan(MockClient):
+@patch("exports.google_cloud_storage.datetime.datetime")
+@patch("exports.google_cloud_storage.random.choices")
+def test_GCS_export_scan(MockRandom, MockDateTime, MockClient):
+    # Forcing the random
+    MockRandom.return_value = "abcdef"
+
+    # Forcing the date
+    mock_now = MagicMock()
+    mock_now.isoformat.return_value = '2024-01-31T00:00:00'
+    MockDateTime.now.return_value = mock_now
+
     # catching the Client
     mock_client = MagicMock()
     MockClient.return_value = mock_client
@@ -65,6 +74,10 @@ def test_GCS_export_scan(MockClient):
     mock_blob = MagicMock()
     mock_bucket.blob.return_value = mock_blob
 
+    # catching the data written to the blob
+    mock_open_method = mock_open()
+    mock_blob.open = mock_open_method
+
     gcs = GoogleCloudStorage("bucket_name", "app_name", "directory_name")
 
     import_data = {
@@ -75,5 +88,6 @@ def test_GCS_export_scan(MockClient):
     # hack: use the pytest file itself as a scan
     gcs.export_scan(import_data, __file__)
 
-    mock_blob.open.assert_called_once_with(mode="wb")
+    mock_bucket.blob.assert_called_once_with("directory_name/2024-01-31T00:00:00-RapiDAST-app_name-abcdef.tgz")
 
+    mock_open_method.assert_called_once_with(mode="wb")

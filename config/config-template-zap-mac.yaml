@@ -32,7 +32,7 @@ general:
     #   none: Default. RapiDAST runs each scanner in the same host or inside the RapiDAST image container
     #   podman: RapiDAST orchestrates each scanner on its own using podman
     # When undefined, relies on rapidast-defaults.yaml, or `none` if nothing is set
-    #type: "none"
+    type: "none"
 
 scanners:
   zap:
@@ -53,7 +53,7 @@ scanners:
     container:
       parameters:
         image: "ghcr.io/zaproxy/zaproxy:stable" # for type such as podman
-        executable: "/Applications/OWASP ZAP.app/Contents/Java/zap.sh"    # for MacOS, when general.container.type is 'none' only, need to download OWASP ZAP https://www.zaproxy.org/download/
+        executable: "/Applications/ZAP.app/Contents/Java/zap.sh" # the path to ZAP for MacOS, used when general.container.type is 'none'. Installing ZAP is required from https://www.zaproxy.org/download/
 
     miscOptions:
       # List (comma-separated string or list) of additional addons to install

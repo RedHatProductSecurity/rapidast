@@ -41,8 +41,8 @@ repos:
   # R1710: Either all return statements in a function should return an expression, or none of them should. (inconsistent-return-statements)
 
   - repo: https://github.com/PyCQA/pylint
-    #rev: v3.0.3
-    rev: v2.17.4
+    rev: v3.0.3
+    #rev: v2.17.4
     hooks:
       - id: pylint
         exclude: ^tests/

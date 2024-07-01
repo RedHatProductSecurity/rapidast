@@ -176,6 +176,14 @@ class RapidastConfigModel:
 
         deep_dict_merge(sub_conf, merge, preserve)
 
+    def get_official_app_name(self):
+        """ Shortcut: 
+        Return a string corresponding to how the application should be called
+        Based on the configuratoin.
+        Prefer the full product name, but defer to short name if unavailable
+        """
+        return self.get("application.ProductName") or self.get("application.shortName")
+
     def __repr__(self):
         return pformat(vars(self), indent=4, width=1)
 

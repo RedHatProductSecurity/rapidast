@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 import configmodel.converter
 import scanners
 from exports.defect_dojo import DefectDojo
+from exports.google_cloud_storage import GoogleCloudStorage
 from utils import add_logging_level
 
 pp = pprint.PrettyPrinter(indent=4)
@@ -55,7 +56,7 @@ def load_config_file(config_file_location: str):
         return open(config_file_location, mode="r", encoding="utf-8")
 
 
-def run_scanner(name, config, args, defect_d):
+def run_scanner(name, config, args, scan_exporter):
     """given the config `config`, runs scanner `name`.
     Returns:
         0 for success
@@ -116,10 +117,10 @@ def run_scanner(name, config, args, defect_d):
         scanner.cleanup()
 
     # Part 6: export to defect dojo, if the scanner is compatible
-    if defect_d and hasattr(scanner, "data_for_defect_dojo"):
+    if scan_exporter and hasattr(scanner, "data_for_defect_dojo"):
         logging.info("Exporting results to the Defect Dojo service as configured")
 
-        if defect_d.import_or_reimport_scan(*scanner.data_for_defect_dojo()) == 1:
+        if scan_exporter.export_scan(*scanner.data_for_defect_dojo()) == 1:
             logging.error("Exporting results to DefectDojo failed")
             return 1
 
@@ -191,10 +192,19 @@ def run():
     # Do early: load the environment file if one is there
     load_environment(config)
 
-    # Prepare Defect Dojo if configured
-    defect_d = None
-    if config.get("config.defectDojo.url"):
-        defect_d = DefectDojo(
+    # Prepare an export to Defect Dojo if one is configured.
+    scan_exporter = None
+    if config.get("config.googleCloudStorage.bucketName"):
+        scan_exporter = GoogleCloudStorage(
+            bucket_name=config.get(
+                "config.googleCloudStorage.bucketName", "default-bucket-name"
+            ),
+            app_name=config.get_official_app_name(),
+            directory=config.get("config.googleCloudStorage.directory", None),
+            keyfile=config.get("config.googleCloudStorage.keyFile", None),
+        )
+    elif config.get("config.defectDojo.url"):
+        scan_exporter = DefectDojo(
             config.get("config.defectDojo.url"),
             {
                 "username": config.get(
@@ -213,7 +223,7 @@ def run():
     for name in config.get("scanners"):
         logging.info(f"Next scanner: '{name}'")
 
-        ret = run_scanner(name, config, args, defect_d)
+        ret = run_scanner(name, config, args, scan_exporter)
         if ret == 1:
             logging.info(f"scanner: '{name}' failed")
             scan_error_count = scan_error_count + 1

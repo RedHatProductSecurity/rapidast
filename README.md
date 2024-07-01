@@ -172,10 +172,32 @@ In order to do that:
 
 Then the product, as well as an engagement for that product, must be created in your DefectDojo instance. It would not be advised to give the RapiDAST user an "admin" role and simply set `auto_create_context` to True, as it would be both insecure and accident prone (a typo in the product name would let RapiDAST create a new product)
 
-#### DefectDojo configuration in RapiDAST
+#### Exporting data to external services
 
-##### Authentication
-First, RapiDAST needs to be able to authenticate itself to a DefectDojo service. This is a typical configuration:
+There are 2 parts to this:
+- First: choose the exporter and configure an authenticating method
+- Second: choose what data to export
+
+The next 2 chapters will describe the 2 exports, and the 3rd one the configuration of data to be exported
+
+
+##### Using Google Cloud Storage export
+
+This simply stores the data as a compressed tarball in a Google Cloud Storage bucket.
+
+```yaml
+config:
+  # Defect dojo configuration
+  googleCloudStorage:
+    keyFile: "/path/to/GCS/key"                           # optional: path to the GCS key file (alternatively: use GOOGLE_APPLICATION_CREDENTIALS)
+    bucketName: "<name-of-GCS-bucket-to-export-to>"       # Mandatory
+    directory: "<override-of-default-directory>"          # Optional directory where the credentials have write access, defaults to `RapiDAST-<product>`
+```
+
+
+##### Directly to Defect Dojo
+
+RapiDAST will send the results directly to a DefectDojo service. This is a typical configuration:
 
 ```yaml
 config:
@@ -197,37 +219,47 @@ Alternatively, the `REQUESTS_CA_BUNDLE` environment variable can be used to sele
 
 You can either authenticate using a username/password combination, or a token (make sure it is not expired). In either case, you can use the `_from_var` method described in the previous chapter to avoid hardcoding the value in the configuration.
 
-##### Product/engagement/test
+##### Configuration of exported data
 
-Then, RapiDAST needs to know, for each scanner, sufficient information such that it can identify which product/engagement/test to match.
-This is configured in the `zap.scanner.defectDojoExport.parameters` entry. See the `import-scan` or  `reimport-scan` parameters at https://demo.defectdojo.org/api/v2/doc/ for a list of accepted entries.
-Notes:
-    * `engagement` and `test` refer to identifiers, and should be integers (as opposed to `engagement_name` and `test_title`)
-    * If a `test` identifier is provided, RapiDAST will reimport the result to that test. The existing test must be compatible (same file schema, such as ZAP Scan, for example)
-    * If the `product_name` does not exist, the scanner should default to `application.productName`, or `application.shortName`
-    * Tip: the entries common to all scanners can be added to `general.defectDojoExport.parameters`, while the scanner-dependant entries (e.g.: test identifier) can be set in the scanner's configuration (e.g.: `scanners.zap.defectDojoExport.parameters`)
+The data exported follows the Defectdojo methodology of "Product → Engagement → Test" : a test, such as a ZAP scan, belongs to an engagement for a product.
+Its configuration is made under the `scanners.<scanner>.defectDojoExport.parameters` configuration entries. As a baseline, parameters from the Defectdojo `import-scan` and `reimport-scan` are accepted.
+
+For each scan, the logic applied is the following, in order:
+* If a test ID is provided (parameter `test`), this scan will replace the previous one (a "reimport" in Defectdojo)
+* If an engagement ID is provided (parameter `engagement`), this scan will be added as a new test in that existing engagement
+* If an engagement and a product are given by name (`engagement_name` and `product_name` parameters), this scan will be added for that given engagement for the given product
+    - The engagement and the product may be created if they do not exist
+
+In each `defectDojoExport.parameters`, some defaults parameters are applied:
+* `product_name`, in order (the first non empty value found):
+    - `application.productName`
+    - `application.shortName` (this name should not contain non-printable characters, such as spaces)
+* `engagement_name` defaults to `RapiDAST-<product name>-<date>`
+* `scan_type` : filled by the scanner
+* `active`: `True`
+* `verified`: `False`
+
+As a reminder: values from `general` are applied to each scanner.
+
+Here is an example:
 
 ```yaml
-general:
-  defectDojoExport:
-    parameters:
-      productName: "My product"
-      tags: ["RapiDAST"]
-
 scanners:
   zap:
     defectDojoExport:
       parameters:
         test: 34
-        endpoint_to_add: "https://qa.myapp.local/"
+        tags: ["RapiDAST", "ZAP"]
 ```
+
+In the scenario above, the result of the scan will be added to the test ID 34 (i.e.: it will be a reimport), the new test tag list will replace the previous one.
 
 
 ## Execution
 
 Once you have created a configuration file, you can run a scan with it.
-```
-$ rapidast.py --config <your-config.yaml>
+```sh
+$ rapidast.py --config "<your-config.yaml>"
 ```
 
 There are more options.
@@ -535,7 +567,7 @@ com.fasterxml.jackson.dataformat.yaml.JacksonYAMLParseException: The incoming YA
  at [Source: (StringReader); line: 49813, column: 50]
 ```
 
-Solutions: 
+Solutions:
 * If you are using a Swagger v2 definition, try converting it to v3 (OpenAPI)
 * Set a `maxYamlCodePoints` Java proprety with a big value, which can be passed using environment variables (via the `config.environ.envFile` config entry): `_JAVA_OPTIONS=-DmaxYamlCodePoints=99999999`
 

@@ -40,7 +40,8 @@ def test_GCS_create_metadata(mock_uuid, mock_client):
 
     import_data = {
         "scan_type": "ABC",
-        "foo": "bar"
+        "engagement_name": "engagement",
+        "product_name": "product",
     }
 
     meta = gcs.create_metadata(import_data)
@@ -48,6 +49,8 @@ def test_GCS_create_metadata(mock_uuid, mock_client):
     assert meta["scan_type"] == import_data["scan_type"]
     assert meta["uuid"] == "123"
     assert meta["import_data"] == import_data
+    assert meta["import_data"]["engagement_name"] == "engagement"
+    assert meta["import_data"]["product_name"] == "product"
 
 
 @patch("exports.google_cloud_storage.storage.Client")

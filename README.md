@@ -29,7 +29,7 @@ RapiDAST supports executing ZAP on the MacOS host directly only.
 To run RapiDAST on MacOS(See the Configuration section below for more details on configuration):
 
 * Set `general.container.type: "none"` or `scanners.zap.container.type: "none"` in the configuration.
-* Configure `scanners.zap.container.parameters.executable` to the installation path of the `zap.sh` command, because it is not available in the PATH. Usually, its path is `/Applications/OWASP ZAP.app/Contents/Java/zap.sh` on MacOS.
+* Configure `scanners.zap.container.parameters.executable` to the installation path of the `zap.sh` command, because it is not available in the PATH. Usually, its path is `/Applications/ZAP.app/Contents/Java/zap.sh` on MacOS.
 
 Example:
 
@@ -39,7 +39,7 @@ scanners:
     container:
       type: none
       parameters:
-        executable: "/Applications/OWASP ZAP.app/Contents/Java/zap.sh"
+        executable: "/Applications/ZAP.app/Contents/Java/zap.sh"
 ```
 
 ## Installation
@@ -158,30 +158,9 @@ scanners:
 In the example above, the ZAP scanner will first run without authentication, and then rerun again with a basic HTTP authentication.
 The results will be stored in their respective names (i.e.: `zap_unauthenticated` and `zap_authenticated` in the example above).
 
-### DefectDojo integration
+### Exporting data to external services
 
-RapiDAST supports integration with OWASP DefectDojo which is an open source vulnerability management tool.
-
-#### Preamble: creating DefectDojo user
-
-RapiDAST needs to be able to authenticate to your DefectDojo instance. However, ideally, it should have the minimum set of permissions, such that it will not be allowed to modify products other than the one(s) it is supposed to.
-
-In order to do that:
-* create a user without any global role
-* add that user as a "writer" for the product(s) it is supposed to scan
-
-Then the product, as well as an engagement for that product, must be created in your DefectDojo instance. It would not be advised to give the RapiDAST user an "admin" role and simply set `auto_create_context` to True, as it would be both insecure and accident prone (a typo in the product name would let RapiDAST create a new product)
-
-#### Exporting data to external services
-
-There are 2 parts to this:
-- First: choose the exporter and configure an authenticating method
-- Second: choose what data to export
-
-The next 2 chapters will describe the 2 exports, and the 3rd one the configuration of data to be exported
-
-
-##### Using Google Cloud Storage export
+#### Exporting to Google Cloud Storage
 
 This simply stores the data as a compressed tarball in a Google Cloud Storage bucket.
 
@@ -194,8 +173,26 @@ config:
     directory: "<override-of-default-directory>"          # Optional directory where the credentials have write access, defaults to `RapiDAST-<product>`
 ```
 
+Once this is set, scan results will be exported to the bucket automatically. The tarball file will include:
+ 1. metadata.json - the file that contains scan_type, uuid and import_data(could be changed later. Currently this comes from the previous DefectDojo integration feature)
+ 2. scans - the directory that contains scan results
 
-##### Directly to Defect Dojo
+#### Exporting to DefectDojo
+
+RapiDAST supports integration with OWASP DefectDojo which is an open source vulnerability management tool.
+
+##### Preamble: creating DefectDojo user
+
+RapiDAST needs to be able to authenticate to your DefectDojo instance. However, ideally, it should have the minimum set of permissions, such that it will not be allowed to modify products other than the one(s) it is supposed to.
+
+In order to do that:
+* create a user without any global role
+* add that user as a "writer" for the product(s) it is supposed to scan
+
+Then the product, as well as an engagement for that product, must be created in your DefectDojo instance. It would not be advised to give the RapiDAST user an "admin" role and simply set `auto_create_context` to True, as it would be both insecure and accident prone (a typo in the product name would let RapiDAST create a new product)
+
+
+##### Exporting to Defect Dojo
 
 RapiDAST will send the results directly to a DefectDojo service. This is a typical configuration:
 
@@ -228,7 +225,6 @@ For each scan, the logic applied is the following, in order:
 * If a test ID is provided (parameter `test`), this scan will replace the previous one (a "reimport" in Defectdojo)
 * If an engagement ID is provided (parameter `engagement`), this scan will be added as a new test in that existing engagement
 * If an engagement and a product are given by name (`engagement_name` and `product_name` parameters), this scan will be added for that given engagement for the given product
-    - The engagement and the product may be created if they do not exist
 
 In each `defectDojoExport.parameters`, some defaults parameters are applied:
 * `product_name`, in order (the first non empty value found):
@@ -248,12 +244,12 @@ scanners:
   zap:
     defectDojoExport:
       parameters:
-        test: 34
-        tags: ["RapiDAST", "ZAP"]
+        product_name: "My Product"
+        engagement_name: "RapiDAST" # or engagement: <engagement_id>
+        #test: <test_id>
 ```
 
-In the scenario above, the result of the scan will be added to the test ID 34 (i.e.: it will be a reimport), the new test tag list will replace the previous one.
-
+See https://documentation.defectdojo.com/integrations/importing/#api for more information.
 
 ## Execution
 
@@ -517,7 +513,7 @@ See https://github.com/zaproxy/zaproxy/issues/7703 for additional information.
 RapiDAST works around this bug, but with little inconvenients (slower because it has to fix itself and download all the plugins)
 
 - Verify that the host installation directory is missing its plugins.
-e.g., in a MacOS installation, `/Applications/OWASP ZAP.app/Contents/Java/plugin/` will be mostly empty. In particular, no `callhome*.zap` and `network*.zap` file are present.
+e.g., in a MacOS installation, `/Applications/ZAP.app/Contents/Java/plugin/` will be mostly empty. In particular, no `callhome*.zap` and `network*.zap` file are present.
 - Reinstall ZAP, but __DO NOT RUN IT__, as it would delete the plugins. Verify that the directory contains many plugins.
 - `chown` the installation files to root, so that when running ZAP, the application running as the user does not have sufficient permission to delete its own plugins
 

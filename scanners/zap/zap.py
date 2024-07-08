@@ -876,11 +876,11 @@ def find_context(automation_config, context=Zap.DEFAULT_CONTEXT):
     except:
         pass
     logging.warning(
-        f"No context matching {context} have ben found in the current Automation Framework configuration.",
+        f"No context matching {context} have ben found in the current Automation Framework configuration."
         "It may be missing from default. An empty context is created",
     )
     # something failed: create an empty one and return it
-    if not automation_config["env"]:
+    if not automation_config.get("env"):
         automation_config["env"] = {}
     if not automation_config["env"].get("contexts"):
         automation_config["env"]["contexts"] = []

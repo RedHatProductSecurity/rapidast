@@ -154,6 +154,22 @@ class ZapPodman(Zap):
             self.state = State.CLEANEDUP
 
     ###############################################################
+    # OVERLOADED METHODS                                          #
+    # Method overloading parent class                             #
+    ###############################################################
+
+    def _setup_ajax_spider(self):
+        """Ajax requires a lot of shared memory"""
+
+        if self.my_conf("spiderAjax", default=False) is False:
+            return
+
+        self.podman.add_option("--shm-size", "2g")
+
+        # Regular Ajax setup
+        super()._setup_ajax_spider()
+
+    ###############################################################
     # PROTECTED METHODS                                           #
     # Accessed by Zap parent only                                 #
     # + MUST be implemented                                       #

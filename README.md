@@ -567,6 +567,27 @@ Solutions:
 * If you are using a Swagger v2 definition, try converting it to v3 (OpenAPI)
 * Set a `maxYamlCodePoints` Java proprety with a big value, which can be passed using environment variables (via the `config.environ.envFile` config entry): `_JAVA_OPTIONS=-DmaxYamlCodePoints=99999999`
 
+### ZAP's Ajax Spider failing
+
+#### Insufficient shared memory
+
+ZAP's Ajax Spider makes heavy use of shared memory (`/dev/shm/`). When using the RapiDAST image or the ZAP image, the user needs to make sure that sufficient space is available in `/dev/shm/` (in podman, by default, its size is 64MB). A size of 2G would be the minimum recommended. In podman for example, the option would be `--shm-size=2g`.
+
+ZAP logs that would bring evidence of a lack of shared memory would look like the following:
+
+```
+2024-07-04 11:21:32,061 [ZAP-AjaxSpiderAuto] WARN  SpiderThread - Failed to start browser firefox-headless
+com.google.inject.ProvisionException: Unable to provision, see the following errors:
+
+1) [Guice/ErrorInCustomProvider]: SessionNotCreatedException: Could not start a new session. Response code 500. Message: Failed to decode response from marionette
+```
+
+Or the following:
+
+```
+2024-07-04 12:23:28,027 [ZAP-AjaxSpiderAuto] ERROR UncaughtExceptionLogger - Exception in thread "ZAP-AjaxSpiderAuto"
+java.lang.OutOfMemoryError: unable to create native thread: possibly out of memory or process/resource limits reached
+```
 
 ## Caveats
 

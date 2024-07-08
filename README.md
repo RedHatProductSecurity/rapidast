@@ -571,7 +571,7 @@ Solutions:
 
 #### Insufficient shared memory
 
-In Linux, ZAP's Ajax Spider makes heavy use of shared memory (`/dev/shm/`). In such a case, when using the RapiDAST image, the user needs to make sure that sufficient space is available in `/dev/shm/` (by default, podman creates a 64MB directory). A size of 2G would be the minimum recommended. In podman for example, the option would be `--shm-size=2g`.
+In Linux, ZAP's Ajax Spider makes heavy use of shared memory (`/dev/shm/`). When using the RapiDAST image or the ZAP image, the user needs to make sure that sufficient space is available in `/dev/shm/` (in podman, by default, its size is 64MB). A size of 2G would be the minimum recommended. In podman for example, the option would be `--shm-size=2g`.
 
 ZAP logs that would bring evidence of a lack of shared memory would look like the following:
 

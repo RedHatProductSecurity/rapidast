@@ -98,19 +98,8 @@ class Zap(RapidastScanner):
                 # log path is like '/tmp/rapidast_*/zap.log'
                 tar.add(log, f"evidences/zap_logs/{log.split('/')[-1]}")
 
-    def cleanup(self):
-        """Generic ZAP cleanup: should be called only via super() inheritance
-        Deletes home and work directory
-        """
-
-        logging.debug(
-            f"Deleting temp directories {self.host_work_dir} and {self.host_home_dir}"
-        )
-        shutil.rmtree(self.host_work_dir)
-        shutil.rmtree(self.host_home_dir)
-
     def data_for_defect_dojo(self):
-        """Return a tuple containing:
+        """Returns a tuple containing:
         1) Metadata for the test (dictionary)
         2) Path to the result file (string)
         For additional info regarding the metadata, see the `import-scan`/`reimport-scan`
@@ -125,32 +114,9 @@ class Zap(RapidastScanner):
         # the XML report is supposed to have been forcefully added, and expected to exist
         filename = f"{self.results_dir}/zap-report.xml"
 
-        # default, mandatory values (which can be overloaded)
-        data = {
-            "scan_type": "ZAP Scan",
-            "active": True,
-            "verified": False,
-        }
+        data = {"scan_type": "ZAP Scan"}
 
-        # lists of configured import parameters
-        params_root = "defectDojoExport.parameters"
-        import_params = self.my_conf(params_root, default={}).keys()
-
-        # overload that list onto the defaults
-        for param in import_params:
-            data[param] = self.my_conf(f"{params_root}.{param}")
-
-        if data.get("test") is None:
-            # No test ID provided, so we need to make sure there is enough info
-            # But we can't make it default (they should not be filled if there is a test ID
-            if not data.get("product_name"):
-                data["product_name"] = self.config.get(
-                    "application.ProductName"
-                ) or self.config.get("application.shortName")
-            if not data.get("engagement_name"):
-                data["engagement_name"] = "RapiDAST"
-
-        return data, filename
+        return (self._fill_up_data_for_defect_dojo(data), filename)
 
     def get_update_command(self):
         """Returns a list of all options required to update ZAP plugins"""
@@ -603,13 +569,6 @@ class Zap(RapidastScanner):
 
         return report_af
 
-    def _should_export_to_defect_dojo(self):
-        """Return a truthful value if Defect Dojo export is configured and not disbaled"""
-        return (
-            self.my_conf("defectDojoExport", default=False) is not False
-            and self.my_conf("defectDojoExport.type", default=False) is not False
-        )
-
     def _setup_report(self):
         """Adds the report to the job list. This should be called last"""
 
@@ -631,7 +590,7 @@ class Zap(RapidastScanner):
 
         # DefectDojo requires XML report type
         if self._should_export_to_defect_dojo():
-            logging.debug("ZAP report: ensures XML report for Defect Dojo")
+            logging.debug("ZAP report: ensures XML report for Export")
             formats.add("xml")
 
         appended = 0
@@ -917,11 +876,11 @@ def find_context(automation_config, context=Zap.DEFAULT_CONTEXT):
     except:
         pass
     logging.warning(
-        f"No context matching {context} have ben found in the current Automation Framework configuration.",
+        f"No context matching {context} have ben found in the current Automation Framework configuration."
         "It may be missing from default. An empty context is created",
     )
     # something failed: create an empty one and return it
-    if not automation_config["env"]:
+    if not automation_config.get("env"):
         automation_config["env"] = {}
     if not automation_config["env"].get("contexts"):
         automation_config["env"]["contexts"] = []

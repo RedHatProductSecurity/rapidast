@@ -21,7 +21,7 @@ class ZapPodman(Zap):
     # PRIVATE CONSTANTS                                           #
     # Accessed by ZapPodman only                                  #
     ###############################################################
-    DEFAULT_IMAGE = "docker.io/owasp/zap2docker-stable:latest"
+    DEFAULT_IMAGE = "ghcr.io/zaproxy/zaproxy:stable"
 
     ###############################################################
     # PROTECTED CONSTANTS                                         #
@@ -152,6 +152,22 @@ class ZapPodman(Zap):
 
         if not self.state == State.ERROR:
             self.state = State.CLEANEDUP
+
+    ###############################################################
+    # OVERLOADED METHODS                                          #
+    # Method overloading parent class                             #
+    ###############################################################
+
+    def _setup_ajax_spider(self):
+        """Ajax requires a lot of shared memory"""
+
+        if self.my_conf("spiderAjax", default=False) is False:
+            return
+
+        self.podman.add_option("--shm-size", "2g")
+
+        # Regular Ajax setup
+        super()._setup_ajax_spider()
 
     ###############################################################
     # PROTECTED METHODS                                           #

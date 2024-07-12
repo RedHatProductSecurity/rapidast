@@ -101,31 +101,9 @@ class Generic(RapidastScanner):
         filename = f"{self.results_dir}/{sarif_filename}"
         logging.debug(f"export {filename} to defect dojo")
 
-        # default, mandatory values (which can be overloaded)
-        data = {
-            "scan_type": "SARIF",
-            "active": True,
-            "verified": False,
-        }
+        data = {"scan_type": "SARIF"}
 
-        # lists of configured import parameters
-        params_root = "defectDojoExport.parameters"
-        import_params = self.my_conf(params_root, default={}).keys()
-
-        # overload that list onto the defaults
-        for param in import_params:
-            data[param] = self.my_conf(f"{params_root}.{param}")
-
-        if data.get("test") is None:
-            # No test ID provided, so we need to make sure there is enough info
-            # But we can't make it default (they should not be filled if there is a test ID
-            if not data.get("product_name"):
-                data["product_name"] = self.config.get(
-                    "application.ProductName"
-                ) or self.config.get("application.shortName")
-            if not data.get("engagement_name"):
-                data["engagement_name"] = "RapiDAST"
-        return data, filename
+        return (self._fill_up_data_for_defect_dojo(data), filename)
 
     ###############################################################
     # PROTECTED METHODS                                           #
@@ -152,13 +130,6 @@ class Generic(RapidastScanner):
     # PRIVATE METHODS                                             #
     # Those are called only from Generic itself                   #
     ###############################################################
-
-    def _should_export_to_defect_dojo(self):
-        """Return a truthful value if Defect Dojo export is configured and not disbaled"""
-        return (
-            self.my_conf("defectDojoExport", default=False) is not False
-            and self.my_conf("defectDojoExport.type", default=False) is not False
-        )
 
     ###############################################################
     # MAGIC METHODS                                               #

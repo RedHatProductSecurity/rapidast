@@ -184,6 +184,18 @@ def test_setup_podman_pod_injection(test_config):
 # Misc tests
 
 
+def test_podman_handling_ajax(test_config):
+    test_config.set("scanners.zap.spiderAjax.url", "https://abcdef.jklm")
+    test_zap = ZapPodman(config=test_config)
+    # create a fake automation framework: just an empty `jobs` is sufficient
+    test_zap.automation_config = {"jobs": []}
+    test_zap._setup_ajax_spider()
+
+    cli = test_zap.podman.get_complete_cli()
+    i = cli.index("--shm-size")
+    assert cli[i + 1] == "2g"
+
+
 def test_podman_handling_plugins(test_config):
     test_config.set("scanners.zap.miscOptions.updateAddons", True)
     test_config.set("scanners.zap.miscOptions.additionalAddons", "pluginA,pluginB")

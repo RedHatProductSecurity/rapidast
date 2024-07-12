@@ -29,7 +29,7 @@ RapiDAST supports executing ZAP on the MacOS host directly only.
 To run RapiDAST on MacOS(See the Configuration section below for more details on configuration):
 
 * Set `general.container.type: "none"` or `scanners.zap.container.type: "none"` in the configuration.
-* Configure `scanners.zap.container.parameters.executable` to the installation path of the `zap.sh` command, because it is not available in the PATH. Usually, its path is `/Applications/OWASP ZAP.app/Contents/Java/zap.sh` on MacOS.
+* Configure `scanners.zap.container.parameters.executable` to the installation path of the `zap.sh` command, because it is not available in the PATH. Usually, its path is `/Applications/ZAP.app/Contents/Java/zap.sh` on MacOS.
 
 Example:
 
@@ -39,7 +39,7 @@ scanners:
     container:
       type: none
       parameters:
-        executable: "/Applications/OWASP ZAP.app/Contents/Java/zap.sh"
+        executable: "/Applications/ZAP.app/Contents/Java/zap.sh"
 ```
 
 ## Installation
@@ -158,11 +158,30 @@ scanners:
 In the example above, the ZAP scanner will first run without authentication, and then rerun again with a basic HTTP authentication.
 The results will be stored in their respective names (i.e.: `zap_unauthenticated` and `zap_authenticated` in the example above).
 
-### DefectDojo integration
+### Exporting data to external services
+
+#### Exporting to Google Cloud Storage
+
+This simply stores the data as a compressed tarball in a Google Cloud Storage bucket.
+
+```yaml
+config:
+  # Defect dojo configuration
+  googleCloudStorage:
+    keyFile: "/path/to/GCS/key"                           # optional: path to the GCS key file (alternatively: use GOOGLE_APPLICATION_CREDENTIALS)
+    bucketName: "<name-of-GCS-bucket-to-export-to>"       # Mandatory
+    directory: "<override-of-default-directory>"          # Optional directory where the credentials have write access, defaults to `RapiDAST-<product>`
+```
+
+Once this is set, scan results will be exported to the bucket automatically. The tarball file will include:
+ 1. metadata.json - the file that contains scan_type, uuid and import_data(could be changed later. Currently this comes from the previous DefectDojo integration feature)
+ 2. scans - the directory that contains scan results
+
+#### Exporting to DefectDojo
 
 RapiDAST supports integration with OWASP DefectDojo which is an open source vulnerability management tool.
 
-#### Preamble: creating DefectDojo user
+##### Preamble: creating DefectDojo user
 
 RapiDAST needs to be able to authenticate to your DefectDojo instance. However, ideally, it should have the minimum set of permissions, such that it will not be allowed to modify products other than the one(s) it is supposed to.
 
@@ -172,10 +191,10 @@ In order to do that:
 
 Then the product, as well as an engagement for that product, must be created in your DefectDojo instance. It would not be advised to give the RapiDAST user an "admin" role and simply set `auto_create_context` to True, as it would be both insecure and accident prone (a typo in the product name would let RapiDAST create a new product)
 
-#### DefectDojo configuration in RapiDAST
 
-##### Authentication
-First, RapiDAST needs to be able to authenticate itself to a DefectDojo service. This is a typical configuration:
+##### Exporting to Defect Dojo
+
+RapiDAST will send the results directly to a DefectDojo service. This is a typical configuration:
 
 ```yaml
 config:
@@ -197,37 +216,46 @@ Alternatively, the `REQUESTS_CA_BUNDLE` environment variable can be used to sele
 
 You can either authenticate using a username/password combination, or a token (make sure it is not expired). In either case, you can use the `_from_var` method described in the previous chapter to avoid hardcoding the value in the configuration.
 
-##### Product/engagement/test
+##### Configuration of exported data
 
-Then, RapiDAST needs to know, for each scanner, sufficient information such that it can identify which product/engagement/test to match.
-This is configured in the `zap.scanner.defectDojoExport.parameters` entry. See the `import-scan` or  `reimport-scan` parameters at https://demo.defectdojo.org/api/v2/doc/ for a list of accepted entries.
-Notes:
-    * `engagement` and `test` refer to identifiers, and should be integers (as opposed to `engagement_name` and `test_title`)
-    * If a `test` identifier is provided, RapiDAST will reimport the result to that test. The existing test must be compatible (same file schema, such as ZAP Scan, for example)
-    * If the `product_name` does not exist, the scanner should default to `application.productName`, or `application.shortName`
-    * Tip: the entries common to all scanners can be added to `general.defectDojoExport.parameters`, while the scanner-dependant entries (e.g.: test identifier) can be set in the scanner's configuration (e.g.: `scanners.zap.defectDojoExport.parameters`)
+The data exported follows the Defectdojo methodology of "Product → Engagement → Test" : a test, such as a ZAP scan, belongs to an engagement for a product.
+Its configuration is made under the `scanners.<scanner>.defectDojoExport.parameters` configuration entries. As a baseline, parameters from the Defectdojo `import-scan` and `reimport-scan` are accepted.
+
+For each scan, the logic applied is the following, in order:
+* If a test ID is provided (parameter `test`), this scan will replace the previous one (a "reimport" in Defectdojo)
+* If an engagement ID is provided (parameter `engagement`), this scan will be added as a new test in that existing engagement
+* If an engagement and a product are given by name (`engagement_name` and `product_name` parameters), this scan will be added for that given engagement for the given product
+
+In each `defectDojoExport.parameters`, some defaults parameters are applied:
+* `product_name`, in order (the first non empty value found):
+    - `application.productName`
+    - `application.shortName` (this name should not contain non-printable characters, such as spaces)
+* `engagement_name` defaults to `RapiDAST-<product name>-<date>`
+* `scan_type` : filled by the scanner
+* `active`: `True`
+* `verified`: `False`
+
+As a reminder: values from `general` are applied to each scanner.
+
+Here is an example:
 
 ```yaml
-general:
-  defectDojoExport:
-    parameters:
-      productName: "My product"
-      tags: ["RapiDAST"]
-
 scanners:
   zap:
     defectDojoExport:
       parameters:
-        test: 34
-        endpoint_to_add: "https://qa.myapp.local/"
+        product_name: "My Product"
+        engagement_name: "RapiDAST" # or engagement: <engagement_id>
+        #test: <test_id>
 ```
 
+See https://documentation.defectdojo.com/integrations/importing/#api for more information.
 
 ## Execution
 
 Once you have created a configuration file, you can run a scan with it.
-```
-$ rapidast.py --config <your-config.yaml>
+```sh
+$ rapidast.py --config "<your-config.yaml>"
 ```
 
 There are more options.
@@ -485,7 +513,7 @@ See https://github.com/zaproxy/zaproxy/issues/7703 for additional information.
 RapiDAST works around this bug, but with little inconvenients (slower because it has to fix itself and download all the plugins)
 
 - Verify that the host installation directory is missing its plugins.
-e.g., in a MacOS installation, `/Applications/OWASP ZAP.app/Contents/Java/plugin/` will be mostly empty. In particular, no `callhome*.zap` and `network*.zap` file are present.
+e.g., in a MacOS installation, `/Applications/ZAP.app/Contents/Java/plugin/` will be mostly empty. In particular, no `callhome*.zap` and `network*.zap` file are present.
 - Reinstall ZAP, but __DO NOT RUN IT__, as it would delete the plugins. Verify that the directory contains many plugins.
 - `chown` the installation files to root, so that when running ZAP, the application running as the user does not have sufficient permission to delete its own plugins
 
@@ -535,10 +563,31 @@ com.fasterxml.jackson.dataformat.yaml.JacksonYAMLParseException: The incoming YA
  at [Source: (StringReader); line: 49813, column: 50]
 ```
 
-Solutions: 
+Solutions:
 * If you are using a Swagger v2 definition, try converting it to v3 (OpenAPI)
 * Set a `maxYamlCodePoints` Java proprety with a big value, which can be passed using environment variables (via the `config.environ.envFile` config entry): `_JAVA_OPTIONS=-DmaxYamlCodePoints=99999999`
 
+### ZAP's Ajax Spider failing
+
+#### Insufficient shared memory
+
+ZAP's Ajax Spider makes heavy use of shared memory (`/dev/shm/`). When using the RapiDAST image or the ZAP image, the user needs to make sure that sufficient space is available in `/dev/shm/` (in podman, by default, its size is 64MB). A size of 2G would be the minimum recommended. In podman for example, the option would be `--shm-size=2g`.
+
+ZAP logs that would bring evidence of a lack of shared memory would look like the following:
+
+```
+2024-07-04 11:21:32,061 [ZAP-AjaxSpiderAuto] WARN  SpiderThread - Failed to start browser firefox-headless
+com.google.inject.ProvisionException: Unable to provision, see the following errors:
+
+1) [Guice/ErrorInCustomProvider]: SessionNotCreatedException: Could not start a new session. Response code 500. Message: Failed to decode response from marionette
+```
+
+Or the following:
+
+```
+2024-07-04 12:23:28,027 [ZAP-AjaxSpiderAuto] ERROR UncaughtExceptionLogger - Exception in thread "ZAP-AjaxSpiderAuto"
+java.lang.OutOfMemoryError: unable to create native thread: possibly out of memory or process/resource limits reached
+```
 
 ## Caveats
 

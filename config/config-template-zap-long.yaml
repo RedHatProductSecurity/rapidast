@@ -92,8 +92,10 @@ general:
       #test_title: "ZAP"
       # - or -
       #test: 5       # test ID, that will force "reimport" mode
-      # additional options, see https://demo.defectdojo.org/api/v2/doc/ for list
-      auto_create_context: False  # Optional. set to True to auto-create engagement (requires product_name and engagement_name)
+      #product_type_name: "My Product Type"
+
+      # For additional options, see https://demo.defectdojo.org/api/v2/doc/ for list
+      # auto_create_context: False  # Optional. set to True to create the engagement if it doesn't exist. The correct product_name is required. If a product needs to be created as well, product_type_name is also required.
 
 # `scanners' is a section that configures scanning options
 scanners:

@@ -1,7 +1,9 @@
 import logging
 import os
+import platform
 import pprint
 import subprocess
+from shutil import disk_usage
 
 from .zap import MODULE_DIR
 from .zap import Zap
@@ -163,6 +165,36 @@ class ZapNone(Zap):
 
         if not self.state == State.ERROR:
             self.state = State.CLEANEDUP
+
+    ###############################################################
+    # OVERLOADED METHODS                                          #
+    # Method overloading parent class                             #
+    ###############################################################
+
+    def _setup_ajax_spider(self):
+        """Ajax requires a lot of shared memory"""
+
+        if self.my_conf("spiderAjax", default=False) is False:
+            return
+
+        if platform.system() == "Linux":
+            # We need to verify that there's sufficient amount of shared memory
+            try:
+                # verify that there's at least 1GB in /dev/shm
+                shm = disk_usage("/dev/shm/").total
+                logging.debug(f"Shared mem size: {shm} bytes")
+                if shm <= (1024 * 1024 * 1024):
+                    logging.warning(
+                        "Insufficient shared memory to run an Ajax Spider correctly. "
+                        "Make sure that /dev/shm/ is at least 1GB in size [ideally at least 2GB]"
+                    )
+            except FileNotFoundError:
+                logging.warning(
+                    "/dev/shm not present. Unable to calcuate shared memory size"
+                )
+
+        # Regular Ajax setup
+        super()._setup_ajax_spider()
 
     ###############################################################
     # PROTECTED METHODS                                           #

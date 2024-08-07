@@ -569,11 +569,15 @@ Solutions:
 
 ### ZAP's Ajax Spider failing
 
-#### Insufficient shared memory
+#### Insufficient Resources
 
-ZAP's Ajax Spider makes heavy use of shared memory (`/dev/shm/`). When using the RapiDAST image or the ZAP image, the user needs to make sure that sufficient space is available in `/dev/shm/` (in podman, by default, its size is 64MB). A size of 2G would be the minimum recommended. In podman for example, the option would be `--shm-size=2g`.
+Zap's Ajax Spider makes use of a lot of resources, in particular:
+- Shared Memory (`/dev/shm`)
+- processes
 
-ZAP logs that would bring evidence of a lack of shared memory would look like the following:
+If you see evidence of Firefox crashing, either via in the `zap.log` files stored in `session.tar.gz` file (see below for examples of such evidence), or logged by an external crash report (such as `abrtd` for example).
+
+`zap.log` hints for Firefox crashing:
 
 ```
 2024-07-04 11:21:32,061 [ZAP-AjaxSpiderAuto] WARN  SpiderThread - Failed to start browser firefox-headless
@@ -588,6 +592,16 @@ Or the following:
 2024-07-04 12:23:28,027 [ZAP-AjaxSpiderAuto] ERROR UncaughtExceptionLogger - Exception in thread "ZAP-AjaxSpiderAuto"
 java.lang.OutOfMemoryError: unable to create native thread: possibly out of memory or process/resource limits reached
 ```
+
+This issue may also be apparent _outside_ of the spider, in particular, the following error being printed on the RapiDAST output is likely an evidence that the maximum number of concurrent thread is currently reached:
+
+```
+Failed to start thread "Unknown thread" - pthread_create failed (EAGAIN) for attributes: stacksize: 1024k, guardsize: 0k, detached.
+```
+
+Solutions:
+* Selenium, used to control Firefox, uses shared memory (`/dev/shm/`). When using the RapiDAST image or the ZAP image, the user needs to make sure that sufficient space is available in `/dev/shm/` (in podman, by default, its size is 64MB). A size of 2G is the recommended value by the Selenium community. In podman for example, the option would be `--shm-size=2g`.
+* Zap and Firefox can create a huge numbers of threads. Some container engines will default to 2048 concurrent pids, which is not sufficient for the Ajax Spider. Whenever possible, RapiDAST will check if that limit was reached, after the scan is finished, and prints a warning if this happened. In podman, increasing the maximum number of concurrent pids is done via the `--pids-limit=-1` option to prevent any limits.
 
 ## Caveats
 

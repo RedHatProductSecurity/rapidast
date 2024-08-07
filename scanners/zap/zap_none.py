@@ -150,6 +150,7 @@ class ZapNone(Zap):
     def postprocess(self):
         logging.info("Running postprocess for the ZAP Host environment")
 
+        # Calling parent ZapScanner postprocess
         super().postprocess()
 
         if not self.state == State.ERROR:
@@ -199,7 +200,7 @@ class ZapNone(Zap):
             # Assume we're regulated by cgroup v2
             try:
                 with open("/sys/fs/cgroup/pids.max", encoding="utf-8") as f:
-                    pid_val = f.readline()
+                    pid_val = f.readline().rstrip()
                     if pid_val == "max" or int(pid_val) > 10000:
                         logging.debug(
                             f"cgroup v2 has a sufficient pid limit: {pid_val}"

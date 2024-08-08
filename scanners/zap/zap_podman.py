@@ -165,6 +165,7 @@ class ZapPodman(Zap):
             return
 
         self.podman.add_option("--shm-size", "2g")
+        self.podman.add_option("--pids-limit", "-1")
 
         # Regular Ajax setup
         super()._setup_ajax_spider()

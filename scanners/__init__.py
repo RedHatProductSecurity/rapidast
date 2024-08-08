@@ -45,6 +45,24 @@ class RapidastScanner:
         """
         return self.config.set(f"scanners.{self.ident}.{path}", *args, **kwargs)
 
+    def postprocess(self):
+        """Final check to verify nothing went wrong during the scan"""
+
+        # Verify that we didn't get throttled by PID limits (for multithreaded scanners)
+        try:
+            with open("/sys/fs/cgroup/pids.events", encoding="utf-8") as f:
+                for line in f.readlines():
+                    event, value = line.rstrip().split(sep=" ")
+                    if event == "max" and value != "0":
+                        logging.warning(
+                            "Scanner may have been throttled by CGroupv2 PID limits: "
+                            f"pids.events reports {event} {value}"
+                        )
+                    elif event != "max":
+                        logging.warning(f"unknown pids.events report: {event} {value}")
+        except FileNotFoundError:
+            logging.debug("No CGroupv2 pids.events (normal if in a root CGroup)")
+
     def _should_export_to_defect_dojo(self):
         """Return a truthful value if Defect Dojo export is configured and not disbaled
         Returns True if:

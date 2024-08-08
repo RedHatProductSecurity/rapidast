@@ -98,6 +98,9 @@ class Zap(RapidastScanner):
                 # log path is like '/tmp/rapidast_*/zap.log'
                 tar.add(log, f"evidences/zap_logs/{log.split('/')[-1]}")
 
+        # Calling parent RapidastScanner postprocess
+        super().postprocess()
+
     def data_for_defect_dojo(self):
         """Returns a tuple containing:
         1) Metadata for the test (dictionary)

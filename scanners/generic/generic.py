@@ -78,6 +78,9 @@ class Generic(RapidastScanner):
             # it's a false positive: it's defined in the RapidastScanner class
             self.state = State.ERROR
 
+        # Calling parent RapidastScanner postprocess
+        super().postprocess()
+
     def cleanup(self):
         """Generic Generic cleanup: should be called only via super() inheritance"""
         shutil.rmtree(self.workdir)

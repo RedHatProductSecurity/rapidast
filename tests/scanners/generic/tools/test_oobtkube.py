@@ -1,5 +1,4 @@
-import re
-from unittest.mock import Mock
+import logging
 from unittest.mock import patch
 
 import pytest
@@ -7,35 +6,45 @@ import pytest
 from scanners.generic.tools import oobtkube
 
 
+@pytest.fixture
+def test_data():
+    # Sample nested dictionary data for testing
+    return {
+        "root": {
+            "branch": {"leaf1": "value1", "spec": {"leaf2": "value2"}},
+            "leaf3": "value3",
+        }
+    }
+
+
+def test_count_total_leaf_keys(test_data):
+    # Test if the count_leaf_keys function returns the correct count of leaf keys
+    assert oobtkube.count_total_leaf_keys(test_data) == 3
+
+
 @patch("scanners.generic.tools.oobtkube.os.system")
-def test_find_leaf_keys_and_test(mock_system):
+def test_find_leaf_keys_and_test(mock_system, test_data, caplog):
     """
     Ensure all the leaves are navigated through
     """
 
-    data = {
-        "root": {
-            "branch": {
-                "leaf1": 0,
-            },
-            "leaf2": 1,
-        }
-    }
-    leaves = ["leaf1", "leaf2"]
+    caplog.set_level(logging.INFO)
 
-    def cmd_check(cmd):
-        print(f"mock: command: {cmd}")
-        if cmd.startswith("kubectl"):
-            # ignore these calls, they are static
-            return 0
-        elif cmd.startswith("sed"):
-            # in `sed 's/{key}:.*/{key}: `, extract the value of `key`
-            key = re.search(r"sed 's/(.+):\.\*/\1: ", cmd).group(1)
-            leaves.remove(key)
-        else:
-            raise ValueError("system call with bad command")
+    total_leaf_keys = oobtkube.count_total_leaf_keys(test_data)
 
-    mock_system.side_effect = cmd_check
+    oobtkube.find_leaf_keys_and_test(
+        test_data, "cr_test_file", "10.10.10.10", "12345", total_leaf_keys
+    )
 
-    oobtkube.find_leaf_keys_and_test(data, "xxx", "yyy", "zzz")
-    assert not leaves
+    processed_count = 0
+    leaves = ["leaf1", "leaf2", "leaf3"]
+    for leaf_key in leaves:
+        processed_count += 1
+        assert (
+            f"Testing a leaf key: '{leaf_key}', ({processed_count} / {total_leaf_keys})"
+            in caplog.text
+        )
+
+    assert (
+        mock_system.call_count == 6
+    )  # Each leaf key runs `sed` and `kubectl` commands (2 calls per key)

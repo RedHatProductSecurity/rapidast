@@ -114,6 +114,13 @@ This method describes the HTTP Basic Authorization Header. The username and pass
         * `username`
         * `password`
 
+- HTTP Header:
+This method describes the HTTP generic header. The name and value must be provided in plaintext.
+    + authentication type: `http_basic`
+    + parameters:
+        * `name`
+        * `value` or `value_from_var` (the environment variable with the secret)
+
 - Cookie Authentication:
 This method describes authentication via Cookie header. The cookie name and value must be provided in plaintext.
     + authentication type: `cookie`

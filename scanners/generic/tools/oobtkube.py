@@ -128,6 +128,11 @@ def count_total_leaf_keys(data):
 def find_leaf_keys_and_test(
     data, original_file, ipaddr, port, total_leaf_keys, processed_leaf_keys=0
 ):
+    """
+    Iterate the spec data and test each parameter by modifying the value with the attack payload.
+    Test cases: appending 'curl' command, TBD
+    """
+
     tmp_file = "/tmp/oobtkube-test.yaml"
     for key, value in data.items():
         if isinstance(value, dict):

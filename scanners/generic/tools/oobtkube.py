@@ -132,7 +132,6 @@ def find_leaf_keys_and_test(
     Iterate the spec data and test each parameter by modifying the value with the attack payload.
     Test cases: appending 'curl' command, TBD
     """
-
     tmp_file = "/tmp/oobtkube-test.yaml"
     for key, value in data.items():
         if isinstance(value, dict):
@@ -148,9 +147,13 @@ def find_leaf_keys_and_test(
             logging.debug(f"Command run: {cmd}")
             os.system(cmd)
 
+            redirect = "&> /dev/null"
+            if logging.getLogger().isEnabledFor(logging.DEBUG):
+                # don't supress output when debug logging
+                redirect = ""
             # if using 'apply' and a resource already exists, the command won't run as it returns as 'unchanged'
             # therefore 'create' and 'replace' are used
-            kube_cmd = f"kubectl create -f {tmp_file} > /dev/null 2>&1; kubectl replace -f {tmp_file}"
+            kube_cmd = f"kubectl create -f {tmp_file} {redirect} || kubectl replace -f {tmp_file} {redirect}"
 
             logging.debug(f"Command run: {kube_cmd}")
             os.system(kube_cmd)
@@ -272,6 +275,19 @@ def print_result(sarif_output, file_output=False, message_detected=False):
         logging.info(sarif_output)
 
 
+def check_k8s_auth() -> bool:
+    try:
+        subprocess.run(["kubectl", "auth", "whoami"], check=True, capture_output=True, timeout=30)
+    except subprocess.TimeoutExpired as e:
+        logging.error(e)
+        return False
+    except subprocess.CalledProcessError as e:
+        err = e.stderr.decode().rstrip()
+        logging.error(f"Failed to authenticate: {err}")
+        return False
+    return True
+
+
 # pylint: disable=R0915
 def main():
     # Parse command-line arguments
@@ -334,6 +350,10 @@ def main():
     # Check if the file exists before creating a thread
     if not os.path.exists(args.filename):
         raise FileNotFoundError(f"The file '{args.filename}' does not exist.")
+
+    # if we can't auth to the k8s cluster, no point going further
+    if not check_k8s_auth():
+        sys.exit(1)
 
     # Init variables
     data_has_been_received = False

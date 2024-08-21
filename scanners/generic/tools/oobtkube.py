@@ -132,6 +132,15 @@ def find_leaf_keys_and_test(
     Iterate the spec data and test each parameter by modifying the value with the attack payload.
     Test cases: appending 'curl' command, TBD
     """
+    try:
+        subprocess.run(["kubectl", "auth", "whoami"], check=True, capture_output=True, timeout=30)
+    except subprocess.TimeoutExpired as e:
+        logging.error(e)
+        return processed_leaf_keys
+    except subprocess.CalledProcessError as e:
+        err = e.stderr.decode().rstrip()
+        logging.error(f"Failed to authenticate: {err}")
+        return processed_leaf_keys
 
     tmp_file = "/tmp/oobtkube-test.yaml"
     for key, value in data.items():
@@ -148,9 +157,13 @@ def find_leaf_keys_and_test(
             logging.debug(f"Command run: {cmd}")
             os.system(cmd)
 
+            redirect = "&> /dev/null"
+            if logging.getLogger().isEnabledFor(logging.DEBUG):
+                # don't supress output when debug logging
+                redirect = ""
             # if using 'apply' and a resource already exists, the command won't run as it returns as 'unchanged'
             # therefore 'create' and 'replace' are used
-            kube_cmd = f"kubectl create -f {tmp_file} > /dev/null 2>&1; kubectl replace -f {tmp_file}"
+            kube_cmd = f"kubectl create -f {tmp_file} {redirect} || kubectl replace -f {tmp_file} {redirect}"
 
             logging.debug(f"Command run: {kube_cmd}")
             os.system(kube_cmd)

@@ -216,7 +216,6 @@ def start_socket_listener(port, shared_queue, data_received, stop_event, duratio
         logging.info(
             "Socket timeout reached as the test duration expired. Stopping the server."
         )
-        pass
 
     except Exception as e:
         raise RuntimeError("An error occurred. See logs for details.") from e

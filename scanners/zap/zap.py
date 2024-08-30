@@ -429,7 +429,7 @@ class Zap(RapidastScanner):
         - authentication.parameters.verifyUrl
         - application.url
         """
-        verify_url =  self.my_conf(f"authentication.parameters.verifyUrl")
+        verify_url = self.my_conf("authentication.parameters.verifyUrl")
         if verify_url:
             if not verify_url.startswith("http"):
                 verify_url = self.config.get("application.url") + verify_url
@@ -439,11 +439,13 @@ class Zap(RapidastScanner):
         job = {
             "name": "requestor",
             "type": "requestor",
-            "parameters": { "user": Zap.USER if self.authenticated else "" },
-            "request":  [ {
-                "name": "Verify server availability",
-                "url": verify_url,
-            } ] ,
+            "parameters": {"user": Zap.USER if self.authenticated else ""},
+            "request": [
+                {
+                    "name": "Verify server availability",
+                    "url": verify_url,
+                }
+            ],
         }
         self.automation_config["jobs"].append(job)
 
@@ -651,10 +653,9 @@ class Zap(RapidastScanner):
             "parameters": {
                 "format": "Long",
                 "summaryFile": f"{self.container_work_dir}/summary.json",
-            }
+            },
         }
         self.automation_config["jobs"].append(job)
-
 
     def _save_automation_file(self):
         """Save the Automation dictionary as YAML in the container"""
@@ -742,7 +743,7 @@ class Zap(RapidastScanner):
         return False
 
     @authentication_factory.register("browser")
-    def authentication_set_oauth2_rtoken(self):
+    def authentication_set_browser(self):
         """Configure authentication via a form filled in using the browser, as smartly as possible
         In order to achieve that:
         - Configure the context to use "Browser based authentication"
@@ -756,10 +757,10 @@ class Zap(RapidastScanner):
         username = self.my_conf(f"{params_path}.username")
         password = self.my_conf(f"{params_path}.password")
 
-        loginPageUrl = self.my_conf(f"{params_path}.loginPageUrl")
-        if not loginPageUrl.startswith("http"):
-            loginPageUrl = self.config.get("application.url") + loginPageUrl
-        verify_url =  self.my_conf(f"{params_path}.verifyUrl")
+        login_page_url = self.my_conf(f"{params_path}.loginPageUrl")
+        if not login_page_url.startswith("http"):
+            login_page_url = self.config.get("application.url") + login_page_url
+        verify_url = self.my_conf(f"{params_path}.verifyUrl")
         if not verify_url.startswith("http"):
             verify_url = self.config.get("application.url") + verify_url
 
@@ -767,9 +768,9 @@ class Zap(RapidastScanner):
         context_["authentication"] = {
             "method": "browser",
             "parameters": {
-                "loginPageUrl": loginPageUrl,
+                "loginPageUrl": login_page_url,
                 "loginPageWait": 2,
-                "browserId": "firefox-headless"
+                "browserId": "firefox-headless",
             },
             "verification": {
                 "method": "poll",
@@ -785,10 +786,12 @@ class Zap(RapidastScanner):
             "method": "cookie",
             "parameters": {},
         }
-        context_["users"] = [ {
-            "name": Zap.USER,
-            "credentials": {"username": username, "password": password},
-        } ]
+        context_["users"] = [
+            {
+                "name": Zap.USER,
+                "credentials": {"username": username, "password": password},
+            }
+        ]
         return True
 
     @authentication_factory.register("oauth2_rtoken")

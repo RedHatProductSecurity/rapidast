@@ -459,7 +459,7 @@ class Zap(RapidastScanner):
                 "maxDuration": self.my_conf("spiderAjax.maxDuration", default=0),
                 "url": self.my_conf("spiderAjax.url", default=""),
                 "browserId": self.my_conf(
-                    "spiderAjax.browserId", default="chrome-headless"
+                    "spiderAjax.browserId", default="firefox-headless"
                 ),
             },
         }
@@ -700,6 +700,56 @@ class Zap(RapidastScanner):
 
         logging.info("ZAP configured with HTTP Basic Authentication")
         return False
+
+    @authentication_factory.register("browser")
+    def authentication_set_oauth2_rtoken(self):
+        """Configure authentication via a form filled in using the browser, as smartly as possible
+        In order to achieve that:
+        - Configure the context to use "Browser based authentication"
+        - Set the browser to be Firefox-headless
+
+        Returns True as it creates a ZAP user
+        """
+        context_ = find_context(self.automation_config)
+        params_path = "authentication.parameters"
+
+        username = self.my_conf(f"{params_path}.username")
+        password = self.my_conf(f"{params_path}.password")
+
+        loginPageUrl = self.my_conf(f"{params_path}.loginPageUrl")
+        if not loginPageUrl.startswith("http"):
+            loginPageUrl = self.config.get("application.url") + loginPageUrl
+        verify_url =  self.my_conf(f"{params_path}.verifyUrl")
+        if not verify_url.startswith("http"):
+            verify_url = self.config.get("application.url") + verify_url
+
+        # 1- complete the context: install the form based auth, and add a user
+        context_["authentication"] = {
+            "method": "browser",
+            "parameters": {
+                "loginPageUrl": loginPageUrl,
+                "loginPageWait": 2,
+                "browserId": "firefox-headless"
+            },
+            "verification": {
+                "method": "poll",
+                "loggedInRegex": "\\Q 200 OK\\E",
+                "loggedOutRegex": "\\Q 403 Forbidden\\E",
+                "pollFrequency": 60,
+                "pollUnits": "requests",
+                "pollUrl": verify_url,
+                "pollPostData": "",
+            },
+        }
+        context_["sessionManagement"] = {
+            "method": "cookie",
+            "parameters": {},
+        }
+        context_["users"] = [ {
+            "name": Zap.USER,
+            "credentials": {"username": username, "password": password},
+        } ]
+        return True
 
     @authentication_factory.register("oauth2_rtoken")
     def authentication_set_oauth2_rtoken(self):

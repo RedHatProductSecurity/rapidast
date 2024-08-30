@@ -120,7 +120,6 @@ def count_total_leaf_keys(data):
             count += 1
             key_list.append(key)
 
-    logging.info(f"Parameters to be tested: {key_list} (total: {count})")
     return count
 
 
@@ -277,7 +276,9 @@ def print_result(sarif_output, file_output=False, message_detected=False):
 
 def check_k8s_auth() -> bool:
     try:
-        subprocess.run(["kubectl", "auth", "whoami"], check=True, capture_output=True, timeout=30)
+        subprocess.run(
+            ["kubectl", "auth", "whoami"], check=True, capture_output=True, timeout=30
+        )
     except subprocess.TimeoutExpired as e:
         logging.error(e)
         return False

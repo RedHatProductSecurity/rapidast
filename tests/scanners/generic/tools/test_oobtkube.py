@@ -1,9 +1,12 @@
 import logging
+import os
 from unittest.mock import patch
 
 import pytest
 
 from scanners.generic.tools import oobtkube
+
+TEST_DATA_DIR = "tests/scanners/generic/tools/test_data_oobtkube/"
 
 
 @pytest.fixture
@@ -48,3 +51,11 @@ def test_find_leaf_keys_and_test(mock_system, test_data, caplog):
     assert (
         mock_system.call_count == 6
     )  # Each leaf key runs `sed` and `kubectl` commands (2 calls per key)
+
+
+def test_parse_resource_yaml():
+    path = os.path.join(TEST_DATA_DIR, "pod.yaml")
+    obj_data = oobtkube.parse_obj_data(path)
+    assert obj_data["kind"] == "Pod"
+    assert isinstance(obj_data["spec"], dict)
+    assert isinstance(obj_data["metadata"], dict)

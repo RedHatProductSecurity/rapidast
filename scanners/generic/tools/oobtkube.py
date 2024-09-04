@@ -160,22 +160,22 @@ def find_leaf_keys_and_test(
     return processed_leaf_keys
 
 
-def scan_with_k8s_config(cfg_file_path, ipaddr, port):
-    # Apply Kubernetes config (e.g. CR for Operator, or Pod/resource for webhook)
-
-    with open(cfg_file_path, "r", encoding="utf-8") as file:
-        yaml_data = yaml.safe_load(file)
+def parse_obj_data(filename: str) -> dict:
+    with open(filename, "r", encoding="utf-8") as file:
         try:
-            spec_data = yaml_data.get("spec", {})
-
-            total_leaf_keys = count_total_leaf_keys(spec_data)
-            find_leaf_keys_and_test(
-                spec_data, cfg_file_path, ipaddr, port, total_leaf_keys
-            )
-
+            return yaml.safe_load(file)
         except yaml.YAMLError as e:
             logging.error(f"Error parsing YAML: {e}")
-            return []
+    return {}
+
+
+def scan_with_k8s_config(cfg_file_path: str, obj_data: dict, ipaddr: str, port: int):
+    spec_data = obj_data.get("spec", {})
+    total_leaf_keys = count_total_leaf_keys(spec_data)
+    # Apply Kubernetes config (e.g. CR for Operator, or Pod/resource for webhook)
+    find_leaf_keys_and_test(
+        spec_data, cfg_file_path, ipaddr, port, total_leaf_keys
+    )
 
 
 def start_socket_listener(port, shared_queue, data_received, stop_event, duration):
@@ -274,17 +274,17 @@ def print_result(sarif_output, file_output=False, message_detected=False):
         logging.info(sarif_output)
 
 
-def check_k8s_auth() -> bool:
+def check_can_create(obj_data: dict) -> bool:
+    """Check if possible to create target resources. Verifies connection, sufficient permissions etc"""
+    resource = obj_data["kind"]  # kind must always be present in resource file
     try:
-        subprocess.run(
-            ["kubectl", "auth", "whoami"], check=True, capture_output=True, timeout=30
-        )
+        subprocess.run(["kubectl", "auth", "can-i", "create", resource], check=True, capture_output=True, timeout=30)
     except subprocess.TimeoutExpired as e:
         logging.error(e)
         return False
     except subprocess.CalledProcessError as e:
         err = e.stderr.decode().rstrip()
-        logging.error(f"Failed to authenticate: {err}")
+        logging.error(f"Unable to create {resource} resource(s): {err}")
         return False
     return True
 
@@ -352,8 +352,10 @@ def main():
     if not os.path.exists(args.filename):
         raise FileNotFoundError(f"The file '{args.filename}' does not exist.")
 
-    # if we can't auth to the k8s cluster, no point going further
-    if not check_k8s_auth():
+    # if we can't parse the resource file, or lack permission to create such
+    # resources, then exit early
+    obj_data = parse_obj_data(args.filename)
+    if not obj_data or not check_can_create(obj_data):
         sys.exit(1)
 
     # Init variables
@@ -387,7 +389,7 @@ def main():
     start_time_main = time.time()
 
     # Run kubectl apply command
-    scan_with_k8s_config(args.filename, args.ip_addr, args.port)
+    scan_with_k8s_config(args.filename, obj_data, args.ip_addr, args.port)
 
     # Check the overall duration periodically
     vulnerability_count = 0

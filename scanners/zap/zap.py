@@ -350,6 +350,7 @@ class Zap(RapidastScanner):
         # Create the AF configuration
         # Passive Scan must be configured first, as subsequent jobs may trigger requests
         self._setup_passive_scan()
+        self._setup_verify()
         self._setup_spider()
         self._setup_ajax_spider()
         self._setup_api()
@@ -358,6 +359,7 @@ class Zap(RapidastScanner):
         self._setup_active_scan()
         self._setup_passive_wait()
         self._setup_report()
+        self._setup_summary()
 
         # The AF should now be setup and ready to be written
         self._save_automation_file()
@@ -421,6 +423,32 @@ class Zap(RapidastScanner):
 
         self.automation_config["jobs"].append(openapi)
 
+    def _setup_verify(self):
+        """Make a quick request to ensure we can reach the server
+        Do so with either (from high prio to low prio):
+        - authentication.parameters.verifyUrl
+        - application.url
+        """
+        verify_url = self.my_conf("authentication.parameters.verifyUrl")
+        if verify_url:
+            if not verify_url.startswith("http"):
+                verify_url = self.config.get("application.url") + verify_url
+        else:
+            verify_url = self.config.get("application.url")
+
+        job = {
+            "name": "requestor",
+            "type": "requestor",
+            "parameters": {"user": Zap.USER if self.authenticated else ""},
+            "request": [
+                {
+                    "name": "Verify server availability",
+                    "url": verify_url,
+                }
+            ],
+        }
+        self.automation_config["jobs"].append(job)
+
     def _setup_spider(self):
         """Prepare an spider job and append it to the job list"""
 
@@ -459,7 +487,7 @@ class Zap(RapidastScanner):
                 "maxDuration": self.my_conf("spiderAjax.maxDuration", default=0),
                 "url": self.my_conf("spiderAjax.url", default=""),
                 "browserId": self.my_conf(
-                    "spiderAjax.browserId", default="chrome-headless"
+                    "spiderAjax.browserId", default="firefox-headless"
                 ),
             },
         }
@@ -616,6 +644,19 @@ class Zap(RapidastScanner):
                 self._construct_report_af(reports["json"])
             )
 
+    def _setup_summary(self):
+        """Adds a outputSummary job"""
+        job = {
+            "name": "outputSummary",
+            "type": "outputSummary",
+            "rules": [],
+            "parameters": {
+                "format": "Long",
+                "summaryFile": f"{self.container_work_dir}/summary.json",
+            },
+        }
+        self.automation_config["jobs"].append(job)
+
     def _save_automation_file(self):
         """Save the Automation dictionary as YAML in the container"""
         af_host_path = self.host_work_dir + "/af.yaml"
@@ -700,6 +741,58 @@ class Zap(RapidastScanner):
 
         logging.info("ZAP configured with HTTP Basic Authentication")
         return False
+
+    @authentication_factory.register("browser")
+    def authentication_set_browser(self):
+        """Configure authentication via a form filled in using the browser, as smartly as possible
+        In order to achieve that:
+        - Configure the context to use "Browser based authentication"
+        - Set the browser to be Firefox-headless
+
+        Returns True as it creates a ZAP user
+        """
+        context_ = find_context(self.automation_config)
+        params_path = "authentication.parameters"
+
+        username = self.my_conf(f"{params_path}.username")
+        password = self.my_conf(f"{params_path}.password")
+
+        login_page_url = self.my_conf(f"{params_path}.loginPageUrl")
+        if not login_page_url.startswith("http"):
+            login_page_url = self.config.get("application.url") + login_page_url
+        verify_url = self.my_conf(f"{params_path}.verifyUrl")
+        if not verify_url.startswith("http"):
+            verify_url = self.config.get("application.url") + verify_url
+
+        # 1- complete the context: install the form based auth, and add a user
+        context_["authentication"] = {
+            "method": "browser",
+            "parameters": {
+                "loginPageUrl": login_page_url,
+                "loginPageWait": 2,
+                "browserId": "firefox-headless",
+            },
+            "verification": {
+                "method": "poll",
+                "loggedInRegex": "\\Q 200 OK\\E",
+                "loggedOutRegex": "\\Q 403 Forbidden\\E",
+                "pollFrequency": 60,
+                "pollUnits": "requests",
+                "pollUrl": verify_url,
+                "pollPostData": "",
+            },
+        }
+        context_["sessionManagement"] = {
+            "method": "cookie",
+            "parameters": {},
+        }
+        context_["users"] = [
+            {
+                "name": Zap.USER,
+                "credentials": {"username": username, "password": password},
+            }
+        ]
+        return True
 
     @authentication_factory.register("oauth2_rtoken")
     def authentication_set_oauth2_rtoken(self):

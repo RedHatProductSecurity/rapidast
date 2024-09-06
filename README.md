@@ -118,7 +118,7 @@ This method describes the HTTP Basic Authorization Header. The username and pass
 This method describes the HTTP generic header. The name and value must be provided in plaintext.
     + authentication type: `http_header`
     + parameters:
-        * `name`: the header name added to every request. By default is `Authorization` 
+        * `name`: the header name added to every request. By default is `Authorization`
         * `value` or `value_from_var` (the environment variable with the secret)
 
 - Cookie Authentication:
@@ -127,6 +127,15 @@ This method describes authentication via Cookie header. The cookie name and valu
     + parameters:
         * `name`
         * `value`
+
+- Browser authentication method
+This method uses firefox in the background to load a login page and fill in username/password, and will retrieve and set the session cookies accordingly.
+    + authentication type: `browser`
+    + parameters:
+        * `username`
+        * `password`
+        * `loginPageUrl`: the URL to the login page (either the full URL, or relative to the `application.url` value)
+        * `verifyUrl`: a URL that "proves" the user is authenticated (either the full URL, or relative to the `application.url` value). This URL must return a success if the user is correctly authenticated, and an error otherwise.
 
 
 ### Advanced configuration

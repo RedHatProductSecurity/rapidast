@@ -63,6 +63,15 @@ general:
     #parameters:
     #  name: "cookie name"
     #  value: "cookie value"
+    #
+    # "browser" authentication will use firefox in the background to generate cookies
+    #  - verifyUrl must return an error if the user is not logged in
+    #type: "browser"   
+    #parameters:
+    #  username: "user"
+    #  password: "mypassw0rd"
+    #  loginPageUrl: "https://myapp/login"
+    #  verifyUrl: "https://myapp/user/info"
 
 
   container:

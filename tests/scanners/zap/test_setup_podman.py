@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 import requests
 
-import configmodel.converter
+import configmodel
 from scanners.zap.zap import find_context
 from scanners.zap.zap_podman import ZapPodman
 
@@ -194,6 +194,8 @@ def test_podman_handling_ajax(test_config):
     cli = test_zap.podman.get_complete_cli()
     i = cli.index("--shm-size")
     assert cli[i + 1] == "2g"
+    i = cli.index("--pids-limit")
+    assert cli[i + 1] == "-1"
 
 
 def test_podman_handling_plugins(test_config):

@@ -63,6 +63,15 @@ general:
     #parameters:
     #  name: "cookie name"
     #  value: "cookie value"
+    #
+    # "browser" authentication will use firefox in the background to generate cookies
+    #  - verifyUrl must return an error if the user is not logged in
+    #type: "browser"   
+    #parameters:
+    #  username: "user"
+    #  password: "mypassw0rd"
+    #  loginPageUrl: "https://myapp/login"
+    #  verifyUrl: "https://myapp/user/info"
 
 
   container:
@@ -92,8 +101,8 @@ general:
       #test_title: "ZAP"
       # - or -
       #test: 5       # test ID, that will force "reimport" mode
-      # additional options, see https://demo.defectdojo.org/api/v2/doc/ for list
-      auto_create_context: False  # Optional. set to True to auto-create engagement (requires product_name and engagement_name)
+
+      # For additional options, see https://defectdojo.github.io/django-DefectDojo/integrations/importing/
 
 # `scanners' is a section that configures scanning options
 scanners:

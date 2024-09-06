@@ -1,7 +1,9 @@
 import logging
 import os
+import platform
 import pprint
 import subprocess
+from shutil import disk_usage
 
 from .zap import MODULE_DIR
 from .zap import Zap
@@ -148,6 +150,7 @@ class ZapNone(Zap):
     def postprocess(self):
         logging.info("Running postprocess for the ZAP Host environment")
 
+        # Calling parent ZapScanner postprocess
         super().postprocess()
 
         if not self.state == State.ERROR:
@@ -163,6 +166,59 @@ class ZapNone(Zap):
 
         if not self.state == State.ERROR:
             self.state = State.CLEANEDUP
+
+    ###############################################################
+    # OVERLOADED METHODS                                          #
+    # Method overloading parent class                             #
+    ###############################################################
+
+    def _setup_ajax_spider(self):
+        """Ajax requires a lot of shared memory"""
+
+        if self.my_conf("spiderAjax", default=False) is False:
+            return
+
+        # In Linux, we may be contained, with limitations
+        # On MacOS: we're running on the host, limits should not be a problem
+        if platform.system() == "Linux":
+            # We need to verify that there's sufficient amount of shared memory
+            try:
+                # verify that there's at least 1GB in /dev/shm
+                shm = disk_usage("/dev/shm/").total
+                logging.debug(f"Shared mem size: {shm} bytes")
+                if shm <= (1024 * 1024 * 1024):
+                    logging.warning(
+                        f"Insufficient shared memory to run an Ajax Spider correctly ({shm} bytes). "
+                        "Make sure that /dev/shm/ is at least 1GB in size [ideally at least 2GB]"
+                    )
+            except FileNotFoundError:
+                logging.warning(
+                    "/dev/shm not present. Unable to calcuate shared memory size"
+                )
+
+            # Firefox tends to use _a lot_ of threads
+            # Assume we're regulated by cgroup v2
+            try:
+                with open("/sys/fs/cgroup/pids.max", encoding="utf-8") as f:
+                    pid_val = f.readline().rstrip()
+                    if pid_val == "max" or int(pid_val) > 10000:
+                        logging.debug(
+                            f"cgroup v2 has a sufficient pid limit: {pid_val}"
+                        )
+                    else:
+                        logging.warning(
+                            f"Number of threads may be too low for SpiderAjax: cgroupv2 pids.max={pid_val}"
+                        )
+            except FileNotFoundError:
+                # open /sys/fs/cgroup/pids.max failed: root cgroup (unlimited pids) or no cgroup v2 at all.
+                # assume the former
+                logging.debug("No cgroupv2 pids.max: assume root cgroup")
+            except ValueError as e:
+                # pids.max is neither "max" nor a number. This is not supposed to happen
+                logging.warning(f"Unable to parse cgroupv2 pids.max: {e}")
+
+        # Regular Ajax setup
+        super()._setup_ajax_spider()
 
     ###############################################################
     # PROTECTED METHODS                                           #

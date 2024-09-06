@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #######################################
 #
-# [v0.1.0] OOBT(Out of Band testing) for Kubernetes.
+# [v0.1.1] OOBT(Out of Band testing) for Kubernetes.
 # This is to detect vulnerabilites that can be detected with OOBT such as blind command injection.
 #
 # Current internal workflow:
@@ -13,8 +13,13 @@
 # A usage example (see options in the code):
 #  $ python3 oobtkube.py -d <timeout> -p <port> -i <ipaddr> -f <your_cr_config_example>.yaml
 #
+#
+# Changelog:
+#
+#  - 0.1.1: add INFO logs to show test progress (key name, counts, vulnerability found)
+#  - 0.1.0: produce SARIF result and improvements
+#  - 0.0.1: init
 # Roadmap:
-#  - improve logging
 #  - more payload
 #  - improve modulization and extensibility
 #
@@ -105,37 +110,72 @@ def get_sarif_output(shared_queue):
     return sarif_conv.convert_to_sarif_json(result_message, artifact_url, snippet)
 
 
-def find_leaf_keys_and_test(data, original_file, ipaddr, port):
+def count_total_leaf_keys(data):
+    count = 0
+    key_list = []
+    for key, value in data.items():
+        if isinstance(value, dict):
+            count += count_total_leaf_keys(value)
+        else:
+            count += 1
+            key_list.append(key)
+
+    return count
+
+
+# pylint: disable=R0913
+def find_leaf_keys_and_test(
+    data, original_file, ipaddr, port, total_leaf_keys, processed_leaf_keys=0
+):
+    """
+    Iterate the spec data and test each parameter by modifying the value with the attack payload.
+    Test cases: appending 'curl' command, TBD
+    """
     tmp_file = "/tmp/oobtkube-test.yaml"
     for key, value in data.items():
         if isinstance(value, dict):
-            find_leaf_keys_and_test(value, original_file, ipaddr, port)
+            processed_leaf_keys = find_leaf_keys_and_test(
+                value, original_file, ipaddr, port, total_leaf_keys, processed_leaf_keys
+            )
         else:
-            logging.debug(f"Testing a leaf key found: '{key}'")
+            processed_leaf_keys += 1
+            logging.info(
+                f"Testing a leaf key: '{key}', ({processed_leaf_keys} / {total_leaf_keys})"
+            )
             cmd = f"sed 's/{key}:.*/{key}: \"echo oobt; curl {ipaddr}:{port}\\/{key}\"/g' {original_file} > {tmp_file}"
             logging.debug(f"Command run: {cmd}")
             os.system(cmd)
 
+            redirect = "&> /dev/null"
+            if logging.getLogger().isEnabledFor(logging.DEBUG):
+                # don't supress output when debug logging
+                redirect = ""
             # if using 'apply' and a resource already exists, the command won't run as it returns as 'unchanged'
             # therefore 'create' and 'replace' are used
-            kube_cmd = f"kubectl create -f {tmp_file} > /dev/null 2>&1; kubectl replace -f {tmp_file}"
+            kube_cmd = f"kubectl create -f {tmp_file} {redirect} || kubectl replace -f {tmp_file} {redirect}"
 
             logging.debug(f"Command run: {kube_cmd}")
             os.system(kube_cmd)
 
+    return processed_leaf_keys
 
-def scan_with_k8s_config(cfg_file_path, ipaddr, port):
-    # Apply Kubernetes config (e.g. CR for Operator, or Pod/resource for webhook)
 
-    with open(cfg_file_path, "r", encoding="utf-8") as file:
-        yaml_data = yaml.safe_load(file)
+def parse_obj_data(filename: str) -> dict:
+    with open(filename, "r", encoding="utf-8") as file:
         try:
-            spec_data = yaml_data.get("spec", {})
-            find_leaf_keys_and_test(spec_data, cfg_file_path, ipaddr, port)
-
+            return yaml.safe_load(file)
         except yaml.YAMLError as e:
             logging.error(f"Error parsing YAML: {e}")
-            return []
+    return {}
+
+
+def scan_with_k8s_config(cfg_file_path: str, obj_data: dict, ipaddr: str, port: int):
+    spec_data = obj_data.get("spec", {})
+    total_leaf_keys = count_total_leaf_keys(spec_data)
+    # Apply Kubernetes config (e.g. CR for Operator, or Pod/resource for webhook)
+    find_leaf_keys_and_test(
+        spec_data, cfg_file_path, ipaddr, port, total_leaf_keys
+    )
 
 
 def start_socket_listener(port, shared_queue, data_received, stop_event, duration):
@@ -174,9 +214,10 @@ def start_socket_listener(port, shared_queue, data_received, stop_event, duratio
 
             break
 
-    except TimeoutError:
-        logging.debug("Timeout reached. Stopping the server.")
-        pass
+    except socket.timeout:
+        logging.info(
+            "Socket timeout reached as the test duration expired. Stopping the server."
+        )
 
     except Exception as e:
         raise RuntimeError("An error occurred. See logs for details.") from e
@@ -233,6 +274,21 @@ def print_result(sarif_output, file_output=False, message_detected=False):
         logging.info(sarif_output)
 
 
+def check_can_create(obj_data: dict) -> bool:
+    """Check if possible to create target resources. Verifies connection, sufficient permissions etc"""
+    resource = obj_data["kind"]  # kind must always be present in resource file
+    try:
+        subprocess.run(["kubectl", "auth", "can-i", "create", resource], check=True, capture_output=True, timeout=30)
+    except subprocess.TimeoutExpired as e:
+        logging.error(e)
+        return False
+    except subprocess.CalledProcessError as e:
+        err = e.stderr.decode().rstrip()
+        logging.error(f"Unable to create {resource} resource(s): {err}")
+        return False
+    return True
+
+
 # pylint: disable=R0915
 def main():
     # Parse command-line arguments
@@ -285,6 +341,7 @@ def main():
 
     args = parser.parse_args()
     args.loglevel = args.loglevel.upper()
+
     logging.basicConfig(format="%(levelname)s: %(message)s", level=args.loglevel)
 
     if not args.filename:
@@ -294,6 +351,12 @@ def main():
     # Check if the file exists before creating a thread
     if not os.path.exists(args.filename):
         raise FileNotFoundError(f"The file '{args.filename}' does not exist.")
+
+    # if we can't parse the resource file, or lack permission to create such
+    # resources, then exit early
+    obj_data = parse_obj_data(args.filename)
+    if not obj_data or not check_can_create(obj_data):
+        sys.exit(1)
 
     # Init variables
     data_has_been_received = False
@@ -326,9 +389,10 @@ def main():
     start_time_main = time.time()
 
     # Run kubectl apply command
-    scan_with_k8s_config(args.filename, args.ip_addr, args.port)
+    scan_with_k8s_config(args.filename, obj_data, args.ip_addr, args.port)
 
     # Check the overall duration periodically
+    vulnerability_count = 0
     while not stop_event.is_set():
         time.sleep(1)  # Adjust the sleep duration as needed
         elapsed_time_main = time.time() - start_time_main
@@ -342,6 +406,11 @@ def main():
             sarif_output = get_sarif_output(shared_queue)
 
             print_result(sarif_output, args.output, True)
+
+            vulnerability_count += 1
+            logging.info(
+                f"A vulnerability has been found. Total: {vulnerability_count}"
+            )
 
             data_has_been_received = True
 

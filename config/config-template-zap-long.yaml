@@ -64,7 +64,7 @@ general:
     #  name: "cookie name"
     #  value: "cookie value"
     #
-    # "browser" authenticatoin will use firefox in the background to generate cookies
+    # "browser" authentication will use firefox in the background to generate cookies
     #  - verifyUrl must return an error if the user is not logged in
     #type: "browser"   
     #parameters:

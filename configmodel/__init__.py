@@ -176,8 +176,50 @@ class RapidastConfigModel:
 
         deep_dict_merge(sub_conf, merge, preserve)
 
+    def subtree_to_dict(self, path):
+        """Given a path, returns its subtree as a dictionary.
+        This includes applying all the `*_from_var` transformation.
+        e.g.:
+        "{'a_from_var': 'A_VAR'}" would return "{'a': '<value of $A_VAR>'}"
+
+        Cases:
+        1- path does not exist: return None
+        2- path does not point to a dictionary: throw a KeyError instance
+        3- path exist and is a dictionary: copy it, walk the copy apply all _from_var, return the copy
+        """
+
+        # recursively descend the tree, and apply all the _from_var
+        def descend(tree):
+            new = {}
+            for key in tree.keys():
+                if key.endswith("_from_var"):
+                    val = os.environ[tree[key]]
+                    if not val:
+                        logging.warning(
+                            f"configuration {key} points to environment variable {val}, which is empty"
+                        )
+                    new[key.removesuffix("_from_var")] = val
+                elif isinstance(tree[key], dict):
+                    new[key] = descend(tree[key])
+                else:
+                    new[key] = tree[key]
+            return new
+
+        try:
+            subtree = self._get_from_conf(path_to_list(path))
+        except KeyError:
+            logging.debug(f"subtree_to_dict(): path '{path}' does not exist")
+            return None
+
+        if not isinstance(subtree, dict):
+            raise KeyError(
+                f"subtree_to_dict(): '{path}' does not point to a dictionary in the config"
+            )
+
+        return descend(subtree)
+
     def get_official_app_name(self):
-        """ Shortcut: 
+        """Shortcut:
         Return a string corresponding to how the application should be called
         Based on the configuratoin.
         Prefer the full product name, but defer to short name if unavailable

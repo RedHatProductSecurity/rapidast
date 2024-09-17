@@ -191,9 +191,9 @@ class PodmanWrapper:
                 "podman enabled UID mapping arguments (using uidmap workaround)"
             )
         else:
-            logging.warning(
+            raise RuntimeError(
                 "subUIDs seem to be disabled/misconfigured for the current user. \
-                Podman is unlikely to run correctly"
+                Rootless podman can not run without subUIDs"
             )
 
         # GID mapping
@@ -207,7 +207,7 @@ class PodmanWrapper:
                 "podman enabled GID mapping arguments (using uidmap workaround)"
             )
         else:
-            logging.warning(
+            raise RuntimeError(
                 "subGIDs seem to be disabled/misconfigured for the current user. \
-                Podman is unlikely to run correctly"
+                Rootless podman can not run without subGIDs"
             )

@@ -45,7 +45,8 @@ def generate_some_nested_config_with_var():
                 "key3": "nestedvalue",
                 "secretkey_from_var": "SECRETKEY",
                 "nestnest": {"leaf": "value"},
-            }
+            },
+            "list": [1, 2, 3, {"foo_from_var": "SECRETKEY"}, 4, 5],
         },
         "nothing": None,
         "falsekey": False,
@@ -75,7 +76,8 @@ def test_subtree_to_dict(nested_with_var):
             "key3": "nestedvalue",
             "secretkey": "ABC",
             "nestnest": {"leaf": "value"},
-        }
+        },
+        "list": [1, 2, 3, {"foo": "ABC"}, 4, 5],
     }
     assert d == expected
     # also verify that the original config dictionary was not modified

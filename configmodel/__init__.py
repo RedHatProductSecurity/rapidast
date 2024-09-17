@@ -189,21 +189,29 @@ class RapidastConfigModel:
         """
 
         # recursively descend the tree, and apply all the _from_var
-        def descend(tree):
-            new = {}
-            for key in tree.keys():
-                if key.endswith("_from_var"):
-                    val = os.environ[tree[key]]
-                    if not val:
-                        logging.warning(
-                            f"configuration {key} points to environment variable {val}, which is empty"
-                        )
-                    new[key.removesuffix("_from_var")] = val
-                elif isinstance(tree[key], dict):
-                    new[key] = descend(tree[key])
-                else:
-                    new[key] = tree[key]
-            return new
+        def descend(root):
+            if isinstance(root, dict):
+                # Dictionary:
+                #  create a new dictionary, and apply the following logic:
+                #  if key matches `_from_var`, assume value is a string, and apply replacement
+                #  otherwise, copy key name and recursively descend on the value
+                new = {}
+                for key, val in root.items():
+                    if key.endswith("_from_var"):
+                        new[key.removesuffix("_from_var")] = os.environ[val]
+                        if not new[key.removesuffix("_from_var")]:
+                            logging.warning(
+                                f"configuration {key} points to environment variable {val}, which is empty"
+                            )
+                    else:
+                        new[key] = descend(val)
+                return new
+            elif isinstance(root, list):
+                # List: apply on each entry, and return a new List
+                return [descend(val) for val in root]
+            else:
+                # root is just a value (integer, string), assuming it's immutable
+                return root
 
         try:
             subtree = self._get_from_conf(path_to_list(path))

@@ -36,8 +36,6 @@ def test_dd_parameters():
     with pytest.raises(KeyError):
         defect_d.params["verify"]
 
-    defect_d = DefectDojo(
-        "https://127.0.0.1:12345", token="random_token", ssl="CAbundle"
-    )
+    defect_d = DefectDojo("https://127.0.0.1:12345", token="random_token", ssl="CAbundle")
     assert defect_d.params["timeout"] == DefectDojo.DD_CONNECT_TIMEOUT
     assert defect_d.params["verify"] == "CAbundle"

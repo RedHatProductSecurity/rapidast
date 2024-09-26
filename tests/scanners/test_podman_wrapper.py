@@ -1,8 +1,8 @@
 import shutil
-import pytest
 import subprocess
-
 from unittest.mock import patch
+
+import pytest
 
 from scanners.podman_wrapper import PodmanWrapper
 
@@ -12,7 +12,7 @@ def test_change_user_id(mock_subprocess):
     wrap = PodmanWrapper(app_name="pytest", scan_name="pytest", image="nothing")
 
     version = '{"Client":{"APIVersion":"5.2.2","Version":"5.2.2","GoVersion":"go1.22.6","GitCommit":"","BuiltTime":"Wed Aug 21 02:00:00 2024","Built":1724198400,"OsArch":"linux/amd64","Os":"linux"}}'
-    run = subprocess.CompletedProcess(args=None, returncode=0, stdout=version.encode('utf-8'))
+    run = subprocess.CompletedProcess(args=None, returncode=0, stdout=version.encode("utf-8"))
 
     mock_subprocess.return_value = run
 
@@ -20,6 +20,7 @@ def test_change_user_id(mock_subprocess):
 
     i = wrap.opts.index("--userns")
     assert wrap.opts[i + 1] == "keep-id:uid=1000,gid=1000"
+
 
 @patch("scanners.podman_wrapper.subprocess.run")
 def test_change_user_id_workaround(mock_subprocess):
@@ -58,8 +59,7 @@ def test_change_user_id_workaround(mock_subprocess):
 }
 """
 
-	
-    run = subprocess.CompletedProcess(args=None, returncode=0, stdout=info.encode('utf-8'))
+    run = subprocess.CompletedProcess(args=None, returncode=0, stdout=info.encode("utf-8"))
 
     mock_subprocess.return_value = run
 

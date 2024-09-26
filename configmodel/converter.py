@@ -45,9 +45,7 @@ def config_converter_dispatcher(func):
 def convert_configmodel(conf):
     """This is the base function, attached to error reporting"""
     version = conf.get("config.configVersion", 0)
-    raise RuntimeError(
-        f"There was an error in converting configuration. No convertion available for version {version}"
-    )
+    raise RuntimeError(f"There was an error in converting configuration. No convertion available for version {version}")
 
 
 @convert_configmodel.register(4)
@@ -60,9 +58,7 @@ def convert_from_version_4_to_5(old):
     new = copy.deepcopy(old)
 
     for key in old.conf["scanners"]:
-        if key.startswith("zap") and old.exists(
-            f"scanners.{key}.miscOptions.oauth2OpenapiManualDownload"
-        ):
+        if key.startswith("zap") and old.exists(f"scanners.{key}.miscOptions.oauth2OpenapiManualDownload"):
             new.move(
                 f"scanners.{key}.miscOptions.oauth2OpenapiManualDownload",
                 f"scanners.{key}.miscOptions.oauth2ManualDownload",
@@ -174,8 +170,7 @@ def convert_from_version_0_to_1(old):
     auth_method = old.get("scan.auth_method", default=None)
     if (
         auth_method == "scriptBasedAuthentication"
-        and old.get("scan.scriptAuth.authScriptFilePath", default="")
-        == "scripts/offline-token.js"
+        and old.get("scan.scriptAuth.authScriptFilePath", default="") == "scripts/offline-token.js"
     ):
         # probably OAuth2
         new.set(
@@ -183,20 +178,14 @@ def convert_from_version_0_to_1(old):
             {
                 "type": "oauth2_rtoken",
                 "parameters": {
-                    "client_id": old.get(
-                        "scan.scriptAuth.authClientID", default="cloud-services"
-                    ),
-                    "token_endpoint": old.get(
-                        "scan.scriptAuth.authTokenEndpoint", default=""
-                    ),
+                    "client_id": old.get("scan.scriptAuth.authClientID", default="cloud-services"),
+                    "token_endpoint": old.get("scan.scriptAuth.authTokenEndpoint", default=""),
                     "rtoken_var_name": "RTOKEN",
                 },
             },
         )
     else:
-        logging.warning(
-            "The config version translator does not support this particular authentication"
-        )
+        logging.warning("The config version translator does not support this particular authentication")
 
     # "Scanners.Zap" section
     new.set(
@@ -206,13 +195,9 @@ def convert_from_version_0_to_1(old):
 
     ### OpenAPI
     if old.get("openapi.importFromUrl", default=False):
-        new.set(
-            "scanners.zap.apiScan.apis.apiUrl", old.get("openapi.url", default=None)
-        )
+        new.set("scanners.zap.apiScan.apis.apiUrl", old.get("openapi.url", default=None))
     elif old.get("openapi.directory", default=""):
-        logging.warning(
-            "The config version translator does not support Directory based OpenAPI"
-        )
+        logging.warning("The config version translator does not support Directory based OpenAPI")
 
     ## Passive scan
     new.set("scanners.zap.passiveScan", {})
@@ -225,9 +210,7 @@ def convert_from_version_0_to_1(old):
     ## Active scan
     # Active scanner was always enabled, so we do the same:
     new.set("scanners.zap.activeScan", {})
-    new.set(
-        "scanners.zap.activeScan.policy", old.get("scan.policies.scanPolicyName", None)
-    )
+    new.set("scanners.zap.activeScan.policy", old.get("scan.policies.scanPolicyName", None))
 
     # Finally, set the correct version number
     new.set("config.configVersion", 1)

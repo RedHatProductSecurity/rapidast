@@ -19,9 +19,7 @@ def test_generic_podman_cli(test_config):
 
     scanner = GenericPodman(config=test_config)
     scanner.setup()
-    assert {"podman", "run", "--name", "myimage", "--pod", "myPod"}.issubset(
-        set(scanner.podman.get_complete_cli())
-    )
+    assert {"podman", "run", "--name", "myimage", "--pod", "myPod"}.issubset(set(scanner.podman.get_complete_cli()))
 
 
 def test_generic_podman_volume(test_config):

@@ -56,9 +56,7 @@ class GoogleCloudStorage:
 
         metadata = self.create_metadata(data)
 
-        logging.info(
-            f"GoogleCloudStorage: sending {filename}. UUID: {metadata['uuid']}"
-        )
+        logging.info(f"GoogleCloudStorage: sending {filename}. UUID: {metadata['uuid']}")
 
         # export data as a metadata.json file
         json_stream = StringIO()
@@ -82,11 +80,7 @@ class GoogleCloudStorage:
         unique_id = "{}-RapiDAST-{}-{}.tgz".format(  # pylint: disable=C0209
             datetime.datetime.now(tz=datetime.timezone.utc).isoformat(),
             self.app_name,
-            "".join(
-                random.choices(
-                    string.ascii_letters + string.ascii_uppercase + string.digits, k=6
-                )
-            ),
+            "".join(random.choices(string.ascii_letters + string.ascii_uppercase + string.digits, k=6)),
         )
         blob_name = self.directory + "/" + unique_id
 

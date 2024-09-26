@@ -7,10 +7,5 @@ def test_path_translation():
     id3 = ("id3", "/z/x/c/v", "/b/n/m")
     path_map = make_mapping_for_scanner("Test", id1, id2, id3)
 
-    assert (
-        path_map.host_2_container("/a/s/d/f/g/subdir/myfile")
-        == "/h/j/k/l/subdir/myfile"
-    )
-    assert (
-        path_map.container_2_host("/b//n/m/subdir/myfile") == "/z/x/c/v/subdir/myfile"
-    )
+    assert path_map.host_2_container("/a/s/d/f/g/subdir/myfile") == "/h/j/k/l/subdir/myfile"
+    assert path_map.container_2_host("/b//n/m/subdir/myfile") == "/z/x/c/v/subdir/myfile"

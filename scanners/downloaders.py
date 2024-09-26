@@ -60,9 +60,7 @@ def oauth2_get_token_from_rtoken(auth, proxy=None, session=None, verify=None):
         resp = session.post(auth["url"], data=payload, headers=headers, proxies=proxy)
         resp.raise_for_status()
     except requests.exceptions.ConnectTimeout:
-        logging.error(
-            "Getting oauth2 token failed: server unresponsive. Check the Authentication URL parameters"
-        )
+        logging.error("Getting oauth2 token failed: server unresponsive. Check the Authentication URL parameters")
         return False
     except requests.exceptions.HTTPError as e:
         logging.error(f"Getting token failed: Check the RTOKEN. err details: {e}")
@@ -71,9 +69,7 @@ def oauth2_get_token_from_rtoken(auth, proxy=None, session=None, verify=None):
     try:
         token = yaml.safe_load(resp.text)["access_token"]
     except KeyError as exc:
-        logging.error(
-            f"Unable to extract access token from OAuth2 authentication:\n {str(exc)}"
-        )
+        logging.error(f"Unable to extract access token from OAuth2 authentication:\n {str(exc)}")
         return False
 
     return token
@@ -101,9 +97,7 @@ def authenticated_download_with_rtoken(url, dest, auth, proxy=None, verify=None)
     resp = session.get(url, proxies=proxy, headers=authenticated_headers)
 
     if resp.status_code >= 400:
-        logging.warning(
-            f"ERROR: download failed with {resp.status_code}. Aborting download for {url}"
-        )
+        logging.warning(f"ERROR: download failed with {resp.status_code}. Aborting download for {url}")
         return False
 
     with open(dest, "w", encoding="utf-8") as file:

@@ -40,7 +40,7 @@ scanners:
     # 'inline' is used when container.type is not 'podman'
     # 'toolDir' specifies the default directory where inline scripts are located
     #toolDir: scanners/generic/tools
-    inline: "trivy k8s --kubeconfig=/home/rapidast/.kube/config -n default pod --scanners=misconfig --report all --format json -o /tmp/k8s_result.json && python3 convert_trivy_k8s_to_sarif.py -f /tmp/k8s_result.json"
+    inline: "trivy k8s --kubeconfig=/home/rapidast/.kube/config -n default pod --scanners=misconfig --report all --format json | convert_trivy_k8s_to_sarif.py"
 
     container:
       parameters:

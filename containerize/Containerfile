@@ -55,6 +55,9 @@ COPY ./configmodel/ /opt/rapidast/configmodel/
 COPY ./utils/ /opt/rapidast/utils/
 COPY ./config/ /opt/rapidast/config/
 
+### Add generic tools in the PATH
+COPY ./scanners/generic/tools/convert_trivy_k8s_to_sarif.py /usr/local/bin/
+
 ### Overload default config (set 'none' as default container type)
 COPY ./containerize/container_default_config.yaml /opt/rapidast/rapidast-defaults.yaml
 

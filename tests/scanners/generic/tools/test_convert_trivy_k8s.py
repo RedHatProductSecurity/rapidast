@@ -3,7 +3,7 @@ import json
 
 import pytest
 
-from scanners.generic.tools.convert_trivy_k8s_to_sarif import convert_json_to_sarif
+from scanners.generic.tools.convert_trivy_k8s_to_sarif import convert_json_to_sarif, read_json_block
 
 TEST_DATA_DIR = "tests/scanners/generic/tools/test_data_convert_trivy_k8s/"
 
@@ -18,6 +18,13 @@ def _assert_default_sarif_info(sarif):
         return False
 
     return True
+
+def test_read_json_block():
+    json_file = TEST_DATA_DIR + "sample-single-result.json"
+    json_assert = json.load(open(json_file))
+
+    json_test = read_json_block(json_file)
+    assert json_test == json_assert
 
 
 def test_convert_json_to_sarif():

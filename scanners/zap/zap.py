@@ -452,26 +452,26 @@ class Zap(RapidastScanner):
     def _setup_spider(self):
         """Prepare an spider job and append it to the job list"""
 
-        if self.my_conf("spider", default=False) is False:
+        params = self.config.subtree_to_dict(self.absolute_conf_path("spider"))
+        if params is None:
             return
 
-        af_spider = {
+        job = {
             "name": "spider",
             "type": "spider",
-            "parameters": {
-                "user": Zap.USER if self.authenticated else "",
-                "maxDuration": self.my_conf("spider.maxDuration", default=0),
-                "url": self.my_conf("spider.url", default=""),
-            },
+            "parameters": params,
         }
 
+        # Enforce user/context parameters
+        self._enforce_job_parameters(job)
+
         # Add to includePaths to the context
-        if self.my_conf("spider.url"):
-            new_include_path = self.my_conf("spider.url") + ".*"
+        if params.get("url"):
+            new_include_path = f"{params['url']}.*"
             af_context = find_context(self.automation_config)
             af_context["includePaths"].append(new_include_path)
 
-        self.automation_config["jobs"].append(af_spider)
+        self.automation_config["jobs"].append(job)
 
     def _setup_ajax_spider(self):
         """Prepare an spiderAjax job and append it to the job list"""
@@ -486,9 +486,8 @@ class Zap(RapidastScanner):
             "parameters": params,
         }
 
-        # Enforce some parameters
-        job["parameters"]["user"] = Zap.USER if self.authenticated else ""
-        job["parameters"]["context"] = Zap.DEFAULT_CONTEXT
+        # Enforce user/context parameters
+        self._enforce_job_parameters(job)
 
         # Set some RapiDAST-centric defaults
         # Unless overwritten, browser should be Firefox-headless, since RapiDAST only has that
@@ -496,9 +495,8 @@ class Zap(RapidastScanner):
             job["parameters"]["policy"] = "firefox-headless"
 
         # Add to includePaths to the context
-        ajax_url = self.my_conf("spiderAjax.url")
-        if ajax_url:
-            new_include_path = f"{ajax_url}.*"
+        if params.get("url"):
+            new_include_path = f"{params['url']}.*"
             af_context = find_context(self.automation_config)
             af_context["includePaths"].append(new_include_path)
 
@@ -582,9 +580,8 @@ class Zap(RapidastScanner):
             "parameters": params,
         }
 
-        # Enforce some parameters
-        job["parameters"]["user"] = Zap.USER if self.authenticated else ""
-        job["parameters"]["context"] = Zap.DEFAULT_CONTEXT
+        # Enforce user/context parameters
+        self._enforce_job_parameters(job)
 
         # Set some RapiDAST-centric defaults
         # unless overwritten, policy should be "API-scan-minimal"
@@ -672,6 +669,11 @@ class Zap(RapidastScanner):
         with open(af_host_path, "w", encoding="utf-8") as f:
             f.write(yaml.dump(self.automation_config))
         logging.info(f"Saved Automation Framework in {af_host_path}")
+
+    def _enforce_job_parameters(self, job):
+        """Enforce parameters `user` and `context` to a given job"""
+        job["parameters"]["user"] = Zap.USER if self.authenticated else ""
+        job["parameters"]["context"] = Zap.DEFAULT_CONTEXT
 
     # Building an authentication factory for ZAP
     # For every authentication methods:

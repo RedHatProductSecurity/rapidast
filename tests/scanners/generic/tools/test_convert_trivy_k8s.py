@@ -55,3 +55,23 @@ def test_empty_json():
 
     json_data = json.loads("[]")
     assert _assert_default_sarif_info(convert_json_to_sarif(json_data))
+
+def test_convert_json_to_sarif_no_duplicate_rules_with_same_id():
+    json_file = TEST_DATA_DIR + "sample-misconfig-findings-with-same-rule.json"
+    json_data = json.load(open(json_file, encoding="utf-8"))
+
+    expected_rules = [
+        {
+            "id": "RULE001",
+            "name": "First Rule Title",
+            "shortDescription": {"text": "First rule description"}
+        }
+    ]
+
+    sarif_result = convert_json_to_sarif(json_data)
+
+    assert sarif_result["runs"][0]["tool"]["driver"]["rules"] == expected_rules
+
+    assert len(sarif_result["runs"][0]["results"]) == 2
+    assert sarif_result["runs"][0]["results"][0]["ruleId"] == "RULE001"
+    assert sarif_result["runs"][0]["results"][1]["ruleId"] == "RULE001"

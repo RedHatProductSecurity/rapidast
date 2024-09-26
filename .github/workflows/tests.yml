@@ -30,4 +30,4 @@ jobs:
     - name: Lint with pre-commit hook
       continue-on-error: true # XXX temporary, until all code linted
       run: |
-        pre-commit run --all-files
+        pre-commit run --all-files --show-diff-on-failure

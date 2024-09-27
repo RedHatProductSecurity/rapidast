@@ -92,13 +92,50 @@ class PodmanWrapper:
         self.add_option("--volume", mapping)
 
     def change_user_id(self, runas_uid, runas_gid):
-        """Adds a specific user mapping between host user and user in the podman container.
-        Some containers, such as Zap, focused on docker require this to prevent UID mismatch.
-        This function aims as preparing a specific UID/GID mapping so that a particular UID/GID maps to the host user
+        """
+        Specify a container user ID to which the current user should be mapped to.
+        This is sometimes required because rootless podman uses Linux' subUIDs.
+
+        If podman version >= 4.3, use the `--userns keep-id:uid=X,gid=Y`
+        otherwise, call `change_user_id_workaround()` to manually create a user mapping
+        """
+        logging.info(f"Current user mapped to container user {runas_uid}:{runas_gid}")
+        try:
+            vers = json.loads(
+                subprocess.run(
+                    ["podman", "version", "--format", "json"],
+                    stdout=subprocess.PIPE,
+                    check=True,
+                ).stdout.decode("utf-8")
+            )
+            major, minor = map(int, vers["Client"]["Version"].split(".")[:2])
+            logging.debug(f"podman version: {vers}. Major: {major}, minor: {minor}")
+            if major < 4 or (major == 4 and minor < 3):
+                # podman < 4.3.0 : the option `keep-id:uid=1000,gid=1000` is not present, we need a workaround
+                self.change_user_id_workaround(runas_uid, runas_gid)
+            else:
+                # use option: keep-id:uid=1000,gid=1000
+                self.add_option("--userns", f"keep-id:uid={runas_uid},gid={runas_gid}")
+
+        except json.JSONDecodeError as exc:
+            raise RuntimeError(
+                f"Unable to parse `podman version` output: {exc}"
+            ) from exc
+        except (KeyError, AttributeError) as exc:
+            raise RuntimeError(
+                f"Unexpected podman version output: Version not found: {exc}"
+            ) from exc
+        except ValueError as exc:
+            raise RuntimeError(
+                f"Unexpected podman version output: unable to decode major/minor version: {exc}"
+            ) from exc
+
+    def change_user_id_workaround(self, runas_uid, runas_gid):
+        """This function aims as preparing a specific UID/GID mapping so that a particular UID/GID maps to the host user
+        Should be called only for podman < 4.3
         source of the hack :
         https://github.com/containers/podman/blob/main/troubleshooting.md#39-podman-run-fails-with-error-unrecognized-namespace-mode-keep-iduid1000gid1000-passed
         """
-
         subuid_size = self.DEFAULT_ID_MAPPING_MAP_SIZE - 1
         subgid_size = self.DEFAULT_ID_MAPPING_MAP_SIZE - 1
 
@@ -144,17 +181,33 @@ class PodmanWrapper:
             raise RuntimeError(f"Unable to retrieve podman UID mapping: {exc}") from exc
 
         # UID mapping
-        self.add_option("--uidmap", f"0:1:{runas_uid}")
-        self.add_option("--uidmap", f"{runas_uid}:0:1")
-        self.add_option(
-            "--uidmap", f"{runas_uid+1}:{runas_uid+1}:{subuid_size-runas_uid}"
-        )
+        if subuid_size >= runas_uid:
+            self.add_option("--uidmap", f"0:1:{runas_uid}")
+            self.add_option("--uidmap", f"{runas_uid}:0:1")
+            self.add_option(
+                "--uidmap", f"{runas_uid+1}:{runas_uid+1}:{subuid_size-runas_uid}"
+            )
+            logging.debug(
+                "podman enabled UID mapping arguments (using uidmap workaround)"
+            )
+        else:
+            raise RuntimeError(
+                "subUIDs seem to be disabled/misconfigured for the current user. \
+                Rootless podman can not run without subUIDs"
+            )
 
         # GID mapping
-        self.add_option("--gidmap", f"0:1:{runas_gid}")
-        self.add_option("--gidmap", f"{runas_gid}:0:1")
-        self.add_option(
-            "--gidmap", f"{runas_gid+1}:{runas_gid+1}:{subgid_size-runas_gid}"
-        )
-
-        logging.debug("podman enabled UID/GID mapping arguments")
+        if subgid_size >= runas_gid:
+            self.add_option("--gidmap", f"0:1:{runas_gid}")
+            self.add_option("--gidmap", f"{runas_gid}:0:1")
+            self.add_option(
+                "--gidmap", f"{runas_gid+1}:{runas_gid+1}:{subgid_size-runas_gid}"
+            )
+            logging.debug(
+                "podman enabled GID mapping arguments (using uidmap workaround)"
+            )
+        else:
+            raise RuntimeError(
+                "subGIDs seem to be disabled/misconfigured for the current user. \
+                Rootless podman can not run without subGIDs"
+            )

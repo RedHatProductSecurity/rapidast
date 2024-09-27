@@ -3,21 +3,28 @@
 #
 # Convert a Trivy k8s json result to SARIF format(stdout).
 # A usage example (see options in the code):
-#  $ convert_trivy_k8s_to_sarify.py -f <input.json> [--log-level=DEBUG]
+#  $ convert_trivy_k8s_to_sarify.py [-f <input.json>] [--log-level=DEBUG]
+# If `-f` is absent, or its value is `-`, JSON data will be read from STDIN
 #
 #
 import argparse
 import json
+import sys
 import logging
 
 
 def read_json_block(json_file):
     """
-    Read JSON data from a file.
+    Read JSON data from a file, or from STDIN.
     """
-    with open(json_file, "r", encoding="utf-8") as f:
-        json_data = json.load(f)
-    return json_data
+    if json_file is None or json_file == "-":
+        logging.debug("Reading input from STDIN")
+        data = sys.stdin.read()
+    else:
+        logging.debug(f"Reading input from '{json_file}'")
+        with open(json_file, "r", encoding="utf-8") as f:
+            data = f.read()
+    return json.loads(data)
 
 
 def convert_json_to_sarif(json_data):
@@ -108,8 +115,9 @@ def main():
         "-f",
         "--filename",
         type=str,
-        required=True,
-        help="Path to JSON file",
+        required=False,
+        default=None,
+        help="Path to JSON file (if absent or '-': read from STDIN)",
     )
     parser.add_argument(
         "--log-level",

@@ -15,6 +15,10 @@ config:
   # all the results of all scanners will be stored under that location
   base_results_dir: "./results"
 
+  # In RapiDAST only: should RapiDAST verify certificates
+  # possible values: true [default], false, /path/to/a/PEM/file
+  tls_verify: true
+
   # Import a particular environment, and inject it for each scanner
   environ:
     envFile: "path/to/env/file"
@@ -66,7 +70,7 @@ general:
     #
     # "browser" authentication will use firefox in the background to generate cookies
     #  - verifyUrl must return an error if the user is not logged in
-    #type: "browser"   
+    #type: "browser"
     #parameters:
     #  username: "user"
     #  password: "mypassw0rd"

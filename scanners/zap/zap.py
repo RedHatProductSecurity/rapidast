@@ -827,7 +827,10 @@ class Zap(RapidastScanner):
                 "rtoken": rtoken,
                 "url": token_endpoint,
             }
-            token = oauth2_get_token_from_rtoken(auth, proxy=self.my_conf("proxy"))
+            verify = self.config.get("config.tls_verify", True)
+            token = oauth2_get_token_from_rtoken(
+                auth, proxy=self.my_conf("proxy"), verify=verify
+            )
             if token:
                 # Delete previous config, and creating a new one
                 logging.debug(
@@ -938,8 +941,11 @@ class Zap(RapidastScanner):
 
         for change in changes:
             url = self.my_conf(change.config_url)
+            verify = self.config.get("config.tls_verify", True)
             if url:
-                if authenticated_download_with_rtoken(url, change.path, auth, proxy):
+                if authenticated_download_with_rtoken(
+                    url, change.path, auth, proxy, verify=verify
+                ):
                     logging.info(
                         f"Successful download of scanner's {change.config_url}"
                     )

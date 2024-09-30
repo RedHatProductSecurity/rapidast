@@ -66,7 +66,7 @@ general:
     #
     # "browser" authentication will use firefox in the background to generate cookies
     #  - verifyUrl must return an error if the user is not logged in
-    #type: "browser"   
+    #type: "browser"
     #parameters:
     #  username: "user"
     #  password: "mypassw0rd"
@@ -135,6 +135,9 @@ scanners:
       url: ""        # url to start spidering from, default: application.url set above
 
     spiderAjax:
+      # The list of parameters: https://www.zaproxy.org/docs/desktop/addons/ajax-spider/automation/
+      #maxCrawlStates: 10   # this may be useful when running in a memory limited environment (default: 0 unlimited)
+      #maxCrawlDepth: 10    # default: unlimited
       maxDuration: 0 # in minutes, default: 0 unlimited
       url: ""        # url to start spidering from, default: application.url set above
       browserId: firefox-headless
@@ -145,6 +148,10 @@ scanners:
       disabledRules: "2,10015,10024,10027,10054,10096,10109,10112"
 
     activeScan:
+      # The list of parameters: https://www.zaproxy.org/docs/desktop/addons/ajax-spider/automation/
+      #maxRuleDurationInMins: max scan time for each Rule (default: unlimited)
+      #maxScanDurationInMins: max scan time for the entire scan. Useful for debugging automation
+      #
       # If no policy is chosen, a default ("API-scan-minimal") will be selected
       # The list of policies can be found in scanners/zap/policies/
       policy:  "API-scan-minimal"

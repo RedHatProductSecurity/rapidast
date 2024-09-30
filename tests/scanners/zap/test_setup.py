@@ -248,19 +248,40 @@ def test_setup_include_urls(test_config):
     assert "def" in find_context(test_zap.automation_config)["includePaths"]
 
 
+def test_setup_active_scan(test_config):
+    test_config.set("scanners.zap.activeScan.maxRuleDurationInMins", 10)
+
+    test_zap = ZapNone(config=test_config)
+    test_zap.setup()
+
+    for item in test_zap.automation_config["jobs"]:
+        if item["type"] == "activeScan":
+            assert item["parameters"]["policy"] == "API-scan-minimal"
+            assert item["parameters"]["maxRuleDurationInMins"] == 10
+            assert item["parameters"]["context"] == "Default Context"
+            assert item["parameters"]["user"] == ""
+            break
+    else:
+        assert False
+
+
 def test_setup_ajax(test_config):
     test_config.set("scanners.zap.spiderAjax.maxDuration", 10)
     test_config.set("scanners.zap.spiderAjax.url", "http://test.com")
     test_config.set("scanners.zap.spiderAjax.browserId", "chrome-headless")
+    test_config.set("scanners.zap.spiderAjax.maxCrawlState", 3)
 
     test_zap = ZapNone(config=test_config)
     test_zap.setup()
 
     for item in test_zap.automation_config["jobs"]:
         if item["type"] == "spiderAjax":
+            assert item["parameters"]["context"] == "Default Context"
             assert item["parameters"]["maxDuration"] == 10
+            assert item["parameters"]["user"] == ""
             assert item["parameters"]["url"] == "http://test.com"
             assert item["parameters"]["browserId"] == "chrome-headless"
+            assert item["parameters"]["maxCrawlState"] == 3
             break
     else:
         assert False

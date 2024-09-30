@@ -33,11 +33,18 @@ class RapidastScanner:
         # this temporary directory
         self.main_temp_dir = None
 
+    def absolute_conf_path(self, path):
+        """Handy shortcut to get an absolute path into a scanner's config parameter.
+        WARNING: currently, `path` MUST be in string for (e.g.: `spiderAjax.parameters.maxCrawlDepth`)
+        """
+        return f"scanners.{self.ident}.{path}"
+
     def my_conf(self, path, *args, **kwargs):
         """Handy shortcut to get the scanner's configuration.
         Only for within `scanners.<scanner>`
+        WARNING: currently, `path` MUST be in string for (e.g.: `spiderAjax.parameters.maxCrawlDepth`)
         """
-        return self.config.get(f"scanners.{self.ident}.{path}", *args, **kwargs)
+        return self.config.get(self.absolute_conf_path(path), *args, **kwargs)
 
     def set_my_conf(self, path, *args, **kwargs):
         """Handy shortcut to set the scanner's configuration.

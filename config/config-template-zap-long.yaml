@@ -17,7 +17,7 @@ config:
 
   # In RapiDAST only: should RapiDAST verify certificates
   # possible values: true [default], false, /path/to/a/PEM/file
-  tls_verify: true
+  tls_verify_for_rapidast_downloads: true
 
   # Import a particular environment, and inject it for each scanner
   environ:

@@ -827,7 +827,7 @@ class Zap(RapidastScanner):
                 "rtoken": rtoken,
                 "url": token_endpoint,
             }
-            verify = self.config.get("config.tls_verify", True)
+            verify = self.config.get("config.tls_verify_for_rapidast_downloads", True)
             token = oauth2_get_token_from_rtoken(
                 auth, proxy=self.my_conf("proxy"), verify=verify
             )
@@ -941,7 +941,7 @@ class Zap(RapidastScanner):
 
         for change in changes:
             url = self.my_conf(change.config_url)
-            verify = self.config.get("config.tls_verify", True)
+            verify = self.config.get("config.tls_verify_for_rapidast_downloads", True)
             if url:
                 if authenticated_download_with_rtoken(
                     url, change.path, auth, proxy, verify=verify

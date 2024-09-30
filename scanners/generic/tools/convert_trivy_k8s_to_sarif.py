@@ -47,6 +47,8 @@ def convert_json_to_sarif(json_data):
     if "Resources" not in json_data:
         return sarif_template
 
+    rule_ids = set()
+
     for res in json_data["Resources"]:
         if "Results" not in res:
             continue
@@ -87,13 +89,18 @@ def convert_json_to_sarif(json_data):
                         },
                     }
 
-                new_rule = {
-                    "id": misconf["ID"],
-                    "name": misconf["Title"],
-                    "shortDescription": {"text": misconf["Description"]},
-                }
+                if misconf["ID"] not in rule_ids:
+                    new_rule = {
+                        "id": misconf["ID"],
+                        "name": misconf["Title"],
+                        "shortDescription": {"text": misconf["Description"]},
+                    }
 
-                sarif_template["runs"][0]["tool"]["driver"]["rules"].append(new_rule)
+                    sarif_template["runs"][0]["tool"]["driver"]["rules"].append(
+                        new_rule
+                    )
+                    rule_ids.add(misconf["ID"])
+
                 sarif_template["runs"][0]["results"].append(new_report)
 
     return sarif_template

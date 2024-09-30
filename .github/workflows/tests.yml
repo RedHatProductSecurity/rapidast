@@ -24,10 +24,10 @@ jobs:
       run: |
         python3 -m ensurepip --upgrade
         pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
+    - name: Test with pytest
+      run: |
+        pytest
     - name: Lint with pre-commit hook
       continue-on-error: true # XXX temporary, until all code linted
       run: |
         pre-commit run --all-files
-    - name: Test with pytest
-      run: |
-        pytest

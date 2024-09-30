@@ -1,3 +1,4 @@
+import copy
 import os
 
 import pytest
@@ -29,6 +30,66 @@ def generate_some_nested_config():
         "nothing": None,
         "falsekey": False,
     }
+
+
+@pytest.fixture(name="nested_with_var")
+def generate_some_nested_config_with_var():
+    os.environ["SECRETKEY"] = "ABC"
+    return {
+        "key1": "value1",
+        "key2": {"key21": "value21"},
+        "key3": "value3",
+        "key4": "value4",
+        "nested": {
+            "morenested": {
+                "key3": "nestedvalue",
+                "secretkey_from_var": "SECRETKEY",
+                "nestnest": {"leaf": "value"},
+            },
+            "list": [1, 2, 3, {"foo_from_var": "SECRETKEY"}, 4, 5],
+        },
+        "nothing": None,
+        "falsekey": False,
+    }
+
+
+def test_subtree_to_dict(nested_with_var):
+    myconf = RapidastConfigModel(nested_with_var)
+
+    # make a "backup" of the original config, to look for unexpected modification
+    original = copy.deepcopy(myconf.conf)
+
+    d = myconf.subtree_to_dict("nested.morenested")
+    expected = {
+        "key3": "nestedvalue",
+        "secretkey": "ABC",
+        "nestnest": {"leaf": "value"},
+    }
+    assert d == expected
+    # also verify that the original config dictionary was not modified
+    assert original == myconf.conf
+
+    # same test, one layer up
+    d = myconf.subtree_to_dict("nested")
+    expected = {
+        "morenested": {
+            "key3": "nestedvalue",
+            "secretkey": "ABC",
+            "nestnest": {"leaf": "value"},
+        },
+        "list": [1, 2, 3, {"foo": "ABC"}, 4, 5],
+    }
+    assert d == expected
+    # also verify that the original config dictionary was not modified
+    assert original == myconf.conf
+
+    # pointing to a non-dictionary generates a KeyError
+    with pytest.raises(KeyError):
+        myconf.subtree_to_dict("key1")
+
+    # pointing to a non existing entry return an empty dict
+    d = myconf.subtree_to_dict("nested.foo")
+    assert d == None
 
 
 def test_configmodel_exists(some_nested_config):

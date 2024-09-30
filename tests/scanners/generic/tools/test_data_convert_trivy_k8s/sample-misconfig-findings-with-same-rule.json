@@ -1,0 +1,46 @@
+{
+  "ClusterName": "cluster1",
+  "Resources": [
+    {
+      "Results": [
+        {
+          "Target": "resource1.yaml",
+          "Misconfigurations": [
+            {
+              "ID": "RULE001",
+              "Severity": "HIGH",
+              "Message": "First message",
+              "Title": "First Rule Title",
+              "Description": "First rule description",
+              "CauseMetadata": {
+                "StartLine": 1,
+                "EndLine": 2,
+                "Code": {
+                  "Lines": [
+                    "some code line"
+                  ]
+                }
+              }
+            },
+            {
+              "ID": "RULE001",
+              "Severity": "HIGH",
+              "Message": "Second message",
+              "Title": "First Rule Title",
+              "Description": "First rule description",
+              "CauseMetadata": {
+                "StartLine": 3,
+                "EndLine": 4,
+                "Code": {
+                  "Lines": [
+                    "another code line"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

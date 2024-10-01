@@ -21,6 +21,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build container image
+      id: build-image
       uses: redhat-actions/buildah-build@v2
       with:
         image: ${{ env.IMAGE_NAME }}

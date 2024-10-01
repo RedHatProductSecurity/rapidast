@@ -71,7 +71,11 @@ def test_convert_json_to_sarif_no_duplicate_rules_with_same_id():
     json_data = json.load(open(json_file, encoding="utf-8"))
 
     expected_rules = [
-        {"id": "RULE001", "name": "First Rule Title", "shortDescription": {"text": "First rule description"}}
+        {
+            "id": "RULE001",
+            "name": "First Rule Title",
+            "shortDescription": {"text": "First rule description"},
+        }
     ]
 
     sarif_result = convert_json_to_sarif(json_data)

@@ -201,7 +201,10 @@ class Zap(RapidastScanner):
         standard = []
 
         # Proxy workaround (because it currently can't be configured from Automation Framework)
-        p_host, p_port = self.my_conf("proxy.proxyHost"), self.my_conf("proxy.proxyPort")
+        p_host, p_port = (
+            self.my_conf("proxy.proxyHost"),
+            self.my_conf("proxy.proxyPort"),
+        )
         if p_host and p_port:
             standard.extend(["-config", f"network.connection.httpProxy.host={p_host}"])
             standard.extend(["-config", f"network.connection.httpProxy.port={p_port}"])

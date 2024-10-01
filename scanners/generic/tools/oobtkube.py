@@ -268,7 +268,12 @@ def check_can_create(obj_data: dict) -> bool:
     """Check if possible to create target resources. Verifies connection, sufficient permissions etc"""
     resource = obj_data["kind"]  # kind must always be present in resource file
     try:
-        subprocess.run(["kubectl", "auth", "can-i", "create", resource], check=True, capture_output=True, timeout=30)
+        subprocess.run(
+            ["kubectl", "auth", "can-i", "create", resource],
+            check=True,
+            capture_output=True,
+            timeout=30,
+        )
     except subprocess.TimeoutExpired as e:
         logging.error(e)
         return False

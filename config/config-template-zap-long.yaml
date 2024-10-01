@@ -15,6 +15,10 @@ config:
   # all the results of all scanners will be stored under that location
   base_results_dir: "./results"
 
+  # In RapiDAST only: should RapiDAST verify certificates
+  # possible values: true [default], false, /path/to/a/PEM/file
+  tls_verify_for_rapidast_downloads: true
+
   # Import a particular environment, and inject it for each scanner
   environ:
     envFile: "path/to/env/file"

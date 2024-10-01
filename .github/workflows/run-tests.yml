@@ -1,4 +1,4 @@
-name: RapiDAST
+name: Run tests
 
 on:
   push:

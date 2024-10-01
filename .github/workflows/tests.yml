@@ -1,0 +1,33 @@
+name: RapiDAST
+
+on:
+  push:
+    branches: ["development", "main"]
+  pull_request:
+    branches: ["development", "main"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.9"
+    - name: Install dependencies
+      run: |
+        python3 -m ensurepip --upgrade
+        pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
+    - name: Test with pytest
+      run: |
+        pytest
+    - name: Lint with pre-commit hook
+      continue-on-error: true # XXX temporary, until all code linted
+      run: |
+        pre-commit run --all-files

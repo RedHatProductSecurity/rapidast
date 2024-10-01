@@ -57,9 +57,7 @@ def main(input_file, output_file, debug):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Remove recursive $ref from OpenAPI JSON file."
-    )
+    parser = argparse.ArgumentParser(description="Remove recursive $ref from OpenAPI JSON file.")
     parser.add_argument("-f", "--file", required=True, help="Input OpenAPI JSON file")
     parser.add_argument(
         "-o",
@@ -67,9 +65,7 @@ if __name__ == "__main__":
         default="cleaned_openapi.json",
         help="Output file for cleaned OpenAPI JSON (default: cleaned_openapi.json)",
     )
-    parser.add_argument(
-        "-d", "--debug", action="store_true", help="Enable debug messages"
-    )
+    parser.add_argument("-d", "--debug", action="store_true", help="Enable debug messages")
 
     args = parser.parse_args()
 

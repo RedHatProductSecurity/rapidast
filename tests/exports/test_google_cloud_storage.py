@@ -1,11 +1,12 @@
+import datetime
+from unittest.mock import MagicMock
+from unittest.mock import Mock
+from unittest.mock import mock_open
+from unittest.mock import patch
+
 import pytest
 
-from unittest.mock import Mock, MagicMock, patch, mock_open
-
-import datetime
-
 from exports.google_cloud_storage import GoogleCloudStorage
-
 
 
 @patch("exports.google_cloud_storage.storage.Client.from_service_account_json")
@@ -21,6 +22,7 @@ def test_GCS_simple_init_keyfile(mock_from_json):
     mock_from_json.assert_called_once_with("/key/file.json")
     mock_client.get_bucket.assert_called_once_with("bucket_name")
 
+
 @patch("exports.google_cloud_storage.storage.Client")
 def test_GCS_simple_init_no_keyfile(mock_client):
     gcs = GoogleCloudStorage("bucket_name", "app_name", "directory_name")
@@ -33,7 +35,6 @@ def test_GCS_simple_init_no_keyfile(mock_client):
 @patch("exports.google_cloud_storage.storage.Client")
 @patch("exports.google_cloud_storage.uuid")
 def test_GCS_create_metadata(mock_uuid, mock_client):
-
     mock_uuid.uuid1.return_value = 123
 
     gcs = GoogleCloudStorage("bucket_name", "app_name", "directory_name")
@@ -62,7 +63,7 @@ def test_GCS_export_scan(MockRandom, MockDateTime, MockClient):
 
     # Forcing the date
     mock_now = MagicMock()
-    mock_now.isoformat.return_value = '2024-01-31T00:00:00'
+    mock_now.isoformat.return_value = "2024-01-31T00:00:00"
     MockDateTime.now.return_value = mock_now
 
     # catching the Client
@@ -83,10 +84,7 @@ def test_GCS_export_scan(MockRandom, MockDateTime, MockClient):
 
     gcs = GoogleCloudStorage("bucket_name", "app_name", "directory_name")
 
-    import_data = {
-        "scan_type": "ABC",
-        "foo": "bar"
-    }
+    import_data = {"scan_type": "ABC", "foo": "bar"}
 
     # hack: use the pytest file itself as a scan
     gcs.export_scan(import_data, __file__)

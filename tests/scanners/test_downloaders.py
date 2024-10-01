@@ -47,9 +47,7 @@ def test_oauth2_get_token_from_rtoken(mock_session, my_auth, my_proxy):
 
     mock_session.side_effect = fake_Session
 
-    rtoken = downloaders.oauth2_get_token_from_rtoken(
-        auth=my_auth, proxy=my_proxy, session=None
-    )
+    rtoken = downloaders.oauth2_get_token_from_rtoken(auth=my_auth, proxy=my_proxy, session=None)
 
     assert rtoken == 123
 
@@ -57,9 +55,7 @@ def test_oauth2_get_token_from_rtoken(mock_session, my_auth, my_proxy):
 @patch("scanners.downloaders.requests.Session")
 @patch("scanners.downloaders.oauth2_get_token_from_rtoken")
 @patch("builtins.open")
-def test_authenticated_download_with_rtoken(
-    mock_open, mock_get_rtoken, mock_session, my_auth, my_proxy
-):
+def test_authenticated_download_with_rtoken(mock_open, mock_get_rtoken, mock_session, my_auth, my_proxy):
     class fake_Session:
         def post(self, url, **kwargs):
             Post = namedtuple("Post", ["raise_for_status", "text"])
@@ -73,7 +69,5 @@ def test_authenticated_download_with_rtoken(
     mock_get_rtoken.return_value = "123"
     mock_open.return_value = MagicMock()
 
-    res = downloaders.authenticated_download_with_rtoken(
-        "url", "Nowhere", auth=my_auth, proxy=my_proxy
-    )
+    res = downloaders.authenticated_download_with_rtoken("url", "Nowhere", auth=my_auth, proxy=my_proxy)
     assert res == True

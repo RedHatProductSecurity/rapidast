@@ -39,14 +39,10 @@ In the process any comments will be deleted. Please review any warnings or error
     args.loglevel = args.loglevel.upper()
     add_logging_level("VERBOSE", logging.DEBUG + 5)
     logging.basicConfig(format="%(levelname)s:%(message)s", level=args.loglevel)
-    logging.debug(
-        f"log level set to debug. Config file: '{parser.parse_args().config_file.name}'"
-    )
+    logging.debug(f"log level set to debug. Config file: '{parser.parse_args().config_file.name}'")
 
     try:
-        config = configmodel.RapidastConfigModel(
-            yaml.safe_load(parser.parse_args().config_file)
-        )
+        config = configmodel.RapidastConfigModel(yaml.safe_load(parser.parse_args().config_file))
     except yaml.YAMLError as exc:
         raise RuntimeError(
             f"Something went wrong while parsing one of the config '{parser.parse_args().config_file}':\n {str(exc)}"

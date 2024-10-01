@@ -35,22 +35,15 @@ def test_find_leaf_keys_and_test(mock_system, test_data, caplog):
 
     total_leaf_keys = oobtkube.count_total_leaf_keys(test_data)
 
-    oobtkube.find_leaf_keys_and_test(
-        test_data, "cr_test_file", "10.10.10.10", "12345", total_leaf_keys
-    )
+    oobtkube.find_leaf_keys_and_test(test_data, "cr_test_file", "10.10.10.10", "12345", total_leaf_keys)
 
     processed_count = 0
     leaves = ["leaf1", "leaf2", "leaf3"]
     for leaf_key in leaves:
         processed_count += 1
-        assert (
-            f"Testing a leaf key: '{leaf_key}', ({processed_count} / {total_leaf_keys})"
-            in caplog.text
-        )
+        assert f"Testing a leaf key: '{leaf_key}', ({processed_count} / {total_leaf_keys})" in caplog.text
 
-    assert (
-        mock_system.call_count == 6
-    )  # Each leaf key runs `sed` and `kubectl` commands (2 calls per key)
+    assert mock_system.call_count == 6  # Each leaf key runs `sed` and `kubectl` commands (2 calls per key)
 
 
 def test_parse_resource_yaml():

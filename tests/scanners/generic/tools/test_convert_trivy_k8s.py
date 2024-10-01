@@ -3,7 +3,8 @@ import json
 
 import pytest
 
-from scanners.generic.tools.convert_trivy_k8s_to_sarif import convert_json_to_sarif, read_json_block
+from scanners.generic.tools.convert_trivy_k8s_to_sarif import convert_json_to_sarif
+from scanners.generic.tools.convert_trivy_k8s_to_sarif import read_json_block
 
 TEST_DATA_DIR = "tests/scanners/generic/tools/test_data_convert_trivy_k8s/"
 
@@ -18,6 +19,7 @@ def _assert_default_sarif_info(sarif):
         return False
 
     return True
+
 
 def test_read_json_block():
     json_file = TEST_DATA_DIR + "sample-single-result.json"
@@ -63,16 +65,13 @@ def test_empty_json():
     json_data = json.loads("[]")
     assert _assert_default_sarif_info(convert_json_to_sarif(json_data))
 
+
 def test_convert_json_to_sarif_no_duplicate_rules_with_same_id():
     json_file = TEST_DATA_DIR + "sample-misconfig-findings-with-same-rule.json"
     json_data = json.load(open(json_file, encoding="utf-8"))
 
     expected_rules = [
-        {
-            "id": "RULE001",
-            "name": "First Rule Title",
-            "shortDescription": {"text": "First rule description"}
-        }
+        {"id": "RULE001", "name": "First Rule Title", "shortDescription": {"text": "First rule description"}}
     ]
 
     sarif_result = convert_json_to_sarif(json_data)

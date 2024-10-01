@@ -12,9 +12,7 @@ from scanners.zap.zap_none import ZapNone
 
 @pytest.fixture(scope="function")
 def test_config():
-    return configmodel.RapidastConfigModel(
-        {"application": {"url": "http://example.com"}}
-    )
+    return configmodel.RapidastConfigModel({"application": {"url": "http://example.com"}})
 
 
 @patch("scanners.zap.zap_none.platform.system")
@@ -37,9 +35,7 @@ def test_none_handling_ajax(mock_warning, mock_disk_usage, mock_system, test_con
         test_zap._setup_ajax_spider()
 
     mock_pidsmax.assert_called_once_with("/sys/fs/cgroup/pids.max", encoding="utf-8")
-    mock_warning.assert_any_call(
-        "Number of threads may be too low for SpiderAjax: cgroupv2 pids.max=42"
-    )
+    mock_warning.assert_any_call("Number of threads may be too low for SpiderAjax: cgroupv2 pids.max=42")
     mock_warning.assert_any_call(
         "Insufficient shared memory to run an Ajax Spider correctly (67108864 bytes). "
         "Make sure that /dev/shm/ is at least 1GB in size [ideally at least 2GB]"
@@ -56,11 +52,7 @@ def test_zap_none_postprocess(mock_tarfile, mock_copytree, mock_warning, test_co
     with patch("builtins.open", mock_open(read_data="max 2\n")) as mock_pidsevents:
         test_zap.postprocess()
 
-    mock_pidsevents.assert_called_once_with(
-        "/sys/fs/cgroup/pids.events", encoding="utf-8"
-    )
-    mock_warning.assert_any_call(
-        "Scanner may have been throttled by CGroupv2 PID limits: pids.events reports max 2"
-    )
+    mock_pidsevents.assert_called_once_with("/sys/fs/cgroup/pids.events", encoding="utf-8")
+    mock_warning.assert_any_call("Scanner may have been throttled by CGroupv2 PID limits: pids.events reports max 2")
 
     assert test_zap.state == State.PROCESSED

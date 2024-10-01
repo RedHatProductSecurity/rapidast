@@ -53,9 +53,7 @@ class GenericNone(Generic):
         """
 
         if self.state != State.UNCONFIGURED:
-            raise RuntimeError(
-                f"generic_none setup encountered an unexpected state: {self.state}"
-            )
+            raise RuntimeError(f"generic_none setup encountered an unexpected state: {self.state}")
 
         self._setup_generic_cli()
 
@@ -78,11 +76,7 @@ class GenericNone(Generic):
         cli = self.generic_cli
 
         # The result is stdout if "results" is undefined or `*stdout`
-        stdout_store = (
-            subprocess.PIPE
-            if not self.my_conf("results") or self.my_conf("results") == "*stdout"
-            else None
-        )
+        stdout_store = subprocess.PIPE if not self.my_conf("results") or self.my_conf("results") == "*stdout" else None
 
         # DO STUFF
 
@@ -105,21 +99,13 @@ class GenericNone(Generic):
                 for line in scanning.stdout:
                     print(line, end="")
                     scanning_stdout_results += line
-        logging.debug(
-            f"generic returned the following:\n=====\n{pp.pformat(scanning)}\n====="
-        )
+        logging.debug(f"generic returned the following:\n=====\n{pp.pformat(scanning)}\n=====")
 
-        if scanning.returncode in self.my_conf(
-            "container.parameters.validReturns", [0]
-        ):
-            logging.info(
-                f"The generic process finished correctly, and exited with code {scanning.returncode}"
-            )
+        if scanning.returncode in self.my_conf("container.parameters.validReturns", [0]):
+            logging.info(f"The generic process finished correctly, and exited with code {scanning.returncode}")
             self.state = State.DONE
         else:
-            logging.warning(
-                f"The generic process did not finish correctly, and exited with code {scanning.returncode}"
-            )
+            logging.warning(f"The generic process did not finish correctly, and exited with code {scanning.returncode}")
             self.state = State.ERROR
 
         # If we captured an output, let's save it into a temporary file, and use that as a new result parameter
@@ -128,17 +114,13 @@ class GenericNone(Generic):
             with open(report_path, "w", encoding="utf-8") as results:
                 results.write(scanning_stdout_results)
             # Now that the result is a file, change the config to point to it
-            logging.debug(
-                f"Overloading {self.ident} config result parameter to {report_path}"
-            )
+            logging.debug(f"Overloading {self.ident} config result parameter to {report_path}")
             self.set_my_conf("results", value=report_path, overwrite=True)
 
     def postprocess(self):
         logging.info("Running postprocess for the generic environment")
         if not self.state == State.DONE:
-            raise RuntimeError(
-                "No post-processing as generic has not successfully run yet."
-            )
+            raise RuntimeError("No post-processing as generic has not successfully run yet.")
 
         super().postprocess()
 

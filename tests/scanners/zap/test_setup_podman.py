@@ -15,9 +15,7 @@ CONFIG_TEMPLATE_LONG = "config/config-template-long.yaml"
 
 @pytest.fixture(scope="function")
 def test_config():
-    return configmodel.RapidastConfigModel(
-        {"application": {"url": "http://example.com"}}
-    )
+    return configmodel.RapidastConfigModel({"application": {"url": "http://example.com"}})
 
 
 ## Testing Authentication methods ##
@@ -29,9 +27,7 @@ def test_setup_podman_authentication_invalid_auth_configured(test_config):
 
     test_config.set("general.authentication", authentication)
 
-    test_config.merge(
-        test_config.get("general", default={}), preserve=False, root=f"scanners.zap"
-    )
+    test_config.merge(test_config.get("general", default={}), preserve=False, root=f"scanners.zap")
 
     print(test_config)
 
@@ -49,9 +45,7 @@ def test_setup_podman_authentication_http_header(test_config):
     }
     test_config.set("general.authentication", authentication)
 
-    test_config.merge(
-        test_config.get("general", default={}), preserve=False, root=f"scanners.zap"
-    )
+    test_config.merge(test_config.get("general", default={}), preserve=False, root=f"scanners.zap")
 
     print(test_config)
 
@@ -69,19 +63,14 @@ def test_setup_podman_authentication_cookie(test_config):
     }
     test_config.set("general.authentication", authentication)
 
-    test_config.merge(
-        test_config.get("general", default={}), preserve=False, root=f"scanners.zap"
-    )
+    test_config.merge(test_config.get("general", default={}), preserve=False, root=f"scanners.zap")
 
     print(test_config)
 
     test_zap = ZapPodman(config=test_config)
     test_zap.setup()
     assert test_zap.authenticated == False
-    assert (
-        "ZAP_AUTH_HEADER_VALUE=mycookiename=mycookieval"
-        in test_zap.podman.get_complete_cli()
-    )
+    assert "ZAP_AUTH_HEADER_VALUE=mycookiename=mycookieval" in test_zap.podman.get_complete_cli()
 
 
 def test_setup_podman_authentication_http_basic(test_config):
@@ -91,19 +80,14 @@ def test_setup_podman_authentication_http_basic(test_config):
     }
     test_config.set("general.authentication", authentication)
 
-    test_config.merge(
-        test_config.get("general", default={}), preserve=False, root=f"scanners.zap"
-    )
+    test_config.merge(test_config.get("general", default={}), preserve=False, root=f"scanners.zap")
 
     print(test_config)
 
     test_zap = ZapPodman(config=test_config)
     test_zap.setup()
     assert test_zap.authenticated == False
-    assert (
-        "ZAP_AUTH_HEADER_VALUE=Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=="
-        in test_zap.podman.get_complete_cli()
-    )
+    assert "ZAP_AUTH_HEADER_VALUE=Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==" in test_zap.podman.get_complete_cli()
 
 
 def test_setup_podman_authentication_auth_rtoken_configured(test_config):
@@ -123,9 +107,7 @@ def test_setup_podman_authentication_auth_rtoken_configured(test_config):
 
     test_config.set("general.authentication", authentication)
 
-    test_config.merge(
-        test_config.get("general", default={}), preserve=False, root=f"scanners.zap"
-    )
+    test_config.merge(test_config.get("general", default={}), preserve=False, root=f"scanners.zap")
 
     print(test_config)
 
@@ -134,10 +116,7 @@ def test_setup_podman_authentication_auth_rtoken_configured(test_config):
     test_zap.setup()
     assert test_zap.authenticated == True
     assert "RTOKEN" in test_zap.podman.get_complete_cli()
-    assert (
-        test_zap.automation_config["jobs"][0]["parameters"]["name"]
-        == "add-bearer-token"
-    )
+    assert test_zap.automation_config["jobs"][0]["parameters"]["name"] == "add-bearer-token"
 
 
 def test_setup_podman_authentication_auth_rtoken_preauth(test_config):
@@ -154,9 +133,7 @@ def test_setup_podman_authentication_auth_rtoken_preauth(test_config):
 
     test_config.set("general.authentication", authentication)
 
-    test_config.merge(
-        test_config.get("general", default={}), preserve=False, root=f"scanners.zap"
-    )
+    test_config.merge(test_config.get("general", default={}), preserve=False, root=f"scanners.zap")
 
     test_zap = ZapPodman(config=test_config)
 

@@ -125,9 +125,7 @@ class Generic(RapidastScanner):
     # disabling these 2 rules only here since they might actually be useful else where
     # pylint: disable=unused-argument
     def _add_env(self, key, value=None):
-        logging.warning(
-            "_add_env() was called on the parent Generic class. This is likely a bug. No operation done"
-        )
+        logging.warning("_add_env() was called on the parent Generic class. This is likely a bug. No operation done")
 
     ###############################################################
     # PRIVATE METHODS                                             #

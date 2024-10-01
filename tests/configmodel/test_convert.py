@@ -38,9 +38,7 @@ def test_v2_to_v3(config_v2):
     newconf = configmodel.converter.convert_from_version_2_to_3(oldconf)
 
     # Check that new path was created
-    assert newconf.get("scanners.zap.miscOptions.updateAddons", "x") == oldconf.get(
-        "scanners.zap.updateAddons", "y"
-    )
+    assert newconf.get("scanners.zap.miscOptions.updateAddons", "x") == oldconf.get("scanners.zap.updateAddons", "y")
     # Check that old path was deleted
     assert not newconf.exists("scanners.zap.updateAddons")
 
@@ -60,9 +58,9 @@ def test_v4_to_v5(config_v4):
     newconf = configmodel.converter.convert_from_version_4_to_5(oldconf)
 
     # Check that new path was created
-    assert newconf.get(
-        "scanners.zap.miscOptions.oauth2ManualDownload", "x"
-    ) == oldconf.get("scanners.zap.miscOptions.oauth2OpenapiManualDownload", "y")
+    assert newconf.get("scanners.zap.miscOptions.oauth2ManualDownload", "x") == oldconf.get(
+        "scanners.zap.miscOptions.oauth2OpenapiManualDownload", "y"
+    )
     # Check that old path was deleted
     assert not newconf.exists("scanners.zap.miscOptions.oauth2OpenapiManualDownload")
 
@@ -79,12 +77,8 @@ def test_v1_to_v2(config_v1):
 def test_v0_to_v1(config_v0):
     conf_v1 = configmodel.converter.convert_from_version_0_to_1(config_v0)
 
-    assert conf_v1.get("application.shortName", "x") == config_v0.get(
-        "general.serviceName", "y"
-    )
-    assert conf_v1.get("scanners.zap.activeScan.policy", "x") == config_v0.get(
-        "scan.policies.scanPolicyName", "y"
-    )
+    assert conf_v1.get("application.shortName", "x") == config_v0.get("general.serviceName", "y")
+    assert conf_v1.get("scanners.zap.activeScan.policy", "x") == config_v0.get("scan.policies.scanPolicyName", "y")
 
 
 def test_basic_config_updater():
@@ -97,10 +91,7 @@ def test_basic_config_updater():
     oldest = configmodel.RapidastConfigModel({})
     last = configmodel.converter.update_to_latest_config(oldest)
 
-    assert (
-        int(last.get("config.configVersion"))
-        == configmodel.converter.CURR_CONFIG_VERSION
-    )
+    assert int(last.get("config.configVersion")) == configmodel.converter.CURR_CONFIG_VERSION
 
 
 if __name__ == "__main__":

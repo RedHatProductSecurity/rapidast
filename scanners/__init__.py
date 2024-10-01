@@ -25,9 +25,7 @@ class RapidastScanner:
         self.config = config
         self.state = State.UNCONFIGURED
 
-        self.results_dir = os.path.join(
-            self.config.get("config.results_dir", default="results"), self.ident
-        )
+        self.results_dir = os.path.join(self.config.get("config.results_dir", default="results"), self.ident)
 
         # When requested to create a temporary file or directory, it will be a subdir of
         # this temporary directory
@@ -77,8 +75,7 @@ class RapidastScanner:
         - this particular scanner's export is not explicitely disabled (`defectDojoExport` is not False)
         """
         return self.my_conf("defectDojoExport") is not False and (
-            self.config.get("config.googleCloudStorage")
-            or self.config.get("config.defectDojo")
+            self.config.get("config.googleCloudStorage") or self.config.get("config.defectDojo")
         )
 
     def _fill_up_data_for_defect_dojo(self, data):
@@ -124,9 +121,7 @@ class RapidastScanner:
             # A default product name was chosen as part of `self.get_default_defectdojo_data()`
             # Generate an engagement name if none are set
             if not data.get("engagement_name"):
-                data[
-                    "engagement_name"
-                ] = f"RapiDAST-{data['product_name']}-{datetime.date.today()}"
+                data["engagement_name"] = f"RapiDAST-{data['product_name']}-{datetime.date.today()}"
 
         return data
 

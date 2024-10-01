@@ -20,6 +20,8 @@ repos:
         args:
         - --safe
         - --quiet
+        - --line-length
+        - "120" # same as pylint below
         language_version: python3
         require_serial: true
 

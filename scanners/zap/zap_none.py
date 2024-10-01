@@ -129,22 +129,16 @@ class ZapNone(Zap):
 
         cli = ["sh", "-c", self._zap_cli_list_to_str_for_sh(self.zap_cli)]
         result = subprocess.run(cli, check=False)
-        logging.debug(
-            f"ZAP returned the following:\n=====\n{pp.pformat(result)}\n====="
-        )
+        logging.debug(f"ZAP returned the following:\n=====\n{pp.pformat(result)}\n=====")
 
         # Zap's return codes : https://www.zaproxy.org/docs/desktop/addons/automation-framework/
         if result.returncode in [0, 2]:
             # 0: ZAP returned correctly. 2: ZAP returned warning
-            logging.info(
-                f"The ZAP process finished with no errors, and exited with code {result.returncode}"
-            )
+            logging.info(f"The ZAP process finished with no errors, and exited with code {result.returncode}")
             self.state = State.DONE
         else:
             # 1: Zap hit an error
-            logging.warning(
-                f"The ZAP process did not finish correctly, and exited with code {result.returncode}"
-            )
+            logging.warning(f"The ZAP process did not finish correctly, and exited with code {result.returncode}")
             self.state = State.ERROR
 
     def postprocess(self):
@@ -192,9 +186,7 @@ class ZapNone(Zap):
                         "Make sure that /dev/shm/ is at least 1GB in size [ideally at least 2GB]"
                     )
             except FileNotFoundError:
-                logging.warning(
-                    "/dev/shm not present. Unable to calcuate shared memory size"
-                )
+                logging.warning("/dev/shm not present. Unable to calcuate shared memory size")
 
             # Firefox tends to use _a lot_ of threads
             # Assume we're regulated by cgroup v2
@@ -202,13 +194,9 @@ class ZapNone(Zap):
                 with open("/sys/fs/cgroup/pids.max", encoding="utf-8") as f:
                     pid_val = f.readline().rstrip()
                     if pid_val == "max" or int(pid_val) > 10000:
-                        logging.debug(
-                            f"cgroup v2 has a sufficient pid limit: {pid_val}"
-                        )
+                        logging.debug(f"cgroup v2 has a sufficient pid limit: {pid_val}")
                     else:
-                        logging.warning(
-                            f"Number of threads may be too low for SpiderAjax: cgroupv2 pids.max={pid_val}"
-                        )
+                        logging.warning(f"Number of threads may be too low for SpiderAjax: cgroupv2 pids.max={pid_val}")
             except FileNotFoundError:
                 # open /sys/fs/cgroup/pids.max failed: root cgroup (unlimited pids) or no cgroup v2 at all.
                 # assume the former
@@ -298,10 +286,7 @@ class ZapNone(Zap):
         result = subprocess.run(command, check=False, capture_output=True)
         if result.returncode == 0:
             logging.debug("ZAP appears to be in a correct state")
-        elif (
-            result.stderr.find(bytes("The mandatory add-on was not found:", "ascii"))
-            > 0
-        ):
+        elif result.stderr.find(bytes("The mandatory add-on was not found:", "ascii")) > 0:
             logging.info("Missing mandatory plugins. Fixing")
             url_root = "https://github.com/zaproxy/zap-extensions/releases/download"
             anonymous_download(
@@ -326,9 +311,7 @@ class ZapNone(Zap):
             result = subprocess.run(command, check=False)
 
         else:
-            logging.warning(
-                f"ZAP appears to be in a incorrect state. Error: {result.stderr}"
-            )
+            logging.warning(f"ZAP appears to be in a incorrect state. Error: {result.stderr}")
 
     def _create_home_if_needed(self):
         """Some tools (most notably: ZAP's Ajax Spider with Firefox) require a writable home directory.

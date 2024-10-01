@@ -22,9 +22,7 @@ class PodmanWrapper:
     def __init__(self, app_name, scan_name, image):
         # First verify that "podman" can be called
         if not shutil.which("podman"):
-            raise OSError(
-                "Podman is not installed or not in the PATH. It is required to run a podman based scanner"
-            )
+            raise OSError("Podman is not installed or not in the PATH. It is required to run a podman based scanner")
 
         # Image to use
         self.image = image
@@ -52,9 +50,7 @@ class PodmanWrapper:
 
     def delete_yourself(self):
         """Deletes the container image created by the run command"""
-        ret = subprocess.run(
-            ["podman", "rm", self.container_name], check=False
-        ).returncode
+        ret = subprocess.run(["podman", "rm", self.container_name], check=False).returncode
         if ret:
             logging.warning(f"Failed to delete container {self.container_name}")
         return ret
@@ -118,13 +114,9 @@ class PodmanWrapper:
                 self.add_option("--userns", f"keep-id:uid={runas_uid},gid={runas_gid}")
 
         except json.JSONDecodeError as exc:
-            raise RuntimeError(
-                f"Unable to parse `podman version` output: {exc}"
-            ) from exc
+            raise RuntimeError(f"Unable to parse `podman version` output: {exc}") from exc
         except (KeyError, AttributeError) as exc:
-            raise RuntimeError(
-                f"Unexpected podman version output: Version not found: {exc}"
-            ) from exc
+            raise RuntimeError(f"Unexpected podman version output: Version not found: {exc}") from exc
         except ValueError as exc:
             raise RuntimeError(
                 f"Unexpected podman version output: unable to decode major/minor version: {exc}"
@@ -150,9 +142,7 @@ class PodmanWrapper:
             logging.debug(f"podman UID mapping: {info['host']['idMappings']['uidmap']}")
 
             if info["host"]["idMappings"]["uidmap"] is not None:
-                subuid_size = (
-                    sum(i["size"] for i in info["host"]["idMappings"]["uidmap"]) - 1
-                )
+                subuid_size = sum(i["size"] for i in info["host"]["idMappings"]["uidmap"]) - 1
             else:
                 logging.warning(
                     f"the value of host.idMappings.uidmap in 'podman info' is null. \
@@ -160,9 +150,7 @@ class PodmanWrapper:
                       DEFAULT_MAP_SIZE {self.DEFAULT_ID_MAPPING_MAP_SIZE} applied"
                 )
             if info["host"]["idMappings"]["gidmap"] is not None:
-                subgid_size = (
-                    sum(i["size"] for i in info["host"]["idMappings"]["gidmap"]) - 1
-                )
+                subgid_size = sum(i["size"] for i in info["host"]["idMappings"]["gidmap"]) - 1
             else:
                 logging.warning(
                     f"the value of host.idMappings.gidmap in 'podman info' is null. \
@@ -173,9 +161,7 @@ class PodmanWrapper:
         except json.JSONDecodeError as exc:
             raise RuntimeError(f"Unable to parse `podman info` output: {exc}") from exc
         except (KeyError, AttributeError) as exc:
-            raise RuntimeError(
-                f"Unexpected podman info output: entry not found: {exc}"
-            ) from exc
+            raise RuntimeError(f"Unexpected podman info output: entry not found: {exc}") from exc
         except Exception as exc:
             logging.error(f"change_user_id unexpected error: {exc}")
             raise RuntimeError(f"Unable to retrieve podman UID mapping: {exc}") from exc
@@ -184,12 +170,8 @@ class PodmanWrapper:
         if subuid_size >= runas_uid:
             self.add_option("--uidmap", f"0:1:{runas_uid}")
             self.add_option("--uidmap", f"{runas_uid}:0:1")
-            self.add_option(
-                "--uidmap", f"{runas_uid+1}:{runas_uid+1}:{subuid_size-runas_uid}"
-            )
-            logging.debug(
-                "podman enabled UID mapping arguments (using uidmap workaround)"
-            )
+            self.add_option("--uidmap", f"{runas_uid+1}:{runas_uid+1}:{subuid_size-runas_uid}")
+            logging.debug("podman enabled UID mapping arguments (using uidmap workaround)")
         else:
             raise RuntimeError(
                 "subUIDs seem to be disabled/misconfigured for the current user. \
@@ -200,12 +182,8 @@ class PodmanWrapper:
         if subgid_size >= runas_gid:
             self.add_option("--gidmap", f"0:1:{runas_gid}")
             self.add_option("--gidmap", f"{runas_gid}:0:1")
-            self.add_option(
-                "--gidmap", f"{runas_gid+1}:{runas_gid+1}:{subgid_size-runas_gid}"
-            )
-            logging.debug(
-                "podman enabled GID mapping arguments (using uidmap workaround)"
-            )
+            self.add_option("--gidmap", f"{runas_gid+1}:{runas_gid+1}:{subgid_size-runas_gid}")
+            logging.debug("podman enabled GID mapping arguments (using uidmap workaround)")
         else:
             raise RuntimeError(
                 "subGIDs seem to be disabled/misconfigured for the current user. \

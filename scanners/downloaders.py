@@ -5,7 +5,7 @@ import requests
 import yaml
 
 
-def anonymous_download(url, dest=None, proxy=None):
+def anonymous_download(url, dest=None, proxy=None, verify=None):
     """Given a URL, load it using a GET request to dest"""
 
     logging.debug(f"Downloading {url}")
@@ -14,7 +14,7 @@ def anonymous_download(url, dest=None, proxy=None):
             "https": f"http://{proxy['proxyHost']}:{proxy['proxyPort']}",
             "http": f"http://{proxy['proxyHost']}:{proxy['proxyPort']}",
         }
-    resp = requests.get(url, allow_redirects=True, proxies=proxy)
+    resp = requests.get(url, allow_redirects=True, proxies=proxy, verify=verify)
     if resp.status_code >= 400:
         logging.warning(f"Download {url} failed with {resp.status_code}.")
         return False
@@ -29,14 +29,17 @@ def anonymous_download(url, dest=None, proxy=None):
         return resp.content
 
 
-def oauth2_get_token_from_rtoken(auth, proxy=None, session=None):
+def oauth2_get_token_from_rtoken(auth, proxy=None, session=None, verify=None):
     """Given a rtoken, retrieve and return a Bearer token
     auth is in the form { url, client_id, rtoken }
 
+    NOTE: if a session is provided, `verify` will not overwrite the session's `verify` state
     """
 
     if session is None:
         session = requests.Session()
+        if verify is not None:
+            session.verify = verify
 
     headers = {
         "Accept": "application/json",
@@ -76,10 +79,12 @@ def oauth2_get_token_from_rtoken(auth, proxy=None, session=None):
     return token
 
 
-def authenticated_download_with_rtoken(url, dest, auth, proxy=None):
+def authenticated_download_with_rtoken(url, dest, auth, proxy=None, verify=None):
     """Given a URL and Oauth2 authentication parameters, download the URL and store it at `dest`"""
 
     session = requests.Session()
+    if verify is not None:
+        session.verify = verify
 
     # get a token
     token = oauth2_get_token_from_rtoken(auth, proxy, session)

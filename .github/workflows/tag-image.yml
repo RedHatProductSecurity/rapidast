@@ -1,0 +1,33 @@
+name: Tag image on quay.io
+
+env:
+  IMAGE_NAME: "rapidast"
+  IMAGE_REGISTRY: quay.io/redhatproductsecurity
+  IMAGE_REGISTRY_USER: ${{ secrets.IMAGE_REGISTRY_USER }}
+  IMAGE_REGISTRY_PASSWORD: ${{ secrets.IMAGE_REGISTRY_PASSWORD }}
+
+on:
+  push:
+    tags: ["*"]
+
+jobs:
+
+  tag-image:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    # https://github.com/redhat-actions/podman-login
+    - name: Log in to quay.io
+      uses: redhat-actions/podman-login@v1
+      with:
+        registry: ${{ env.IMAGE_REGISTRY }}
+        username: ${{ env.IMAGE_REGISTRY_USER }}
+        password: ${{ env.IMAGE_REGISTRY_PASSWORD }}
+
+    - name: Tag image
+      run: |
+          # tag existing image on quay.io that has :<commit> tag with :<new> gh tag
+          SRC=${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          DST=${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+          skopeo copy docker://${SRC} docker://${DST}

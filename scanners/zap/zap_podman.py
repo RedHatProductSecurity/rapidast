@@ -109,30 +109,22 @@ class ZapPodman(Zap):
         # DO STUFF
         logging.info(f"Running ZAP with the following command:\n{cli}")
         result = subprocess.run(cli, check=False)
-        logging.debug(
-            f"ZAP returned the following:\n=====\n{pp.pformat(result)}\n====="
-        )
+        logging.debug(f"ZAP returned the following:\n=====\n{pp.pformat(result)}\n=====")
 
         # Zap's return codes : https://www.zaproxy.org/docs/desktop/addons/automation-framework/
         if result.returncode in [0, 2]:
             # 0: ZAP returned correctly. 2: ZAP returned warning
-            logging.info(
-                f"The ZAP process finished with no errors, and exited with code {result.returncode}"
-            )
+            logging.info(f"The ZAP process finished with no errors, and exited with code {result.returncode}")
             self.state = State.DONE
         else:
             # 1: Zap hit an error, >125 : podman returned an error
-            logging.warning(
-                f"The ZAP process did not finish correctly, and exited with code {result.returncode}"
-            )
+            logging.warning(f"The ZAP process did not finish correctly, and exited with code {result.returncode}")
             self.state = State.ERROR
 
     def postprocess(self):
         logging.info("Running postprocess for the ZAP Podman environment")
         if not self.state == State.DONE:
-            raise RuntimeError(
-                "No post-processing as ZAP has not successfully run yet."
-            )
+            raise RuntimeError("No post-processing as ZAP has not successfully run yet.")
 
         super().postprocess()
 

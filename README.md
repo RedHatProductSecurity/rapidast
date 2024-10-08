@@ -619,6 +619,23 @@ Solutions:
 * Selenium, used to control Firefox, uses shared memory (`/dev/shm/`). When using the RapiDAST image or the ZAP image, the user needs to make sure that sufficient space is available in `/dev/shm/` (in podman, by default, its size is 64MB). A size of 2G is the recommended value by the Selenium community. In podman for example, the option would be `--shm-size=2g`.
 * Zap and Firefox can create a huge numbers of threads. Some container engines will default to 2048 concurrent pids, which is not sufficient for the Ajax Spider. Whenever possible, RapiDAST will check if that limit was reached, after the scan is finished, and prints a warning if this happened. In podman, increasing the maximum number of concurrent pids is done via the `--pids-limit=-1` option to prevent any limits.
 
+## Podman errors
+
+### subuid/subgid are not enabled
+
+If you see one of those errors:
+
+```
+Error: copying system image from manifest list: writing blob: adding layer with blob "sha256:82aabceedc2fbf89030cbb4ff98215b70d9ae35c780ade6c784d9b447b1109ed": processing tar file(potentially insufficient UIDs or GIDs available in user namespace (requested 0:42 for /etc/gshadow): Check /etc/subuid and /etc/subgid if configured locally and run "podman system migrate": lchown /etc/gshadow: invalid argument): exit status 1
+```
+ -or-
+```
+Error: parsing id map value "-1000": strconv.ParseUint: parsing "-1000": invalid syntax
+```
+
+Podman, in rootless mode (running as a regular user), needs subuid/subgit to be enabled: [rootless mode](https://docs.podman.io/en/latest/markdown/podman.1.html#rootless-mode)
+
+
 ## Caveats
 
 * Currently, RapiDAST does not clean up the temporary data when there is an error. The data may include:

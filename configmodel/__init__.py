@@ -77,9 +77,7 @@ class RapidastConfigModel:
         except AttributeError:
             pass
         # Failed to iterate until the end: the path does not exist
-        logging.warning(
-            f"RapidastConfigModel.delete(): Config path {path} was not found. No deletion"
-        )
+        logging.warning(f"RapidastConfigModel.delete(): Config path {path} was not found. No deletion")
         return False
 
     def exists(self, path):
@@ -122,9 +120,7 @@ class RapidastConfigModel:
                 tmp = walk[key]
             # case 3: not a "dictionary" type: warn and overwrite (if True)
             if not isinstance(tmp, dict):
-                logging.warning(
-                    f"RapidastConfigModel.set: Incompatible {path} at {tmp}"
-                )
+                logging.warning(f"RapidastConfigModel.set: Incompatible {path} at {tmp}")
                 if not overwrite:
                     logging.info("RapidastConfigModel.set: no overwrite: early return")
                     return False
@@ -162,9 +158,7 @@ class RapidastConfigModel:
         if not merge:
             return
         if not isinstance(merge, dict):
-            raise TypeError(
-                f"RapidastConfigModel.merge: merge must be a dict (was: {type(merge)})"
-            )
+            raise TypeError(f"RapidastConfigModel.merge: merge must be a dict (was: {type(merge)})")
 
         root = path_to_list(root)
 
@@ -176,8 +170,54 @@ class RapidastConfigModel:
 
         deep_dict_merge(sub_conf, merge, preserve)
 
+    def subtree_to_dict(self, path):
+        """Given a path, returns its subtree as a dictionary.
+        This includes applying all the `*_from_var` transformation.
+        e.g.:
+        "{'a_from_var': 'A_VAR'}" would return "{'a': '<value of $A_VAR>'}"
+
+        Cases:
+        1- path does not exist: return None
+        2- path does not point to a dictionary: throw a KeyError instance
+        3- path exist and is a dictionary: copy it, walk the copy apply all _from_var, return the copy
+        """
+
+        # recursively descend the tree, and apply all the _from_var
+        def descend(root):
+            if isinstance(root, dict):
+                # Dictionary:
+                #  create a new dictionary, and apply the following logic:
+                #  if key matches `_from_var`, assume value is a string, and apply replacement
+                #  otherwise, copy key name and recursively descend on the value
+                new = {}
+                for key, val in root.items():
+                    if key.endswith("_from_var"):
+                        new[key.removesuffix("_from_var")] = os.environ[val]
+                        if not new[key.removesuffix("_from_var")]:
+                            logging.warning(f"configuration {key} points to environment variable {val}, which is empty")
+                    else:
+                        new[key] = descend(val)
+                return new
+            elif isinstance(root, list):
+                # List: apply on each entry, and return a new List
+                return [descend(val) for val in root]
+            else:
+                # root is just a value (integer, string), assuming it's immutable
+                return root
+
+        try:
+            subtree = self._get_from_conf(path_to_list(path))
+        except KeyError:
+            logging.debug(f"subtree_to_dict(): path '{path}' does not exist")
+            return None
+
+        if not isinstance(subtree, dict):
+            raise KeyError(f"subtree_to_dict(): '{path}' does not point to a dictionary in the config")
+
+        return descend(subtree)
+
     def get_official_app_name(self):
-        """ Shortcut: 
+        """Shortcut:
         Return a string corresponding to how the application should be called
         Based on the configuratoin.
         Prefer the full product name, but defer to short name if unavailable

@@ -108,9 +108,7 @@ def run_scanner(name, config, args, scan_exporter):
 
     # Part 5: cleanup
     if not scanner.state == scanners.State.PROCESSED:
-        logging.error(
-            f"Something is wrong. Scanner {name} is not in PROCESSED state: the workdir won't be cleaned up"
-        )
+        logging.error(f"Something is wrong. Scanner {name} is not in PROCESSED state: the workdir won't be cleaned up")
         return 1
 
     if not args.no_cleanup:
@@ -155,19 +153,13 @@ def run():
     args.loglevel = args.loglevel.upper()
     add_logging_level("VERBOSE", logging.DEBUG + 5)
     logging.basicConfig(format="%(levelname)s:%(message)s", level=args.loglevel)
-    logging.debug(
-        f"log level set to debug. Config file: '{parser.parse_args().config_file}'"
-    )
+    logging.debug(f"log level set to debug. Config file: '{parser.parse_args().config_file}'")
 
     # Load config file
     try:
-        config = configmodel.RapidastConfigModel(
-            yaml.safe_load(load_config_file(parser.parse_args().config_file))
-        )
+        config = configmodel.RapidastConfigModel(yaml.safe_load(load_config_file(parser.parse_args().config_file)))
     except yaml.YAMLError as exc:
-        raise RuntimeError(
-            f"YAML error in config {parser.parse_args().config_file}':\n {str(exc)}"
-        ) from exc
+        raise RuntimeError(f"YAML error in config {parser.parse_args().config_file}':\n {str(exc)}") from exc
 
     # Optionally adds default if file exists (will not overwrite existing entries)
     default_conf = os.path.join(os.path.dirname(__file__), "rapidast-defaults.yaml")
@@ -176,18 +168,14 @@ def run():
         try:
             config.merge(yaml.safe_load(load_config_file(default_conf)), preserve=True)
         except yaml.YAMLError as exc:
-            raise RuntimeError(
-                f"YAML error in config {default_conf}':\n {str(exc)}"
-            ) from exc
+            raise RuntimeError(f"YAML error in config {default_conf}':\n {str(exc)}") from exc
 
     # Update to latest config schema if need be
     config = configmodel.converter.update_to_latest_config(config)
 
     config.set("config.results_dir", get_full_result_dir_path(config))
 
-    logging.debug(
-        f"The entire loaded configuration is as follow:\n=====\n{pp.pformat(config)}\n====="
-    )
+    logging.debug(f"The entire loaded configuration is as follow:\n=====\n{pp.pformat(config)}\n=====")
 
     # Do early: load the environment file if one is there
     load_environment(config)
@@ -196,9 +184,7 @@ def run():
     scan_exporter = None
     if config.get("config.googleCloudStorage.bucketName"):
         scan_exporter = GoogleCloudStorage(
-            bucket_name=config.get(
-                "config.googleCloudStorage.bucketName", "default-bucket-name"
-            ),
+            bucket_name=config.get("config.googleCloudStorage.bucketName", "default-bucket-name"),
             app_name=config.get_official_app_name(),
             directory=config.get("config.googleCloudStorage.directory", None),
             keyfile=config.get("config.googleCloudStorage.keyFile", None),
@@ -207,12 +193,8 @@ def run():
         scan_exporter = DefectDojo(
             config.get("config.defectDojo.url"),
             {
-                "username": config.get(
-                    "config.defectDojo.authorization.username", default=""
-                ),
-                "password": config.get(
-                    "config.defectDojo.authorization.password", default=""
-                ),
+                "username": config.get("config.defectDojo.authorization.username", default=""),
+                "password": config.get("config.defectDojo.authorization.password", default=""),
             },
             config.get("config.defectDojo.authorization.token"),
             config.get("config.defectDojo.ssl", default=True),

@@ -3,21 +3,28 @@
 #
 # Convert a Trivy k8s json result to SARIF format(stdout).
 # A usage example (see options in the code):
-#  $ convert_trivy_k8s_to_sarify.py -f <input.json> [--log-level=DEBUG]
+#  $ convert_trivy_k8s_to_sarify.py [-f <input.json>] [--log-level=DEBUG]
+# If `-f` is absent, or its value is `-`, JSON data will be read from STDIN
 #
 #
 import argparse
 import json
 import logging
+import sys
 
 
 def read_json_block(json_file):
     """
-    Read JSON data from a file.
+    Read JSON data from a file, or from STDIN.
     """
-    with open(json_file, "r", encoding="utf-8") as f:
-        json_data = json.load(f)
-    return json_data
+    if json_file is None or json_file == "-":
+        logging.debug("Reading input from STDIN")
+        data = sys.stdin.read()
+    else:
+        logging.debug(f"Reading input from '{json_file}'")
+        with open(json_file, "r", encoding="utf-8") as f:
+            data = f.read()
+    return json.loads(data)
 
 
 def convert_json_to_sarif(json_data):
@@ -29,9 +36,7 @@ def convert_json_to_sarif(json_data):
         "version": "2.1.0",
         "runs": [
             {
-                "tool": {
-                    "driver": {"name": "Trivy-k8s", "version": "0.49.1", "rules": []}
-                },
+                "tool": {"driver": {"name": "Trivy-k8s", "version": "0.49.1", "rules": []}},
                 "results": [],
             }
         ],
@@ -39,6 +44,8 @@ def convert_json_to_sarif(json_data):
 
     if "Resources" not in json_data:
         return sarif_template
+
+    rule_ids = set()
 
     for res in json_data["Resources"]:
         if "Results" not in res:
@@ -54,13 +61,7 @@ def convert_json_to_sarif(json_data):
                     "ruleId": misconf["ID"],
                     "level": misconf["Severity"],
                     "message": {"text": misconf["Message"]},
-                    "locations": [
-                        {
-                            "physicalLocation": {
-                                "artifactLocation": {"uri": artifact_location}
-                            }
-                        }
-                    ],
+                    "locations": [{"physicalLocation": {"artifactLocation": {"uri": artifact_location}}}],
                 }
 
                 # It is observed there are no "StartLine" exists and "Code.Lines" is null in the result file
@@ -73,20 +74,19 @@ def convert_json_to_sarif(json_data):
                     new_report["locations"][0]["physicalLocation"]["region"] = {
                         "startLine": misconf["CauseMetadata"]["StartLine"],
                         "endLine": misconf["CauseMetadata"]["EndLine"],
-                        "snippet": {
-                            "text": json.dumps(
-                                misconf["CauseMetadata"]["Code"]["Lines"]
-                            )
-                        },
+                        "snippet": {"text": json.dumps(misconf["CauseMetadata"]["Code"]["Lines"])},
                     }
 
-                new_rule = {
-                    "id": misconf["ID"],
-                    "name": misconf["Title"],
-                    "shortDescription": {"text": misconf["Description"]},
-                }
+                if misconf["ID"] not in rule_ids:
+                    new_rule = {
+                        "id": misconf["ID"],
+                        "name": misconf["Title"],
+                        "shortDescription": {"text": misconf["Description"]},
+                    }
 
-                sarif_template["runs"][0]["tool"]["driver"]["rules"].append(new_rule)
+                    sarif_template["runs"][0]["tool"]["driver"]["rules"].append(new_rule)
+                    rule_ids.add(misconf["ID"])
+
                 sarif_template["runs"][0]["results"].append(new_report)
 
     return sarif_template
@@ -94,15 +94,14 @@ def convert_json_to_sarif(json_data):
 
 def main():
     # Parse command-line arguments
-    parser = argparse.ArgumentParser(
-        description="Convert JSON data to SARIF format with JSON block added to message."
-    )
+    parser = argparse.ArgumentParser(description="Convert JSON data to SARIF format with JSON block added to message.")
     parser.add_argument(
         "-f",
         "--filename",
         type=str,
-        required=True,
-        help="Path to JSON file",
+        required=False,
+        default=None,
+        help="Path to JSON file (if absent or '-': read from STDIN)",
     )
     parser.add_argument(
         "--log-level",

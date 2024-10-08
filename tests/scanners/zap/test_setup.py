@@ -16,9 +16,7 @@ CONFIG_TEMPLATE_LONG = "config/config-template-long.yaml"
 
 @pytest.fixture(scope="function")
 def test_config():
-    return configmodel.RapidastConfigModel(
-        {"application": {"url": "http://example.com"}}
-    )
+    return configmodel.RapidastConfigModel({"application": {"url": "http://example.com"}})
 
 
 ## Basic test
@@ -29,10 +27,7 @@ def test_setup_openapi(test_config):
     test_zap.setup()
 
     # a '/' should have been appended
-    assert (
-        test_zap.automation_config["env"]["contexts"][0]["urls"][0]
-        == "http://example.com/"
-    )
+    assert test_zap.automation_config["env"]["contexts"][0]["urls"][0] == "http://example.com/"
 
     for item in test_zap.automation_config["jobs"]:
         if item["type"] == "openapi":
@@ -85,9 +80,7 @@ def test_setup_authentication_invalid_auth_configured(test_config):
 
     test_config.set("general.authentication", authentication)
 
-    test_config.merge(
-        test_config.get("general", default={}), preserve=False, root=f"scanners.zap"
-    )
+    test_config.merge(test_config.get("general", default={}), preserve=False, root=f"scanners.zap")
 
     print(test_config)
 
@@ -105,9 +98,7 @@ def test_setup_authentication_http_header(test_config):
     }
     test_config.set("general.authentication", authentication)
 
-    test_config.merge(
-        test_config.get("general", default={}), preserve=False, root=f"scanners.zap"
-    )
+    test_config.merge(test_config.get("general", default={}), preserve=False, root=f"scanners.zap")
 
     print(test_config)
 
@@ -125,9 +116,7 @@ def test_setup_authentication_cookie(test_config):
     }
     test_config.set("general.authentication", authentication)
 
-    test_config.merge(
-        test_config.get("general", default={}), preserve=False, root=f"scanners.zap"
-    )
+    test_config.merge(test_config.get("general", default={}), preserve=False, root=f"scanners.zap")
 
     print(test_config)
 
@@ -144,9 +133,7 @@ def test_setup_authentication_http_basic(test_config):
     }
     test_config.set("general.authentication", authentication)
 
-    test_config.merge(
-        test_config.get("general", default={}), preserve=False, root=f"scanners.zap"
-    )
+    test_config.merge(test_config.get("general", default={}), preserve=False, root=f"scanners.zap")
 
     print(test_config)
 
@@ -168,9 +155,7 @@ def test_setup_authentication_auth_rtoken_configured(test_config):
 
     test_config.set("general.authentication", authentication)
 
-    test_config.merge(
-        test_config.get("general", default={}), preserve=False, root=f"scanners.zap"
-    )
+    test_config.merge(test_config.get("general", default={}), preserve=False, root=f"scanners.zap")
 
     print(test_config)
 
@@ -179,10 +164,7 @@ def test_setup_authentication_auth_rtoken_configured(test_config):
     test_zap.setup()
     assert test_zap.authenticated == True
     # TODO: check "RTOKEN"
-    assert (
-        test_zap.automation_config["jobs"][0]["parameters"]["name"]
-        == "add-bearer-token"
-    )
+    assert test_zap.automation_config["jobs"][0]["parameters"]["name"] == "add-bearer-token"
 
 
 def test_setup_authentication_auth_rtoken_preauth(test_config):
@@ -199,9 +181,7 @@ def test_setup_authentication_auth_rtoken_preauth(test_config):
 
     test_config.set("general.authentication", authentication)
 
-    test_config.merge(
-        test_config.get("general", default={}), preserve=False, root=f"scanners.zap"
-    )
+    test_config.merge(test_config.get("general", default={}), preserve=False, root=f"scanners.zap")
 
     test_zap = ZapNone(config=test_config)
 
@@ -224,9 +204,7 @@ def test_setup_import_urls(test_config):
 
 def test_setup_exclude_urls(test_config):
     test_config.set("scanners.zap.urls.excludes", ["abc", "def"])
-    test_config.merge(
-        test_config.get("general", default={}), preserve=False, root=f"scanners.zap"
-    )
+    test_config.merge(test_config.get("general", default={}), preserve=False, root=f"scanners.zap")
 
     test_zap = ZapNone(config=test_config)
     test_zap.setup()
@@ -237,9 +215,7 @@ def test_setup_exclude_urls(test_config):
 
 def test_setup_include_urls(test_config):
     test_config.set("scanners.zap.urls.includes", ["abc", "def"])
-    test_config.merge(
-        test_config.get("general", default={}), preserve=False, root=f"scanners.zap"
-    )
+    test_config.merge(test_config.get("general", default={}), preserve=False, root=f"scanners.zap")
 
     test_zap = ZapNone(config=test_config)
     test_zap.setup()
@@ -248,19 +224,40 @@ def test_setup_include_urls(test_config):
     assert "def" in find_context(test_zap.automation_config)["includePaths"]
 
 
+def test_setup_active_scan(test_config):
+    test_config.set("scanners.zap.activeScan.maxRuleDurationInMins", 10)
+
+    test_zap = ZapNone(config=test_config)
+    test_zap.setup()
+
+    for item in test_zap.automation_config["jobs"]:
+        if item["type"] == "activeScan":
+            assert item["parameters"]["policy"] == "API-scan-minimal"
+            assert item["parameters"]["maxRuleDurationInMins"] == 10
+            assert item["parameters"]["context"] == "Default Context"
+            assert item["parameters"]["user"] == ""
+            break
+    else:
+        assert False
+
+
 def test_setup_ajax(test_config):
     test_config.set("scanners.zap.spiderAjax.maxDuration", 10)
     test_config.set("scanners.zap.spiderAjax.url", "http://test.com")
     test_config.set("scanners.zap.spiderAjax.browserId", "chrome-headless")
+    test_config.set("scanners.zap.spiderAjax.maxCrawlState", 3)
 
     test_zap = ZapNone(config=test_config)
     test_zap.setup()
 
     for item in test_zap.automation_config["jobs"]:
         if item["type"] == "spiderAjax":
+            assert item["parameters"]["context"] == "Default Context"
             assert item["parameters"]["maxDuration"] == 10
+            assert item["parameters"]["user"] == ""
             assert item["parameters"]["url"] == "http://test.com"
             assert item["parameters"]["browserId"] == "chrome-headless"
+            assert item["parameters"]["maxCrawlState"] == 3
             break
     else:
         assert False
@@ -281,10 +278,7 @@ def test_setup_graphql(test_config):
         if item["type"] == "graphql":
             assert item["parameters"]["endpoint"] == TEST_GRAPHQL_ENDPOINT
             assert item["parameters"]["schemaUrl"] == TEST_GRAPHQL_SCHEMA_URL
-            assert (
-                item["parameters"]["schemaFile"]
-                == f"{test_zap.container_work_dir}/schema.graphql"
-            )
+            assert item["parameters"]["schemaFile"] == f"{test_zap.container_work_dir}/schema.graphql"
             break
     else:
         assert False, "graphql job not found"
@@ -384,18 +378,14 @@ def test_setup_override_cfg(test_config):
     override_cfg1 = "formhandler.fields.field(0).fieldId=namespace"
     override_cfg2 = "formhandler.fields.field(0).value=default"
 
-    test_config.set(
-        "scanners.zap.miscOptions.overrideConfigs", [override_cfg1, override_cfg2]
-    )
+    test_config.set("scanners.zap.miscOptions.overrideConfigs", [override_cfg1, override_cfg2])
     test_zap = ZapNone(config=test_config)
     test_zap.setup()
 
     assert f"{override_cfg1}" in test_zap.zap_cli
     assert f"{override_cfg2}" in test_zap.zap_cli
 
-    assert r"formhandler.fields.field\(0\)" in test_zap._zap_cli_list_to_str_for_sh(
-        test_zap.zap_cli
-    )
+    assert r"formhandler.fields.field\(0\)" in test_zap._zap_cli_list_to_str_for_sh(test_zap.zap_cli)
 
 
 def test_setup_override_non_list_format(test_config):

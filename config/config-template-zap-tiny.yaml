@@ -1,0 +1,12 @@
+config:
+  configVersion: 5
+
+application:
+  shortName: "example-1.0"
+  url: "https://example.com" # root URL of the application
+
+scanners:
+  zap:
+    apiScan:
+      apis:
+        apiUrl: "https://example.com/api/v1/swagger.json" # URL to application openAPI spec

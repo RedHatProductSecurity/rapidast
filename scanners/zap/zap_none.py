@@ -2,7 +2,9 @@ import logging
 import os
 import platform
 import pprint
+import shutil
 import subprocess
+import sys
 from shutil import disk_usage
 
 from .zap import MODULE_DIR
@@ -277,7 +279,12 @@ class ZapNone(Zap):
         """
         logging.info("Zap: verifying the viability of ZAP")
 
-        command = [self.my_conf("container.parameters.executable")]
+        cmd = self.my_conf("container.parameters.executable")
+        if shutil.which(cmd) is None:
+            logging.error(f"{cmd} not found in PATH, is ZAP installed?")
+            sys.exit(1)
+
+        command = [cmd]
         command.extend(self._get_standard_options())
         command.extend(["-dir", self.container_home_dir])
         command.append("-cmd")

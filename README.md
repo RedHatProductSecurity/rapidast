@@ -527,7 +527,7 @@ scanners:
     results: "*stdout"
 
     container:
-      type: "podman"Not compatible with config files
+      type: "podman"
       parameters:
         image: "docker.io/aquasec/trivy"
         command: "image docker.io/aquasec/trivy"

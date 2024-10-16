@@ -3,8 +3,6 @@ import logging
 import os
 from pprint import pformat
 import yaml
-from rapidast import load_config_file
-
 
 class RapidastConfigModel:
     def __init__(self, conf=None):
@@ -12,7 +10,12 @@ class RapidastConfigModel:
             conf = {}
 
         self.conf = conf
+        
+        # Captures configurations that use hardcoded default values when specific entries 
+        # are not found in the original configuration
         self._default_conf = {}
+        
+        # Captures configuration values that are overridden by environment variables
         self._env_conf = {}
 
     def get(self, path, default=None):
@@ -261,7 +264,7 @@ class RapidastConfigModel:
 
     def dump(self, dirname: str) -> None:
         """
-        Dumps both the main configuration and the default configuration into YAML files
+        Dumps the main configuration, environment-replaced, and the default configurations into YAML files
         in the specified directory.
 
         Args:

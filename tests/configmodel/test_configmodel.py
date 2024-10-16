@@ -1,7 +1,8 @@
 import copy
 import os
 import unittest
-from unittest.mock import mock_open, patch
+from unittest.mock import mock_open
+from unittest.mock import patch
 
 import pytest
 import yaml

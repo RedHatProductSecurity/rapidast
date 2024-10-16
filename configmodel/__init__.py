@@ -2,7 +2,9 @@ import copy
 import logging
 import os
 from pprint import pformat
+
 import yaml
+
 
 class RapidastConfigModel:
     def __init__(self, conf=None):
@@ -10,11 +12,11 @@ class RapidastConfigModel:
             conf = {}
 
         self.conf = conf
-        
-        # Captures configurations that use hardcoded default values when specific entries 
+
+        # Captures configurations that use hardcoded default values when specific entries
         # are not found in the original configuration
         self._default_conf = {}
-        
+
         # Captures configuration values that are overridden by environment variables
         self._env_conf = {}
 

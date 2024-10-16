@@ -97,7 +97,9 @@ class RapidastConfigModel:
         except AttributeError:
             pass
         # Failed to iterate until the end: the path does not exist
-        logging.warning(f"RapidastConfigModel.delete(): Config path {path} was not found. No deletion")
+        logging.warning(
+            f"RapidastConfigModel.delete(): Config path {path} was not found. No deletion"
+        )
         return False
 
     def exists(self, path):
@@ -140,7 +142,9 @@ class RapidastConfigModel:
                 tmp = walk[key]
             # case 3: not a "dictionary" type: warn and overwrite (if True)
             if not isinstance(tmp, dict):
-                logging.warning(f"RapidastConfigModel.set: Incompatible {path} at {tmp}")
+                logging.warning(
+                    f"RapidastConfigModel.set: Incompatible {path} at {tmp}"
+                )
                 if not overwrite:
                     logging.info("RapidastConfigModel.set: no overwrite: early return")
                     return False
@@ -178,7 +182,9 @@ class RapidastConfigModel:
         if not merge:
             return
         if not isinstance(merge, dict):
-            raise TypeError(f"RapidastConfigModel.merge: merge must be a dict (was: {type(merge)})")
+            raise TypeError(
+                f"RapidastConfigModel.merge: merge must be a dict (was: {type(merge)})"
+            )
 
         root = path_to_list(root)
 
@@ -214,7 +220,9 @@ class RapidastConfigModel:
                     if key.endswith("_from_var"):
                         new[key.removesuffix("_from_var")] = os.environ[val]
                         if not new[key.removesuffix("_from_var")]:
-                            logging.warning(f"configuration {key} points to environment variable {val}, which is empty")
+                            logging.warning(
+                                f"configuration {key} points to environment variable {val}, which is empty"
+                            )
                     else:
                         new[key] = descend(val)
                 return new
@@ -232,7 +240,9 @@ class RapidastConfigModel:
             return None
 
         if not isinstance(subtree, dict):
-            raise KeyError(f"subtree_to_dict(): '{path}' does not point to a dictionary in the config")
+            raise KeyError(
+                f"subtree_to_dict(): '{path}' does not point to a dictionary in the config"
+            )
 
         return descend(subtree)
 

@@ -124,6 +124,14 @@ def run_scanner(name, config, args, scan_exporter):
 
     return 0
 
+def dump_configuration(config):
+    base_results_dir = config.get("config.base_results_dir", default="./results")
+    dump_config_dir_name = os.path.join(base_results_dir, "config")
+    try:
+        config.dump(dump_config_dir_name)
+        logging.info(f"Configuration successfully dumped to {dump_config_dir_name}")
+    except OSError as e: # pylint: disable=W0718
+        logging.error(f"Failed to dump configuration: {e}")
 
 def run():
     parser = argparse.ArgumentParser(
@@ -212,16 +220,10 @@ def run():
                 scan_error_count = scan_error_count + 1
             else:
                 logging.info(f"scanner: '{name}' completed successfully")
-    except Exception as e:
+    except Exception as e: # pylint: disable=W0718
         logging.error(f"Unhandled error while running the scanners: {e}")
-    finally:
-        base_results_dir = config.get("config.base_results_dir", default="./results")
-        dump_config_dir_name = os.path.join(base_results_dir, "config")
-        try:
-            config.dump(dump_config_dir_name)
-            logging.info(f"Configuration successfully dumped to {dump_config_dir_name}")
-        except Exception as e:
-            logging.error(f"Failed to dump configuration: {e}")
+
+    dump_configuration(config)
 
     if scan_error_count > 0:
         logging.warning(f"Number of failed scanners: {scan_error_count}")

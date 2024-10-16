@@ -237,7 +237,7 @@ def test_dump(mock_os_makedirs, config_template):
         mock_dump_config.assert_any_call(f"{config_dir}/env-configuration.yaml", {})
 
 
-@patch.dict(os.environ, {"SECRETKEY": "foo"})  # Simulate environment variable
+@patch.dict(os.environ, {"SECRETKEY": "foo"})
 def test_get_with_env_var(nested_with_var):
     config = RapidastConfigModel(nested_with_var)
     _ = config.get("nested.morenested.secretkey")

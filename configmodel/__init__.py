@@ -2,6 +2,8 @@ import copy
 import logging
 import os
 from pprint import pformat
+import yaml
+from rapidast import load_config_file
 
 
 class RapidastConfigModel:
@@ -10,6 +12,8 @@ class RapidastConfigModel:
             conf = {}
 
         self.conf = conf
+        self._default_conf = {}
+        self._env_conf = {}
 
     def get(self, path, default=None):
         """Retrieve a config value as the following:
@@ -21,6 +25,13 @@ class RapidastConfigModel:
 
         path is either a list of values, or a dot-separated string
         """
+
+        def create_nested_dict(keys, value):
+            nested_dict = value
+            for key in reversed(keys):
+                nested_dict = {key: nested_dict}
+            return nested_dict
+
         path = path_to_list(path)
 
         # 1) Try to return value from config
@@ -34,9 +45,13 @@ class RapidastConfigModel:
         new_path[-1] = new_path[-1] + "_from_var"
         try:
             env_name = self._get_from_conf(new_path)
-            return os.environ[env_name]
+            env_value = os.environ[env_name]
+            self._env_conf |= create_nested_dict(path, env_value)
+            return env_value
         except KeyError:
             pass
+
+        self._default_conf |= create_nested_dict(path, default)
 
         # 3) return default
         return default
@@ -226,6 +241,42 @@ class RapidastConfigModel:
 
     def __repr__(self):
         return pformat(vars(self), indent=4, width=1)
+
+    @staticmethod
+    def _dump_config(filename: str, config: dict) -> None:
+        """
+        Dumps the given configuration dictionary into a YAML file.
+
+        Args:
+            filename: The full path of the file where the configuration should be saved.
+            config: The configuration dictionary to be written to the file.
+        """
+        try:
+            with open(filename, "w+", encoding="utf-8") as f:
+                yaml.dump(config, f, allow_unicode=True)
+        except OSError as e:
+            logging.error(f"Error writing to file {filename}: {e}")
+        except yaml.YAMLError as e:
+            logging.error(f"Error dumping YAML configuration: {e}")
+
+    def dump(self, dirname: str) -> None:
+        """
+        Dumps both the main configuration and the default configuration into YAML files
+        in the specified directory.
+
+        Args:
+            dirname: The directory path where the YAML files should be saved.
+        """
+        os.makedirs(dirname, exist_ok=True)
+
+        render_config_file = os.path.join(dirname, "rendered-configuration.yaml")
+        self._dump_config(render_config_file, self.conf)
+
+        default_config_file = os.path.join(dirname, "default-configuration.yaml")
+        self._dump_config(default_config_file, self._default_conf)
+
+        env_config_file = os.path.join(dirname, "env-configuration.yaml")
+        self._dump_config(env_config_file, self._env_conf)
 
 
 ## BELOW: utility functions

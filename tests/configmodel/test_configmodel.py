@@ -1,5 +1,7 @@
 import copy
 import os
+import unittest
+from unittest.mock import mock_open, patch
 
 import pytest
 import yaml
@@ -9,7 +11,7 @@ from configmodel import RapidastConfigModel
 
 @pytest.fixture(name="config_template")
 def generate_config_template():
-    model = "config/config-template-long.yaml"
+    model = "config/config-template-zap-long.yaml"
     try:
         with open(model) as file:
             config = RapidastConfigModel(yaml.safe_load(file))
@@ -207,3 +209,43 @@ def test_configmodel_delete(some_nested_config):
     assert not myconf.exists("nested.morenested.key3")
     assert not myconf.exists("nested.morenested")
     assert not myconf.exists("nested")
+
+
+@patch("builtins.open", new_callable=mock_open)
+@patch("yaml.dump")
+def test_dump_config(mock_yaml_dump, mock_file):
+    config = RapidastConfigModel()
+
+    config._dump_config("test-config.yaml", {"key": "value"})
+    mock_file.assert_called_once_with("test-config.yaml", "w+", encoding="utf-8")
+    mock_yaml_dump.assert_called_once_with({"key": "value"}, mock_file(), allow_unicode=True)
+
+
+@patch("os.makedirs")
+def test_dump(mock_os_makedirs, config_template):
+    config = RapidastConfigModel(config_template)
+
+    config_dir = "/path/to/dir"
+
+    with patch.object(config, "_dump_config") as mock_dump_config:
+        config.dump(config_dir)
+        mock_os_makedirs.assert_called_once_with(config_dir, exist_ok=True)
+
+        mock_dump_config.assert_any_call(f"{config_dir}/rendered-configuration.yaml", config_template)
+        mock_dump_config.assert_any_call(f"{config_dir}/default-configuration.yaml", {})
+        mock_dump_config.assert_any_call(f"{config_dir}/env-configuration.yaml", {})
+
+
+@patch.dict(os.environ, {"SECRETKEY": "foo"})  # Simulate environment variable
+def test_get_with_env_var(nested_with_var):
+    config = RapidastConfigModel(nested_with_var)
+    _ = config.get("nested.morenested.secretkey")
+    assert config._env_conf["nested"]["morenested"]["secretkey"] == "foo"
+
+
+def test_get_with_default(nested_with_var):
+    config = RapidastConfigModel(nested_with_var)
+    _ = config.get("non.existent.path", default="default_value")
+    _ = config.get("another.existent.path", default="another_default_value")
+    assert config._default_conf["non"]["existent"]["path"] == "default_value"
+    assert config._default_conf["another"]["existent"]["path"] == "another_default_value"

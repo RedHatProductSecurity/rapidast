@@ -53,7 +53,7 @@ def test_dump_redacted_exceptions(mock_load_config_file) -> None:
 @patch("os.makedirs")
 @patch("os.path.exists")
 @patch("rapidast.load_config_file")
-def test_dump_redacted_config_creates_destination_dir_when_config_file_not_found(
+def test_dump_redacted_config_creates_destination_dir(
     mock_load_config_file, mock_exists, mock_os_makedirs
 ) -> None:
     # Raising a FileNotFoundError to simulate the absence of the configuration file and stop the process

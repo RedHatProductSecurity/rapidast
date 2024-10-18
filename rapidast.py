@@ -207,7 +207,6 @@ def run():
     try:
         config = configmodel.RapidastConfigModel(yaml.safe_load(load_config_file(config_file)))
     except yaml.YAMLError as exc:
-        dump_redacted_config(config_file, "./results")
         raise RuntimeError(f"YAML error in config {config_file}':\n {str(exc)}") from exc
 
     full_result_dir_path = get_full_result_dir_path(config)

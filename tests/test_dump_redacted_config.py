@@ -34,7 +34,8 @@ def test_dump_redacted_config_success(
     success = dump_redacted_config("config.yaml", "destination_dir")
 
     assert success
-    mock_exists.assert_called_once_with(DEFAULT_CONFIG_FILE)
+    mock_exists.assert_any_call(DEFAULT_CONFIG_FILE)
+    mock_exists.assert_any_call("destination_dir")
     mock_copy.assert_called_once_with(DEFAULT_CONFIG_FILE, "destination_dir")
 
     mock_open_func.assert_called_once_with("destination_dir/config.yaml", "w", encoding="utf-8")
@@ -47,3 +48,17 @@ def test_dump_redacted_exceptions(mock_load_config_file) -> None:
         mock_load_config_file.side_effect = e
         success = dump_redacted_config("invalid_config.yaml", "destination_dir")
         assert not success
+
+
+@patch("os.makedirs")
+@patch("os.path.exists")
+@patch("rapidast.load_config_file")
+def test_dump_redacted_config_creates_destination_dir_when_config_file_not_found(
+    mock_load_config_file, mock_exists, mock_os_makedirs
+) -> None:
+    # Raising a FileNotFoundError to simulate the absence of the configuration file and stop the process
+    mock_load_config_file.side_effect = FileNotFoundError
+    mock_exists.return_value = False
+    _ = dump_redacted_config("config.yaml", "destination_dir")
+
+    mock_os_makedirs.assert_called_with("destination_dir")

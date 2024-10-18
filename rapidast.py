@@ -4,6 +4,7 @@ import logging
 import os
 import pprint
 import re
+import shutil
 import sys
 from datetime import datetime
 from urllib import request
@@ -18,6 +19,9 @@ from exports.google_cloud_storage import GoogleCloudStorage
 from utils import add_logging_level
 
 pp = pprint.PrettyPrinter(indent=4)
+
+
+DEFAULT_CONFIG_FILE = os.path.join(os.path.dirname(__file__), "rapidast-defaults.yaml")
 
 
 def load_environment(config):
@@ -125,6 +129,48 @@ def run_scanner(name, config, args, scan_exporter):
     return 0
 
 
+def dump_redacted_config(config_file_location: str, destination_dir: str) -> bool:
+    """
+    Redacts sensitive parameters from a configuration file and writes the redacted
+    version to a destination directory
+
+    Args:
+        config_file_location: The file path to the source configuration file
+        destination_dir: The directory where the redacted configuration file should be saved
+
+    """
+    logging.info("Starting the redaction and dumping process for the configuration files")
+
+    try:
+        if not os.path.exists(destination_dir):
+            os.makedirs(destination_dir)
+            logging.info(f"Created destination directory: {destination_dir}")
+
+        if os.path.exists(DEFAULT_CONFIG_FILE):
+            logging.info(f"Copying default config file from {DEFAULT_CONFIG_FILE} to {destination_dir}")
+            shutil.copy(DEFAULT_CONFIG_FILE, destination_dir)
+
+        config = yaml.safe_load(load_config_file(config_file_location))
+
+        logging.info(f"Redacting sensitive information from configuration {config_file_location}")
+        for key in config.keys():
+            if config[key].get("authentication") and config[key]["authentication"].get("parameters"):
+                for param in config[key]["authentication"]["parameters"]:
+                    config[key]["authentication"]["parameters"][param] = "*****"
+
+        dest = os.path.join(destination_dir, os.path.basename(config_file_location))
+        logging.info(f"Saving redacted configuration to {dest}")
+        with open(dest, "w", encoding="utf-8") as file:
+            yaml.dump(config, file)
+
+        logging.info("Redacted configuration saved successfully")
+        return True
+
+    except (FileNotFoundError, yaml.YAMLError, IOError) as e:
+        logging.error(f"Error occurred while dumping redacted config: {e}")
+        return False
+
+
 def run():
     parser = argparse.ArgumentParser(
         description="Runs various DAST scanners against a defined target, as configured by a configuration file."
@@ -153,27 +199,34 @@ def run():
     args.loglevel = args.loglevel.upper()
     add_logging_level("VERBOSE", logging.DEBUG + 5)
     logging.basicConfig(format="%(levelname)s:%(message)s", level=args.loglevel)
-    logging.debug(f"log level set to debug. Config file: '{parser.parse_args().config_file}'")
+    config_file = parser.parse_args().config_file
+
+    logging.debug(f"log level set to debug. Config file: '{config_file}'")
 
     # Load config file
     try:
-        config = configmodel.RapidastConfigModel(yaml.safe_load(load_config_file(parser.parse_args().config_file)))
+        config = configmodel.RapidastConfigModel(yaml.safe_load(load_config_file(config_file)))
     except yaml.YAMLError as exc:
-        raise RuntimeError(f"YAML error in config {parser.parse_args().config_file}':\n {str(exc)}") from exc
+        dump_redacted_config(config_file, "./results")
+        raise RuntimeError(f"YAML error in config {config_file}':\n {str(exc)}") from exc
+
+    full_result_dir_path = get_full_result_dir_path(config)
+    if not dump_redacted_config(config_file, full_result_dir_path):
+        logging.error("Failed to dump configuration. Exiting.")
+        sys.exit(2)
 
     # Optionally adds default if file exists (will not overwrite existing entries)
-    default_conf = os.path.join(os.path.dirname(__file__), "rapidast-defaults.yaml")
-    if os.path.exists(default_conf):
-        logging.info(f"Loading defaults from: {default_conf}")
+    if os.path.exists(DEFAULT_CONFIG_FILE):
+        logging.info(f"Loading defaults from: {DEFAULT_CONFIG_FILE}")
         try:
-            config.merge(yaml.safe_load(load_config_file(default_conf)), preserve=True)
+            config.merge(yaml.safe_load(load_config_file(DEFAULT_CONFIG_FILE)), preserve=True)
         except yaml.YAMLError as exc:
-            raise RuntimeError(f"YAML error in config {default_conf}':\n {str(exc)}") from exc
+            raise RuntimeError(f"YAML error in config {DEFAULT_CONFIG_FILE}':\n {str(exc)}") from exc
 
     # Update to latest config schema if need be
     config = configmodel.converter.update_to_latest_config(config)
 
-    config.set("config.results_dir", get_full_result_dir_path(config))
+    config.set("config.results_dir", full_result_dir_path)
 
     logging.debug(f"The entire loaded configuration is as follow:\n=====\n{pp.pformat(config)}\n=====")
 

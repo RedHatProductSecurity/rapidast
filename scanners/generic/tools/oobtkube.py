@@ -166,7 +166,7 @@ def parse_obj_data(filename: str) -> dict:
 
 
 def scan_with_k8s_config(cfg_file_path: str, obj_data: dict, ipaddr: str, port: int):
-    spec_data = obj_data.get("spec", {})
+    spec_data = {k: v for k, v in obj_data.items() if k not in ("kind", "apiVersion", "metadata", "status")}
     total_leaf_keys = count_total_leaf_keys(spec_data)
     # Apply Kubernetes config (e.g. CR for Operator, or Pod/resource for webhook)
     find_leaf_keys_and_test(spec_data, cfg_file_path, ipaddr, port, total_leaf_keys)

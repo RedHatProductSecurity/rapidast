@@ -5,6 +5,7 @@ import pytest
 import yaml
 
 from rapidast import DEFAULT_CONFIG_FILE
+from rapidast import dump_rapidast_redacted_configs
 from rapidast import dump_redacted_config
 
 
@@ -18,25 +19,19 @@ def mock_yaml_data() -> dict:
 
 @patch("yaml.safe_load")
 @patch("yaml.dump")
-@patch("os.path.exists")
-@patch("shutil.copy")
 @patch("builtins.open", new_callable=mock_open)
 @patch("rapidast.load_config_file")
 def test_dump_redacted_config_success(
-    mock_load_config_file, mock_open_func, mock_copy, mock_exists, mock_yaml_dump, mock_yaml_load, mock_yaml_data: dict
+    mock_load_config_file, mock_open_func, mock_yaml_dump, mock_yaml_load, mock_yaml_data: dict
 ) -> None:
     expected_redacted_data = {
         "service1": {"authentication": {"parameters": {"username": "*****", "password": "*****"}}},
         "service2": {"authentication": {"parameters": {"api_key": "*****"}}},
     }
-    mock_exists.return_value = True
     mock_yaml_load.return_value = mock_yaml_data
     success = dump_redacted_config("config.yaml", "destination_dir")
 
     assert success
-    mock_exists.assert_any_call(DEFAULT_CONFIG_FILE)
-    mock_exists.assert_any_call("destination_dir")
-    mock_copy.assert_called_once_with(DEFAULT_CONFIG_FILE, "destination_dir")
 
     mock_open_func.assert_called_once_with("destination_dir/config.yaml", "w", encoding="utf-8")
     mock_yaml_dump.assert_called_once_with(expected_redacted_data, mock_open_func())
@@ -60,3 +55,14 @@ def test_dump_redacted_config_creates_destination_dir(mock_load_config_file, moc
     _ = dump_redacted_config("config.yaml", "destination_dir")
 
     mock_os_makedirs.assert_called_with("destination_dir")
+
+
+@patch("os.path.exists")
+@patch("rapidast.dump_redacted_config")
+def test_dump_rapidast_redacted_configs(mock_dump_redacted_config, mock_exists):
+    mock_exists.return_value = True
+    dump_rapidast_redacted_configs("config.yaml", "destination_dir")
+
+    mock_exists.assert_called_once_with(DEFAULT_CONFIG_FILE)
+    mock_dump_redacted_config.assert_any_call(DEFAULT_CONFIG_FILE, "destination_dir")
+    mock_dump_redacted_config.assert_any_call("config.yaml", "destination_dir")

@@ -4,7 +4,6 @@ import logging
 import os
 import pprint
 import re
-import shutil
 import sys
 from datetime import datetime
 from urllib import request
@@ -139,16 +138,12 @@ def dump_redacted_config(config_file_location: str, destination_dir: str) -> boo
         destination_dir: The directory where the redacted configuration file should be saved
 
     """
-    logging.info("Starting the redaction and dumping process for the configuration files")
+    logging.info("Starting the redaction and dumping process for the configuration file: {config_file_location}")
 
     try:
         if not os.path.exists(destination_dir):
             os.makedirs(destination_dir)
             logging.info(f"Created destination directory: {destination_dir}")
-
-        if os.path.exists(DEFAULT_CONFIG_FILE):
-            logging.info(f"Copying default config file from {DEFAULT_CONFIG_FILE} to {destination_dir}")
-            shutil.copy(DEFAULT_CONFIG_FILE, destination_dir)
 
         config = yaml.safe_load(load_config_file(config_file_location))
 
@@ -169,6 +164,24 @@ def dump_redacted_config(config_file_location: str, destination_dir: str) -> boo
     except (FileNotFoundError, yaml.YAMLError, IOError) as e:
         logging.error(f"Error occurred while dumping redacted config: {e}")
         return False
+
+
+def dump_rapidast_redacted_configs(main_config_file_location: str, destination_dir: str):
+    """
+    Dumps redacted versions of the main and default configuration files to the destination directory.
+
+    Args:
+        main_config_file_location: The file path to the main configuration file.
+        destination_dir: The directory where the redacted configuration files should be saved.
+    """
+    if not dump_redacted_config(main_config_file_location, destination_dir):
+        logging.error("Failed to dump configuration. Exiting.")
+        sys.exit(2)
+
+    if os.path.exists(DEFAULT_CONFIG_FILE):
+        if not dump_redacted_config(DEFAULT_CONFIG_FILE, destination_dir):
+            logging.error("Failed to dump configuration. Exiting.")
+            sys.exit(2)
 
 
 def run():
@@ -210,9 +223,7 @@ def run():
         raise RuntimeError(f"YAML error in config {config_file}':\n {str(exc)}") from exc
 
     full_result_dir_path = get_full_result_dir_path(config)
-    if not dump_redacted_config(config_file, full_result_dir_path):
-        logging.error("Failed to dump configuration. Exiting.")
-        sys.exit(2)
+    dump_rapidast_redacted_configs(config_file, full_result_dir_path)
 
     # Optionally adds default if file exists (will not overwrite existing entries)
     if os.path.exists(DEFAULT_CONFIG_FILE):

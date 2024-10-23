@@ -3,7 +3,7 @@
  *
  * This script retrieves the root of the site tree from the current ZAP session,
  * traverses each child node, and collects relevant information such as node name,
- * HTTP method, and status code. The collected data is then written to a JSON file 
+ * HTTP method, and status code. The collected data is then written to a JSON file
  * named 'zap_site_tree.json' in the session's results directory
  */
 
@@ -36,11 +36,11 @@ function listChildren(node, resultList) {
 try {
     var root = model.getSession().getSiteTree().getRoot();
     var resultList = [];
-    
+
     listChildren(root, resultList);
 
-    var jsonOutput = JSON.stringify(resultList, null, 4);  
-    
+    var jsonOutput = JSON.stringify(resultList, null, 4);
+
     var defaultResultsDir = model.getSession().getSessionFolder();
     var outputFilePath = new File(defaultResultsDir, "zap_site_tree.json").getAbsolutePath();
 

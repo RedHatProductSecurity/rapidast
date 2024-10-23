@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import glob
 import logging
 import os

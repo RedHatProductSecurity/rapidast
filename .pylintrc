@@ -1,5 +1,2 @@
 [TYPECHECK]
 generated-members=logging.verbose
-
-[main]
-max-module-lines=1100

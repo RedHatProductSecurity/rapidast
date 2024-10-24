@@ -34,6 +34,8 @@ class Zap(RapidastScanner):
 
     REPORTS_SUBDIR = "reports"
 
+    SITE_TREE_FILENAME = "zap-site-tree.json"
+
     ## FUNCTIONS
     def __init__(self, config, ident):
         logging.debug("Initializing ZAP scanner")
@@ -107,7 +109,7 @@ class Zap(RapidastScanner):
         """
         Copies the site tree JSON file from the host working directory to the results directory.
         """
-        site_tree_path = os.path.join(self.host_work_dir, "session_data/zap_site_tree.json")
+        site_tree_path = os.path.join(self.host_work_dir, f"session_data/{self.SITE_TREE_FILENAME}")
 
         if os.path.exists(site_tree_path):
             try:
@@ -384,6 +386,28 @@ class Zap(RapidastScanner):
 
     def _setup_export_site_tree(self):
         scripts_dir = self.container_scripts_dir
+        site_tree_file_name_add = {
+            "name": "export-site-tree-filename-global-var-add",
+            "type": "script",
+            "parameters": {
+                "action": "add",
+                "type": "standalone",
+                "name": "export-site-tree-filename-global-var",
+                # Setting the engine to Oracle Nashorn causes the script to fail because
+                # the engine can't be found when using inline scripts. Not sure why this happens
+                "engine": "ECMAScript : Graal.js",
+                "inline": f"""
+                org.zaproxy.zap.extension.script.ScriptVars.setGlobalVar('siteTreeFileName','{self.SITE_TREE_FILENAME}')
+                """,
+            },
+        }
+        self.automation_config["jobs"].append(site_tree_file_name_add)
+        site_tree_file_name_run = {
+            "name": "export-site-tree-filename-global-var-run",
+            "type": "script",
+            "parameters": {"action": "run", "type": "standalone", "name": "export-site-tree-filename-global-var"},
+        }
+        self.automation_config["jobs"].append(site_tree_file_name_run)
         setup = {
             "name": "export-site-tree-add",
             "type": "script",

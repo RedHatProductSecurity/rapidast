@@ -34,7 +34,7 @@ def test_copy_site_tree_success(mock_copy, mock_exists, test_config):
     test_zap._copy_site_tree()
 
     mock_copy.assert_called_once_with(
-        os.path.join(test_zap.host_work_dir, "session_data/zap_site_tree.json"), test_zap.results_dir
+        os.path.join(test_zap.host_work_dir, f"session_data/{ZapNone.SITE_TREE_FILENAME}"), test_zap.results_dir
     )
 
 

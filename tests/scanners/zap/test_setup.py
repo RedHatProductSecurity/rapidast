@@ -416,15 +416,25 @@ def test_setup_export_site_tree(test_config, pytestconfig):
 
     add_script = None
     run_script = None
+    add_variable_script = None
+    run_variable_script = None
 
     for item in test_zap.automation_config["jobs"]:
         if item["name"] == "export-site-tree-add":
             add_script = item
         if item["name"] == "export-site-tree-run":
             run_script = item
+        if item["name"] == "export-site-tree-filename-global-var-add":
+            add_variable_script = item
+        if item["name"] == "export-site-tree-filename-global-var-run":
+            run_variable_script = item
 
-    assert add_script and run_script
+    assert add_script and run_script and add_variable_script and run_variable_script
 
     assert add_script["parameters"]["name"] == run_script["parameters"]["name"]
     assert add_script["parameters"]["file"] == f"{pytestconfig.rootpath}/scanners/zap/scripts/export-site-tree.js"
     assert add_script["parameters"]["engine"] == "ECMAScript : Oracle Nashorn"
+
+    assert add_variable_script["parameters"]["name"] == run_variable_script["parameters"]["name"]
+    assert add_variable_script["parameters"]["inline"]
+    assert add_variable_script["parameters"]["engine"] == "ECMAScript : Graal.js"

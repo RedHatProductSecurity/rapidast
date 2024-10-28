@@ -59,6 +59,10 @@ def load_config_file(config_file_location: str):
         return open(config_file_location, mode="r", encoding="utf-8")
 
 
+def load_config(config_file_location: str):
+    return yaml.safe_load(load_config_file(config_file_location))
+
+
 def run_scanner(name, config, args, scan_exporter):
     """given the config `config`, runs scanner `name`.
     Returns:

@@ -1,10 +1,11 @@
-import configmodel
-import rapidast
+from unittest.mock import Mock
+from unittest.mock import patch
 
 import requests
 
+import configmodel
+import rapidast
 from scanners.nessus.nessus import Nessus
-from unittest.mock import Mock, patch
 
 
 class TestNessus:

@@ -1,12 +1,13 @@
 import logging
-import dacite
-import requests.exceptions
-
 from dataclasses import dataclass
 from typing import List
+
+import dacite
+import requests.exceptions
 from py_nessus_pro import PyNessusPro
 
-from scanners import RapidastScanner, State
+from scanners import RapidastScanner
+from scanners import State
 
 
 @dataclass
@@ -22,7 +23,7 @@ class NessusScanConfig:
     folder: str
     policy: str
     targets: List[str]
-    reportPath: str
+    # reportPath: str
 
 
 @dataclass
@@ -56,7 +57,6 @@ class Nessus(RapidastScanner):
     def setup(self):
         if self.nessus_client is None:
             raise RuntimeError(f"Nessus client not connected: {self.state}")
-        # XXX create scan
         # # Create scan object for use by PyNessusPro
         # # Scan name, scan targets, and scan folder are all retrieved from config
         # scanID = nessus.new_scan(
@@ -68,7 +68,8 @@ class Nessus(RapidastScanner):
         #
         # # Set scan policy
         # # Scan policy is retrieved from config
-        # # Special note: As implemented, only user-created scan policies seem to be identified and must be created with the name used in the config as a prerequisite
+        # # Special note: As implemented, only user-created scan policies seem to be identified and must be
+        # # created with the name used in the config as a prerequisite
         # if config.get("scan_policy"):
         #     nessus.set_scan_policy(scan_id=scanID, policy=config.get("scan_policy"))
         self.state = State.READY
@@ -76,7 +77,6 @@ class Nessus(RapidastScanner):
     def run(self):
         if self.state != State.READY:
             raise RuntimeError(f"[nessus] unexpected state: READY != {self.state}")
-        # XXX launch scan
         # # State that we want the scan to launch immediately
         # nessus.set_scan_launch_now(scan_id=scanID, launch_now=True)
         #

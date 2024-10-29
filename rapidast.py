@@ -149,6 +149,8 @@ def dump_redacted_config(config_file_location: str, destination_dir: str) -> boo
 
         logging.info(f"Redacting sensitive information from configuration {config_file_location}")
         for key in config.keys():
+            if not isinstance(config[key], dict):
+                continue
             if config[key].get("authentication") and config[key]["authentication"].get("parameters"):
                 for param in config[key]["authentication"]["parameters"]:
                     config[key]["authentication"]["parameters"][param] = "*****"

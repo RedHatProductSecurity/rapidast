@@ -1,0 +1,23 @@
+apiVersion: appstudio.redhat.com/v1beta2
+kind: IntegrationTestScenario
+metadata:
+  name: experiment-test
+  annotations:
+    pipelinesascode.tekton.dev/on-event: "[pull_request, push]"
+    pipelinesascode.tekton.dev/on-target-branch: "[main, development]"
+  labels:
+    test.appstudio.openshift.io/optional: "true"
+spec:
+  application: rapidast
+  contexts:
+  - description: Application testing
+    name: application
+  resolverRef:
+    params:
+    - name: url
+      value: https://github.com/sfowl/rapidast
+    - name: revision
+      value: "{{ revision }}"
+    - name: pathInRepo
+      value: e2e-tests/manifests/integration-test-pipeline.yaml
+    resolver: git

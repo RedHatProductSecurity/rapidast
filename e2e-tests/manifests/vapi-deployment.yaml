@@ -1,0 +1,29 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+  name: vapi
+  labels:
+    app: vapi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vapi
+  template:
+    metadata:
+      labels:
+        app: vapi
+    spec:
+      containers:
+      # command is custom because:
+      # - default entrypoint runs frontend and based on rapidast-consolidated-e2e.sh we only want backend
+      # - running start_backend.sh on its own is not sufficient, a sleep is needed to keep the pod alive
+      - command:
+        - bash
+        - -c
+        - . start_backend.sh && sleep infinity
+        image: quay.io/sfowler/vapi:latest
+        imagePullPolicy: Always
+        name: vapi

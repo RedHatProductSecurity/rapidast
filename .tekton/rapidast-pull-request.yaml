@@ -25,9 +25,11 @@ spec:
   - name: output-image
     value: quay.io/redhat-user-workloads/secaut-tenant/rapidast:on-pr-{{revision}}
   - name: image-expires-after
-    value: 5d
+    value: 7d
   - name: dockerfile
     value: containerize/Containerfile
+  - name: skip-checks
+    value: "true"
   pipelineSpec:
     description: |
       This pipeline is ideal for building container images from a Containerfile while maintaining trust after pipeline customization.

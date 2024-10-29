@@ -31,8 +31,8 @@ scanners:
   nessus:
     server:
       url: https://nessus-example.com/ # URL of Nessus instance
-      username_from_var: NESSUS_USER # Nessus credentials
-      password_from_var: NESSUS_PASSWORD
+      username: foo # OR username_from_var: NESSUS_USER
+      password: bar # OR password_from_var: NESSUS_PASSWORD
     scan:
       name: test-scan # name of new scan to create
       folder: test-folder # name of folder in to contain scan

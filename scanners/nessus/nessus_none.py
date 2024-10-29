@@ -1,0 +1,135 @@
+import logging
+import time
+from dataclasses import dataclass
+from dataclasses import field
+from typing import List
+from typing import Optional
+
+import dacite
+import requests.exceptions
+from py_nessus_pro import PyNessusPro
+
+from configmodel import RapidastConfigModel
+from scanners import RapidastScanner
+from scanners import State
+
+
+@dataclass
+class NessusServerConfig:
+    url: str
+    username: str
+    password: str
+
+
+@dataclass
+class NessusScanConfig:
+    name: str
+    policy: str
+    targets: List[str]
+    folder: str = field(default="rapidast")
+
+    def targets_as_str(self) -> str:
+        return " ".join(self.targets)
+
+
+@dataclass
+class NessusConfig:
+    server: NessusServerConfig
+    scan: NessusScanConfig
+
+
+# XXX required by ./rapidast.py
+CLASSNAME = "Nessus"
+
+END_STATUSES = [
+    "completed",
+    "canceled",
+    "imported",
+    "aborted",
+]
+
+
+class Nessus(RapidastScanner):
+    def __init__(self, config: RapidastConfigModel, ident: str = "nessus"):
+        super().__init__(config, ident)
+        self._nessus_client: Optional[PyNessusPro] = None
+        self._scan_id: Optional[int] = None
+        nessus_config_section = config.subtree_to_dict("scanners.nessus")
+        if nessus_config_section is None:
+            raise ValueError("'scanners.nessus' section not in config")
+        # self.auth_config = config.subtree_to_dict("general.authentication")  # creds for target hosts
+        self.config = dacite.from_dict(data_class=NessusConfig, data=nessus_config_section)
+        self.sleep_interval: int = 20
+        self._connect()
+
+    def _connect(self):
+        logging.debug(f"Connecting to nessus instance at {self.config.server.url}")
+        try:
+            self._nessus_client = PyNessusPro(
+                self.config.server.url,
+                self.config.server.username,
+                self.config.server.password,
+                log_level="debug",
+            )
+        except requests.exceptions.RequestException as e:
+            logging.error(f"Failed to connect to {self.config.server.url}: {e}")
+            raise
+
+    @property
+    def nessus_client(self) -> PyNessusPro:
+        if self._nessus_client is None:
+            raise RuntimeError(f"Nessus client not connected: {self.state}")
+        return self._nessus_client
+
+    @property
+    def scan_id(self) -> int:
+        if self._scan_id is None:
+            raise RuntimeError("scan_id is None")
+        return self._scan_id
+
+    def setup(self):
+        logging.debug(f"Creating new scan named {self.config.scan.folder}/{self.config.scan.name}")
+        self._scan_id = self.nessus_client.new_scan(
+            name=self.config.scan.name,
+            targets=self.config.scan.targets_as_str(),
+            folder=self.config.scan.folder,
+            create_folder=True,
+        )
+
+        # only user-created scan policies seem to be identified and must be
+        # created with the name used in the config as a prerequisite
+        if self.config.scan.policy:
+            logging.debug(f"Setting scan policy to {self.config.scan.policy}")
+            self.nessus_client.set_scan_policy(scan_id=self.scan_id, policy=self.config.scan.policy)
+
+        self.state = State.READY
+
+    def run(self):
+        if self.state != State.READY:
+            raise RuntimeError(f"[nessus] unexpected state: READY != {self.state}")
+        # State that we want the scan to launch immediately
+        logging.debug("Launching scan")
+        self.nessus_client.set_scan_launch_now(scan_id=self.scan_id, launch_now=True)
+
+        # Tell nessus to create and launch the scan
+        self.nessus_client.post_scan(scan_id=self.scan_id)
+
+        # Wait for the scan to complete
+        while self.nessus_client.get_scan_status(self.scan_id)["status"] not in END_STATUSES:
+            time.sleep(self.sleep_interval)
+            logging.debug("Waiting {self.sleep_interval}s for scan to finish")
+            logging.info(self.nessus_client.get_scan_status(self.scan_id))
+
+    def postprocess(self):
+        # After scan is complete, download report in csv, nessus, and html format
+        # Path and any folders must already exist in this implementation
+        logging.debug("Retrieving scan reports")
+        scan_reports = self.nessus_client.get_scan_reports(self.scan_id, self.results_dir)
+        print(scan_reports)
+        if not self.state == State.ERROR:
+            self.state = State.PROCESSED
+
+    def cleanup(self):
+        logging.debug("cleaning up")
+        if not self.state == State.PROCESSED:
+            raise RuntimeError(f"[nessus] unexpected state: PROCESSED != {self.state}")

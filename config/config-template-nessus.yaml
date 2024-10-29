@@ -2,40 +2,40 @@ config:
   # WARNING: `configVersion` indicates the schema version of the config file.
   # This value tells RapiDAST what schema should be used to read this configuration.
   # Therefore you should only change it if you update the configuration to a newer schema
-  configVersion: 6
+  configVersion: 5
 
   # all the results of all scanners will be stored under that location
-  base_results_dir: "./results"
+  # base_results_dir: "./results"
 
 # `application` contains data related to the application, not to the scans.
 application:
-  shortName: "MyApp-1.0"
-  url: "<Mandatory. root URL of the application>"
+  shortName: "nessus-test-1.0"
+  # url: "<Mandatory. root URL of the application>" # XXX unused for nessus
 
 # `general` is a section that will be applied to all scanners.
 # Any scanner can override a value by creating an entry of the same name in their own configuration
 general:
 
+  # XXX auth section not yet used by nessus scanner
   # remove `authentication` entirely for unauthenticated connection
-  authentication:
-    type: "oauth2_rtoken"
-    parameters:
-      client_id: "cloud-services"
-      token_endpoint: "<token retrieval URL>"
-      rtoken_from_var: "RTOKEN"     # referring to a env defined in general.environ.envFile
-      #preauth: false  # set to true to pregenerate a token, and stick to it (no refresh)
+  # authentication:
+  #   type: "oauth2_rtoken"
+  #   parameters:
+  #     client_id: "cloud-services"
+  #     token_endpoint: "<token retrieval URL>"
+  #     # rtoken_from_var: "RTOKEN"     # referring to a env defined in general.environ.envFile
+  #     #preauth: false  # set to true to pregenerate a token, and stick to it (no refresh)
 
 # `scanners' is a section that configures scanning options
 scanners:
   nessus:
     server:
-      url: https://nessus-server.example.com # required
-      username: user
-      password: pass
+      url: https://nessus-example.com/ # URL of Nessus instance
+      username_from_var: NESSUS_USER # Nessus credentials
+      password_from_var: NESSUS_PASSWORD
     scan:
-      name: py-nessus-test
-      folder: py-nessus
-      policy: "py-test"
+      name: test-scan # name of new scan to create
+      folder: test-folder # name of folder in to contain scan
+      policy: "py-test" # policy used for scan
       targets:
       - 127.0.0.1
-      reportPath: ./reports

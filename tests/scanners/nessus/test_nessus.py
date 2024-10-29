@@ -5,7 +5,7 @@ import requests
 
 import configmodel
 import rapidast
-from scanners.nessus.nessus import Nessus
+from scanners.nessus.nessus_none import Nessus
 
 
 class TestNessus:

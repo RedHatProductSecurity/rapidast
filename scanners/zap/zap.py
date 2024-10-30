@@ -393,8 +393,6 @@ class Zap(RapidastScanner):
                 "action": "add",
                 "type": "standalone",
                 "name": "export-site-tree-filename-global-var",
-                # Setting the engine to Oracle Nashorn causes the script to fail because
-                # the engine can't be found when using inline scripts. Not sure why this happens
                 "engine": "ECMAScript : Graal.js",
                 "inline": f"""
                 org.zaproxy.zap.extension.script.ScriptVars.setGlobalVar('siteTreeFileName','{self.SITE_TREE_FILENAME}')

@@ -414,7 +414,7 @@ class Zap(RapidastScanner):
             "parameters": {
                 "action": "add",
                 "type": "standalone",
-                "engine": "ECMAScript : Oracle Nashorn",
+                "engine": "ECMAScript : Graal.js",
                 "name": "export-site-tree",
                 "file": f"{scripts_dir}/export-site-tree.js",
             },

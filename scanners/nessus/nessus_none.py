@@ -54,25 +54,26 @@ class Nessus(RapidastScanner):
         super().__init__(config, ident)
         self._nessus_client: Optional[PyNessusPro] = None
         self._scan_id: Optional[int] = None
-        nessus_config_section = config.subtree_to_dict("scanners.nessus")
+        nessus_config_section = config.subtree_to_dict(f"scanners.{ident}")
         if nessus_config_section is None:
             raise ValueError("'scanners.nessus' section not in config")
         # self.auth_config = config.subtree_to_dict("general.authentication")  # creds for target hosts
-        self.config = dacite.from_dict(data_class=NessusConfig, data=nessus_config_section)
+        # XXX self.config is already a dict with raw config values
+        self.cfg = dacite.from_dict(data_class=NessusConfig, data=nessus_config_section)
         self.sleep_interval: int = 20
         self._connect()
 
     def _connect(self):
-        logging.debug(f"Connecting to nessus instance at {self.config.server.url}")
+        logging.debug(f"Connecting to nessus instance at {self.cfg.server.url}")
         try:
             self._nessus_client = PyNessusPro(
-                self.config.server.url,
-                self.config.server.username,
-                self.config.server.password,
+                self.cfg.server.url,
+                self.cfg.server.username,
+                self.cfg.server.password,
                 log_level="debug",
             )
         except requests.exceptions.RequestException as e:
-            logging.error(f"Failed to connect to {self.config.server.url}: {e}")
+            logging.error(f"Failed to connect to {self.cfg.server.url}: {e}")
             raise
 
     @property
@@ -88,19 +89,19 @@ class Nessus(RapidastScanner):
         return self._scan_id
 
     def setup(self):
-        logging.debug(f"Creating new scan named {self.config.scan.folder}/{self.config.scan.name}")
+        logging.debug(f"Creating new scan named {self.cfg.scan.folder}/{self.cfg.scan.name}")
         self._scan_id = self.nessus_client.new_scan(
-            name=self.config.scan.name,
-            targets=self.config.scan.targets_as_str(),
-            folder=self.config.scan.folder,
+            name=self.cfg.scan.name,
+            targets=self.cfg.scan.targets_as_str(),
+            folder=self.cfg.scan.folder,
             create_folder=True,
         )
 
         # only user-created scan policies seem to be identified and must be
         # created with the name used in the config as a prerequisite
-        if self.config.scan.policy:
-            logging.debug(f"Setting scan policy to {self.config.scan.policy}")
-            self.nessus_client.set_scan_policy(scan_id=self.scan_id, policy=self.config.scan.policy)
+        if self.cfg.scan.policy:
+            logging.debug(f"Setting scan policy to {self.cfg.scan.policy}")
+            self.nessus_client.set_scan_policy(scan_id=self.scan_id, policy=self.cfg.scan.policy)
 
         self.state = State.READY
 

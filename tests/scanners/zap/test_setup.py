@@ -433,7 +433,7 @@ def test_setup_export_site_tree(test_config, pytestconfig):
 
     assert add_script["parameters"]["name"] == run_script["parameters"]["name"]
     assert add_script["parameters"]["file"] == f"{pytestconfig.rootpath}/scanners/zap/scripts/export-site-tree.js"
-    assert add_script["parameters"]["engine"] == "ECMAScript : Oracle Nashorn"
+    assert add_script["parameters"]["engine"] == "ECMAScript : Graal.js"
 
     assert add_variable_script["parameters"]["name"] == run_variable_script["parameters"]["name"]
     assert add_variable_script["parameters"]["inline"]

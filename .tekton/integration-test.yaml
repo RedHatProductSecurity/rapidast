@@ -9,8 +9,6 @@ spec:
       default: github.com/sfowl/rapidast
     - name: revision
       default: "development"
-    - name: image
-      default: quay.io/redhatproductsecurity/rapidast:latest
     - description: 'Snapshot of the application'
       name: SNAPSHOT
       default: |-

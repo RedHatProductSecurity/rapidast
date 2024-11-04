@@ -73,7 +73,7 @@ def render_manifests(input_dir, output_dir):
 
 
 def setup_namespace():
-    global NAMESPACE
+    global NAMESPACE  # pylint: disable=W0603
     # only try to create a namespace if env is set
     if NAMESPACE == "":
         NAMESPACE = get_current_namespace()
@@ -98,7 +98,7 @@ def get_current_namespace() -> str:
     except config.config_exception.ConfigException:
         # If running inside a pod
         try:
-            with open("/var/run/secrets/kubernetes.io/serviceaccount/namespace", "r") as f:
+            with open("/var/run/secrets/kubernetes.io/serviceaccount/namespace", "r", encoding="utf-8") as f:
                 return f.read().strip()
         except FileNotFoundError:
             return "default"
@@ -117,7 +117,7 @@ def create_namespace(namespace_name: str):
             corev1.create_namespace(namespace)
         else:
             raise e
-    except Exception as e:
+    except Exception as e:  # pylint: disable=W0718
         print(f"error reading namesapce {namespace_name}: {e}")
 
 

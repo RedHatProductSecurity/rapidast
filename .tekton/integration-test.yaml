@@ -128,7 +128,7 @@ spec:
                 mountPath: /credentials
             script: |
               #!/bin/bash -ex
-              
+
               echo "$KUBECONFIG_VALUE" > "$KUBECONFIG"
               oc whoami
 

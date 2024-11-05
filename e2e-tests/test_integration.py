@@ -119,7 +119,7 @@ def create_namespace(namespace_name: str):
         else:
             raise e
     except Exception as e:  # pylint: disable=W0718
-        print(f"error reading namesapce {namespace_name}: {e}")
+        print(f"error reading namespace {namespace_name}: {e}")
 
 
 def cleanup():

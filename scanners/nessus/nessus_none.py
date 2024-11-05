@@ -27,6 +27,7 @@ class NessusScanConfig:
     policy: str
     targets: List[str]
     folder: str = field(default="rapidast")
+    timeout: int = field(default=600)  # seconds
 
     def targets_as_str(self) -> str:
         return " ".join(self.targets)
@@ -61,7 +62,6 @@ class Nessus(RapidastScanner):
         # XXX self.config is already a dict with raw config values
         self.cfg = dacite.from_dict(data_class=NessusConfig, data=nessus_config_section)
         self._sleep_interval: int = 10
-        self._timeout: int = 300
         self._connect()
 
     def _connect(self):
@@ -122,8 +122,8 @@ class Nessus(RapidastScanner):
         # Wait for the scan to complete
         start = time.time()
         while self.nessus_client.get_scan_status(self.scan_id)["status"] not in END_STATUSES:
-            if time.time() - start > self._timeout:
-                logging.error(f"Timeout {self._timeout}s reached waiting for scan to complete")
+            if time.time() - start > self.cfg.scan.timeout:
+                logging.error(f"Timeout {self.cfg.scan.timeout}s reached waiting for scan to complete")
                 self.state = State.ERROR
                 break
 

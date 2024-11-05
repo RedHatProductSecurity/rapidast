@@ -37,5 +37,6 @@ scanners:
       name: test-scan # name of new scan to create
       folder: test-folder # name of folder in to contain scan
       policy: "py-test" # policy used for scan
+      # timeout: 600 # timeout in seconds to complete scan
       targets:
       - 127.0.0.1

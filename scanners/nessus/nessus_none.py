@@ -60,7 +60,8 @@ class Nessus(RapidastScanner):
         # self.auth_config = config.subtree_to_dict("general.authentication")  # creds for target hosts
         # XXX self.config is already a dict with raw config values
         self.cfg = dacite.from_dict(data_class=NessusConfig, data=nessus_config_section)
-        self.sleep_interval: int = 20
+        self._sleep_interval: int = 10
+        self._timeout: int = 300
         self._connect()
 
     def _connect(self):
@@ -97,6 +98,9 @@ class Nessus(RapidastScanner):
             create_folder=True,
         )
 
+        if self._scan_id < 0:
+            raise RuntimeError(f"Unexpected scan_id {self.scan_id}")
+
         # only user-created scan policies seem to be identified and must be
         # created with the name used in the config as a prerequisite
         if self.cfg.scan.policy:
@@ -116,9 +120,15 @@ class Nessus(RapidastScanner):
         self.nessus_client.post_scan(scan_id=self.scan_id)
 
         # Wait for the scan to complete
+        start = time.time()
         while self.nessus_client.get_scan_status(self.scan_id)["status"] not in END_STATUSES:
-            time.sleep(self.sleep_interval)
-            logging.debug("Waiting {self.sleep_interval}s for scan to finish")
+            if time.time() - start > self._timeout:
+                logging.error(f"Timeout {self._timeout}s reached waiting for scan to complete")
+                self.state = State.ERROR
+                break
+
+            time.sleep(self._sleep_interval)
+            logging.debug(f"Waiting {self._sleep_interval}s for scan to finish")
             logging.info(self.nessus_client.get_scan_status(self.scan_id))
 
     def postprocess(self):
@@ -126,7 +136,7 @@ class Nessus(RapidastScanner):
         # Path and any folders must already exist in this implementation
         logging.debug("Retrieving scan reports")
         scan_reports = self.nessus_client.get_scan_reports(self.scan_id, self.results_dir)
-        print(scan_reports)
+        logging.debug(scan_reports)
         if not self.state == State.ERROR:
             self.state = State.PROCESSED
 

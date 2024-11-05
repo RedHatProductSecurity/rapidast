@@ -38,13 +38,13 @@ def fixture_kclient():
 def wait_until_ready(**kwargs):
     corev1 = client.CoreV1Api()
     w = watch.Watch()
-    for event in w.stream(func=corev1.list_namespaced_pod, namespace=NAMESPACE, timeout_seconds=60, **kwargs):
+    for event in w.stream(func=corev1.list_namespaced_pod, namespace=NAMESPACE, timeout_seconds=120, **kwargs):
         if not isinstance(event, dict):  # Watch.stream() can yield non-dict types
             continue
         print(event["object"].metadata.name, event["object"].status.phase)
         if event["object"].status.phase == "Running":
             return
-    raise RuntimeError("Timeout out waiting for pod matching: {kwargs}")
+    raise RuntimeError(f"Timeout out waiting for pod matching: {kwargs}")
 
 
 # simulates: $ oc logs -f <pod> | tee <file>

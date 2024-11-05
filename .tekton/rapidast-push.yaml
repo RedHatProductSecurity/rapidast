@@ -6,8 +6,7 @@ metadata:
     build.appstudio.redhat.com/commit_sha: '{{revision}}'
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
     pipelinesascode.tekton.dev/max-keep-runs: "3"
-    pipelinesascode.tekton.dev/on-cel-expression: event == "push" && target_branch
-      == "development"
+    pipelinesascode.tekton.dev/on-cel-expression: event == "push" && (target_branch == "development" || target_branch == "main")
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rapidast
@@ -22,7 +21,7 @@ spec:
   - name: revision
     value: '{{revision}}'
   - name: output-image
-    value: quay.io/redhat-user-workloads/secaut-tenant/rapidast:{{revision}}
+    value: quay.io/redhatproductsecurity/rapidast:{{revision}}
   - name: dockerfile
     value: containerize/Containerfile
   pipelineSpec:

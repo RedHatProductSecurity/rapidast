@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+  name: rapidast-oobtkube
+  labels:
+    app: rapidast-oobtkube
+spec:
+  containers:
+  - command:
+    - bash
+    - -c
+    - ./rapidast.py
+    env:
+    - name: HOME
+      value: /opt/rapidast
+    image: ${IMAGE} # quay.io/redhatproductsecurity/rapidast:latest
+    imagePullPolicy: Always
+    name: rapidast-oobtkube
+    resources:
+      limits:
+        cpu: 0.5
+        memory: 1Gi
+    volumeMounts:
+    - name: config-volume
+      mountPath: /opt/rapidast/config
+  serviceAccountName: ${SERVICEACCOUNT} # oobtkube needs perms to query API server
+  securityContext:
+    supplementalGroups: [1000] # "dast" group, necessary to write to /opt/rapidast/results if no PVC mounted
+  volumes:
+  - name: config-volume
+    configMap:
+      name: rapidast-oobtkube
+  # - name: results-volume
+  #   persistentVolumeClaim:
+  #     claimName: rapidast-results
+  restartPolicy: Never

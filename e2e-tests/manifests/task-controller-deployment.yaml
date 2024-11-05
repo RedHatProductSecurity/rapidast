@@ -1,0 +1,34 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+  name: task-controller
+  labels:
+    app: task-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: task-controller
+  template:
+    metadata:
+      labels:
+        app: task-controller
+    spec:
+      containers:
+      # simulates a custom controller that monitors for tekton Tasks named "vulnerable"
+      # and tries to execute a deliberate command injection
+      # Tasks are chosen only because they have a field in .spec that can be arbitrary string
+      - command:
+        - bash
+        - -c
+        - |
+          while true; do
+            sleep 2
+            sh -c "$(oc get task/vulnerable -o=jsonpath='{.spec.description}')"
+          done
+        image: registry.redhat.io/openshift4/ose-cli:latest
+        imagePullPolicy: Always
+        name: task-controller
+      serviceAccountName: ${SERVICEACCOUNT} # required to read Tasks from API server

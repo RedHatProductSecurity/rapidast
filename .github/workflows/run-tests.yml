@@ -10,8 +10,24 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  lint:
+    runs-on: ubuntu-latest
 
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.9"
+    - name: Install dependencies
+      run: |
+        python3 -m ensurepip --upgrade
+        pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
+    - name: Lint with pre-commit hook
+      run: |
+        pre-commit run --all-files --show-diff-on-failure
+
+  unit-tests:
     runs-on: ubuntu-latest
 
     steps:
@@ -26,7 +42,4 @@ jobs:
         pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
     - name: Test with pytest
       run: |
-        pytest
-    - name: Lint with pre-commit hook
-      run: |
-        pre-commit run --all-files --show-diff-on-failure
+        pytest tests

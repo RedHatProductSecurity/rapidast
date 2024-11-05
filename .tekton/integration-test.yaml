@@ -101,8 +101,6 @@ spec:
               git clone "$(tasks.parse-metadata.results.source-git-url)" /workspace
               pushd /workspace
               git checkout "$(tasks.parse-metadata.results.source-git-revision)"
-              # XXX Temporary hardcoded repo + commit !
-              # git checkout test-e2e-test
 
           - name: test
             image: registry.redhat.io/openshift4/ose-cli:latest

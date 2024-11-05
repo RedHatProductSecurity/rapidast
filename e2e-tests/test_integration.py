@@ -62,6 +62,7 @@ def tee_log(pod_name: str, filename: str):
 def render_manifests(input_dir, output_dir):
     shutil.copytree(input_dir, output_dir, dirs_exist_ok=True)
     print(f"rendering manifests in {output_dir}")
+    print(f"using serviceaccount {SERVICEACCOUNT}")
     # XXX should probably replace this with something like kustomize
     for filepath in os.scandir(output_dir):
         with open(filepath, "r", encoding="utf-8") as f:

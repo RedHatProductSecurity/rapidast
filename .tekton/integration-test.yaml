@@ -6,7 +6,7 @@ metadata:
 spec:
   params:
     - name: repo_url
-      default: github.com/sfowl/rapidast
+      default: github.com/RedHatProductSecurity/rapidast
     - name: revision
       default: "development"
     - description: 'Snapshot of the application'
@@ -19,7 +19,7 @@ spec:
                 "containerImage": "quay.io/redhatproductsecurity/rapidast:latest",
                 "source":{
                   "git":{
-                    "url":"git@github.com:sfowl/rapidast.git",
+                    "url":"git@github.com:RedHatProductSecurity/rapidast.git",
                     "revision":"development",
                   }
                 }

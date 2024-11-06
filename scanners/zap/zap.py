@@ -151,7 +151,7 @@ class Zap(RapidastScanner):
             *self._get_standard_options(),
             "-cmd",
         ]
-        if self.my_conf("miscOptions.updateAddons", default=True):
+        if self.my_conf("miscOptions.updateAddons"):
             command.append("-addonupdate")
 
         addons = self.my_conf("miscOptions.additionalAddons", default=[])

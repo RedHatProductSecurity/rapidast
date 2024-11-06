@@ -449,9 +449,9 @@ Example: `podman pod create --userns=keep-id:uid=1000,gid=1000 myApp_Pod`
 
 This is useful for debugging.  Set `scanners.zap.miscOptions.enableUI: True` (default: False).  Then, the ZAP desktop will run with GUI on your host and show the progress of scanning.
 
-+ Disable add-on updates:
++ Enable add-on updates:
 
-Set `scanners.zap.miscOptions.updateAddons: False` (default: True). Then, ZAP will update its addons first and run the scan.
+Set `scanners.zap.miscOptions.updateAddons: True` (default: False). ZAP will first update its addons and then run the scan.
 
 + Install additional addons:
 

@@ -90,7 +90,7 @@ class Zap(RapidastScanner):
         logging.debug(f"reports_dir: {reports_dir}")
 
         logging.info(f"Extracting report, storing in {self.results_dir}")
-        shutil.copytree(reports_dir, self.results_dir)
+        shutil.copytree(reports_dir, self.results_dir, dirs_exist_ok=True)
 
         logging.info("Saving the session as evidence")
         with tarfile.open(f"{self.results_dir}/session.tar.gz", "w:gz") as tar:

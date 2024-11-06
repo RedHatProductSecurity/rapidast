@@ -191,6 +191,9 @@ class Zap(RapidastScanner):
         """
         self.zap_cli.extend(self._get_standard_options())
 
+        # Addon update has already been done, if enabled. Prevent a new check for update
+        self.zap_cli.append("-silent")
+
         # Create a session, to store them as evidence
         self.zap_cli.extend(["-newsession", f"{self.container_work_dir}/session_data/session"])
 

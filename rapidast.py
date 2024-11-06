@@ -6,6 +6,8 @@ import pprint
 import re
 import sys
 from datetime import datetime
+from typing import Any
+from typing import Dict
 from urllib import request
 
 import yaml
@@ -57,6 +59,10 @@ def load_config_file(config_file_location: str):
         return request.urlopen(config_file_location)
     else:
         return open(config_file_location, mode="r", encoding="utf-8")
+
+
+def load_config(config_file_location: str) -> Dict[str, Any]:
+    return yaml.safe_load(load_config_file(config_file_location))
 
 
 def run_scanner(name, config, args, scan_exporter):
@@ -138,7 +144,7 @@ def dump_redacted_config(config_file_location: str, destination_dir: str) -> boo
         destination_dir: The directory where the redacted configuration file should be saved
 
     """
-    logging.info("Starting the redaction and dumping process for the configuration file: {config_file_location}")
+    logging.info(f"Starting the redaction and dumping process for the configuration file: {config_file_location}")
 
     try:
         if not os.path.exists(destination_dir):

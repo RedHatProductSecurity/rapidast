@@ -1,6 +1,4 @@
 import os
-import pathlib
-import re
 from pathlib import Path
 
 import pytest

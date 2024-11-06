@@ -20,12 +20,13 @@ class State(Enum):
 
 
 class RapidastScanner:
-    def __init__(self, config, ident):
+    def __init__(self, config: configmodel.RapidastConfigModel, ident: str):
         self.ident = ident
         self.config = config
         self.state = State.UNCONFIGURED
 
         self.results_dir = os.path.join(self.config.get("config.results_dir", default="results"), self.ident)
+        os.makedirs(self.results_dir, exist_ok=True)
 
         # When requested to create a temporary file or directory, it will be a subdir of
         # this temporary directory

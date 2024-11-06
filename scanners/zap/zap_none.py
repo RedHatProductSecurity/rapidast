@@ -106,7 +106,7 @@ class ZapNone(Zap):
         if not self.state == State.READY:
             raise RuntimeError("[ZAP SCANNER]: ERROR, not ready to run")
 
-        self._check_plugin_status()
+        # self._check_plugin_status()
 
         # temporary workaround: cleanup addon state
         # see https://github.com/zaproxy/zaproxy/issues/7590#issuecomment-1308909500

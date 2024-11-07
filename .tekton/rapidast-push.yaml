@@ -401,6 +401,9 @@ spec:
       description: select the tags used for apply-tags
       runAfter:
       - build-image-index
+      params:
+        - name: TARGET_BRANCH
+          value: "{{target_branch}}"
       results:
         - name: TAGS
           type: array
@@ -412,7 +415,7 @@ spec:
             script: |
               #!/bin/bash -ex
 
-              case "{{target_branch}}" in
+              case $(params.TARGET_BRANCH) in
                 "main") echo '["latest"]' > $(results.TAGS.path) ;;
                 "development") echo '["development"]' > $(results.TAGS.path) ;;
                 *) echo '[]' >  $(results.TAGS.path) ;;

@@ -2,15 +2,12 @@ import logging
 import os
 import platform
 import pprint
-import shutil
 import subprocess
-import sys
 from shutil import disk_usage
 
 from .zap import MODULE_DIR
 from .zap import Zap
 from scanners import State
-from scanners.downloaders import anonymous_download
 from scanners.path_translators import make_mapping_for_scanner
 
 CLASSNAME = "ZapNone"

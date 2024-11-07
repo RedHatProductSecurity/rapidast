@@ -399,7 +399,6 @@ spec:
         - "false"
     - name: select-tags
       description: select the tags used for apply-tags
-      image: registry.access.redhat.com/ubi9/ubi-minimal:9.4-1194@sha256:73f7dcacb460dad137a58f24668470a5a2e47378838a0190eef0ab532c6e8998
       runAfter:
       - build-image-index
       results:
@@ -408,7 +407,8 @@ spec:
           default: []
       taskSpec:
         steps:
-          - name: Select tags based on branch
+          - name: select-tags-based-on-branch
+            image: registry.access.redhat.com/ubi9/ubi-minimal:9.4-1194@sha256:73f7dcacb460dad137a58f24668470a5a2e47378838a0190eef0ab532c6e8998
             script: |
               #!/bin/bash -ex
 

@@ -397,12 +397,36 @@ spec:
         operator: in
         values:
         - "false"
+    - name: select-tags
+      description: select the tags used for apply-tags
+      image: registry.access.redhat.com/ubi9/ubi-minimal:9.4-1194@sha256:73f7dcacb460dad137a58f24668470a5a2e47378838a0190eef0ab532c6e8998
+      runAfter:
+      - build-image-index
+      results:
+        - name: TAGS
+          type: array
+          default: []
+      steps:
+          - name: Select tags based on branch
+            script: |
+              #!/bin/bash -ex
+
+              case "{{target_branch}}" in
+                "main") echo '["latest"]' > $(results.TAGS.path) ;;
+                "development") echo '["development"]' > $(results.TAGS.path) ;;
+                *) echo '[]' >  $(results.TAGS.path) ;;
+              esac
+
+              echo "selected addtional tags:"
+              tee < $(results.TAGS.path)
     - name: apply-tags
       params:
       - name: IMAGE
         value: $(tasks.build-image-index.results.IMAGE_URL)
+      - name: ADDITIONAL_TAGS
+        value: $(tasks.select-tags.results.TAGS)
       runAfter:
-      - build-image-index
+      - select-tags
       taskRef:
         params:
         - name: name

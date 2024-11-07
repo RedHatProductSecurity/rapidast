@@ -406,7 +406,8 @@ spec:
         - name: TAGS
           type: array
           default: []
-      steps:
+      taskSpec:
+        steps:
           - name: Select tags based on branch
             script: |
               #!/bin/bash -ex

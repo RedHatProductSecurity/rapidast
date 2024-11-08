@@ -61,6 +61,15 @@ def test_setup_no_api_config(test_config):
 
     test_zap.setup()
 
+    # openapi job is not added when no openapi config exists
+    test_config.delete("scanners.zap.apiScan")
+    test_zap = ZapNone(config=test_config)
+
+    test_zap.setup()
+
+    for item in test_zap.automation_config["jobs"]:
+        assert item["type"] != "openapi"
+
 
 ## Testing Authentication methods ##
 ### Handling Authentication is different depending on the container.type so it'd be better to have test cases separately

@@ -185,5 +185,17 @@ def test_podman_handling_plugins(test_config):
     assert "pluginB" in test_zap.get_update_command()
 
     shell = test_zap._handle_plugins()
-    assert_shell = ["zap.sh", "-config", "network.connection.httpProxy.enabled=false", "-config", "network.localServers.mainProxy.port=47691", "-cmd", "-addonupdate", "-addoninstall", "pluginA", "-addoninstall", "pluginB"]
+    assert_shell = [
+        "zap.sh",
+        "-config",
+        "network.connection.httpProxy.enabled=false",
+        "-config",
+        "network.localServers.mainProxy.port=47691",
+        "-cmd",
+        "-addonupdate",
+        "-addoninstall",
+        "pluginA",
+        "-addoninstall",
+        "pluginB",
+    ]
     assert shell == assert_shell

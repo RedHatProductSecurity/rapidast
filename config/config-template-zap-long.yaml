@@ -188,7 +188,7 @@ scanners:
       # EnableUI (default: false), requires a compatible runtime (e.g.: `type: none`)
       enableUI: False
 
-      # Defaults to True, set False to prevent auto update of ZAP plugins
+      # Defaults to False, set True to force auto update of ZAP plugins
       updateAddons: True
 
       # List (comma-separated string or list) of additional addons to install

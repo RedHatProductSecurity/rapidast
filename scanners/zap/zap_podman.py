@@ -103,7 +103,26 @@ class ZapPodman(Zap):
         if not self.state == State.READY:
             raise RuntimeError("[ZAP SCANNER]: ERROR, not ready to run")
 
-        cli = self._handle_plugins()
+        # zap_podman's _handle_plugins simply returns the CLI to run as a list
+        # [empty if no update], to be assembled with the scan command in a
+        # single `sh` wrapper
+        plugins_cmd = self._handle_plugins()
+        if plugins_cmd:
+            # We need to merge the update and the scan in a single `sh` wrapped
+            # command, split by `;`
+            # 1) protect & turn the update command in a string
+            full_cmd_as_string = self._zap_cli_list_to_str_for_sh(plugins_cmd)
+            # 2) Add a separator
+            full_cmd_as_string += "; "
+            # 3) protect & turn the scan command in a string
+            full_cmd_as_string += self._zap_cli_list_to_str_for_sh(self.zap_cli)
+
+            cli = ["sh", "-c", full_cmd_as_string]
+
+        else:
+            # No update: we can run a single scan command
+            cli = self.zap_cli
+
         cli = self.podman.get_complete_cli(cli)
 
         # DO STUFF
@@ -199,19 +218,14 @@ class ZapPodman(Zap):
         By running a separate instance of ZAP prior to the real scan.
         This is required because some addons require a restart of ZAP.
 
-        In "podman" mode, we have to run both the plugin command and
-        the scan command in the same run. So we inject that in shell.
+        In "podman" mode, we have to run both the plugin command and the scan
+        command in the same run, so the _handle_plugins function itself can't
+        run the update.
+        So we simply return the `get_update_command()` [command to execute to
+        make the update, or empty list], and the caller will figure how to make
+        use of that]
         """
-
-        shell = ["sh", "-c"]
-        update_cmd = self._zap_cli_list_to_str_for_sh(self.get_update_command())
-        if update_cmd:
-            update_cmd += "; "
-        update_cmd += self._zap_cli_list_to_str_for_sh(self.zap_cli)
-        shell.append(update_cmd)
-
-        logging.debug(f"Update command: {shell}")
-        return shell
+        return self.get_update_command()
 
     def _setup_podman_cli(self):
         """Prepare the podman command.

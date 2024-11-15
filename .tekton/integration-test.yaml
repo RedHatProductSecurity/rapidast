@@ -148,13 +148,13 @@ spec:
               echo "$KUBECONFIG_VALUE" > "$KUBECONFIG"
               oc whoami
 
-              yum install -y python3.12
+              yum install -y python3.12 git
               python3.12 -m ensurepip
               pip3 install -r requirements.txt -r requirements-dev.txt
               pytest -s e2e-tests/test_integration.py --json-report --json-report-summary --json-report-file $(results.TEST_RESULTS.path)
               cat $(results.TEST_RESULTS.path)
 
-    - name: run-e2e-tests
+    - name: run-e2e-tests-nessus
       runAfter:
         - provision-eaas-space-nessus
       taskSpec:
@@ -202,7 +202,7 @@ spec:
               echo "$KUBECONFIG_VALUE" > "$KUBECONFIG"
               oc whoami
 
-              yum install -y python3.12
+              yum install -y python3.12 git
               python3.12 -m ensurepip
               pip3 install -r requirements.txt -r requirements-dev.txt
               pytest -s e2e-tests/test_nessus.py --json-report --json-report-summary --json-report-file $(results.TEST_RESULTS.path)

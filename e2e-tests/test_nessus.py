@@ -1,6 +1,4 @@
-import json
 import os
-import re
 
 from conftest import tee_log
 from conftest import TestBase

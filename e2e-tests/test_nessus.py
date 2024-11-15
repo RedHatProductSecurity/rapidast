@@ -2,7 +2,9 @@ import json
 import os
 import re
 
-from conftest import TestBase, tee_log, wait_until_ready
+from conftest import tee_log
+from conftest import TestBase
+from conftest import wait_until_ready
 
 
 class TestNessus(TestBase):

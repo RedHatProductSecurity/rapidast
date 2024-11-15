@@ -4,7 +4,10 @@ import tempfile
 import time
 
 import certifi
-from kubernetes import client, config, utils, watch
+from kubernetes import client
+from kubernetes import config
+from kubernetes import utils
+from kubernetes import watch
 from kubernetes.client.rest import ApiException
 
 NAMESPACE = os.getenv("RAPIDAST_NAMESPACE", "")  # e.g. rapidast--pipeline

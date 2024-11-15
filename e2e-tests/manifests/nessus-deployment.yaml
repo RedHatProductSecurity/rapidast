@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nessus
+  labels:
+    app: nessus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nessus
+  template:
+    metadata:
+      labels:
+        app: nessus
+    spec:
+      imagePullSecrets:
+      - name: sfowler-nessus-pull-secret
+      containers:
+      - name: nessus
+        command:
+        - /opt/nessus/sbin/nessus-service
+        - --no-root
+        env:
+        - name: AUTO_UPDATE
+          value: "no"
+        image: quay.io/sfowler/nessus@sha256:5881d6928e52d6c536634aeba0bbb7d5aac2b53e77c17f725e4e5aff0054f772
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8834
+        readinessProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - |
+              #!/bin/bash
+
+              # curl -ks https://0.0.0.0:8834/server/status | python3 -c 'import sys, json; json.load(sys.stdin)["code"] == 200 or sys.exit(1)'
+              curl -ks https://0.0.0.0:8834/server/status | python3 -c 'import sys, json; json.load(sys.stdin)["detailed_status"]["login_status"] == "allow" or sys.exit(1)'
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          failureThreshold: 32
+        resources:
+          limits:
+            cpu: 2
+            memory: 4Gi

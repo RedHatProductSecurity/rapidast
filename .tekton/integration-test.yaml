@@ -43,6 +43,26 @@ spec:
         - name: SNAPSHOT
           value: $(params.SNAPSHOT)
 
+    - name: provision-eaas-space-nessus
+      runAfter:
+        - parse-metadata
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/konflux-ci/build-definitions.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: task/provision-env-with-ephemeral-namespace/0.1/provision-env-with-ephemeral-namespace.yaml
+      params:
+        - name: KONFLUXNAMESPACE
+          value: $(context.pipelineRun.namespace)
+        - name: PIPELINERUN_NAME
+          value: $(context.pipelineRun.name)
+        - name: PIPELINERUN_UID
+          value: $(context.pipelineRun.uid)
+
     - name: provision-eaas-space
       runAfter:
         - parse-metadata
@@ -131,5 +151,59 @@ spec:
               yum install -y python3.12
               python3.12 -m ensurepip
               pip3 install -r requirements.txt -r requirements-dev.txt
-              pytest -s e2e-tests --json-report --json-report-summary --json-report-file $(results.TEST_RESULTS.path)
+              pytest -s e2e-tests/test_integration.py --json-report --json-report-summary --json-report-file $(results.TEST_RESULTS.path)
+              cat $(results.TEST_RESULTS.path)
+
+    - name: run-e2e-tests
+      runAfter:
+        - provision-eaas-space-nessus
+      taskSpec:
+        volumes:
+          - name: credentials
+            emptyDir: {}
+        results:
+          - name: TEST_RESULTS
+            description: e2e test results
+        steps:
+
+          # XXX not supported to use workspaces in integration tests:
+          # * https://issues.redhat.com/browse/STONEINTG-895
+          - name: clone-repository
+            image: quay.io/konflux-ci/git-clone:latest
+            script: |
+              git config --global --add safe.directory /workspace
+              git clone "$(tasks.parse-metadata.results.source-git-url)" /workspace
+              pushd /workspace
+              git checkout "$(tasks.parse-metadata.results.source-git-revision)"
+
+          - name: test
+            image: registry.redhat.io/openshift4/ose-cli:latest
+            env:
+            - name: KUBECONFIG
+              value: /tmp/kubeconfig
+            - name: KUBECONFIG_VALUE
+              valueFrom:
+                secretKeyRef:
+                  name: $(tasks.provision-eaas-space-nessus.results.secretRef)
+                  key: kubeconfig
+            - name: RAPIDAST_CLEANUP
+              value: "false" # namespace will be cleaned up automatically
+            - name: RAPIDAST_IMAGE
+              value: $(tasks.parse-metadata.results.component-container-image)
+            - name: RAPIDAST_SERVICEACCOUNT
+              value: namespace-manager # created by provision-env-with-ephemeral-namespace
+            workingDir: /workspace
+            volumeMounts:
+              - name: credentials
+                mountPath: /credentials
+            script: |
+              #!/bin/bash -ex
+
+              echo "$KUBECONFIG_VALUE" > "$KUBECONFIG"
+              oc whoami
+
+              yum install -y python3.12
+              python3.12 -m ensurepip
+              pip3 install -r requirements.txt -r requirements-dev.txt
+              pytest -s e2e-tests/test_nessus.py --json-report --json-report-summary --json-report-file $(results.TEST_RESULTS.path)
               cat $(results.TEST_RESULTS.path)

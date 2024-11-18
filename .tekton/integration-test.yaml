@@ -76,7 +76,7 @@ spec:
             - name: EAAS_KUBECONFIG_VALUE
               valueFrom:
                 secretKeyRef:
-                  name: $(tasks.provision-eaas-space.results.secretRef)
+                  name: $(tasks.provision-eaas-space-nessus.results.secretRef)
                   key: kubeconfig
             workingDir: /workspace
             script: |

@@ -63,6 +63,35 @@ spec:
         - name: PIPELINERUN_UID
           value: $(context.pipelineRun.uid)
 
+    - name: copy-nessus-secret
+      runAfter:
+       - provision-eaas-space-nessus
+      taskSpec:
+        steps:
+          - name: copy-nessus-secret
+            image: registry.redhat.io/openshift4/ose-cli:latest
+            env:
+            - name: KUBECONFIG
+              value: /tmp/kubeconfig
+            - name: EAAS_KUBECONFIG_VALUE
+              valueFrom:
+                secretKeyRef:
+                  name: $(tasks.provision-eaas-space.results.secretRef)
+                  key: kubeconfig
+            workingDir: /workspace
+            script: |
+              #!/bin/bash -ex
+
+              # initial request will default to in-cluster k8s config
+              oc whoami
+              oc get secret sfowler-nessus-pull-secret -o yaml > /tmp/nessus-pull-secret.yaml
+              sed '/namespace:/d' /tmp/nessus-pull-secret.yaml > /tmp/new-secret.yaml
+
+              # second request should use newly provisioned eaas creds + namespace
+              echo "$EAAS_KUBECONFIG_VALUE" > "$KUBECONFIG"
+              oc whoami
+              oc apply -f /tmp/new-secret.yaml
+
     - name: provision-eaas-space
       runAfter:
         - parse-metadata
@@ -156,7 +185,7 @@ spec:
 
     - name: run-e2e-tests-nessus
       runAfter:
-        - provision-eaas-space-nessus
+        - copy-nessus-secret
       taskSpec:
         volumes:
           - name: credentials

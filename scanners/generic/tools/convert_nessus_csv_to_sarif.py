@@ -95,12 +95,14 @@ def convert_csv_to_sarif(csv_file):
                     "Nessus version", row["Plugin Output"]
                 )
                 # Adding fullname to include policy
-                sarif_template["runs"][0]["tool"]["driver"]["fullName"] = (
-                    "%s %s %s Policy",
+                full_name = (
                     nessus_info("Scanner edition used", row["Plugin Output"]),
                     nessus_info("Nessus version", row["Plugin Output"]),
                     nessus_info("Scan policy used", row["Plugin Output"]),
                 )
+                sarif_template["runs"][0]["tool"]["driver"][
+                    "fullName"
+                ] = f"{full_name[0]} {full_name[1]} {full_name[2]} Policy"
 
             if row["Plugin ID"] not in rule_ids:
                 new_rule = {
@@ -117,7 +119,7 @@ def convert_csv_to_sarif(csv_file):
                 "ruleId": row["Plugin ID"],
                 "level": map_level(row["Risk"]),
                 "message": {
-                    "text": f"{row["Plugin Output"]}\n\nSolution: {row["Solution"]}"
+                    "text": f"{row['Plugin Output']}\n\nSolution: {row['Solution']}"
                 },
                 "locations": [
                     {
@@ -139,7 +141,7 @@ def main():
     """
     # Parse command-line arguments
     parser = argparse.ArgumentParser(
-        description="Convert JSON data to SARIF format with JSON block added to message."
+        description="Convert Nessus CSV report to SARIF JSON format."
     )
     parser.add_argument(
         "-f",
@@ -147,7 +149,7 @@ def main():
         type=str,
         required=False,
         default=None,
-        help="Path to JSON file (if absent or '-': read from STDIN)",
+        help="Path to Nessus CSV file (if absent or '-': read from STDIN)",
     )
     parser.add_argument(
         "--log-level",
@@ -169,3 +171,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

@@ -18,14 +18,16 @@ def map_level(risk):
     """
     Map severity to match SARIF level property
     """
-    if risk is "Critical" or risk is "High":
+    if risk in ("Critical", "High"):
         return "error"
-    elif risk is "Medium":
+
+    if risk == "Medium":
         return "warning"
-    elif risk is "Low":
+
+    if risk == "Low":
         return "note"
-    else:
-        return "none"
+
+    return "none"
 
 
 def nessus_info(field_name, entry):
@@ -50,7 +52,7 @@ def uri(host, port):
     """
     target = host
     # Ignore port if 0
-    if port is not "0":
+    if port != "0":
         target = target + ":" + port
     return target
 
@@ -93,9 +95,12 @@ def convert_csv_to_sarif(csv_file):
                     "Nessus version", row["Plugin Output"]
                 )
                 # Adding fullname to include policy
-                sarif_template["runs"][0]["tool"]["driver"][
-                    "fullName"
-                ] = f"{nessus_info('Scanner edition used',row['Plugin Output'])} {nessus_info('Nessus version', row['Plugin Output'])} {nessus_info('Scan policy used', row['Plugin Output'])} Policy"
+                sarif_template["runs"][0]["tool"]["driver"]["fullName"] = (
+                    "%s %s %s Policy",
+                    nessus_info("Scanner edition used", row["Plugin Output"]),
+                    nessus_info("Nessus version", row["Plugin Output"]),
+                    nessus_info("Scan policy used", row["Plugin Output"]),
+                )
 
             if row["Plugin ID"] not in rule_ids:
                 new_rule = {

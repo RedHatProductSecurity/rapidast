@@ -161,4 +161,5 @@ class TestBase:
     def create_from_yaml(self, path: str):
         # delete resources in teardown method later
         self._teardowns.append(partial(os.system, f"kubectl delete -f {path} -n {NAMESPACE}"))
-        utils.create_from_yaml(self.kclient, path, namespace=NAMESPACE, verbose=True)
+        o = utils.create_from_yaml(self.kclient, path, namespace=NAMESPACE, verbose=True)
+        logging.debug(o)

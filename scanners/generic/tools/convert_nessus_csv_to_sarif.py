@@ -81,9 +81,7 @@ def convert_csv_to_sarif(csv_file):
     else:
         logging.debug("Reading input from STDIN")
 
-    with (
-        open(csv_file, newline="", encoding="utf-8") if is_file(csv_file) else sys.stdin
-    ) as report:
+    with open(csv_file, newline="", encoding="utf-8") if is_file(csv_file) else sys.stdin as report:
         reader = csv.DictReader(report)
         for row in reader:
             if row["Plugin ID"] == "19506":
@@ -118,16 +116,8 @@ def convert_csv_to_sarif(csv_file):
             new_report = {
                 "ruleId": row["Plugin ID"],
                 "level": map_level(row["Risk"]),
-                "message": {
-                    "text": f"{row['Plugin Output']}\n\nSolution: {row['Solution']}"
-                },
-                "locations": [
-                    {
-                        "physicalLocation": {
-                            "artifactLocation": {"uri": artifact_location}
-                        }
-                    }
-                ],
+                "message": {"text": f"{row['Plugin Output']}\n\nSolution: {row['Solution']}"},
+                "locations": [{"physicalLocation": {"artifactLocation": {"uri": artifact_location}}}],
             }
 
             sarif_template["runs"][0]["results"].append(new_report)
@@ -140,9 +130,7 @@ def main():
     Parses arguments before converting Nessus CSV report to SARIF JSON format
     """
     # Parse command-line arguments
-    parser = argparse.ArgumentParser(
-        description="Convert Nessus CSV report to SARIF JSON format."
-    )
+    parser = argparse.ArgumentParser(description="Convert Nessus CSV report to SARIF JSON format.")
     parser.add_argument(
         "-f",
         "--filename",

@@ -43,5 +43,5 @@ spec:
           failureThreshold: 32
         resources:
           limits:
-            cpu: 2
+            cpu: 1750m
             memory: 4Gi

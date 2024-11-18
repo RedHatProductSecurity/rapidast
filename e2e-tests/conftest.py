@@ -1,7 +1,10 @@
+import logging
 import os
 import shutil
 import tempfile
 import time
+from functools import partial
+from typing import List, Tuple
 
 import certifi
 from kubernetes import client
@@ -29,7 +32,6 @@ certifi.where = where
 
 def wait_until_ready(**kwargs):
     corev1 = client.CoreV1Api()
-    w = watch.Watch()
     timeout = kwargs.pop("timeout", 120)
 
     start_time = time.time()
@@ -45,13 +47,13 @@ def wait_until_ready(**kwargs):
             if pod.status.conditions:
                 for condition in pod.status.conditions:
                     if condition.type == "Ready":
-                        print(f"{pod.metadata.name} Ready={condition.status}")
+                        logging.info(f"{pod.metadata.name} Ready={condition.status}")
                         if condition.status == "True":
                             return True
 
             time.sleep(2)
         except client.ApiException as e:
-            print(f"Error checking pod status: {e}")
+            logging.error(f"Error checking pod status: {e}")
     return False
 
 
@@ -69,8 +71,8 @@ def tee_log(pod_name: str, filename: str):
 
 def render_manifests(input_dir, output_dir):
     shutil.copytree(input_dir, output_dir, dirs_exist_ok=True)
-    print(f"rendering manifests in {output_dir}")
-    print(f"using serviceaccount {SERVICEACCOUNT}")
+    logging.info(f"rendering manifests in {output_dir}")
+    logging.info(f"using serviceaccount {SERVICEACCOUNT}")
     # XXX should probably replace this with something like kustomize
     for filepath in os.scandir(output_dir):
         with open(filepath, "r", encoding="utf-8") as f:
@@ -88,7 +90,7 @@ def setup_namespace():
         NAMESPACE = get_current_namespace()
     else:
         create_namespace(NAMESPACE)
-    print(f"using namespace '{NAMESPACE}'")
+    logging.info(f"using namespace '{NAMESPACE}'")
 
 
 def get_current_namespace() -> str:
@@ -118,23 +120,16 @@ def create_namespace(namespace_name: str):
     corev1 = client.CoreV1Api()
     try:
         corev1.read_namespace(namespace_name)
-        print(f"namespace {namespace_name} already exists")
+        logging.info(f"namespace {namespace_name} already exists")
     except ApiException as e:
         if e.status == 404:
-            print(f"creating namespace {namespace_name}")
+            logging.info(f"creating namespace {namespace_name}")
             namespace = client.V1Namespace(metadata=client.V1ObjectMeta(name=namespace_name))
             corev1.create_namespace(namespace)
         else:
             raise e
     except Exception as e:  # pylint: disable=W0718
-        print(f"error reading namespace {namespace_name}: {e}")
-
-
-def cleanup():
-    if RAPIDAST_CLEANUP:
-        os.system(f"kubectl delete -f {MANIFESTS}/")
-        # XXX oobtukbe does not clean up after itself
-        os.system("kubectl delete Task/vulnerable")
+        logging.error(f"error reading namespace {namespace_name}: {e}")
 
 
 def new_kclient():
@@ -143,21 +138,28 @@ def new_kclient():
 
 
 class TestBase:
+    _teardowns = []
+
     @classmethod
     def setup_class(cls):
         cls.tempdir = tempfile.mkdtemp()
         cls.kclient = new_kclient()
         render_manifests(MANIFESTS, cls.tempdir)
-        print(f"testing with image: {RAPIDAST_IMAGE}")
+        logging.info(f"testing with image: {RAPIDAST_IMAGE}")
         setup_namespace()
-        cleanup()
 
     @classmethod
     def teardown_class(cls):
         # TODO teardown should really occur after each test, so the the
         # resource count does not grown until quota reached
-        cleanup()
+        if RAPIDAST_CLEANUP:
+            for func in cls._teardowns:
+                logging.debug(f"calling {func}")
+                func()
+        # XXX oobtukbe does not clean up after itself
+        os.system(f"kubectl delete Task/vulnerable -n {NAMESPACE}")
 
     def create_from_yaml(self, path: str):
-        # simple wrapper to reduce repetition
+        # delete resources in teardown method later
+        self._teardowns.append(partial(os.system, f"kubectl delete -f {path} -n {NAMESPACE}"))
         utils.create_from_yaml(self.kclient, path, namespace=NAMESPACE, verbose=True)

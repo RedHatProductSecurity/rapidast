@@ -37,6 +37,7 @@ def wait_until_ready(**kwargs):
     start_time = time.time()
 
     while time.time() - start_time < timeout:
+        time.sleep(2)
         try:
             pods = corev1.list_namespaced_pod(namespace=NAMESPACE, **kwargs)
             if len(pods.items) != 1:
@@ -50,8 +51,6 @@ def wait_until_ready(**kwargs):
                         logging.info(f"{pod.metadata.name} Ready={condition.status}")
                         if condition.status == "True":
                             return True
-
-            time.sleep(2)
         except client.ApiException as e:
             logging.error(f"Error checking pod status: {e}")
     return False

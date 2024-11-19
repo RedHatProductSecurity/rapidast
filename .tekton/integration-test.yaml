@@ -126,8 +126,7 @@ spec:
             description: e2e test results
         steps:
 
-          # XXX not supported to use workspaces in integration tests:
-          # * https://issues.redhat.com/browse/STONEINTG-895
+          # XXX not supported to use workspaces in integration tests
           - name: clone-repository
             image: quay.io/konflux-ci/git-clone:latest
             script: |

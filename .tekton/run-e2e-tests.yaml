@@ -12,7 +12,7 @@ spec:
       type: string
     - name: rapidast_image
       type: string
-    - name: kubeconfig_value
+    - name: eaas_secret_name
       type: string
     - name: test_filter
       type: string
@@ -40,7 +40,10 @@ spec:
       - name: KUBECONFIG
         value: /tmp/kubeconfig
       - name: KUBECONFIG_VALUE
-        value: $(params.kubeconfig_value)
+        valueFrom:
+          secretKeyRef:
+            name: $(params.eaas_secret_name)
+            key: kubeconfig
       - name: RAPIDAST_CLEANUP
         value: "false" # namespace will be cleaned up automatically
       - name: RAPIDAST_IMAGE

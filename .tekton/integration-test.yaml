@@ -124,11 +124,8 @@ spec:
           value: $(tasks.parse-metadata.results.source-git-revision)
         - name: rapidast_image
           value: $(tasks.parse-metadata.results.component-container-image)
-        - name: kubeconfig_value
-          valueFrom:
-            secretKeyRef:
-              name: $(tasks.provision-eaas-space.results.secretRef)
-              key: kubeconfig
+        - name: eaas_secret_name
+          value: $(tasks.provision-eaas-space.results.secretRef)
         - name: test-filter
           value: test_integration.py
 
@@ -144,11 +141,8 @@ spec:
           value: $(tasks.parse-metadata.results.source-git-revision)
         - name: rapidast_image
           value: $(tasks.parse-metadata.results.component-container-image)
-        - name: kubeconfig_value
-          valueFrom:
-            secretKeyRef:
-              name: $(tasks.provision-eaas-space-nessus.results.secretRef)
-              key: kubeconfig
+        - name: eaas_secret_name
+          value: $(tasks.provision-eaas-space-nessus.results.secretRef)
         - name: test-filter
           value: test_nessus.py
 

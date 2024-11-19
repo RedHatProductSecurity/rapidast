@@ -1,0 +1,51 @@
+apiVersion: v1
+data:
+  config.yaml: |+
+    config:
+      # WARNING: `configVersion` indicates the schema version of the config file.
+      # This value tells RapiDAST what schema should be used to read this configuration.
+      # Therefore you should only change it if you update the configuration to a newer schema
+      configVersion: 5
+
+      # all the results of all scanners will be stored under that location
+      # base_results_dir: "./results"
+
+    # `application` contains data related to the application, not to the scans.
+    application:
+      shortName: "nessus-test-1.0"
+      # url: "<Mandatory. root URL of the application>" # XXX unused for nessus
+
+    # `general` is a section that will be applied to all scanners.
+    # Any scanner can override a value by creating an entry of the same name in their own configuration
+    general:
+      # container:
+      #   type: podman
+
+      # remove `authentication` entirely for unauthenticated connection
+      authentication:
+        type: "oauth2_rtoken"
+        parameters:
+          client_id: "cloud-services"
+          token_endpoint: "<token retrieval URL>"
+          # rtoken_from_var: "RTOKEN"     # referring to a env defined in general.environ.envFile
+          #preauth: false  # set to true to pregenerate a token, and stick to it (no refresh)
+
+    # `scanners' is a section that configures scanning options
+    scanners:
+      nessus_foobar:
+        server:
+          # url: https://10.0.108.143:8834/ # URL of Nessus instance
+          url: https://nessus:8834/ # URL of Nessus instance
+          username_from_var: NESSUS_USER # Nessus credentials
+          password_from_var: NESSUS_PASSWORD
+        scan:
+          name: nessus-test # name of new scan to create
+          folder: nessus-tests # name of folder in to contain scan
+          policy: "discovery" # policy used for scan
+          timeout: 600 # timeout limit in seconds to complete scan
+          targets:
+          - 127.0.0.1
+
+kind: ConfigMap
+metadata:
+  name: rapidast-nessus

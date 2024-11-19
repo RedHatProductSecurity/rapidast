@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: rapidast-nessus
+spec:
+  containers:
+  - command:
+    - bash
+    - -c
+    - ./rapidast.py
+    env:
+    - name: HOME
+      value: /opt/rapidast
+    - name: NESSUS_USER
+      value: admin
+    - name: NESSUS_PASSWORD
+      value: foobar
+    image: ${IMAGE} # quay.io/redhatproductsecurity/rapidast:latest
+    imagePullPolicy: Always
+    name: rapidast-nessus
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 125m
+        memory: 256Mi
+    volumeMounts:
+    - name: config-volume
+      mountPath: /opt/rapidast/config
+  securityContext:
+    supplementalGroups: [1000] # "dast" group, necessary to write to /opt/rapidast/results if no PVC mounted
+  volumes:
+  - name: config-volume
+    configMap:
+      name: rapidast-nessus
+  restartPolicy: Never

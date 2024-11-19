@@ -10,13 +10,8 @@ from scanners.nessus.nessus_none import Nessus
 
 class TestNessus:
     @patch("requests.Session.request")
-    @patch("py_nessus_pro.py_nessus_pro.BeautifulSoup")  # patch where imported
-    @patch("py_nessus_pro.py_nessus_pro.webdriver")  # patch where imported
-    def test_setup_nessus(self, mock_driver, mock_bs4, mock_get):
+    def test_setup_nessus(self, mock_get):
         # All this mocking is for PyNessusPro.__init__() which attempts to connect to Nessus
-        mock_soup = Mock()
-        mock_soup.find_all.return_value = [{"src": "foo"}]
-        mock_bs4.return_value = mock_soup
         mock_get.return_value = Mock(spec=requests.Response)
         mock_get.return_value.status_code = 200
         mock_get.return_value.text = '{"token": "foo", "folders": []}'

@@ -1,8 +1,8 @@
 import os
 
-from conftest import tee_log
-from conftest import TestBase
-from conftest import wait_until_ready
+from conftest import tee_log  # pylint: disable=E0611
+from conftest import TestBase  # pylint: disable=E0611
+from conftest import wait_until_ready  # pylint: disable=E0611
 
 
 class TestNessus(TestBase):
@@ -18,13 +18,3 @@ class TestNessus(TestBase):
 
         logfile = os.path.join(self.tempdir, "rapidast-nessus.log")
         tee_log("rapidast-nessus", logfile)
-
-        # # XXX relies on rapidast-vapi pod cat-ing the result json file after execution
-        # with open(logfile, "r", encoding="utf-8") as f:
-        #     logs = f.read()
-        #     pattern = r"^{\s*$.*$"
-        #     matches = re.findall(pattern, logs, re.MULTILINE | re.DOTALL)
-        #     assert matches, f"{logfile} did not contain expected json results"
-        #     results = json.loads(matches[0])
-
-        # assert len(results["site"][0]["alerts"]) == 3

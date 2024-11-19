@@ -2,9 +2,9 @@ import json
 import os
 import re
 
-from conftest import tee_log
-from conftest import TestBase
-from conftest import wait_until_ready
+from conftest import tee_log  # pylint: disable=E0611
+from conftest import TestBase  # pylint: disable=E0611
+from conftest import wait_until_ready  # pylint: disable=E0611
 
 
 class TestRapiDAST(TestBase):

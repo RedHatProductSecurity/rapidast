@@ -4,7 +4,6 @@ import shutil
 import tempfile
 import time
 from functools import partial
-from typing import List, Tuple
 
 import certifi
 from kubernetes import client
@@ -40,19 +39,21 @@ def wait_until_ready(**kwargs):
         time.sleep(2)
         try:
             pods = corev1.list_namespaced_pod(namespace=NAMESPACE, **kwargs)
-            if len(pods.items) != 1:
-                raise RuntimeError(f"Unexpected number of pods {len(pods.items)} matching: {kwargs}")
-            pod = pods.items[0]
-
-            # Check if pod is ready by looking at conditions
-            if pod.status.conditions:
-                for condition in pod.status.conditions:
-                    if condition.type == "Ready":
-                        logging.info(f"{pod.metadata.name} Ready={condition.status}")
-                        if condition.status == "True":
-                            return True
         except client.ApiException as e:
             logging.error(f"Error checking pod status: {e}")
+            return False
+
+        if len(pods.items) != 1:
+            raise RuntimeError(f"Unexpected number of pods {len(pods.items)} matching: {kwargs}")
+        pod = pods.items[0]
+
+        # Check if pod is ready by looking at conditions
+        if pod.status.conditions:
+            for condition in pod.status.conditions:
+                if condition.type == "Ready":
+                    logging.info(f"{pod.metadata.name} Ready={condition.status}")
+                    if condition.status == "True":
+                        return True
     return False
 
 

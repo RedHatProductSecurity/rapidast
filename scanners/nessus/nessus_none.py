@@ -1,5 +1,8 @@
+import glob
+import json
 import logging
 import time
+
 from dataclasses import dataclass
 from dataclasses import field
 from typing import List
@@ -12,6 +15,7 @@ from py_nessus_pro import PyNessusPro
 from configmodel import RapidastConfigModel
 from scanners import RapidastScanner
 from scanners import State
+from scanners.generic.tools.convert_nessus_csv_to_sarif import convert_csv_to_sarif
 
 
 @dataclass
@@ -90,7 +94,9 @@ class Nessus(RapidastScanner):
         return self._scan_id
 
     def setup(self):
-        logging.debug(f"Creating new scan named {self.cfg.scan.folder}/{self.cfg.scan.name}")
+        logging.debug(
+            f"Creating new scan named {self.cfg.scan.folder}/{self.cfg.scan.name}"
+        )
         self._scan_id = self.nessus_client.new_scan(
             name=self.cfg.scan.name,
             targets=self.cfg.scan.targets_as_str(),
@@ -105,7 +111,9 @@ class Nessus(RapidastScanner):
         # created with the name used in the config as a prerequisite
         if self.cfg.scan.policy:
             logging.debug(f"Setting scan policy to {self.cfg.scan.policy}")
-            self.nessus_client.set_scan_policy(scan_id=self.scan_id, policy=self.cfg.scan.policy)
+            self.nessus_client.set_scan_policy(
+                scan_id=self.scan_id, policy=self.cfg.scan.policy
+            )
 
         self.state = State.READY
 
@@ -121,9 +129,14 @@ class Nessus(RapidastScanner):
 
         # Wait for the scan to complete
         start = time.time()
-        while self.nessus_client.get_scan_status(self.scan_id)["status"] not in END_STATUSES:
+        while (
+            self.nessus_client.get_scan_status(self.scan_id)["status"]
+            not in END_STATUSES
+        ):
             if time.time() - start > self.cfg.scan.timeout:
-                logging.error(f"Timeout {self.cfg.scan.timeout}s reached waiting for scan to complete")
+                logging.error(
+                    f"Timeout {self.cfg.scan.timeout}s reached waiting for scan to complete"
+                )
                 self.state = State.ERROR
                 break
 
@@ -135,8 +148,21 @@ class Nessus(RapidastScanner):
         # After scan is complete, download report in csv, nessus, and html format
         # Path and any folders must already exist in this implementation
         logging.debug("Retrieving scan reports")
-        scan_reports = self.nessus_client.get_scan_reports(self.scan_id, self.results_dir)
+        scan_reports = self.nessus_client.get_scan_reports(
+            self.scan_id, self.results_dir
+        )
         logging.debug(scan_reports)
+        # Get filename
+        for file in glob.glob(self.results_dir + "/*.csv"):
+            sarif_output = convert_csv_to_sarif(file)
+            # Save sarif file
+            with open(
+                self.results_dir + "/" + self.cfg.scan.name + "-sarif.json",
+                "w",
+                encoding="utf-8",
+            ) as output:
+                json.dump(sarif_output, output, indent=2)
+
         if not self.state == State.ERROR:
             self.state = State.PROCESSED
 

@@ -541,7 +541,7 @@ class Zap(RapidastScanner):
         # Set some RapiDAST-centric defaults
         # Unless overwritten, browser should be Firefox-headless, since RapiDAST only has that
         if not job["parameters"].get("browserId"):
-            job["parameters"]["policy"] = "firefox-headless"
+            job["parameters"]["browserId"] = "firefox-headless"
 
         # Add to includePaths to the context
         if params.get("url"):

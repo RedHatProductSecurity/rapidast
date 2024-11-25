@@ -1,10 +1,10 @@
 import pytest
 
+from scanners.nessus.tools.convert_nessus_csv_to_sarif import convert_csv_to_sarif
+from scanners.nessus.tools.convert_nessus_csv_to_sarif import is_file
 from scanners.nessus.tools.convert_nessus_csv_to_sarif import map_level
 from scanners.nessus.tools.convert_nessus_csv_to_sarif import nessus_info
-from scanners.nessus.tools.convert_nessus_csv_to_sarif import is_file
 from scanners.nessus.tools.convert_nessus_csv_to_sarif import uri
-from scanners.nessus.tools.convert_nessus_csv_to_sarif import convert_csv_to_sarif
 
 TEST_DATA_DIR = "tests/scanners/nessus/tools/test_data_convert_nessus_csv_to_sarif/"
 

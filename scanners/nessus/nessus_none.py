@@ -1,10 +1,10 @@
-import glob
 import json
 import logging
 import time
 
 from dataclasses import dataclass
 from dataclasses import field
+from os import listdir, path
 from typing import List
 from typing import Optional
 
@@ -142,11 +142,12 @@ class Nessus(RapidastScanner):
         scan_reports = self.nessus_client.get_scan_reports(self.scan_id, self.results_dir)
         logging.debug(scan_reports)
         # Get filename
-        for file in glob.glob(self.results_dir + "/*.csv"):
-            sarif_output = convert_csv_to_sarif(file)
+        csv_files = [file for file in listdir(scan_reports) if file.endswith('.csv')]
+        for file in csv_files:
+            sarif_output = convert_csv_to_sarif(path.join(scan_reports, file))
             # Save sarif file
             with open(
-                self.results_dir + "/" + self.cfg.scan.name + "-sarif.json",
+                path.join(scan_reports, file.replace('.csv', '-sarif.json')),
                 "w",
                 encoding="utf-8",
             ) as output:

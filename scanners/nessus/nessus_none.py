@@ -1,7 +1,6 @@
 import json
 import logging
 import time
-
 from dataclasses import dataclass
 from dataclasses import field
 from os import listdir

@@ -15,7 +15,7 @@ from py_nessus_pro import PyNessusPro
 from configmodel import RapidastConfigModel
 from scanners import RapidastScanner
 from scanners import State
-from scanners.generic.tools.convert_nessus_csv_to_sarif import convert_csv_to_sarif
+from scanners.nessus.tools.convert_nessus_csv_to_sarif import convert_csv_to_sarif
 
 
 @dataclass

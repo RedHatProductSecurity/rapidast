@@ -8,8 +8,8 @@ from rapidast import scanners
 @patch("rapidast.scanners.str_to_scanner")
 def test_run_scanner_setup_failure(mock_str_to_scanner):
     """
-    Test that if an exception is raised during scanner.setup, the run_scanner method
-    catches the exception and correctly updates the scanner's state to 'ERROR'
+    Test that if an exception occurs during `scanner.setup`, the `run_scanner` method
+    catches the exception, returns 1, and updates the scanner's state to 'ERROR'
     """
 
     mock_config = MagicMock()
@@ -31,10 +31,9 @@ def test_run_scanner_setup_failure(mock_str_to_scanner):
 @patch("rapidast.scanners.str_to_scanner")
 def test_run_scanner_setup_success(mock_str_to_scanner):
     """
-    Test that if scanner.setup completes successfully, the run_scanner method
-    continues with the process. Since run_scanner performs multiple actions after 
-    setup, all subsequent actions are mocked to focus on validating that the function
-    returns a successful result (0)
+    Test that if `scanner.setup` is successful, `run_scanner` continues as expected.
+    Subsequent actions are mocked to focus on ensuring `run_scanner` returns a successful
+    result (0)
     """
     def update_state(state):
         mock_scanner.state = state

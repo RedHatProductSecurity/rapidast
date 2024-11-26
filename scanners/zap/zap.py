@@ -1057,6 +1057,8 @@ class InvalidXMLFileError(RuntimeError):
 def validate_active_scan_policy(policy_path: Path):
     policy_name = policy_path.stem
 
+    logging.info(f"Starting validation of ZAP active scan policy: '{policy_path}'")
+
     if not policy_path.is_file():
         raise PolicyFileNotFoundError(
             f"Policy '{policy_name}' not found in '{policy_path.parent}' directory. "
@@ -1082,3 +1084,5 @@ def validate_active_scan_policy(policy_path: Path):
 
     except ET.ParseError as exc:
         raise InvalidXMLFileError(f"Policy file '{policy_path}' is not a valid XML file") from exc
+
+    logging.info(f"Validation successful for policy file: '{policy_path}'")

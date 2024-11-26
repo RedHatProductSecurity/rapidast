@@ -100,7 +100,11 @@ def run_scanner(name, config, args, scan_exporter):
         return 1
 
     # Part 2: setup the environment (e.g.: spawn a server)
-    scanner.setup()
+    try:
+        scanner.setup()
+    except Exception as excp:
+        logging.error(f"Failed to set up the scanner: {excp}")
+        return 1
 
     logging.debug(scanner)
 

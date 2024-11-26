@@ -35,6 +35,7 @@ def test_run_scanner_setup_success(mock_str_to_scanner):
     Subsequent actions are mocked to focus on ensuring `run_scanner` returns a successful
     result (0)
     """
+
     def update_state(state):
         mock_scanner.state = state
 

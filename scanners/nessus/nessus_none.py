@@ -1,7 +1,10 @@
+import json
 import logging
 import time
 from dataclasses import dataclass
 from dataclasses import field
+from os import listdir
+from os import path
 from typing import List
 from typing import Optional
 
@@ -12,6 +15,7 @@ from py_nessus_pro import PyNessusPro
 from configmodel import RapidastConfigModel
 from scanners import RapidastScanner
 from scanners import State
+from scanners.nessus.tools.convert_nessus_csv_to_sarif import convert_csv_to_sarif
 
 
 @dataclass
@@ -137,6 +141,18 @@ class Nessus(RapidastScanner):
         logging.debug("Retrieving scan reports")
         scan_reports = self.nessus_client.get_scan_reports(self.scan_id, self.results_dir)
         logging.debug(scan_reports)
+        # Get filename
+        csv_files = [file for file in listdir(scan_reports) if file.endswith(".csv")]
+        for file in csv_files:
+            sarif_output = convert_csv_to_sarif(path.join(scan_reports, file))
+            # Save sarif file
+            with open(
+                path.join(scan_reports, file.replace(".csv", "-sarif.json")),
+                "w",
+                encoding="utf-8",
+            ) as output:
+                json.dump(sarif_output, output, indent=2)
+
         if not self.state == State.ERROR:
             self.state = State.PROCESSED
 

@@ -1,0 +1,68 @@
+Plugin ID,CVE,CVSS v2.0 Base Score,Risk,Host,Protocol,Port,Name,Synopsis,Description,Solution,See Also,Plugin Output,STIG Severity,CVSS v3.0 Base Score,CVSS v2.0 Temporal Score,CVSS v3.0 Temporal Score,VPR Score,Risk Factor,BID,XREF,MSKB,Plugin Publication Date,Plugin Modification Date,Metasploit,Core Impact,CANVAS
+10180,,,None,127.0.0.1,tcp,0,Ping the remote host,"It was possible to identify the status of the remote host (alive or
+dead).","Nessus was able to determine if the remote host is alive using one or
+more of the following ping types :
+
+  - An ARP ping, provided the host is on the local subnet
+    and Nessus is running over Ethernet.
+
+  - An ICMP ping.
+
+  - A TCP ping, in which the plugin sends to the remote host
+    a packet with the flag SYN, and the host will reply with
+    a RST or a SYN/ACK.
+
+  - A UDP ping (e.g., DNS, RPC, and NTP).",n/a,,"The remote host is up
+The host is the local scanner.",,,,,,None,,,,1999/06/24,2024/03/25,,,
+19506,,,None,127.0.0.1,tcp,0,Nessus Scan Information,This plugin displays information about the Nessus scan.,"This plugin displays, for each tested host, information about the
+scan itself :
+
+  - The version of the plugin set.
+  - The type of scanner (Nessus or Nessus Home).
+  - The version of the Nessus Engine.
+  - The port scanner(s) used.
+  - The port range scanned.
+  - The ping round trip time 
+  - Whether credentialed or third-party patch management
+    checks are possible.
+  - Whether the display of superseded patches is enabled
+  - The date of the scan.
+  - The duration of the scan.
+  - The number of hosts scanned in parallel.
+  - The number of checks done in parallel.",n/a,,"Information about this scan : 
+
+Nessus version : 10.8.3
+Nessus build : 20010
+Plugin feed version : 202410091249
+Scanner edition used : Nessus
+Scanner OS : LINUX
+Scanner distribution : fc38-x86-64
+Scan type : Normal
+Scan name : py-nessus-test
+Scan policy used : py-test
+Scanner IP : 127.0.0.1
+Ping RTT : Unavailable
+Thorough tests : no
+Experimental tests : no
+Scan for Unpatched Vulnerabilities : no
+Plugin debugging enabled : no
+Paranoia level : 1
+Report verbosity : 1
+Safe checks : yes
+Optimize the test : no
+Credentialed checks : no
+Patch management checks : None
+Display superseded patches : yes (supersedence plugin did not launch)
+CGI scanning : disabled
+Web application tests : disabled
+Max hosts : 256
+Max checks : 5
+Recv timeout : 5
+Backports : None
+Allow post-scan editing : Yes
+Nessus Plugin Signature Checking : Enabled
+Audit File Signature Checking : Disabled
+Scan Start Date : 2024/10/24 18:36 UTC
+Scan duration : 1 sec
+Scan for malware : no
+",,,,,,None,,,,2005/08/26,2024/10/04,,,

@@ -36,7 +36,11 @@ def nessus_info(field_name, entry):
     """
     # Match the field name with RegEx, then split it to extract
     # the value. Finally, strip all surrounding whitespace
-    return re.compile(field_name + ".*\n").search(entry)[0].split(":")[1].strip()
+    try:
+        result = re.compile(field_name + ".*\n").search(entry)[0].split(":")[1].strip()
+    except TypeError:
+        return "DNE"
+    return result
 
 
 def is_file(file_name):

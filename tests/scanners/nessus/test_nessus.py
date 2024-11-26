@@ -9,8 +9,9 @@ from scanners.nessus.nessus_none import Nessus
 
 
 class TestNessus:
+    @patch("py_nessus_pro.PyNessusPro._authenticate")
     @patch("requests.Session.request")
-    def test_setup_nessus(self, mock_get):
+    def test_setup_nessus(self, mock_get, auth):
         # All this mocking is for PyNessusPro.__init__() which attempts to connect to Nessus
         mock_get.return_value = Mock(spec=requests.Response)
         mock_get.return_value.status_code = 200

@@ -1,13 +1,18 @@
+from unittest.mock import MagicMock
+from unittest.mock import patch
+
 import rapidast
 from rapidast import scanners
 
-def test_run_scanner_setup_failure(mocker):
-    mock_config = mocker.MagicMock()
-    mock_args = mocker.MagicMock()
-    mock_scan_exporter = mocker.MagicMock()
 
-    mock_scanner = mocker.MagicMock()
-    mocker.patch("rapidast.scanners.str_to_scanner", return_value=lambda config, name: mock_scanner)
+@patch("rapidast.scanners.str_to_scanner")
+def test_run_scanner_setup_failure(mock_str_to_scanner):
+    mock_config = MagicMock()
+    mock_args = MagicMock()
+    mock_scan_exporter = MagicMock()
+
+    mock_scanner = MagicMock()
+    mock_str_to_scanner.return_value = lambda config, name: mock_scanner
 
     mock_scanner.setup.side_effect = Exception("Setup failed")
 
@@ -15,25 +20,27 @@ def test_run_scanner_setup_failure(mocker):
 
     assert result == 1
     mock_scanner.setup.assert_called_once()
+    assert mock_scanner.state == scanners.State.ERROR
 
 
-def test_run_scanner_setup_success(mocker):
+@patch("rapidast.scanners.str_to_scanner")
+def test_run_scanner_setup_success(mock_str_to_scanner):
     def update_state(state):
         mock_scanner.state = state
-    
+
     def update_state_ready():
         update_state(scanners.State.READY)
 
     def update_state_processed():
         update_state(scanners.State.PROCESSED)
-        
-    mock_config = mocker.MagicMock()
-    mock_args = mocker.MagicMock()
-    mock_scan_exporter = mocker.MagicMock()
 
-    mock_scanner = mocker.MagicMock()
-    mocker.patch("rapidast.scanners.str_to_scanner", return_value=lambda config, name: mock_scanner)
-        
+    mock_config = MagicMock()
+    mock_args = MagicMock()
+    mock_scan_exporter = MagicMock()
+
+    mock_scanner = MagicMock()
+    mock_str_to_scanner.return_value = lambda config, name: mock_scanner
+
     mock_scanner.setup.side_effect = update_state_ready
     mock_scanner.postprocess.side_effect = update_state_processed
 

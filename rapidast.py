@@ -65,6 +65,8 @@ def load_config(config_file_location: str) -> Dict[str, Any]:
     return yaml.safe_load(load_config_file(config_file_location))
 
 
+# pylint: disable=R0911
+# too many return statements
 def run_scanner(name, config, args, scan_exporter):
     """given the config `config`, runs scanner `name`.
     Returns:
@@ -94,8 +96,12 @@ def run_scanner(name, config, args, scan_exporter):
     # Part 1: create a instance based on configuration
     try:
         scanner = class_(config, name)
-    except OSError as excp:
-        logging.error(excp)
+    except OSError as e:
+        logging.error(f"Caught exception: {e}")
+        logging.error(f"Ignoring failed Scanner `{name}` of type `{typ}`")
+        return 1
+    except RuntimeError as e:
+        logging.error(f"Caught exception: {e}")
         logging.error(f"Ignoring failed Scanner `{name}` of type `{typ}`")
         return 1
 

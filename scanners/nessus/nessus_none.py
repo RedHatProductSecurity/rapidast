@@ -15,6 +15,7 @@ from py_nessus_pro import PyNessusPro
 from configmodel import RapidastConfigModel
 from scanners import RapidastScanner
 from scanners import State
+from scanners.authentication_factory import generic_authentication_factory
 from scanners.nessus.tools.convert_nessus_csv_to_sarif import convert_csv_to_sarif
 
 
@@ -62,10 +63,18 @@ class Nessus(RapidastScanner):
         nessus_config_section = config.subtree_to_dict(f"scanners.{ident}")
         if nessus_config_section is None:
             raise ValueError("'scanners.nessus' section not in config")
-        # self.auth_config = config.subtree_to_dict("general.authentication")  # creds for target hosts
+        self.auth_config = config.subtree_to_dict("scanners.nessus.authentication")  # creds for target hosts
         # XXX self.config is already a dict with raw config values
         self.cfg = dacite.from_dict(data_class=NessusConfig, data=nessus_config_section)
         self._sleep_interval: int = 10
+
+        # the Exception log will be output in rapidast.py
+        # pylint: disable=W0706
+        try:
+            self.authenticated = self.authentication_factory()
+        except RuntimeError:
+            raise
+
         self._connect()
 
     def _connect(self):
@@ -92,6 +101,25 @@ class Nessus(RapidastScanner):
         if self._scan_id is None:
             raise RuntimeError("scan_id is None")
         return self._scan_id
+
+    @generic_authentication_factory()
+    def authentication_factory(self):
+        """This is the default function, attached to error reporting"""
+        raise RuntimeError(f"No valid authenticator found for {self}")
+
+    @authentication_factory.register(None)
+    def authentication_set_anonymous(self):
+        """No authentication: don't do anything"""
+        logging.info("NOT configured with any authentication")
+        return False
+
+    @authentication_factory.register("http_header")
+    def authentication_set_http_header_auth(self):
+        """
+        Nessus Professional doesn't support HTTP header (e.g. Authorization: Bearer token) auth
+        """
+
+        raise RuntimeError("http_header authentication is not supported in Nessus Professional.")
 
     def setup(self):
         logging.debug(f"Creating new scan named {self.cfg.scan.folder}/{self.cfg.scan.name}")

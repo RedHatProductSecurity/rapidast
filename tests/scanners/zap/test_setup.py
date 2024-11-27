@@ -1,11 +1,15 @@
 import os
 from pathlib import Path
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
 import pytest
 import requests
 
 import configmodel.converter
+import scanners
 from scanners.zap.zap import find_context
+from scanners.zap.zap import MODULE_DIR
 from scanners.zap.zap_none import ZapNone
 
 # from pytest_mock import mocker
@@ -232,9 +236,9 @@ def test_setup_include_urls(test_config):
     assert "def" in find_context(test_zap.automation_config)["includePaths"]
 
 
-def test_setup_active_scan(test_config):
+@patch("scanners.zap.zap.validate_active_scan_policy")
+def test_setup_active_scan(mock_validate_active_scan_policy, test_config):
     test_config.set("scanners.zap.activeScan.maxRuleDurationInMins", 10)
-
     test_zap = ZapNone(config=test_config)
     test_zap.setup()
 
@@ -244,6 +248,10 @@ def test_setup_active_scan(test_config):
             assert item["parameters"]["maxRuleDurationInMins"] == 10
             assert item["parameters"]["context"] == "Default Context"
             assert item["parameters"]["user"] == ""
+            mock_validate_active_scan_policy.assert_called_once_with(
+                policy_path=Path(f"{MODULE_DIR}/policies/API-scan-minimal.policy")
+            )
+
             break
     else:
         assert False

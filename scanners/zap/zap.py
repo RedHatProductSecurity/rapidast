@@ -6,8 +6,10 @@ import pprint
 import re
 import shutil
 import tarfile
+import xml.etree.ElementTree as ET
 from base64 import urlsafe_b64encode
 from collections import namedtuple
+from pathlib import Path
 
 import yaml
 
@@ -637,6 +639,10 @@ class Zap(RapidastScanner):
         if not job["parameters"].get("policy"):
             job["parameters"]["policy"] = "API-scan-minimal"
 
+        validate_active_scan_policy(
+            policy_path=Path(MODULE_DIR) / "policies" / f"{job['parameters']['policy']}.policy",
+        )
+
         self.automation_config["jobs"].append(job)
 
     def _construct_report_af(self, report_format):
@@ -1026,3 +1032,57 @@ def find_context(automation_config, context=Zap.DEFAULT_CONTEXT):
         automation_config["env"]["contexts"] = []
     automation_config["env"]["contexts"].append({"name": context})
     return ensure_default(automation_config["env"]["contexts"][-1])
+
+
+class PolicyFileNotFoundError(FileNotFoundError):
+    """Raised when the policy file is not found."""
+
+
+class MissingConfigurationNodeError(RuntimeError):
+    """Raised when the root <configuration> node is missing"""
+
+
+class MissingPolicyNodeError(RuntimeError):
+    """Raised when the <policy> node inside <configuration> is missing"""
+
+
+class MismatchedPolicyNameError(RuntimeError):
+    """Raised when the <policy> node content does not match the filename"""
+
+
+class InvalidXMLFileError(RuntimeError):
+    """Raised when the policy file is not a valid XML"""
+
+
+def validate_active_scan_policy(policy_path: Path):
+    policy_name = policy_path.stem
+
+    logging.info(f"Starting validation of ZAP active scan policy: '{policy_path}'")
+
+    if not policy_path.is_file():
+        raise PolicyFileNotFoundError(
+            f"Policy '{policy_name}' not found in '{policy_path.parent}' directory. "
+            f"Please check the policy name in the configuration"
+        )
+
+    try:
+        tree = ET.parse(policy_path)
+        root = tree.getroot()
+
+        if not root.tag or root.tag != "configuration":
+            raise MissingConfigurationNodeError(f"Missing <configuration> node in '{policy_name}.policy'")
+
+        policy_node = root.find("policy")
+        if policy_node is None:
+            raise MissingPolicyNodeError(f"Missing <policy> node inside <configuration> in '{policy_name}.policy'")
+
+        if policy_node.text.strip() != policy_name:
+            raise MismatchedPolicyNameError(
+                f"The <policy> node in '{policy_name}' does not match the filename. "
+                f"Expected '{policy_name}', but found '{policy_node.text.strip()}'"
+            )
+
+    except ET.ParseError as exc:
+        raise InvalidXMLFileError(f"Policy file '{policy_path}' is not a valid XML file") from exc
+
+    logging.info(f"Validation successful for policy file: '{policy_path}'")

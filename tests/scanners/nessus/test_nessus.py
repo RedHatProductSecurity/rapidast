@@ -35,14 +35,8 @@ class TestNessus:
         config_data = rapidast.load_config("config/config-template-nessus.yaml")
         config = configmodel.RapidastConfigModel(config_data)
 
-        authentication = {"type": "http_header", "parameters": {"name": "Authorizaiton", "value": "123"}}
-        config.set("scanners.nessus.authentication", authentication)
-
-        with pytest.raises(RuntimeError, match="http_header authentication is not supported in Nessus Professional"):
-            test_nessus = Nessus(config=config)
-
         authentication = {"type": "invalid", "parameters": {"name": "Authorizaiton", "value": "123"}}
         config.set("scanners.nessus.authentication", authentication)
 
-        with pytest.raises(RuntimeError, match="No valid authenticator found"):
+        with pytest.raises(RuntimeError, match="The authentication option is not supported"):
             test_nessus = Nessus(config=config)

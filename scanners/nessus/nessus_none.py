@@ -114,7 +114,10 @@ class Nessus(RapidastScanner):
     @generic_authentication_factory()
     def authentication_factory(self):
         """This is the default function, attached to error reporting"""
-        raise RuntimeError(f"The authentication option is not supported: {self.cfg.authentication}")
+        raise RuntimeError(
+            f"The authentication option is not supported. "
+            f"Input - type: {self.cfg.authentication.type}, params: {self.cfg.authentication.parameters}"
+        )
 
     @authentication_factory.register(None)
     def authentication_set_anonymous(self):

@@ -77,12 +77,7 @@ class Nessus(RapidastScanner):
         self.cfg = dacite.from_dict(data_class=NessusConfig, data=nessus_config_section)
         self._sleep_interval: int = 10
 
-        # the Exception log will be output in rapidast.py
-        # pylint: disable=W0706
-        try:
-            self.authenticated = self.authentication_factory()
-        except RuntimeError:
-            raise
+        self.authenticated = self.authentication_factory()
 
         self._connect()
 

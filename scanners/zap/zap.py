@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import glob
 import logging
 import os
@@ -5,8 +6,10 @@ import pprint
 import re
 import shutil
 import tarfile
+import xml.etree.ElementTree as ET
 from base64 import urlsafe_b64encode
 from collections import namedtuple
+from pathlib import Path
 
 import yaml
 
@@ -32,6 +35,8 @@ class Zap(RapidastScanner):
     USER = "test1"
 
     REPORTS_SUBDIR = "reports"
+
+    SITE_TREE_FILENAME = "zap-site-tree.json"
 
     ## FUNCTIONS
     def __init__(self, config, ident):
@@ -87,7 +92,7 @@ class Zap(RapidastScanner):
         logging.debug(f"reports_dir: {reports_dir}")
 
         logging.info(f"Extracting report, storing in {self.results_dir}")
-        shutil.copytree(reports_dir, self.results_dir)
+        shutil.copytree(reports_dir, self.results_dir, dirs_exist_ok=True)
 
         logging.info("Saving the session as evidence")
         with tarfile.open(f"{self.results_dir}/session.tar.gz", "w:gz") as tar:
@@ -98,8 +103,24 @@ class Zap(RapidastScanner):
                 # log path is like '/tmp/rapidast_*/zap.log'
                 tar.add(log, f"evidences/zap_logs/{log.split('/')[-1]}")
 
-        # Calling parent RapidastScanner postprocess
+        self._copy_site_tree()
+
         super().postprocess()
+
+    def _copy_site_tree(self):
+        """
+        Copies the site tree JSON file from the host working directory to the results directory.
+        """
+        site_tree_path = os.path.join(self.host_work_dir, f"session_data/{self.SITE_TREE_FILENAME}")
+
+        if os.path.exists(site_tree_path):
+            try:
+                logging.info(f"Copying site tree from {site_tree_path} to {self.results_dir}")
+                shutil.copy(site_tree_path, self.results_dir)
+            except Exception as e:  # pylint: disable=broad-except
+                logging.error(f"Failed to copy site tree: {e}")
+        else:
+            logging.warning(f"Site tree not found at {site_tree_path}")
 
     def data_for_defect_dojo(self):
         """Returns a tuple containing:
@@ -132,7 +153,7 @@ class Zap(RapidastScanner):
             *self._get_standard_options(),
             "-cmd",
         ]
-        if self.my_conf("miscOptions.updateAddons", default=True):
+        if self.my_conf("miscOptions.updateAddons"):
             command.append("-addonupdate")
 
         addons = self.my_conf("miscOptions.additionalAddons", default=[])
@@ -171,6 +192,9 @@ class Zap(RapidastScanner):
         If called, the descendant must fill at least the executable
         """
         self.zap_cli.extend(self._get_standard_options())
+
+        # Addon update has already been done, if enabled. Prevent a new check for update
+        self.zap_cli.append("-silent")
 
         # Create a session, to store them as evidence
         self.zap_cli.extend(["-newsession", f"{self.container_work_dir}/session_data/session"])
@@ -345,6 +369,7 @@ class Zap(RapidastScanner):
         self._setup_passive_wait()
         self._setup_report()
         self._setup_summary()
+        self._setup_export_site_tree()
 
         # The AF should now be setup and ready to be written
         self._save_automation_file()
@@ -363,6 +388,51 @@ class Zap(RapidastScanner):
         self._include_file(orig, dest)
         job["parameters"]["fileName"] = dest
         self.automation_config["jobs"].append(job)
+
+    def _setup_export_site_tree(self):
+        scripts_dir = self.container_scripts_dir
+        site_tree_file_name_add = {
+            "name": "export-site-tree-filename-global-var-add",
+            "type": "script",
+            "parameters": {
+                "action": "add",
+                "type": "standalone",
+                "name": "export-site-tree-filename-global-var",
+                "engine": "ECMAScript : Graal.js",
+                "inline": f"""
+                org.zaproxy.zap.extension.script.ScriptVars.setGlobalVar('siteTreeFileName','{self.SITE_TREE_FILENAME}')
+                """,
+            },
+        }
+        self.automation_config["jobs"].append(site_tree_file_name_add)
+        site_tree_file_name_run = {
+            "name": "export-site-tree-filename-global-var-run",
+            "type": "script",
+            "parameters": {"action": "run", "type": "standalone", "name": "export-site-tree-filename-global-var"},
+        }
+        self.automation_config["jobs"].append(site_tree_file_name_run)
+        setup = {
+            "name": "export-site-tree-add",
+            "type": "script",
+            "parameters": {
+                "action": "add",
+                "type": "standalone",
+                "engine": "ECMAScript : Graal.js",
+                "name": "export-site-tree",
+                "file": f"{scripts_dir}/export-site-tree.js",
+            },
+        }
+        self.automation_config["jobs"].append(setup)
+        run = {
+            "name": "export-site-tree-run",
+            "type": "script",
+            "parameters": {
+                "action": "run",
+                "type": "standalone",
+                "name": "export-site-tree",
+            },
+        }
+        self.automation_config["jobs"].append(run)
 
     def _append_slash_to_url(self, url):
         # For some unknown reason, ZAP appears to behave weirdly if the URL is just the hostname without '/'
@@ -473,7 +543,7 @@ class Zap(RapidastScanner):
         # Set some RapiDAST-centric defaults
         # Unless overwritten, browser should be Firefox-headless, since RapiDAST only has that
         if not job["parameters"].get("browserId"):
-            job["parameters"]["policy"] = "firefox-headless"
+            job["parameters"]["browserId"] = "firefox-headless"
 
         # Add to includePaths to the context
         if params.get("url"):
@@ -568,6 +638,10 @@ class Zap(RapidastScanner):
         # unless overwritten, policy should be "API-scan-minimal"
         if not job["parameters"].get("policy"):
             job["parameters"]["policy"] = "API-scan-minimal"
+
+        validate_active_scan_policy(
+            policy_path=Path(MODULE_DIR) / "policies" / f"{job['parameters']['policy']}.policy",
+        )
 
         self.automation_config["jobs"].append(job)
 
@@ -958,3 +1032,57 @@ def find_context(automation_config, context=Zap.DEFAULT_CONTEXT):
         automation_config["env"]["contexts"] = []
     automation_config["env"]["contexts"].append({"name": context})
     return ensure_default(automation_config["env"]["contexts"][-1])
+
+
+class PolicyFileNotFoundError(FileNotFoundError):
+    """Raised when the policy file is not found."""
+
+
+class MissingConfigurationNodeError(RuntimeError):
+    """Raised when the root <configuration> node is missing"""
+
+
+class MissingPolicyNodeError(RuntimeError):
+    """Raised when the <policy> node inside <configuration> is missing"""
+
+
+class MismatchedPolicyNameError(RuntimeError):
+    """Raised when the <policy> node content does not match the filename"""
+
+
+class InvalidXMLFileError(RuntimeError):
+    """Raised when the policy file is not a valid XML"""
+
+
+def validate_active_scan_policy(policy_path: Path):
+    policy_name = policy_path.stem
+
+    logging.info(f"Starting validation of ZAP active scan policy: '{policy_path}'")
+
+    if not policy_path.is_file():
+        raise PolicyFileNotFoundError(
+            f"Policy '{policy_name}' not found in '{policy_path.parent}' directory. "
+            f"Please check the policy name in the configuration"
+        )
+
+    try:
+        tree = ET.parse(policy_path)
+        root = tree.getroot()
+
+        if not root.tag or root.tag != "configuration":
+            raise MissingConfigurationNodeError(f"Missing <configuration> node in '{policy_name}.policy'")
+
+        policy_node = root.find("policy")
+        if policy_node is None:
+            raise MissingPolicyNodeError(f"Missing <policy> node inside <configuration> in '{policy_name}.policy'")
+
+        if policy_node.text.strip() != policy_name:
+            raise MismatchedPolicyNameError(
+                f"The <policy> node in '{policy_name}' does not match the filename. "
+                f"Expected '{policy_name}', but found '{policy_node.text.strip()}'"
+            )
+
+    except ET.ParseError as exc:
+        raise InvalidXMLFileError(f"Policy file '{policy_path}' is not a valid XML file") from exc
+
+    logging.info(f"Validation successful for policy file: '{policy_path}'")

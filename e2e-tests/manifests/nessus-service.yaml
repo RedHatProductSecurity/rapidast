@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: nessus
+  name: nessus
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - port: 8834
+    protocol: TCP
+    targetPort: 8834
+  selector:
+    app: nessus
+  sessionAffinity: None
+  type: ClusterIP

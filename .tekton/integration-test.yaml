@@ -1,0 +1,225 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: rapidast-e2e
+spec:
+  params:
+    - name: repo_url
+      default: github.com/RedHatProductSecurity/rapidast
+    - name: revision
+      default: "development"
+    - description: 'Snapshot of the application'
+      name: SNAPSHOT
+      default: |-
+          '{
+            "components": [
+              {
+                "name":"rapidast",
+                "containerImage": "quay.io/redhatproductsecurity/rapidast:latest",
+                "source":{
+                  "git":{
+                    "url":"git@github.com:RedHatProductSecurity/rapidast.git",
+                    "revision":"development",
+                  }
+                }
+              }
+            ]
+          }'
+      type: string
+
+  tasks:
+    - name: parse-metadata
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/konflux-ci/integration-examples
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: tasks/test_metadata.yaml
+      params:
+        - name: SNAPSHOT
+          value: $(params.SNAPSHOT)
+
+    - name: provision-eaas-space-nessus
+      runAfter:
+        - parse-metadata
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/konflux-ci/build-definitions.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: task/provision-env-with-ephemeral-namespace/0.1/provision-env-with-ephemeral-namespace.yaml
+      params:
+        - name: KONFLUXNAMESPACE
+          value: $(context.pipelineRun.namespace)
+        - name: PIPELINERUN_NAME
+          value: $(context.pipelineRun.name)
+        - name: PIPELINERUN_UID
+          value: $(context.pipelineRun.uid)
+
+    - name: copy-nessus-secret
+      runAfter:
+       - provision-eaas-space-nessus
+      taskSpec:
+        steps:
+          - name: copy-nessus-secret
+            image: registry.redhat.io/openshift4/ose-cli:latest
+            env:
+            - name: KUBECONFIG
+              value: /tmp/kubeconfig
+            - name: EAAS_KUBECONFIG_VALUE
+              valueFrom:
+                secretKeyRef:
+                  name: $(tasks.provision-eaas-space-nessus.results.secretRef)
+                  key: kubeconfig
+            workingDir: /workspace
+            script: |
+              #!/bin/bash -ex
+
+              # initial request will default to in-cluster k8s config
+              oc whoami
+              oc get secret sfowler-nessus-pull-secret -o yaml > /tmp/nessus-pull-secret.yaml
+              sed '/namespace:/d' /tmp/nessus-pull-secret.yaml > /tmp/new-secret.yaml
+
+              # second request should use newly provisioned eaas creds + namespace
+              echo "$EAAS_KUBECONFIG_VALUE" > "$KUBECONFIG"
+              oc whoami
+              oc apply -f /tmp/new-secret.yaml
+
+    - name: provision-eaas-space
+      runAfter:
+        - parse-metadata
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/konflux-ci/build-definitions.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: task/provision-env-with-ephemeral-namespace/0.1/provision-env-with-ephemeral-namespace.yaml
+      params:
+        - name: KONFLUXNAMESPACE
+          value: $(context.pipelineRun.namespace)
+        - name: PIPELINERUN_NAME
+          value: $(context.pipelineRun.name)
+        - name: PIPELINERUN_UID
+          value: $(context.pipelineRun.uid)
+
+    # XXX integrations tests can't reference Tasks in the same PR AFAICT
+    # so need to repeat them inline, rather than define in a separate file
+    - name: run-e2e-tests
+      runAfter:
+        - provision-eaas-space
+      taskSpec:
+        volumes:
+          - name: credentials
+            emptyDir: {}
+        results:
+          - name: TEST_RESULTS
+            description: e2e test results
+        steps:
+
+          # XXX not supported to use workspaces in integration tests
+          - name: clone-repository
+            image: quay.io/konflux-ci/git-clone:latest
+            script: |
+              git config --global --add safe.directory /workspace
+              git clone "$(tasks.parse-metadata.results.source-git-url)" /workspace
+              pushd /workspace
+              git checkout "$(tasks.parse-metadata.results.source-git-revision)"
+
+          - name: test
+            image: registry.redhat.io/openshift4/ose-cli:latest
+            env:
+            - name: KUBECONFIG
+              value: /tmp/kubeconfig
+            - name: KUBECONFIG_VALUE
+              valueFrom:
+                secretKeyRef:
+                  name: $(tasks.provision-eaas-space.results.secretRef)
+                  key: kubeconfig
+            - name: RAPIDAST_CLEANUP
+              value: "false" # namespace will be cleaned up automatically
+            - name: RAPIDAST_IMAGE
+              value: $(tasks.parse-metadata.results.component-container-image)
+            - name: RAPIDAST_SERVICEACCOUNT
+              value: namespace-manager # created by provision-env-with-ephemeral-namespace
+            workingDir: /workspace
+            volumeMounts:
+              - name: credentials
+                mountPath: /credentials
+            script: |
+              #!/bin/bash -ex
+
+              echo "$KUBECONFIG_VALUE" > "$KUBECONFIG"
+              oc whoami
+
+              yum install -y python3.12 git
+              python3.12 -m ensurepip
+              pip3 install -r requirements.txt -r requirements-dev.txt
+              pytest -s e2e-tests/test_integration.py --json-report --json-report-summary --json-report-file $(results.TEST_RESULTS.path)
+              cat $(results.TEST_RESULTS.path)
+
+    - name: run-e2e-tests-nessus
+      runAfter:
+        - copy-nessus-secret
+      taskSpec:
+        volumes:
+          - name: credentials
+            emptyDir: {}
+        results:
+          - name: TEST_RESULTS
+            description: e2e test results
+        steps:
+
+          # XXX not supported to use workspaces in integration tests:
+          # * https://issues.redhat.com/browse/STONEINTG-895
+          - name: clone-repository
+            image: quay.io/konflux-ci/git-clone:latest
+            script: |
+              git config --global --add safe.directory /workspace
+              git clone "$(tasks.parse-metadata.results.source-git-url)" /workspace
+              pushd /workspace
+              git checkout "$(tasks.parse-metadata.results.source-git-revision)"
+
+          - name: test
+            image: registry.redhat.io/openshift4/ose-cli:latest
+            env:
+            - name: KUBECONFIG
+              value: /tmp/kubeconfig
+            - name: KUBECONFIG_VALUE
+              valueFrom:
+                secretKeyRef:
+                  name: $(tasks.provision-eaas-space-nessus.results.secretRef)
+                  key: kubeconfig
+            - name: RAPIDAST_CLEANUP
+              value: "false" # namespace will be cleaned up automatically
+            - name: RAPIDAST_IMAGE
+              value: $(tasks.parse-metadata.results.component-container-image)
+            - name: RAPIDAST_SERVICEACCOUNT
+              value: namespace-manager # created by provision-env-with-ephemeral-namespace
+            workingDir: /workspace
+            volumeMounts:
+              - name: credentials
+                mountPath: /credentials
+            script: |
+              #!/bin/bash -ex
+
+              echo "$KUBECONFIG_VALUE" > "$KUBECONFIG"
+              oc whoami
+
+              # XXX temp!
+              oc get secret sfowler-nessus-pull-secret
+
+              yum install -y python3.12 git
+              python3.12 -m ensurepip
+              pip3 install -r requirements.txt -r requirements-dev.txt
+              pytest -sv e2e-tests/test_nessus.py --json-report --json-report-summary --json-report-file $(results.TEST_RESULTS.path)
+              cat $(results.TEST_RESULTS.path)

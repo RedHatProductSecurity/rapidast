@@ -1,48 +1,61 @@
 # RapiDAST
 
-RapiDAST(Rapid DAST) is an open-source security testing tool that automates the process of DAST(Dynamic Application Security Testing) security testing and streamlines the integration of security into your development workflow. It is designed to help Developers and/or QA engineers rapidly and effectively identify low-hanging security vulnerabilities in your applications, ideally in CI/CD pipelines. This will help your organization to move towards DevSecOps with the shift-left approach.
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/redhatproductsecurity/rapidast/run-tests.yml?branch=development&logo=github&label=CI) ![GitHub License](https://img.shields.io/github/license/redhatproductsecurity/rapidast)
 
-RapiDAST provides values as follows:
+RapiDAST (Rapid DAST) is an open-source security testing tool that automates DAST ([Dynamic Application Security Testing](https://owasp.org/www-project-devsecops-guideline/latest/02b-Dynamic-Application-Security-Testing)) and streamlines the integration of security testing into development workflows. It is designed to help Developers and/or QA engineers rapidly and effectively identify low-hanging security vulnerabilities in your applications, ideally in CI/CD pipelines. RapiDAST is for organizations implementing DevSecOps with a shift-left approach.
 
-- Ease of use and simple automation of HTTP/API scanning, fully working in CLI with a yaml configuration, taking advantage of [ZAP](https://www.zaproxy.org/)
-- Ability to run automated DAST scanning to suit various users' needs via custom container images
+RapiDAST provides:
+
+- Simplified HTTP/API security scanning using [ZAP]
+- Command-line execution with yaml configuration, suitable for integration in CI/CD pipelines
+- Ability to run automated DAST scanning with pre-built or custom container images
 - HTML, JSON and XML report generation
 - Integration with reporting solutions such as [OWASP DefectDojo](https://owasp.org/www-project-defectdojo/)
 
-# Getting Started
+RapiDAST is used for testing applications, and should not be used on production systems.
 
-## Prerequisites
+## Quickstart
+
+Quickly setup RapiDAST to scan a target application. See [Workflow](#workflow) for more information.
+
+1. Create a minimal config file for the target application, see [Configuration](#configuration) section for details
+2. Run RapiDAST with the config file, either in a container or from source code
+
+### OS Support
+
+Linux and MacOS are both supported, however running RapiDAST in a container is currently only supported on Linux. See [MacOS Configuration](#macos) section for more details.
+
+### Run in container (Linux only)
+
+Run the pre-built [rapidast container image](https://quay.io/repository/redhatproductsecurity/rapidast), which includes scanners like [ZAP]. Not compatible with config files using `general.container.type` set to `podman`.
+
+**Prerequisites**
+
+- `docker` / `podman` (>= v3.0.1)
+
+**Run**
+```sh
+$ podman run -v ./config.yaml:/opt/rapidast/config/config.yaml:Z quay.io/redhatproductsecurity/rapidast:latest ./rapidast.py
+```
+
+**Note**
+
+* Sample config is very minimal and has no [Authentication](#authentication) enabled
+* The `:Z` option is only necessary on RHEL/CentOS/Fedora systems with SELinux enabled
+* To retrieve scan results, add a volume mount like `-v ./results/:/opt/rapidast/results/:Z`. The permissions of the `./results/` directory may need to be modified first with a command like `chmod o+w ./results/` to be writeable by the rapidast user in the container.
+
+### Run from source
+
+Install dependencies and run RapiDAST directly on a host machine. Unless using the config setting of `general.container.type: podman`, scanners like [ZAP] are expected to be installed on the host system.
+
+**Prerequisites**
 
 - `python` >= 3.6.8 (3.7 for MacOS/Darwin)
 - `podman` >= 3.0.1
     + required when you want to run scanners from their container images, rather than installing them to your host.
 - See `requirements.txt` for a list of required python libraries
 
-### OS Support
-
-Linux and MacOS`*` are supported.
-
-#### Note regarding MacOS and ZAP
-
-RapiDAST supports executing ZAP on the MacOS host directly only.
-
-To run RapiDAST on MacOS(See the Configuration section below for more details on configuration):
-
-* Set `general.container.type: "none"` or `scanners.zap.container.type: "none"` in the configuration.
-* Configure `scanners.zap.container.parameters.executable` to the installation path of the `zap.sh` command, because it is not available in the PATH. Usually, its path is `/Applications/ZAP.app/Contents/Java/zap.sh` on MacOS.
-
-Example:
-
-```yaml
-scanners:
-  zap:
-    container:
-      type: none
-      parameters:
-        executable: "/Applications/ZAP.app/Contents/Java/zap.sh"
-```
-
-## Installation
+**Setup**
 
 Clone the repository.
 ```
@@ -62,15 +75,24 @@ Install the project requirements.
 (venv) $ pip install -r requirements.txt
 ```
 
-# Usage
+**Run**
+
+Run RapiDAST script:
+```
+$ ./rapidast.py --config <path/to/config.yml>
+```
+
+**Note**
+* Example minimum config expects scanners like [ZAP] to be available on the host, and will fail if not found. See [Execution Environments](#choosing-the-execution-environment) section for more info
+* Results will be written to the `./results/` directory
 
 ## Workflow
 
 This section summarize the basic workflow as follows:
-1. Create a configuration file for testing the application. See the 'configuration' section below for more information.
-2. Optionally, an environment file may be added, e.g., to separate the secrets from the configuration file.
-3. Run RapiDAST and get the results.
-    - First run with passive scanning only which can save your time at the initial scanning  phase. There are various situations that can cause an issue, not only from scanning set up but also from your application or test environment. Active scanning takes a long time in general.
+1. Create a configuration file for testing the application. See the [configuration](#configuration) section below for more information.
+    - Optionally, an [environment file](#advanced-configuration) may be added, e.g., to separate the secrets from the configuration file.
+2. Run RapiDAST and get the results.
+    - First run with passive scanning only, which can save time at the initial scanning phase. There are various situations that can cause an issue, not only from scanning set up but also from your application or test environment. Active scanning takes a long time in general.
     - Once passive Scanning has run successfully, run another scan with active scanning enabled in the configuration file.
 
 ## Configuration
@@ -82,16 +104,36 @@ The configuration file is presented as YAML, and contains several main entries:
     + Each scanner can override an entry from `general` by creating an entry with the same name
 - `scanners` : list of scanners, and their configuration
 
-See templates in the `config/` directory for examples and ideas.
+See templates in the [config](./config/) directory for examples and ideas.
+- `config-template-zap-tiny.yaml` : describes a bare minimum configuration, without authentication options.
 - `config-template-zap-simple.yaml` : describes a generic/minimal use of the ZAP scanner (i.e.: the minimum set of option to get a ZAP scan from RapiDAST)
 - `config-template-zap-mac.yaml` : describes a minimal use of the ZAP scanner on a Apple Mac environment
 - `config-template-zap-long.yaml` : describes a more extensive use of ZAP (all configuration options are presented)
 - `config-template-multi-scan.yaml` : describes how to combine multiple scanners in a single configuration
 - `config-template-generic-scan.yaml` : describes the use of the generic scanner
 
+### Basic Example
+
+Example bare minimum [config file](./config/config-template-zap-tiny.yaml), without any [Authentication](#authentication) options, and passive scanning only:
+
+```yaml
+config:
+  configVersion: 5
+
+application:
+  shortName: "example-1.0"
+  url: "https://example.com" # root URL of the application
+
+scanners:
+  zap:
+    apiScan:
+      apis:
+        apiUrl: "https://example.com/api/v1/swagger.json" # URL to application openAPI spec
+```
+
 ### Authentication
 
-Authentication is configured in the `general` entry, as it can be applied to multiple scanning options. Currently, Authentication is applied to ZAP scanning only. In the long term it may be applied to other scanning configurations.
+Authentication is configured in the `general` entry, as it can be applied to multiple scanning options. Currently, Authentication is applied to [ZAP] scanning only. In the long term it may be applied to other scanning configurations.
 
 Supported options:
 
@@ -137,6 +179,25 @@ This method uses firefox in the background to load a login page and fill in user
         * `loginPageUrl`: the URL to the login page (either the full URL, or relative to the `application.url` value)
         * `verifyUrl`: a URL that "proves" the user is authenticated (either the full URL, or relative to the `application.url` value). This URL must return a success if the user is correctly authenticated, and an error otherwise.
 
+### MacOS
+
+RapiDAST supports executing scanners like [ZAP] on the MacOS host directly only.
+
+To run RapiDAST on MacOS(See the Configuration section below for more details on configuration):
+
+* Set `general.container.type: "none"` or `scanners.zap.container.type: "none"` in the configuration.
+* Configure `scanners.zap.container.parameters.executable` to the installation path of the `zap.sh` command, because it is not available in the PATH. Usually, its path is `/Applications/ZAP.app/Contents/Java/zap.sh` on MacOS.
+
+Example:
+
+```yaml
+scanners:
+  zap:
+    container:
+      type: none
+      parameters:
+        executable: "/Applications/ZAP.app/Contents/Java/zap.sh"
+```
 
 ### Advanced configuration
 
@@ -146,6 +207,7 @@ To avoid this, RapiDAST proposes 2 ways to provide a value for a given configura
 
 - Create an entry in the configuration file (this is the usual method)
 - Create an entry in the configuration file pointing to the environment variable that actually contains the data, by appending `_from_var` to the entry name: `general.authentication.parameters.rtoken_from_var=RTOKEN` (in this example, the token value is provided by the `$RTOKEN` environment variable)
+
 
 #### Running several instance of a scanner
 
@@ -271,7 +333,7 @@ See https://documentation.defectdojo.com/integrations/importing/#api for more in
 
 Once you have created a configuration file, you can run a scan with it.
 ```sh
-$ rapidast.py --config "<your-config.yaml>"
+$ ./rapidast.py --config "<your-config.yaml>"
 ```
 
 There are more options.
@@ -293,17 +355,16 @@ options:
 
 ### Choosing the execution environment
 
-Set `general.container.type` to select a runtime (default: 'none')
+Set `general.container.type` to select an environment (default: `none`)
 
-Accepted values are as follows:
-+ `podman`:
-    - Set when you want to run scanners with their container images and use `podman` to run them.
-    - RapiDAST must not run inside a container.
-    - Select the image to load from `scanner.<name>.container.image` (sensible default are provided for each scanner)
-
-+ `none`:
-    - Set when you want to run a RapiDAST scan with scanners that are installed on the host or you want to build the RapiDAST container image(scanners are to be built in the same image) and run a scan with it.
++ `none` (default):
+    - Run a RapiDAST scan with scanners that are installed on the same host OR run RapiDAST in a container (scanners are to be installed in the same container image)
     - __Warning__: without a container layer, RapiDAST may have to modify the host's file system, such as the tools configuration to fit its needs. For example: the ZAP plugin has to copy the policy file used in ZAP's user config directory (`~/.ZAP`)
+
++ `podman`:
+    - Run scanners as separate containers using `podman`
+    - RapiDAST must not run inside a container
+    - Select the image to load from `scanner.<name>.container.image` (sensible default are provided for each scanner)
 
 It is also possible to set the container type for each scanner differently by setting `scanners.<name>.container.type` under a certain scanner configuration. Then the scanner will run from its image, regardless of the `general.container.type` value.
 
@@ -388,9 +449,9 @@ Example: `podman pod create --userns=keep-id:uid=1000,gid=1000 myApp_Pod`
 
 This is useful for debugging.  Set `scanners.zap.miscOptions.enableUI: True` (default: False).  Then, the ZAP desktop will run with GUI on your host and show the progress of scanning.
 
-+ Disable add-on updates:
++ Enable add-on updates:
 
-Set `scanners.zap.miscOptions.updateAddons: False` (default: True). Then, ZAP will update its addons first and run the scan.
+Set `scanners.zap.miscOptions.updateAddons: True` (default: False). ZAP will first update its addons and then run the scan.
 
 + Install additional addons:
 
@@ -653,3 +714,5 @@ If you encounter any issues or have questions, please [open an issue](https://gi
 Contribution to the project is more than welcome.
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md)
+
+[ZAP]: #ZAP

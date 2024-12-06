@@ -1,20 +1,21 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.2.0
+    rev: v4.6.0
     hooks:
       - id: trailing-whitespace
         language_version: python3
+        exclude: \.csv$
       - id: end-of-file-fixer
       - id: debug-statements
         language_version: python3
 
   - repo: https://github.com/asottile/reorder_python_imports
-    rev: v3.0.1
+    rev: v3.14.0
     hooks:
       - id: reorder-python-imports
         language_version: python3
   - repo: https://github.com/psf/black
-    rev: 23.1.0
+    rev: 23.12.1
     hooks:
       - id: black
         args:
@@ -26,7 +27,7 @@ repos:
         require_serial: true
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.32.0
+    rev: v2.38.4
     hooks:
       - id: pyupgrade
         language_version: python3
@@ -37,6 +38,7 @@ repos:
   # W0603 - Using the global statement
   # C0114,C0115,C0116 - docstring checks. Disabled because of pydocstyle checks
   # W0107 - unnecessary pass
+  # W0511: fixme
   # W0702: No exception type(s) specified (bare-except)
   # R0801: Similar lines in 2 files. Disabled because it flags any file even those which are unrelated
   # R1705: Unnecessary "elif" after "return", remove the leading "el" from "elif" (no-else-return)
@@ -44,13 +46,13 @@ repos:
 
   - repo: https://github.com/PyCQA/pylint
     #rev: v3.0.3
-    rev: v2.17.4
+    rev: v2.17.7
     hooks:
       - id: pylint
         exclude: ^tests/
         args:
           - --max-line-length=120
           - --min-public-methods=0
-          - --good-names=q,f,fp,i,e
-          - --disable=E0401,W1201,W1203,C0114,C0115,C0116,C0411,W0107,W0702,R0801,R1705,R1710
+          - --good-names=o,w,q,f,fp,i,e
+          - --disable=E0401,W1201,W1203,C0114,C0115,C0116,C0411,W0107,W0511,W0702,R0801,R1705,R1710
         language_version: python3

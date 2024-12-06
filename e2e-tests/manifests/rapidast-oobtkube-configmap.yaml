@@ -1,0 +1,46 @@
+apiVersion: v1
+data:
+  config.yaml: |+
+    config:
+      configVersion: 5
+
+    # `application` contains data related to the application, not to the scans.
+    application:
+      shortName: "oobttest"
+
+    general:
+      container:
+        # currently supported: `podman` and `none`
+        type: "none"
+
+    scanners:
+      generic_1:
+        # results:
+        #   An absolute path to file or directory where results are stored on the host.
+        #   if it is "*stdout" or unspecified, the command's standard output will be selected
+        results: "/tmp/oobtkube.sarif.json"   # if None or "*stdout", the command's standard output is selected
+        # toolDir: scanners/generic/tools
+        inline: "python3 oobtkube.py --log-level debug -d 60 -p 6000 -i rapidast-oobtkube -f /opt/rapidast/config/cr_example.yaml | tee /tmp/oobtkube.sarif.json"
+  # XXX using tekton Task because it has:
+  # - a resource type that has a .spec field (required by oobtkube script)
+  # - fields in .spec that are arbitrary string (.spec.description)
+  # this could be replaced later with something more common like a ConfigMap,
+  # once oobtkube can test non .spec values
+  cr_example.yaml: |+
+    apiVersion: tekton.dev/v1
+    kind: Task
+    metadata:
+      name: vulnerable
+    spec:
+      description: foobar
+      params:
+        - name: foo
+          type: string
+      steps:
+      - image: foo
+        name: foo
+        script: foo
+
+kind: ConfigMap
+metadata:
+  name: rapidast-oobtkube

@@ -1,12 +1,15 @@
 import os
-import re
 from pathlib import Path
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
 import pytest
 import requests
 
 import configmodel.converter
+import scanners
 from scanners.zap.zap import find_context
+from scanners.zap.zap import MODULE_DIR
 from scanners.zap.zap_none import ZapNone
 
 # from pytest_mock import mocker
@@ -61,6 +64,15 @@ def test_setup_no_api_config(test_config):
     test_zap = ZapNone(config=test_config)
 
     test_zap.setup()
+
+    # openapi job is not added when no openapi config exists
+    test_config.delete("scanners.zap.apiScan")
+    test_zap = ZapNone(config=test_config)
+
+    test_zap.setup()
+
+    for item in test_zap.automation_config["jobs"]:
+        assert item["type"] != "openapi"
 
 
 ## Testing Authentication methods ##
@@ -224,9 +236,9 @@ def test_setup_include_urls(test_config):
     assert "def" in find_context(test_zap.automation_config)["includePaths"]
 
 
-def test_setup_active_scan(test_config):
+@patch("scanners.zap.zap.validate_active_scan_policy")
+def test_setup_active_scan(mock_validate_active_scan_policy, test_config):
     test_config.set("scanners.zap.activeScan.maxRuleDurationInMins", 10)
-
     test_zap = ZapNone(config=test_config)
     test_zap.setup()
 
@@ -236,6 +248,10 @@ def test_setup_active_scan(test_config):
             assert item["parameters"]["maxRuleDurationInMins"] == 10
             assert item["parameters"]["context"] == "Default Context"
             assert item["parameters"]["user"] == ""
+            mock_validate_active_scan_policy.assert_called_once_with(
+                policy_path=Path(f"{MODULE_DIR}/policies/API-scan-minimal.policy")
+            )
+
             break
     else:
         assert False
@@ -404,3 +420,36 @@ def test_get_update_command(test_config):
     assert "-addonupdate" in test_zap.get_update_command()
     assert "pluginA" in test_zap.get_update_command()
     assert "pluginB" in test_zap.get_update_command()
+
+
+# Export Site Tree
+
+
+def test_setup_export_site_tree(test_config, pytestconfig):
+    test_zap = ZapNone(config=test_config)
+    test_zap.setup()
+
+    add_script = None
+    run_script = None
+    add_variable_script = None
+    run_variable_script = None
+
+    for item in test_zap.automation_config["jobs"]:
+        if item["name"] == "export-site-tree-add":
+            add_script = item
+        if item["name"] == "export-site-tree-run":
+            run_script = item
+        if item["name"] == "export-site-tree-filename-global-var-add":
+            add_variable_script = item
+        if item["name"] == "export-site-tree-filename-global-var-run":
+            run_variable_script = item
+
+    assert add_script and run_script and add_variable_script and run_variable_script
+
+    assert add_script["parameters"]["name"] == run_script["parameters"]["name"]
+    assert add_script["parameters"]["file"] == f"{pytestconfig.rootpath}/scanners/zap/scripts/export-site-tree.js"
+    assert add_script["parameters"]["engine"] == "ECMAScript : Graal.js"
+
+    assert add_variable_script["parameters"]["name"] == run_variable_script["parameters"]["name"]
+    assert add_variable_script["parameters"]["inline"]
+    assert add_variable_script["parameters"]["engine"] == "ECMAScript : Graal.js"

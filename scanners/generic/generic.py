@@ -65,7 +65,7 @@ class Generic(RapidastScanner):
         logging.info(f"Extracting report, storing in {self.results_dir}")
         result = self.my_conf("results")
         try:
-            os.makedirs(self.results_dir)
+            os.makedirs(self.results_dir, exist_ok=True)
             if os.path.isdir(result):
                 shutil.copytree(result, self.results_dir, dirs_exist_ok=True)
             else:

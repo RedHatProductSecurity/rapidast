@@ -118,8 +118,10 @@ scanners:
         apiUrl: "<URL to openAPI>"
         # alternative to apiURL: apiFile: "<local path to openAPI file>"
 
-    # A list of URLs can also be provided, from a text file (1 URL per line)
-    importUrlsFromFile: "<path to import URL>"
+    # A list of URLs can also be provided, type supported: 'har', 'modsec2', 'url' (default), 'zap_messages'
+    importUrlsFromFile:
+      type: "url"
+      fileName: "<path to import URL>"
 
     graphql:
       endpoint: "<URL to GraphQL API endpoint>"

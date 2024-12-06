@@ -387,9 +387,13 @@ class Zap(RapidastScanner):
         The filename of the import will always be copied in the `container_work_dir` as importUrls.txt
         """
         # Basic job config. The `type` parameter will be set later
-        job = {"name": "import", "type": "import", "parameters": {"fileName": f"{self.container_work_dir}/importUrls.txt"}}
+        job = {
+            "name": "import",
+            "type": "import",
+            "parameters": {"fileName": f"{self.container_work_dir}/importUrls.txt"},
+        }
 
-        types = ('har', 'modsec2', 'url', 'zap_messages')
+        types = ("har", "modsec2", "url", "zap_messages")
 
         source = ""  # Location of the import file on the host
 

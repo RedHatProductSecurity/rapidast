@@ -14,7 +14,7 @@ RapiDAST provides:
 - HTML, JSON and XML report generation
 - Integration with Google Cloud Storage and [OWASP DefectDojo](https://owasp.org/www-project-defectdojo/)
 
-RapiDAST is to be used for testing purpose, and should not be used on production systems.
+RapiDAST is for testing purposes, and should not be used on production systems.
 
 ## Quickstart
 

@@ -7,7 +7,7 @@ RapiDAST (Rapid DAST) is an open-source security testing tool that automates DAS
 RapiDAST provides:
 
 - Automated HTTP/API security scanning using ZAP
-- Kubernetes opearator scanning using OOBTKUBE
+- Kubernetes operator scanning using OOBTKUBE
 - Automated vulnerability scanning using Nessus (requires a Nessus instance)
 - Command-line execution with yaml configuration, suitable for integration in CI/CD pipelines
 - Ability to run automated DAST scanning with pre-built or custom container images

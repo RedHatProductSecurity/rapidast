@@ -57,7 +57,7 @@ def convert_from_version_5_to_6(old):
 
     for key in old.conf["scanners"]:
         if key.startswith("zap") and old.exists(f"scanners.{key}.importUrlsFromFile"):
-            new.delete(f"scanners.{key}.importUrlsFromFile") # start from fresh
+            new.delete(f"scanners.{key}.importUrlsFromFile")  # start from fresh
             new.set(f"scanners.{key}.importUrlsFromFile.fileName", old.get(f"scanners.{key}.importUrlsFromFile"))
             new.set(f"scanners.{key}.importUrlsFromFile.type", "url")
 
@@ -65,6 +65,7 @@ def convert_from_version_5_to_6(old):
     new.set("config.configVersion", 6)
 
     return new
+
 
 @convert_configmodel.register(4)
 def convert_from_version_4_to_5(old):

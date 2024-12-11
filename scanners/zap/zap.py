@@ -377,15 +377,14 @@ class Zap(RapidastScanner):
     def _setup_import_urls(self):
         """If importUrlsFromFile exists:
         Prepare a URL import job. All ZAP's import job are supported: 'har', 'modsec2', 'url' (default), 'zap_messages'
-
-        2 possibilities:
-        1- [for backward compatibility] if importUrlsFromFile is a string:
-        it must point to an existing file on the host
-
-        2- importUrlsFromFile is a dictionary: { "type": "<type>", "fileName": "<path/to/file>"}
+        importUrlsFromFile is a dictionary: { "type": "<type>", "fileName": "<path/to/file>"}
 
         The filename of the import will always be copied in the `container_work_dir` as importUrls.txt
         """
+        if not self.my_conf("importUrlsFromFile"):
+            # no import configured
+            return
+
         # Basic job config. The `type` parameter will be set later
         job = {
             "name": "import",
@@ -397,23 +396,10 @@ class Zap(RapidastScanner):
 
         source = ""  # Location of the import file on the host
 
-        conf = self.my_conf("importUrlsFromFile")
-        if not conf:
-            return
-        if isinstance(conf, str):
-            # Backward compatibility with previous behavior
-            source = conf
-            job["parameters"]["type"] = "url"
-
-        elif isinstance(conf, dict):
-            # "importUrlsFromFile" = { type, fileName }
-            source = self.my_conf("importUrlsFromFile.fileName")
-            if not source:
-                raise ValueError("ZAP config error: importUrlsFromFile must have a `fileName` entry")
-            job["parameters"]["type"] = self.my_conf("importUrlsFromFile.type", "url")
-
-        else:
-            raise ValueError("ZAP config error: importUrlsFromFile must be a dictionary")
+        source = self.my_conf("importUrlsFromFile.fileName")
+        if not source:
+            raise ValueError("ZAP config error: importUrlsFromFile must have a `fileName` entry")
+        job["parameters"]["type"] = self.my_conf("importUrlsFromFile.type", "url")
 
         if not job["parameters"]["type"] in types:
             raise ValueError(f"ZAP config error: importUrlsFromFile.type must be within {types}")

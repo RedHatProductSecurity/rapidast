@@ -208,19 +208,7 @@ def test_setup_authentication_auth_rtoken_preauth(test_config):
 def test_setup_import_urls(test_config):
     # trick: use is the current pytest as import file
 
-    # 1- Test backward compatible behaviour
-    test_config.set("scanners.zap.importUrlsFromFile", __file__)
-    test_zap = ZapNone(config=test_config)
-    test_zap.setup()
-    assert Path(test_zap.host_work_dir, "importUrls.txt").is_file()
-    for item in test_zap.automation_config["jobs"]:
-        if item["type"] == "import":
-            assert item["parameters"]["type"] == "url"
-            break
-    else:
-        assert False
-
-    # 2- Test new config style, with type "har"
+    # 1- Test importUrlsFromFile, with type "har"
     test_config.set("scanners.zap.importUrlsFromFile", {"type": "har", "fileName": __file__})
     test_zap = ZapNone(config=test_config)
     test_zap.setup()
@@ -231,7 +219,7 @@ def test_setup_import_urls(test_config):
     else:
         assert False
 
-    # 3- Test new config style, defaulting to "url" type
+    # 2- Test that importUrlsFromFile defaults to "url" type
     test_config.set("scanners.zap.importUrlsFromFile", {"fileName": __file__})
     test_zap = ZapNone(config=test_config)
     test_zap.setup()
@@ -242,7 +230,7 @@ def test_setup_import_urls(test_config):
     else:
         assert False
 
-    # 4- Test new config style, with an unexisting type
+    # 3- Test that importUrlsFromFile fails if the type is incorrect
     test_config.set("scanners.zap.importUrlsFromFile", {"type": "doesntexist", "fileName": __file__})
     test_zap = ZapNone(config=test_config)
     with pytest.raises(ValueError) as exc:

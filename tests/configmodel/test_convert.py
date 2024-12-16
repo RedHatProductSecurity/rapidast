@@ -53,6 +53,26 @@ def generate_config_v4():
         raise RuntimeError(f"Unable to load TEST file {path}") from exc
 
 
+@pytest.fixture(name="config_v5")
+def generate_config_v5():
+    path = "tests/configmodel/older-schemas/v5.yaml"
+    try:
+        with open(path) as file:
+            return configmodel.RapidastConfigModel(yaml.safe_load(file))
+    except yaml.YAMLError as exc:
+        raise RuntimeError(f"Unable to load TEST file {path}") from exc
+
+
+def test_v5_to_v6(config_v5):
+    oldconf = config_v5
+    newconf = configmodel.converter.convert_from_version_5_to_6(oldconf)
+
+    # Check that new importUrlsFromFile is a dictionary and contains a fileName matching the old importUrlsFromFile
+    assert newconf.get("scanners.zap.importUrlsFromFile.fileName", "x") == oldconf.get(
+        "scanners.zap.importUrlsFromFile", "y"
+    )
+
+
 def test_v4_to_v5(config_v4):
     oldconf = config_v4
     newconf = configmodel.converter.convert_from_version_4_to_5(oldconf)

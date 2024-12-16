@@ -1,5 +1,5 @@
 config:
-  configVersion: 5
+  configVersion: 6
 
 application:
   shortName: "example-1.0"

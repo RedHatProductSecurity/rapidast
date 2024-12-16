@@ -365,6 +365,7 @@ class Zap(RapidastScanner):
         self._setup_api()
         self._setup_graphql()
         self._setup_import_urls()
+        self._setup_replacer()
         self._setup_active_scan()
         self._setup_passive_wait()
         self._setup_report()
@@ -617,6 +618,29 @@ class Zap(RapidastScanner):
             "parameters": {},
         }
         self.automation_config["jobs"].append(waitfor)
+
+    def _setup_replacer(self):
+        """Adds the replacer to the job list"""
+
+        if self.my_conf("replacer", default=False) is False:
+            return
+
+        rules = self.my_conf("replacer.rules")
+        if rules:
+            if not isinstance(rules, list):
+                raise ValueError("replacer.rules must be a list")
+
+        # replacer schema
+        replacer = {
+            "name": "replacer",
+            "type": "replacer",
+            "parameters": {
+                "deleteAllRules": self.my_conf("replacer.parameters.deleteAllRules", default=True),
+            },
+            "rules": rules,
+        }
+
+        self.automation_config["jobs"].append(replacer)
 
     def _setup_active_scan(self):
         """Adds an active scan job list, if there is one"""

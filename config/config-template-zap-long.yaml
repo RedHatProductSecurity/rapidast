@@ -146,10 +146,25 @@ scanners:
       url: ""        # url to start spidering from, default: application.url set above
       browserId: firefox-headless
 
+
+
     passiveScan:
       # Optional comma-separated list of passive rules to disable
       # Use https://www.zaproxy.org/docs/alerts/ to match rule with its ID
       disabledRules: "2,10015,10024,10027,10054,10096,10109,10112"
+
+    #replacer:                          # replacer replaces strings in requests and responses during active scan
+    #  parameters:
+    #    deleteAllRules: True           # Boolean, if true then will delete all existing replacer rules, default false
+    #  rules:                           # list of rules
+    #  - description:                   # String, the name of the rule
+    #    url:                           # String, a regex which will be used to match URLs, if empty then it will match all
+    #    matchType:                     # String, one of req_header, req_header_str, req_body_str, resp_header, resp_header_str, resp_body_str
+    #    matchString:                   # String, will be used to identify what should be replaced
+    #    matchRegex:                    # Boolean, if set then the matchString will be treated as a regex, default false
+    #    replacementString:             # String, the new string that will replace the specified selection
+    #    tokenProcessing:               # Boolean, when enabled the replacementString may contain a single token
+    #    initiators:                    # A list of integers representing the initiators (see the help)
 
     activeScan:
       # The list of parameters: https://www.zaproxy.org/docs/desktop/addons/ajax-spider/automation/

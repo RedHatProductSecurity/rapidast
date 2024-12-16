@@ -236,6 +236,52 @@ def test_setup_include_urls(test_config):
     assert "def" in find_context(test_zap.automation_config)["includePaths"]
 
 
+def test_setup_replacer(test_config):
+    # testing if deleteAllRules is set to True when it is not
+
+    test_zap = ZapNone(config=test_config)
+    test_zap.setup()
+
+    for item in test_zap.automation_config["jobs"]:
+        if item["type"] == "replacer":
+            assert item["parameters"]["deleteAllRules"] is True
+
+    # test deleteAllRules option False
+    test_config.set("scanners.zap.replacer.parameters.deleteAllRules", False)
+    test_zap = ZapNone(config=test_config)
+    test_zap.setup()
+
+    for item in test_zap.automation_config["jobs"]:
+        if item["type"] == "replacer":
+            assert item["parameters"]["deleteAllRules"] is False
+
+    # test rules1
+    test_rule1 = {
+        "description": "test_rule1",  # String, the name of the rule
+        "url": ".*",  # String, a regex which will be used to match URLs, if empty then it will match all
+        "matchType": "req_body_str",  # String, one of req_header, req_header_str, req_body_str, resp_header, resp_header_str, resp_body_str
+        "matchString": "John Doe,",  # String, will be used to identify what should be replaced
+        "matchRegex": "false",  # Boolean, if set then the matchString will be treated as a regex, default false
+        "replacementString": "JeremyC",
+    }
+    test_rule2 = {
+        "description": "test_rule2",  # String, the name of the rule
+        "matchType": "req_header",  # String, one of req_header, req_header_str, req_body_str, resp_header, resp_header_str, resp_body_str
+        "matchString": "Cookie",  # String, will be used to identify what should be replaced
+        "matchRegex": "false",  # Boolean, if set then the matchString will be treated as a regex, default false
+        "replacementString": "session=abc123",
+    }
+
+    test_config.set("scanners.zap.replacer.rules", [test_rule1, test_rule2])
+    test_zap = ZapNone(config=test_config)
+    test_zap.setup()
+
+    for item in test_zap.automation_config["jobs"]:
+        if item["type"] == "replacer":
+            assert item["rules"][0] is test_rule1
+            assert item["rules"][1] is test_rule2
+
+
 @patch("scanners.zap.zap.validate_active_scan_policy")
 def test_setup_active_scan(mock_validate_active_scan_policy, test_config):
     test_config.set("scanners.zap.activeScan.maxRuleDurationInMins", 10)

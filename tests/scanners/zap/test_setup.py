@@ -237,8 +237,7 @@ def test_setup_include_urls(test_config):
 
 
 def test_setup_replacer(test_config):
-    # testing if deleteAllRules is set to True when it is not
-
+    # test if deleteAllRules is set to True by default when it is not set
     test_zap = ZapNone(config=test_config)
     test_zap.setup()
 
@@ -255,7 +254,7 @@ def test_setup_replacer(test_config):
         if item["type"] == "replacer":
             assert item["parameters"]["deleteAllRules"] is False
 
-    # test rules1
+    # test rules
     test_rule1 = {
         "description": "test_rule1",  # String, the name of the rule
         "url": ".*",  # String, a regex which will be used to match URLs, if empty then it will match all

@@ -236,49 +236,85 @@ def test_setup_include_urls(test_config):
     assert "def" in find_context(test_zap.automation_config)["includePaths"]
 
 
-def test_setup_replacer(test_config):
-    # test if deleteAllRules is set to True by default when it is not set
+def test_setup_replacer_no_rule(test_config):
+    test_config.set("scanners.zap.replacer.parameters.deleteAllRules", False)
+    test_zap = ZapNone(config=test_config)
+
+    # test: not having a rule raises ValueError
+    with pytest.raises(ValueError):
+        test_zap.setup()
+
+
+def test_setup_replacer_parameter(test_config):
+    test_rule = {
+        "description": "test_rule1",  # String, the name of the rule
+        "url": ".*",  # (optional) String, a regex which will be used to match URLs, if empty then it will match all
+        "matchType": "req_body_str",  # String, one of req_header, req_header_str, req_body_str, resp_header, resp_header_str, resp_body_str
+        "matchString": "John Doe",  # String, will be used to identify what should be replaced
+        "matchRegex": False,  # Boolean, if set then the matchString will be treated as a regex, default false
+        "replacementString": "test_string",  # String, the new string that will replace the specified selection
+        "tokenProcessing": False,  # (optional) Boolean, when enabled the replacementString may contain a single token
+    }
+
+    test_config.set("scanners.zap.replacer.rules", [test_rule])
+
     test_zap = ZapNone(config=test_config)
     test_zap.setup()
 
+    # test: deleteAllRules is True when it is not set
     for item in test_zap.automation_config["jobs"]:
         if item["type"] == "replacer":
             assert item["parameters"]["deleteAllRules"] is True
 
-    # test deleteAllRules option False
+    # test: deleteAllRules parameter is set to False
     test_config.set("scanners.zap.replacer.parameters.deleteAllRules", False)
     test_zap = ZapNone(config=test_config)
     test_zap.setup()
 
     for item in test_zap.automation_config["jobs"]:
         if item["type"] == "replacer":
+            assert isinstance(item["parameters"]["deleteAllRules"], bool)
             assert item["parameters"]["deleteAllRules"] is False
 
+    # test: when deleteAllRules parameter is not Boolean type
+    test_config.set("scanners.zap.replacer.parameters.deleteAllRules", "non-boolean")
+    test_zap = ZapNone(config=test_config)
+    with pytest.raises(ValueError):
+        test_zap.setup()
+
+
+def test_setup_replacer_rules(test_config):
     # test rules
     test_rule1 = {
         "description": "test_rule1",  # String, the name of the rule
-        "url": ".*",  # String, a regex which will be used to match URLs, if empty then it will match all
+        "url": ".*",  # (optional) String, a regex which will be used to match URLs, if empty then it will match all
         "matchType": "req_body_str",  # String, one of req_header, req_header_str, req_body_str, resp_header, resp_header_str, resp_body_str
-        "matchString": "John Doe,",  # String, will be used to identify what should be replaced
-        "matchRegex": "false",  # Boolean, if set then the matchString will be treated as a regex, default false
-        "replacementString": "JeremyC",
+        "matchString": "John Doe",  # String, will be used to identify what should be replaced
+        "matchRegex": False,  # Boolean, if set then the matchString will be treated as a regex, default false
+        "replacementString": "test_string",  # String, the new string that will replace the specified selection
+        "tokenProcessing": False,  # (optional) Boolean, when enabled the replacementString may contain a single token
     }
     test_rule2 = {
         "description": "test_rule2",  # String, the name of the rule
         "matchType": "req_header",  # String, one of req_header, req_header_str, req_body_str, resp_header, resp_header_str, resp_body_str
         "matchString": "Cookie",  # String, will be used to identify what should be replaced
-        "matchRegex": "false",  # Boolean, if set then the matchString will be treated as a regex, default false
+        "matchRegex": True,  # Boolean, if set then the matchString will be treated as a regex, default false
         "replacementString": "session=abc123",
     }
 
     test_config.set("scanners.zap.replacer.rules", [test_rule1, test_rule2])
+
     test_zap = ZapNone(config=test_config)
     test_zap.setup()
 
     for item in test_zap.automation_config["jobs"]:
         if item["type"] == "replacer":
             assert item["rules"][0] is test_rule1
+            assert isinstance(item["rules"][0]["matchRegex"], bool)
+            assert isinstance(item["rules"][0]["tokenProcessing"], bool)
+
             assert item["rules"][1] is test_rule2
+            assert isinstance(item["rules"][1]["matchRegex"], bool)
 
 
 @patch("scanners.zap.zap.validate_active_scan_policy")

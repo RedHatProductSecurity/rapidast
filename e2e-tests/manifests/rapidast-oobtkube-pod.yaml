@@ -7,11 +7,7 @@ metadata:
     app: rapidast-oobtkube
 spec:
   containers:
-  - command:
-    - bash
-    - -c
-    - ./rapidast.py
-    env:
+  - env:
     - name: HOME
       value: /opt/rapidast
     image: ${IMAGE} # quay.io/redhatproductsecurity/rapidast:latest

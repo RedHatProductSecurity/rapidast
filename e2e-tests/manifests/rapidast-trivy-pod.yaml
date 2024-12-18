@@ -5,11 +5,7 @@ metadata:
   name: rapidast-trivy
 spec:
   containers:
-  - command:
-    - bash
-    - -c
-    - ./rapidast.py
-    env:
+  - env:
     - name: HOME
       value: /opt/rapidast
     image: ${IMAGE} # quay.io/redhatproductsecurity/rapidast:latest

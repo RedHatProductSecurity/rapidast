@@ -83,3 +83,4 @@ RUN groupadd dast && \
 
 USER rapidast
 WORKDIR /opt/rapidast
+ENTRYPOINT ["./rapidast.py"]

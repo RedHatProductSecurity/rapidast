@@ -365,6 +365,7 @@ class Zap(RapidastScanner):
         self._setup_api()
         self._setup_graphql()
         self._setup_import_urls()
+        self._setup_replacer()
         self._setup_active_scan()
         self._setup_passive_wait()
         self._setup_report()
@@ -635,6 +636,45 @@ class Zap(RapidastScanner):
             "parameters": {},
         }
         self.automation_config["jobs"].append(waitfor)
+
+    def _setup_replacer(self):
+        """Adds the replacer to the job list"""
+
+        def _validate_rule_boolean_values(rule):
+            if not isinstance(rule["matchRegex"], bool):
+                raise ValueError("The matchRegex in the replacer rule must be set to a Boolean value")
+
+            if "tokenProcessing" in rule and not isinstance(rule["tokenProcessing"], bool):
+                raise ValueError("The tokenProcessing in the replacer rule must be set to a Boolean value")
+
+        if not self.my_conf("replacer"):
+            return
+
+        rules = self.my_conf("replacer.rules")
+        if rules:
+            if not isinstance(rules, list):
+                raise ValueError("replacer.rules must be a list")
+
+            for item in rules:
+                _validate_rule_boolean_values(item)
+        else:
+            raise ValueError("replacer must have a rule at least")
+
+        delete_all_rules = self.my_conf("replacer.parameters.deleteAllRules", default=True)
+        if not isinstance(delete_all_rules, bool):
+            raise ValueError("replacer.parameters.deleteAllRules must be set to a Boolean value")
+
+        # replacer schema
+        replacer = {
+            "name": "replacer",
+            "type": "replacer",
+            "parameters": {
+                "deleteAllRules": delete_all_rules,
+            },
+            "rules": rules,
+        }
+
+        self.automation_config["jobs"].append(replacer)
 
     def _setup_active_scan(self):
         """Adds an active scan job list, if there is one"""

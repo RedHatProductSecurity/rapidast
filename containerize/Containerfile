@@ -72,14 +72,12 @@ RUN microdnf install -y --setopt=install_weak_deps=0 java-11-openjdk shadow-util
   pip3 install --no-cache-dir -r /opt/rapidast/requirements.txt && \
   ln -s /opt/redocly/node_modules/@redocly/cli/bin/cli.js /usr/local/bin/redocly
 
-### Allow the `dast` usergroup to make modifications to rapidast
-RUN groupadd dast && \
-  chown -R :dast /opt/rapidast && \
-  chmod -R g+w /opt/rapidast && \
-  ### Allow a user of random UID(e.g. on OpenShift) to create a custom scan policy file
-  chmod -R a+w /opt/rapidast/scanners/zap/policies && \
-  useradd -u 1000 -d /home/rapidast -m -s /bin/bash -G dast rapidast && \
-  echo rapidast:rapidast | chpasswd
+RUN useradd -u 1000 -d /opt/rapidast -m -s /bin/bash rapidast && \
+  chown -R 1000 /opt/rapidast && \
+  # OpenShift runs containers with arbitrary user ids, belonging to root group
+  chgrp -R 0 /opt/rapidast && \
+  chmod -R g=u /opt/rapidast
 
 USER rapidast
 WORKDIR /opt/rapidast
+ENV HOME /opt/rapidast

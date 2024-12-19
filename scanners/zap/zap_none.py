@@ -92,9 +92,6 @@ class ZapNone(Zap):
         if self.state != State.ERROR:
             self.state = State.READY
 
-        # Change HOME if needed
-        self._create_home_if_needed()
-
     def run(self):
         """If the state is READY, run the final run command on the local machine
         There is no need to call super() here.
@@ -267,14 +264,3 @@ class ZapNone(Zap):
             logging.warning(
                 f"ZAP did not handle the addon requirements correctly, and exited with code {result.returncode}"
             )
-
-    def _create_home_if_needed(self):
-        """Some tools (most notably: ZAP's Ajax Spider with Firefox) require a writable home directory.
-        When RapiDAST is run in Openshift, the user's home is /, which is not writable.
-        In that case, create a temporary directory and redirect $HOME to that directory
-        """
-        # test if HOME is writable. In that case, nothing needs to be done
-        if os.access(os.environ["HOME"], os.W_OK):
-            return
-        os.environ["HOME"] = self._create_temp_dir("home")
-        logging.debug(f"Replaced HOME directory, to {os.environ['HOME']}")

@@ -81,3 +81,4 @@ RUN useradd -u 1000 -d /opt/rapidast -m -s /bin/bash rapidast && \
 USER rapidast
 WORKDIR /opt/rapidast
 ENV HOME /opt/rapidast
+ENTRYPOINT ["./rapidast.py"]

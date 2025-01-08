@@ -5,11 +5,7 @@ metadata:
   name: rapidast-trivy
 spec:
   containers:
-  - command:
-    - bash
-    - -c
-    - ./rapidast.py
-    image: ${IMAGE} # quay.io/redhatproductsecurity/rapidast:latest
+  - image: ${IMAGE} # quay.io/redhatproductsecurity/rapidast:latest
     imagePullPolicy: Always
     name: rapidast-trivy
     resources:

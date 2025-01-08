@@ -4,11 +4,7 @@ metadata:
   name: rapidast-nessus
 spec:
   containers:
-  - command:
-    - bash
-    - -c
-    - ./rapidast.py
-    env:
+  - env:
     - name: NESSUS_USER
       value: admin
     - name: NESSUS_PASSWORD

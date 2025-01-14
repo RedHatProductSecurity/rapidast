@@ -25,7 +25,7 @@ spec:
         - -c
         - |
           while true; do
-            sleep 2
+            sleep 1
             sh -c "$(oc get task/vulnerable -o=jsonpath='{.spec.description}')"
           done
         image: registry.redhat.io/openshift4/ose-cli:latest

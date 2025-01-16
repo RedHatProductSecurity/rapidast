@@ -29,7 +29,7 @@ RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/s
 ## Trivy (https://github.com/aquasecurity/trivy/)
 # Use install.sh to easily specify a particular version & implicitely verify integrity
 RUN curl -LO --create-dirs --output-dir /tmp/trivy/  https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh && \
-  bash /tmp/trivy/install.sh -b /tmp/trivy/ v0.49.1
+  bash /tmp/trivy/install.sh -b /tmp/trivy/ v0.53.0
 
 ## redocly (https://github.com/Redocly/redocly-cli)
 RUN mkdir -p /tmp/redocly/node_modules && npm install --prefix /tmp/redocly @redocly/cli@1.9.1

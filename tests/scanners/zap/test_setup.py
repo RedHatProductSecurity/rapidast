@@ -202,6 +202,45 @@ def test_setup_authentication_auth_rtoken_preauth(test_config):
     assert "Invalid URL '<token retrieval URL>'" in str(e_info.value)
 
 
+def test_setup_authentication_auth_browser(test_config):
+    authentication = {
+        "type": "browser",
+        "parameters": {
+            "loginPageUrl": "http://example.com/login",
+            "verifyUrl": "/verify",
+            "username": "usern",
+            "password": "pass",
+            "loginPageWait": "3",
+            "loggedInRegex": "\\Q 200 OK\\E",
+            "loggedOutRegex": "\\Q 401 Unauthorized\\E",
+        },
+    }
+
+    test_config.set("general.authentication", authentication)
+    test_config.merge(test_config.get("general", default={}), preserve=False, root=f"scanners.zap")
+    test_zap = ZapNone(config=test_config)
+    test_zap.setup()
+
+    assert test_zap.authenticated == True
+    assert test_zap.automation_config["env"]["contexts"][0]["authentication"] == {
+        "method": "browser",
+        "parameters": {
+            "browserId": "firefox-headless",
+            "loginPageUrl": "http://example.com/login",
+            "loginPageWait": "3",
+        },
+        "verification": {
+            "loggedInRegex": "\\Q 200 OK\\E",
+            "loggedOutRegex": "\\Q 401 Unauthorized\\E",
+            "method": "poll",
+            "pollFrequency": 60,
+            "pollPostData": "",
+            "pollUnits": "requests",
+            "pollUrl": "http://example.com/verify",
+        },
+    }
+
+
 ## Testing APIs & URLs ##
 
 

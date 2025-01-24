@@ -878,18 +878,22 @@ class Zap(RapidastScanner):
         if not verify_url.startswith("http"):
             verify_url = self.config.get("application.url") + verify_url
 
+        logged_in_regex = self.my_conf(f"{params_path}.loggedInRegex", "\\Q 200 OK\\E")
+        logged_out_regex = self.my_conf(f"{params_path}.loggedOutRegex", "\\Q 403 Forbidden\\E")
+        login_page_wait = self.my_conf(f"{params_path}.loginPageWait", "2")
+
         # 1- complete the context: install the form based auth, and add a user
         context_["authentication"] = {
             "method": "browser",
             "parameters": {
                 "loginPageUrl": login_page_url,
-                "loginPageWait": 2,
+                "loginPageWait": login_page_wait,
                 "browserId": "firefox-headless",
             },
             "verification": {
                 "method": "poll",
-                "loggedInRegex": "\\Q 200 OK\\E",
-                "loggedOutRegex": "\\Q 403 Forbidden\\E",
+                "loggedInRegex": logged_in_regex,
+                "loggedOutRegex": logged_out_regex,
                 "pollFrequency": 60,
                 "pollUnits": "requests",
                 "pollUrl": verify_url,

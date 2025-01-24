@@ -179,7 +179,10 @@ This method uses firefox in the background to load a login page and fill in user
         * `username`
         * `password`
         * `loginPageUrl`: the URL to the login page (either the full URL, or relative to the `application.url` value)
+        * `loginPageWait`: The number of seconds to wait after submitting the login form before the browser is closed. (default: 2)
         * `verifyUrl`: a URL that "proves" the user is authenticated (either the full URL, or relative to the `application.url` value). This URL must return a success if the user is correctly authenticated, and an error otherwise.
+        * `loggedInRegex`: Regex pattern used to identify Logged in messages (default: `\\Q 200 OK\\`)
+        * `loggedOutRegex`: Regex pattern used to identify Logged Out messages (default: `\\Q 403 Forbidden\\`)
 
 ### MacOS
 

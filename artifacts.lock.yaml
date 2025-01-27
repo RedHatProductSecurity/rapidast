@@ -1,0 +1,6 @@
+metadata:
+  version: "1.0"
+artifacts:
+  - download_url: https://github.com/zaproxy/zaproxy/releases/download/v2.15.0/ZAP_2.15.0_Linux.tar.gz
+    filename: ZAP_2.15.0_Linux.tar.gz
+    checksum: "sha256:6410e196baab458a9204e29aafb5745fca003a2a6c0386f2c6e5c04b67621fa7"

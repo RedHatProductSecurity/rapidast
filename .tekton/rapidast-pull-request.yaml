@@ -29,6 +29,10 @@ spec:
     value: containerize/Containerfile
   - name: skip-checks
     value: "true"
+  - name: prefetch-input
+    value: '{"type": "generic", "path": "."}'
+  - name: build-args
+    value: [PREFETCH=true]
   pipelineSpec:
     description: |
       This pipeline is ideal for building container images from a Containerfile while maintaining trust after pipeline customization.

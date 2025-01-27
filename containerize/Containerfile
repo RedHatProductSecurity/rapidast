@@ -4,12 +4,18 @@
 
 # Prepare dependencies
 FROM registry.access.redhat.com/ubi9-minimal AS deps
+ARG PREFETCH=false
 
 RUN microdnf install -y tar gzip bzip2 java-11-openjdk nodejs
 
+RUN mkdir /tmp/deps && if [ "$PREFETCH" == "true" ]; then \
+    cp /cachi2/output/deps/generic/ZAP_2.15.0_Linux.tar.gz /tmp/deps/ZAP_2.15.0_Linux.tar.gz; \
+  else \
+    curl -sfL 'https://github.com/zaproxy/zaproxy/releases/download/v2.15.0/ZAP_2.15.0_Linux.tar.gz' -o /tmp/deps/ZAP_2.15.0_Linux.tar.gz; \
+  fi
 ## ZAP, build and install scanners in advance (more scanners will be added)
 RUN mkdir -p /opt/zap /tmp/zap && \
-  curl -sfL 'https://github.com/zaproxy/zaproxy/releases/download/v2.15.0/ZAP_2.15.0_Linux.tar.gz' | tar zxvf - -C /tmp/zap && \
+  tar zxvf /tmp/deps/ZAP_2.15.0_Linux.tar.gz -C /tmp/zap && \
   mv -T /tmp/zap/ZAP_2.15.0 /opt/zap && \
   ### Update add-ons
   /opt/zap/zap.sh -cmd -silent -addonupdate && \

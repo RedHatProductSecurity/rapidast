@@ -1,0 +1,82 @@
+#####
+# Build RapiDAST image
+#####
+
+# Prepare dependencies
+FROM registry.access.redhat.com/ubi9-minimal AS deps
+
+RUN microdnf install -y tar gzip bzip2 java-11-openjdk nodejs
+
+## ZAP, build and install scanners in advance (more scanners will be added)
+RUN mkdir -p /opt/zap /tmp/zap && \
+  curl -sfL 'https://github.com/zaproxy/zaproxy/releases/download/v2.14.0/ZAP_2.14.0_Linux.tar.gz' | tar zxvf - -C /tmp/zap && \
+  mv -T /tmp/zap/ZAP_2.14.0 /opt/zap && \
+  ### Update add-ons
+  /opt/zap/zap.sh -cmd -silent -addonupdate && \
+  ### Copy them to installation directory
+  cp /root/.ZAP/plugin/*.zap /opt/zap/plugin/ || :
+
+## Firefox, for Ajax
+RUN mkdir -p /opt/firefox /tmp/firefox && \
+  curl -sfL 'https://download.mozilla.org/?product=firefox-esr-latest-ssl&os=linux64&lang=en-US' | tar xjvf - -C /tmp/firefox && \
+  mv -T /tmp/firefox/firefox /opt/firefox
+
+## kubectl
+
+RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl" && \
+  install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+## Trivy (https://github.com/aquasecurity/trivy/)
+# Use install.sh to easily specify a particular version & implicitely verify integrity
+RUN curl -LO --create-dirs --output-dir /tmp/trivy/  https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh && \
+  bash /tmp/trivy/install.sh -b /tmp/trivy/ v0.49.1
+
+## redocly (https://github.com/Redocly/redocly-cli)
+RUN mkdir -p /tmp/redocly/node_modules && npm install --prefix /tmp/redocly @redocly/cli@1.9.1
+
+# Copy artifacts from deps to build RapiDAST
+FROM registry.access.redhat.com/ubi9-minimal
+
+COPY --from=deps /opt/zap /opt/zap
+COPY --from=deps /opt/firefox /opt/firefox
+COPY --from=deps /usr/local/bin/kubectl /usr/local/bin/kubectl
+COPY --from=deps /tmp/trivy/trivy /usr/local/bin/trivy
+COPY --from=deps /tmp/redocly/node_modules /opt/redocly/node_modules
+
+ENV PATH $PATH:/opt/zap/:/opt/rapidast/:/opt/firefox/
+
+## RapiDAST
+RUN mkdir /opt/rapidast
+COPY ./rapidast.py ./requirements.txt /opt/rapidast/
+COPY ./scanners/ /opt/rapidast/scanners/
+COPY ./tools/ /opt/rapidast/tools/
+COPY ./exports/ /opt/rapidast/exports/
+COPY ./configmodel/ /opt/rapidast/configmodel/
+COPY ./utils/ /opt/rapidast/utils/
+COPY ./config/ /opt/rapidast/config/
+
+### Overload default config (set 'none' as default container type)
+COPY ./containerize/container_default_config.yaml /opt/rapidast/rapidast-defaults.yaml
+
+### Add /opt/{zap,rapidast}/ to the PATH (for any user and future user)
+COPY ./containerize/path_rapidast.sh /etc/profile.d/rapidast.sh
+
+### Install RapiDAST requirements, globally, so that it's available to any user
+RUN microdnf install -y --setopt=install_weak_deps=0 java-11-openjdk shadow-utils dbus-glib procps git nodejs npm && \
+  microdnf install -y gtk3 && \
+  microdnf clean all -y && rm -rf /var/cache/dnf /tmp/*  && \
+  python3 -m ensurepip --upgrade && \
+  pip3 install --no-cache-dir -r /opt/rapidast/requirements.txt && \
+  ln -s /opt/redocly/node_modules/@redocly/cli/bin/cli.js /usr/local/bin/redocly
+
+### Allow the `dast` usergroup to make modifications to rapidast
+RUN groupadd dast && \
+  chown -R :dast /opt/rapidast && \
+  chmod -R g+w /opt/rapidast && \
+  ### Allow a user of random UID(e.g. on OpenShift) to create a custom scan policy file
+  chmod -R a+w /opt/rapidast/scanners/zap/policies && \
+  useradd -u 1000 -d /home/rapidast -m -s /bin/bash -G dast rapidast && \
+  echo rapidast:rapidast | chpasswd
+
+USER rapidast
+WORKDIR /opt/rapidast

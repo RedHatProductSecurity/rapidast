@@ -9,8 +9,10 @@ ARG PREFETCH=false
 RUN microdnf install -y tar gzip bzip2 java-11-openjdk nodejs
 
 RUN mkdir /tmp/deps && if [ "$PREFETCH" == "true" ]; then \
+    echo "PREFETCH is true: Copying dependencies from /cachi2/output/deps..." && \
     cp /cachi2/output/deps/generic/ZAP_2.15.0_Linux.tar.gz /tmp/deps/ZAP_2.15.0_Linux.tar.gz; \
   else \
+    echo "PREFETCH is false: Downloading archive from remote sources..." && \
     curl -sfL 'https://github.com/zaproxy/zaproxy/releases/download/v2.15.0/ZAP_2.15.0_Linux.tar.gz' -o /tmp/deps/ZAP_2.15.0_Linux.tar.gz; \
   fi
 ## ZAP, build and install scanners in advance (more scanners will be added)

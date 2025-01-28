@@ -32,6 +32,7 @@ spec:
   - name: prefetch-input
     value:
     - {"type": "generic", "path": "."}
+    - {"type": "npm", "path": "."}
   - name: build-args
     value: [PREFETCH=true]
   pipelineSpec:

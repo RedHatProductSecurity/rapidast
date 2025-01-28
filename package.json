@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@redocly/cli": "^1.9.1"
+  }
+}

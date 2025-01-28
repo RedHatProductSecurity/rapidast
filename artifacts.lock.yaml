@@ -2,5 +2,14 @@ metadata:
   version: "1.0"
 artifacts:
   - download_url: https://github.com/zaproxy/zaproxy/releases/download/v2.15.0/ZAP_2.15.0_Linux.tar.gz
-    filename: ZAP_2.15.0_Linux.tar.gz
+    filename: ZAP.tar.gz
     checksum: "sha256:6410e196baab458a9204e29aafb5745fca003a2a6c0386f2c6e5c04b67621fa7"
+  - download_url: https://releases.mozilla.org/pub/firefox/releases/128.6.0esr/linux-x86_64/en-US/firefox-128.6.0esr.tar.bz2
+    filename: firefox.tar.bz2
+    checksum: "sha256:ab46e298a92276736e1a0b2f2fe232f4b1e9f49c84bdb6fc2565d83013bc8732"
+  - download_url: https://dl.k8s.io/release/v1.32.1/bin/linux/amd64/kubectl
+    filename: kubectl
+    checksum: "sha256:e16c80f1a9f94db31063477eb9e61a2e24c1a4eee09ba776b029048f5369db0c"
+  - download_url: https://github.com/aquasecurity/trivy/releases/download/v0.49.1/trivy_0.49.1_Linux-64bit.tar.gz
+    filename: trivy.tar.gz
+    checksum: "sha256:8adc8236fafa42757fee770b7009893d2e4536cb2d5c0a2bb7fe00f7e91370e8"    

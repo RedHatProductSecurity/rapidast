@@ -5,7 +5,7 @@
 # Prepare dependencies
 FROM registry.access.redhat.com/ubi9-minimal AS deps
 
-# Indicate if dependencies were prefetched using Cachi2 
+# Indicate if dependencies were prefetched using Cachi2
 # They mush be located at /cachi2/output/deps
 ARG PREFETCH=false
 
@@ -34,7 +34,7 @@ RUN mkdir "${DEPS_DIR}" /tmp/node_modules && if [ "$PREFETCH" == "true" ]; then 
     curl -sfL "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" -o "$TRIVY_FILE"; \
   fi
 ## ZAP, build and install scanners in advance (more scanners will be added)
-RUN mkdir /opt/zap && \ 
+RUN mkdir /opt/zap && \
   tar zxvf "$ZAP_FILE" --strip-components=1 -C /opt/zap && \
   ### Update add-ons
   /opt/zap/zap.sh -cmd -silent -addonupdate && \
@@ -42,7 +42,7 @@ RUN mkdir /opt/zap && \
   cp /root/.ZAP/plugin/*.zap /opt/zap/plugin/
 
 ## Firefox, for Ajax
-RUN mkdir -p /opt/firefox && \ 
+RUN mkdir -p /opt/firefox && \
   tar xjvf "$FF_FILE" -C /opt/firefox
 
 ## kubectl

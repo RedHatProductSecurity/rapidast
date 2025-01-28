@@ -45,7 +45,7 @@ class TestRapiDAST(TestBase):
             assert expected_line in logs, f"{logfile} does not contain expected line: {expected_line}"
 
     def test_oobtkube(self):
-        self.create_from_yaml(f"{self.tempdir}/task-controller-deployment.yaml")
+        self.create_from_yaml(f"{self.tempdir}/cm-controller-deployment.yaml")
 
         self.create_from_yaml(f"{self.tempdir}/rapidast-oobtkube-configmap.yaml")
         self.create_from_yaml(f"{self.tempdir}/rapidast-oobtkube-service.yaml")

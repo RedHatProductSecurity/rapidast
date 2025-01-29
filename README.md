@@ -37,7 +37,7 @@ Run the pre-built [rapidast container image](https://quay.io/repository/redhatpr
 
 **Run**
 ```sh
-$ podman run -v ./config.yaml:/opt/rapidast/config/config.yaml:Z quay.io/redhatproductsecurity/rapidast:latest ./rapidast.py
+$ podman run -v ./config.yaml:/opt/rapidast/config/config.yaml:Z quay.io/redhatproductsecurity/rapidast:latest
 ```
 
 **Note**

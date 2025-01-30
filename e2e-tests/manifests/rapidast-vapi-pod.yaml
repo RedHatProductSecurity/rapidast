@@ -9,6 +9,10 @@ spec:
     - bash
     - -c
     - "./rapidast.py && cat results/*/*/zap/zap-report.json" # ugly, but saves needing a PVC to retrieve .json file after execution
+    # - "./rapidast.py --log-level debug && sleep infinity" # keep the pod alive so we can exec into it to parse reports
+    env:
+    - name: HOME
+      value: /opt/rapidast
     image: ${IMAGE} # quay.io/redhatproductsecurity/rapidast:latest
     imagePullPolicy: Always
     name: rapidast-vapi
@@ -22,8 +26,27 @@ spec:
     volumeMounts:
     - name: config-volume
       mountPath: /opt/rapidast/config
+    # - name: results-volume
+    #   mountPath: /opt/rapidast/results
+  securityContext:
+    supplementalGroups: [1000] # "dast" group, necessary to write to /opt/rapidast/results if no PVC mounted
   volumes:
   - name: config-volume
     configMap:
       name: rapidast-vapi
+  # - name: results-volume
+  #   persistentVolumeClaim:
+  #     claimName: rapidast-results
   restartPolicy: Never
+# ---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: rapidast-results
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   volumeMode: Filesystem
+#   resources:
+#     requests:
+#       storage: 1Gi

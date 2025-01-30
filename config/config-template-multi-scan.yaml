@@ -10,7 +10,7 @@ config:
   # This value tells RapiDAST what schema should be used to read this configuration.
   # Therefore you should only change it if you update the configuration to a newer schema
   # It is intended to keep backward compatibility (newer RapiDAST running an older config)
-  configVersion: 6
+  configVersion: 5
 
 # `application` contains data related to the application, not to the scans.
 application:

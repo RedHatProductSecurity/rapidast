@@ -2,7 +2,7 @@ config:
   # WARNING: `configVersion` indicates the schema version of the config file.
   # This value tells RapiDAST what schema should be used to read this configuration.
   # Therefore you should only change it if you update the configuration to a newer schema
-  configVersion: 6
+  configVersion: 5
 
   # all the results of all scanners will be stored under that location
   # base_results_dir: "./results"

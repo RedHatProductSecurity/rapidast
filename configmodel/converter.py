@@ -5,7 +5,7 @@ import configmodel
 
 # WARNING: this needs to be incremented everytime a non-compatible change is made in the configuration.
 # A corresponding function also needs to be written
-CURR_CONFIG_VERSION = 6
+CURR_CONFIG_VERSION = 5
 
 
 def config_converter_dispatcher(func):
@@ -46,25 +46,6 @@ def convert_configmodel(conf):
     """This is the base function, attached to error reporting"""
     version = conf.get("config.configVersion", 0)
     raise RuntimeError(f"There was an error in converting configuration. No convertion available for version {version}")
-
-
-@convert_configmodel.register(5)
-def convert_from_version_5_to_6(old):
-    """Returns a *copy* of the original rapidast config file, but updated to v6
-    scanner.zap.importUrlsFromFile is now a dictionary, not a string
-    """
-    new = copy.deepcopy(old)
-
-    for key in old.conf["scanners"]:
-        if key.startswith("zap") and old.exists(f"scanners.{key}.importUrlsFromFile"):
-            new.delete(f"scanners.{key}.importUrlsFromFile")  # start from fresh
-            new.set(f"scanners.{key}.importUrlsFromFile.fileName", old.get(f"scanners.{key}.importUrlsFromFile"))
-            new.set(f"scanners.{key}.importUrlsFromFile.type", "url")
-
-    # Finally, set the correct version number
-    new.set("config.configVersion", 6)
-
-    return new
 
 
 @convert_configmodel.register(4)

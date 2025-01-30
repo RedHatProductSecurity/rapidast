@@ -157,7 +157,7 @@ class TestBase:
                 logging.debug(f"calling {func}")
                 func()
         # XXX oobtukbe does not clean up after itself
-        os.system(f"kubectl delete ConfigMap/vulnerable -n {NAMESPACE}")
+        os.system(f"kubectl delete Task/vulnerable -n {NAMESPACE}")
 
     def create_from_yaml(self, path: str):
         # delete resources in teardown method later

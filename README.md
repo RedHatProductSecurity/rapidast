@@ -6,15 +6,13 @@ RapiDAST (Rapid DAST) is an open-source security testing tool that automates DAS
 
 RapiDAST provides:
 
-- Automated HTTP/API security scanning using ZAP
-- Kubernetes operator scanning using OOBTKUBE
-- Automated vulnerability scanning using Nessus (requires a Nessus instance)
+- Simplified HTTP/API security scanning using [ZAP]
 - Command-line execution with yaml configuration, suitable for integration in CI/CD pipelines
 - Ability to run automated DAST scanning with pre-built or custom container images
 - HTML, JSON and XML report generation
-- Integration with Google Cloud Storage and [OWASP DefectDojo](https://owasp.org/www-project-defectdojo/)
+- Integration with reporting solutions such as [OWASP DefectDojo](https://owasp.org/www-project-defectdojo/)
 
-RapiDAST is for testing purposes, and should not be used on production systems.
+RapiDAST is used for testing applications, and should not be used on production systems.
 
 ## Quickstart
 
@@ -179,10 +177,7 @@ This method uses firefox in the background to load a login page and fill in user
         * `username`
         * `password`
         * `loginPageUrl`: the URL to the login page (either the full URL, or relative to the `application.url` value)
-        * `loginPageWait`: The number of seconds to wait after submitting the login form before the browser is closed. (default: 2)
         * `verifyUrl`: a URL that "proves" the user is authenticated (either the full URL, or relative to the `application.url` value). This URL must return a success if the user is correctly authenticated, and an error otherwise.
-        * `loggedInRegex`: Regex pattern used to identify Logged in messages (default: `\\Q 200 OK\\`)
-        * `loggedOutRegex`: Regex pattern used to identify Logged Out messages (default: `\\Q 403 Forbidden\\`)
 
 ### MacOS
 
@@ -493,26 +488,6 @@ scanners:
         	- formhandler.fields.field(0).value=default
 ```
 
-#### Nessus
-
-Nessus is a vulnerability scanner developed by Tenable, Inc. It helps organizations identify and address security vulnerabilities across various systems, devices, and applications.
-
-The following is an example to launch a scan:
-```yaml
-scanners:
-  nessus:
-    server:
-      url: https://nessus-example.com/ # URL of Nessus instance
-      username: foo # OR username_from_var: NESSUS_USER
-      password: bar # OR password_from_var: NESSUS_PASSWORD
-    scan:
-      name: test-scan # name of new scan to create
-      folder: test-folder # name of folder in to contain scan
-      policy: "py-test" # policy used for scan
-      # timeout: 600 # timeout in seconds to complete scan
-      targets:
-      - 127.0.0.1
-```
 
 #### Generic scanner
 

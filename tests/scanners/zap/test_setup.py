@@ -202,78 +202,16 @@ def test_setup_authentication_auth_rtoken_preauth(test_config):
     assert "Invalid URL '<token retrieval URL>'" in str(e_info.value)
 
 
-def test_setup_authentication_auth_browser(test_config):
-    authentication = {
-        "type": "browser",
-        "parameters": {
-            "loginPageUrl": "http://example.com/login",
-            "verifyUrl": "/verify",
-            "username": "usern",
-            "password": "pass",
-            "loginPageWait": "3",
-            "loggedInRegex": "\\Q 200 OK\\E",
-            "loggedOutRegex": "\\Q 401 Unauthorized\\E",
-        },
-    }
-
-    test_config.set("general.authentication", authentication)
-    test_config.merge(test_config.get("general", default={}), preserve=False, root=f"scanners.zap")
-    test_zap = ZapNone(config=test_config)
-    test_zap.setup()
-
-    assert test_zap.authenticated == True
-    assert test_zap.automation_config["env"]["contexts"][0]["authentication"] == {
-        "method": "browser",
-        "parameters": {
-            "browserId": "firefox-headless",
-            "loginPageUrl": "http://example.com/login",
-            "loginPageWait": "3",
-        },
-        "verification": {
-            "loggedInRegex": "\\Q 200 OK\\E",
-            "loggedOutRegex": "\\Q 401 Unauthorized\\E",
-            "method": "poll",
-            "pollFrequency": 60,
-            "pollPostData": "",
-            "pollUnits": "requests",
-            "pollUrl": "http://example.com/verify",
-        },
-    }
-
-
 ## Testing APIs & URLs ##
 
 
 def test_setup_import_urls(test_config):
-    # trick: use is the current pytest as import file
+    # trick: set this very file as import
+    test_config.set("scanners.zap.importUrlsFromFile", __file__)
 
-    # 1- Test importUrlsFromFile, with type "har"
-    test_config.set("scanners.zap.importUrlsFromFile", {"type": "har", "fileName": __file__})
     test_zap = ZapNone(config=test_config)
     test_zap.setup()
-    for item in test_zap.automation_config["jobs"]:
-        if item["type"] == "import":
-            assert item["parameters"]["type"] == "har"
-            break
-    else:
-        assert False
-
-    # 2- Test that importUrlsFromFile defaults to "url" type
-    test_config.set("scanners.zap.importUrlsFromFile", {"fileName": __file__})
-    test_zap = ZapNone(config=test_config)
-    test_zap.setup()
-    for item in test_zap.automation_config["jobs"]:
-        if item["type"] == "import":
-            assert item["parameters"]["type"] == "url"
-            break
-    else:
-        assert False
-
-    # 3- Test that importUrlsFromFile fails if the type is incorrect
-    test_config.set("scanners.zap.importUrlsFromFile", {"type": "doesntexist", "fileName": __file__})
-    test_zap = ZapNone(config=test_config)
-    with pytest.raises(ValueError) as exc:
-        test_zap.setup()
+    assert Path(test_zap.host_work_dir, "importUrls.txt").is_file()
 
 
 def test_setup_exclude_urls(test_config):
@@ -296,87 +234,6 @@ def test_setup_include_urls(test_config):
 
     assert "abc" in find_context(test_zap.automation_config)["includePaths"]
     assert "def" in find_context(test_zap.automation_config)["includePaths"]
-
-
-def test_setup_replacer_no_rule(test_config):
-    test_config.set("scanners.zap.replacer.parameters.deleteAllRules", False)
-    test_zap = ZapNone(config=test_config)
-
-    # test: not having a rule raises ValueError
-    with pytest.raises(ValueError):
-        test_zap.setup()
-
-
-def test_setup_replacer_parameter(test_config):
-    test_rule = {
-        "description": "test_rule1",  # String, the name of the rule
-        "url": ".*",  # (optional) String, a regex which will be used to match URLs, if empty then it will match all
-        "matchType": "req_body_str",  # String, one of req_header, req_header_str, req_body_str, resp_header, resp_header_str, resp_body_str
-        "matchString": "John Doe",  # String, will be used to identify what should be replaced
-        "matchRegex": False,  # Boolean, if set then the matchString will be treated as a regex, default false
-        "replacementString": "test_string",  # String, the new string that will replace the specified selection
-        "tokenProcessing": False,  # (optional) Boolean, when enabled the replacementString may contain a single token
-    }
-
-    test_config.set("scanners.zap.replacer.rules", [test_rule])
-
-    test_zap = ZapNone(config=test_config)
-    test_zap.setup()
-
-    # test: deleteAllRules is True when it is not set
-    for item in test_zap.automation_config["jobs"]:
-        if item["type"] == "replacer":
-            assert item["parameters"]["deleteAllRules"] is True
-
-    # test: deleteAllRules parameter is set to False
-    test_config.set("scanners.zap.replacer.parameters.deleteAllRules", False)
-    test_zap = ZapNone(config=test_config)
-    test_zap.setup()
-
-    for item in test_zap.automation_config["jobs"]:
-        if item["type"] == "replacer":
-            assert isinstance(item["parameters"]["deleteAllRules"], bool)
-            assert item["parameters"]["deleteAllRules"] is False
-
-    # test: when deleteAllRules parameter is not Boolean type
-    test_config.set("scanners.zap.replacer.parameters.deleteAllRules", "non-boolean")
-    test_zap = ZapNone(config=test_config)
-    with pytest.raises(ValueError):
-        test_zap.setup()
-
-
-def test_setup_replacer_rules(test_config):
-    # test rules
-    test_rule1 = {
-        "description": "test_rule1",  # String, the name of the rule
-        "url": ".*",  # (optional) String, a regex which will be used to match URLs, if empty then it will match all
-        "matchType": "req_body_str",  # String, one of req_header, req_header_str, req_body_str, resp_header, resp_header_str, resp_body_str
-        "matchString": "John Doe",  # String, will be used to identify what should be replaced
-        "matchRegex": False,  # Boolean, if set then the matchString will be treated as a regex, default false
-        "replacementString": "test_string",  # String, the new string that will replace the specified selection
-        "tokenProcessing": False,  # (optional) Boolean, when enabled the replacementString may contain a single token
-    }
-    test_rule2 = {
-        "description": "test_rule2",  # String, the name of the rule
-        "matchType": "req_header",  # String, one of req_header, req_header_str, req_body_str, resp_header, resp_header_str, resp_body_str
-        "matchString": "Cookie",  # String, will be used to identify what should be replaced
-        "matchRegex": True,  # Boolean, if set then the matchString will be treated as a regex, default false
-        "replacementString": "session=abc123",
-    }
-
-    test_config.set("scanners.zap.replacer.rules", [test_rule1, test_rule2])
-
-    test_zap = ZapNone(config=test_config)
-    test_zap.setup()
-
-    for item in test_zap.automation_config["jobs"]:
-        if item["type"] == "replacer":
-            assert item["rules"][0] is test_rule1
-            assert isinstance(item["rules"][0]["matchRegex"], bool)
-            assert isinstance(item["rules"][0]["tokenProcessing"], bool)
-
-            assert item["rules"][1] is test_rule2
-            assert isinstance(item["rules"][1]["matchRegex"], bool)
 
 
 @patch("scanners.zap.zap.validate_active_scan_policy")

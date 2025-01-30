@@ -365,7 +365,6 @@ class Zap(RapidastScanner):
         self._setup_api()
         self._setup_graphql()
         self._setup_import_urls()
-        self._setup_replacer()
         self._setup_active_scan()
         self._setup_passive_wait()
         self._setup_report()
@@ -377,35 +376,17 @@ class Zap(RapidastScanner):
 
     def _setup_import_urls(self):
         """If importUrlsFromFile exists:
-        Prepare a URL import job. All ZAP's import job are supported: 'har', 'modsec2', 'url' (default), 'zap_messages'
-        importUrlsFromFile is a dictionary: { "type": "<type>", "fileName": "<path/to/file>"}
-
-        The filename of the import will always be copied in the `container_work_dir` as importUrls.txt
+        prepare an import job for URLs importUrlsFromFile _must_ be an existing file on the host
+        Its content is a text file: a list of GET URLs, each of which will be scanned
         """
-        if not self.my_conf("importUrlsFromFile"):
-            # no import configured
+        job = {"name": "import", "type": "import", "parameters": {"type": "url"}}
+
+        orig = self.my_conf("importUrlsFromFile")
+        if not orig:
             return
-
-        # Basic job config. The `type` parameter will be set later
-        job = {
-            "name": "import",
-            "type": "import",
-            "parameters": {"fileName": f"{self.container_work_dir}/importUrls.txt"},
-        }
-
-        types = ("har", "modsec2", "url", "zap_messages")
-
-        source = ""  # Location of the import file on the host
-
-        source = self.my_conf("importUrlsFromFile.fileName")
-        if not source:
-            raise ValueError("ZAP config error: importUrlsFromFile must have a `fileName` entry")
-        job["parameters"]["type"] = self.my_conf("importUrlsFromFile.type", "url")
-
-        if not job["parameters"]["type"] in types:
-            raise ValueError(f"ZAP config error: importUrlsFromFile.type must be within {types}")
-
-        self._include_file(source, job["parameters"]["fileName"])
+        dest = f"{self.container_work_dir}/importUrls.txt"
+        self._include_file(orig, dest)
+        job["parameters"]["fileName"] = dest
         self.automation_config["jobs"].append(job)
 
     def _setup_export_site_tree(self):
@@ -637,45 +618,6 @@ class Zap(RapidastScanner):
         }
         self.automation_config["jobs"].append(waitfor)
 
-    def _setup_replacer(self):
-        """Adds the replacer to the job list"""
-
-        def _validate_rule_boolean_values(rule):
-            if not isinstance(rule["matchRegex"], bool):
-                raise ValueError("The matchRegex in the replacer rule must be set to a Boolean value")
-
-            if "tokenProcessing" in rule and not isinstance(rule["tokenProcessing"], bool):
-                raise ValueError("The tokenProcessing in the replacer rule must be set to a Boolean value")
-
-        if not self.my_conf("replacer"):
-            return
-
-        rules = self.my_conf("replacer.rules")
-        if rules:
-            if not isinstance(rules, list):
-                raise ValueError("replacer.rules must be a list")
-
-            for item in rules:
-                _validate_rule_boolean_values(item)
-        else:
-            raise ValueError("replacer must have a rule at least")
-
-        delete_all_rules = self.my_conf("replacer.parameters.deleteAllRules", default=True)
-        if not isinstance(delete_all_rules, bool):
-            raise ValueError("replacer.parameters.deleteAllRules must be set to a Boolean value")
-
-        # replacer schema
-        replacer = {
-            "name": "replacer",
-            "type": "replacer",
-            "parameters": {
-                "deleteAllRules": delete_all_rules,
-            },
-            "rules": rules,
-        }
-
-        self.automation_config["jobs"].append(replacer)
-
     def _setup_active_scan(self):
         """Adds an active scan job list, if there is one"""
 
@@ -878,22 +820,18 @@ class Zap(RapidastScanner):
         if not verify_url.startswith("http"):
             verify_url = self.config.get("application.url") + verify_url
 
-        logged_in_regex = self.my_conf(f"{params_path}.loggedInRegex", "\\Q 200 OK\\E")
-        logged_out_regex = self.my_conf(f"{params_path}.loggedOutRegex", "\\Q 403 Forbidden\\E")
-        login_page_wait = self.my_conf(f"{params_path}.loginPageWait", "2")
-
         # 1- complete the context: install the form based auth, and add a user
         context_["authentication"] = {
             "method": "browser",
             "parameters": {
                 "loginPageUrl": login_page_url,
-                "loginPageWait": login_page_wait,
+                "loginPageWait": 2,
                 "browserId": "firefox-headless",
             },
             "verification": {
                 "method": "poll",
-                "loggedInRegex": logged_in_regex,
-                "loggedOutRegex": logged_out_regex,
+                "loggedInRegex": "\\Q 200 OK\\E",
+                "loggedOutRegex": "\\Q 403 Forbidden\\E",
                 "pollFrequency": 60,
                 "pollUnits": "requests",
                 "pollUrl": verify_url,

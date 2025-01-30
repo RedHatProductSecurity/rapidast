@@ -1,5 +1,5 @@
 ---
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: Pipeline
 metadata:
   name: rapidast-e2e
@@ -54,13 +54,11 @@ spec:
           - name: revision
             value: main
           - name: pathInRepo
-            value: task/provision-env-with-ephemeral-namespace/0.1/provision-env-with-ephemeral-namespace.yaml
+            value: task/eaas-provision-space/0.1/eaas-provision-space.yaml
       params:
-        - name: KONFLUXNAMESPACE
-          value: $(context.pipelineRun.namespace)
-        - name: PIPELINERUN_NAME
+        - name: ownerName
           value: $(context.pipelineRun.name)
-        - name: PIPELINERUN_UID
+        - name: ownerUid
           value: $(context.pipelineRun.uid)
 
     - name: copy-nessus-secret
@@ -103,13 +101,11 @@ spec:
           - name: revision
             value: main
           - name: pathInRepo
-            value: task/provision-env-with-ephemeral-namespace/0.1/provision-env-with-ephemeral-namespace.yaml
+            value: task/eaas-provision-space/0.1/eaas-provision-space.yaml
       params:
-        - name: KONFLUXNAMESPACE
-          value: $(context.pipelineRun.namespace)
-        - name: PIPELINERUN_NAME
+        - name: ownerName
           value: $(context.pipelineRun.name)
-        - name: PIPELINERUN_UID
+        - name: ownerUid
           value: $(context.pipelineRun.uid)
 
     # XXX integrations tests can't reference Tasks in the same PR AFAICT

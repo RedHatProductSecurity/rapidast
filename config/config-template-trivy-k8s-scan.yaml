@@ -7,7 +7,7 @@ config:
   # This value tells RapiDAST what schema should be used to read this configuration.
   # Therefore you should only change it if you update the configuration to a newer schema
   # It is intended to keep backward compatibility (newer RapiDAST running an older config)
-  configVersion: 5
+  configVersion: 6
 
 # `application` contains data related to the application, not to the scans.
 application:
@@ -40,7 +40,7 @@ scanners:
     # 'inline' is used when container.type is not 'podman'
     # 'toolDir' specifies the default directory where inline scripts are located
     #toolDir: scanners/generic/tools
-    inline: "trivy k8s --kubeconfig=/home/rapidast/.kube/config -n default pod --scanners=misconfig --report all --format json | convert_trivy_k8s_to_sarif.py"
+    inline: "trivy k8s --kubeconfig=/opt/rapidast/.kube/config -n default pod --scanners=misconfig --report all --format json | convert_trivy_k8s_to_sarif.py"
 
     container:
       parameters:

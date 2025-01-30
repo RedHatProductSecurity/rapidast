@@ -4,13 +4,7 @@ metadata:
   name: rapidast-nessus
 spec:
   containers:
-  - command:
-    - bash
-    - -c
-    - ./rapidast.py
-    env:
-    - name: HOME
-      value: /opt/rapidast
+  - env:
     - name: NESSUS_USER
       value: admin
     - name: NESSUS_PASSWORD
@@ -28,8 +22,6 @@ spec:
     volumeMounts:
     - name: config-volume
       mountPath: /opt/rapidast/config
-  securityContext:
-    supplementalGroups: [1000] # "dast" group, necessary to write to /opt/rapidast/results if no PVC mounted
   volumes:
   - name: config-volume
     configMap:

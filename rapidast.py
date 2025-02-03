@@ -2,6 +2,7 @@
 import argparse
 import logging
 import os
+from pathlib import Path
 import pprint
 import re
 import sys
@@ -205,7 +206,51 @@ def dump_rapidast_redacted_configs(main_config_file_location: str, destination_d
             logging.error("Failed to dump configuration. Exiting.")
             sys.exit(2)
 
+def deep_traverse_and_replace(d: Dict[str, Any], suffix: str) -> Dict[str, Any]:
+    """
+    Recursively traverse a dictionary and replace key-value pairs where the key ends with `suffix`
+    The value is replaced with the corresponding environment variable value if available.
+    """
+    keys_to_replace = [key for key in d if isinstance(key, str) and key.endswith(suffix)]
 
+    for key in keys_to_replace:
+        new_key = key[:-len(suffix)]
+        env_value = os.getenv(d[key])
+        d[new_key] = env_value
+        del d[key]
+
+    for key, value in d.items():
+        if isinstance(value, dict):
+            deep_traverse_and_replace(value, suffix)
+        elif isinstance(value, list):
+            for i, item in enumerate(value):
+                if isinstance(item, dict):
+                    value[i] = deep_traverse_and_replace(item, suffix)
+
+    return d
+
+def validate_config(config, schema_path: Path) -> bool:
+    """
+    Validate a configuration dictionary against a JSON schema file
+    """
+    try:
+        logging.info("Validating configuration")
+        with schema_path.open("r", encoding="utf-8") as file:
+            schema = json.load(file)
+
+        validate(instance=config, schema=schema)
+        logging.info("Configuration is valid")
+        return True
+    except ValidationError as ve:
+        logging.error(f"Validation error: {ve.message}")
+    except SchemaError as se:
+        logging.error(f"Schema error: {se.message}")
+    except json.JSONDecodeError:
+        logging.error(f"Failed to parse JSON schema: {schema_path}")
+    except Exception as e:
+        logging.error(f"Unexpected error: {e}")
+    
+    return False
 def run():
     parser = argparse.ArgumentParser(
         description="Runs various DAST scanners against a defined target, as configured by a configuration file."
@@ -262,12 +307,17 @@ def run():
     config.set("config.results_dir", full_result_dir_path)
 
     logging.debug(f"The entire loaded configuration is as follow:\n=====\n{pp.pformat(config)}\n=====")
-    
-    print(config.conf)
-    validate_config(config.conf, "rapidast_schema.json")
-    
-    sys.exit(1)
 
+    config_version = config.get("config", {}).get("configVersion")
+    if not config_version:
+        logging.error("Missing 'configVersion' in configuration")
+    else:
+        schema_path = Path(f"config/schemas/{config_version}/rapidast_schema.json")
+        if schema_path.exists():
+            validate_config(config.conf, schema_path)    
+        else:
+            logging.warning(f"Configuration schema missing: {schema_path}. Skipping validation.")
+    
     # Do early: load the environment file if one is there
     load_environment(config)
 
@@ -310,19 +360,6 @@ def run():
     else:
         sys.exit(0)
 
-def validate_config(config, schema_path):
-    try:
-        with open(schema_path, 'r') as file:
-            schema = json.load(file)
-            
-        validate(instance=config, schema=schema)
-        print("Configuration is valid.")
-    except ValidationError as ve:
-        print(f"Validation error: {ve.message}")
-    except SchemaError as se:
-        print(f"Schema error: {se.message}")
-    except Exception as e:
-        print(f"Unexpected error: {e}")
 
 if __name__ == "__main__":
     run()

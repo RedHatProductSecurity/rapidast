@@ -1,0 +1,398 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "RapiDAST Configuration",
+    "description": "Schema for validating RapiDAST configuration files",
+    "type": "object",
+    "properties": {
+        "config": {
+            "type": "object",
+            "properties": {
+                "configVersion": {
+                    "type": "integer"
+                },
+                "base_results_dir": {
+                    "type": "string"
+                },
+                "tls_verify_for_rapidast_downloads": {
+                    "type": "boolean"
+                },
+                "environ": {
+                    "type": "object",
+                    "properties": {
+                        "envFile": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "envFile"
+                    ]
+                },
+                "googleCloudStorage": {
+                    "type": "object",
+                    "properties": {
+                        "keyFile": {
+                            "type": "string"
+                        },
+                        "bucketName": {
+                            "type": "string"
+                        },
+                        "directory": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "keyFile",
+                        "bucketName"
+                    ]
+                },
+                "defectDojo": {
+                    "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string"
+                        },
+                        "authorization": {
+                            "type": "object",
+                            "properties": {
+                                "username": {
+                                    "type": "string"
+                                },
+                                "parameters": {
+                                    "type": "string"
+                                },
+                                "token": {
+                                    "type": "string"
+                                }
+                            },
+                            "oneOf": [
+                                {
+                                    "required": [
+                                        "token"
+                                    ]
+                                },
+                                {
+                                    "required": [
+                                        "username",
+                                        "password"
+                                    ]
+                                }
+                            ]
+                        },
+                        "ssl": {
+                            "type": "boolean"
+                        }
+                    },
+                    "required": [
+                        "url",
+                        "authorization"
+                    ]
+                }
+            },
+            "required": [
+                "configVersion"
+            ]
+        },
+        "application": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "shortName": {
+                    "type": "string"
+                },
+                "ProductName": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string",
+                    "format": "uri"
+                }
+            },
+            "required": [
+                "shortName"
+            ]
+        },
+        "general": {
+            "oneOf": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "proxy": {
+                            "properties": {
+                                "proxyHost": {
+                                    "type": "string"
+                                },
+                                "proxyPort": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "proxyHost",
+                                "proxyPort"
+                            ]
+                        },
+                        "authentication": {
+                            "type": "object",
+                            "properties": {
+                                "type": {
+                                    "type": "string",
+                                    "enum": [
+                                        "oauth2_rtoken",
+                                        "http_basic",
+                                        "http_header",
+                                        "cookie",
+                                        "browser"
+                                    ]
+                                },
+                                "parameters": {
+                                    "type": "object",
+                                    "properties": {
+                                        "username": {
+                                            "type": "string"
+                                        },
+                                        "password": {
+                                            "type": "string"
+                                        },
+                                        "token_endpoint": {
+                                            "type": "string"
+                                        },
+                                        "client_id": {
+                                            "type": "string"
+                                        },
+                                        "rtoken": {
+                                            "type": "string"
+                                        },
+                                        "preauth": {
+                                            "type": "string"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "value": {
+                                            "type": "string"
+                                        },
+                                        "loginPageUrl": {
+                                            "type": "string"
+                                        },
+                                        "loginPageWait": {
+                                            "type": "string"
+                                        },
+                                        "verifyUrl": {
+                                            "type": "string"
+                                        },
+                                        "loggedInRegex": {
+                                            "type": "string"
+                                        },
+                                        "loggedOutRegex": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "required": [
+                                "type",
+                                "parameters"
+                            ]
+                        },
+                        "container": {
+                            "oneOf": [
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string",
+                                            "enum": [
+                                                "podman",
+                                                "none"
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "type": "null"
+                }
+            ]
+        },
+        "scanners": {
+            "type": "object",
+            "additionalProperties": {
+                "oneOf": [
+                    {
+                        "type": "object",
+                        "description": "ZAP Scanner",
+                        "properties": {
+                            "apiScan": {
+                                "type": "object",
+                                "properties": {
+                                    "apis": {
+                                        "type": "object",
+                                        "properties": {
+                                            "apiUrl": {
+                                                "type": "string",
+                                                "format": "uri"
+                                            },
+                                            "apiFile": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "oneOf": [
+                                            {
+                                                "required": [
+                                                    "apiUrl"
+                                                ]
+                                            },
+                                            {
+                                                "required": [
+                                                    "apiFile"
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "apis"
+                                ]
+                            },
+                            "passiveScan": {
+                                "type": "object",
+                                "properties": {
+                                    "disabledRules": {
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "activeScan": {
+                                "type": "object",
+                                "properties": {
+                                    "policy": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        "required": [
+                            "apiScan"
+                        ]
+                    },
+                    {
+                        "type": "object",
+                        "description": "Generic Scanner",
+                        "properties": {
+                            "results": {
+                                "type": "string"
+                            },
+                            "toolDir": {
+                                "type": "string"
+                            },
+                            "inline": {
+                                "type": "string"
+                            },
+                            "container": {
+                                "type": "object",
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "podman"
+                                        ]
+                                    },
+                                    "parameters": {
+                                        "type": "object",
+                                        "properties": {
+                                            "image": {
+                                                "type": "string"
+                                            },
+                                            "command": {
+                                                "type": "string"
+                                            },
+                                            "validReturns": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "integer"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "required": [
+                            "inline"
+                        ]
+                    },
+                    {
+                        "type": "object",
+                        "description": "Nessus Scanner",
+                        "properties": {
+                            "server": {
+                                "type": "object",
+                                "properties": {
+                                    "url": {
+                                        "type": "string"
+                                    },
+                                    "username": {
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "url",
+                                    "username",
+                                    "password"
+                                ]
+                            },
+                            "scan": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "folder": {
+                                        "type": "string"
+                                    },
+                                    "policy": {
+                                        "type": "string"
+                                    },
+                                    "timeout": {
+                                        "type": "integer"
+                                    },
+                                    "targets": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "name",
+                                    "folder",
+                                    "targets"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "scan",
+                            "server"
+                        ]
+                    }
+                ]
+            }
+        }
+    },
+    "required": [
+        "application"
+    ]
+}

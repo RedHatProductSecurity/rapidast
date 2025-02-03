@@ -63,7 +63,7 @@ scanners:
 
     # this config is used when container.type is not 'podman'
     # toolDir: scanners/generic/tools
-    # inline: "<command to run>"
+    inline: "<command to run>"
 
     # this config is only used when container.type is 'podman'
     #container:

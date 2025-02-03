@@ -20,7 +20,7 @@ from exports.defect_dojo import DefectDojo
 from exports.google_cloud_storage import GoogleCloudStorage
 from utils import add_logging_level
 
-from jsonschema import validate, ValidationError, SchemaError
+from jsonschema import Draft202012Validator, validate, ValidationError, SchemaError
 import json
 
 
@@ -237,7 +237,9 @@ def validate_config(config: dict, schema_path: Path) -> bool:
         logging.info("Validating configuration")
         with schema_path.open("r", encoding="utf-8") as file:
             schema = json.load(file)
-        validate(instance=config, schema=schema)
+        
+        validate(instance=config, schema=schema, format_checker=Draft202012Validator.FORMAT_CHECKER)
+        
         logging.info("Configuration is valid")
         return True
     except ValidationError as ve:
@@ -322,7 +324,7 @@ def run():
     logging.debug(f"The entire loaded configuration is as follow:\n=====\n{pp.pformat(config)}\n=====")
 
     validate_config_schema(config)
-        
+            
     # Do early: load the environment file if one is there
     load_environment(config)
 

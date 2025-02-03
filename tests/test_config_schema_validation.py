@@ -13,6 +13,5 @@ def test_validate_config_schema():
             continue
         
         config = configmodel.RapidastConfigModel(yaml.safe_load(load_config_file(file_path)))
-        
         assert validate_config_schema(config) == True
     

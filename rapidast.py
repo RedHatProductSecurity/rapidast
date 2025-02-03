@@ -218,7 +218,10 @@ def deep_traverse_and_replace(d: dict, suffix: str) -> dict:  # pylint: disable=
 
     for key in keys_to_replace:
         new_key = key[: -len(suffix)]
-        env_value = os.getenv(d[key])
+
+        # @FIX: This will raise an unhandled exception if the referenced environment variable is not defined
+        env_value = os.environ[d[key]]
+
         d[new_key] = env_value
         del d[key]
 
@@ -265,7 +268,8 @@ def validate_config_schema(config: configmodel.RapidastConfigModel) -> bool:
     else:
         schema_path = Path(f"config/schemas/{config_version}/rapidast_schema.json")
         if schema_path.exists():
-            return validate_config(config.conf, schema_path)
+            resolved_config = deep_traverse_and_replace(config.conf, "_from_var")
+            return validate_config(resolved_config, schema_path)
         else:
             logging.warning(f"Configuration schema missing: {schema_path}. Skipping validation")
     return False

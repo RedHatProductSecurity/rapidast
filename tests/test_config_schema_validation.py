@@ -9,6 +9,10 @@ from rapidast import validate_config_schema
 
 def test_validate_config_schema():
     directory = "config"
+
+    for v in ["RTOKEN", "EXPORTED_TOKEN"]:
+        os.environ[v] = "dummy value"
+
     for filename in os.listdir(directory):
         file_path = os.path.join(directory, filename)
 

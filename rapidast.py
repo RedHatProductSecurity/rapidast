@@ -228,8 +228,8 @@ def deep_traverse_and_replace(d: Dict[str, Any], suffix: str) -> Dict[str, Any]:
                     value[i] = deep_traverse_and_replace(item, suffix)
 
     return d
-
-def validate_config(config, schema_path: Path) -> bool:
+  
+def validate_config(config: dict, schema_path: Path) -> bool:
     """
     Validate a configuration dictionary against a JSON schema file
     """
@@ -237,7 +237,6 @@ def validate_config(config, schema_path: Path) -> bool:
         logging.info("Validating configuration")
         with schema_path.open("r", encoding="utf-8") as file:
             schema = json.load(file)
-
         validate(instance=config, schema=schema)
         logging.info("Configuration is valid")
         return True
@@ -251,6 +250,20 @@ def validate_config(config, schema_path: Path) -> bool:
         logging.error(f"Unexpected error: {e}")
     
     return False
+
+def validate_config_schema(config: configmodel.RapidastConfigModel) -> bool:
+
+    config_version = config.get("config", {}).get("configVersion")
+    if not config_version:
+        logging.error("Missing 'configVersion' in configuration")
+    else:
+        schema_path = Path(f"config/schemas/{config_version}/rapidast_schema.json")
+        if schema_path.exists():
+            return validate_config(config.conf, schema_path)            
+        else:
+            logging.warning(f"Configuration schema missing: {schema_path}. Skipping validation")
+    return False
+
 def run():
     parser = argparse.ArgumentParser(
         description="Runs various DAST scanners against a defined target, as configured by a configuration file."
@@ -308,16 +321,8 @@ def run():
 
     logging.debug(f"The entire loaded configuration is as follow:\n=====\n{pp.pformat(config)}\n=====")
 
-    config_version = config.get("config", {}).get("configVersion")
-    if not config_version:
-        logging.error("Missing 'configVersion' in configuration")
-    else:
-        schema_path = Path(f"config/schemas/{config_version}/rapidast_schema.json")
-        if schema_path.exists():
-            validate_config(config.conf, schema_path)    
-        else:
-            logging.warning(f"Configuration schema missing: {schema_path}. Skipping validation.")
-    
+    validate_config_schema(config)
+        
     # Do early: load the environment file if one is there
     load_environment(config)
 

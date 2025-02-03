@@ -1,27 +1,29 @@
 #!/usr/bin/env python3
 import argparse
+import json
 import logging
 import os
-from pathlib import Path
 import pprint
 import re
 import sys
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 from typing import Dict
 from urllib import request
 
 import yaml
 from dotenv import load_dotenv
+from jsonschema import Draft202012Validator
+from jsonschema import SchemaError
+from jsonschema import validate
+from jsonschema import ValidationError
 
 import configmodel.converter
 import scanners
 from exports.defect_dojo import DefectDojo
 from exports.google_cloud_storage import GoogleCloudStorage
 from utils import add_logging_level
-
-from jsonschema import Draft202012Validator, validate, ValidationError, SchemaError
-import json
 
 
 pp = pprint.PrettyPrinter(indent=4)
@@ -206,7 +208,8 @@ def dump_rapidast_redacted_configs(main_config_file_location: str, destination_d
             logging.error("Failed to dump configuration. Exiting.")
             sys.exit(2)
 
-def deep_traverse_and_replace(d: Dict[str, Any], suffix: str) -> Dict[str, Any]:
+
+def deep_traverse_and_replace(d: dict, suffix: str) -> dict:  # pylint: disable=C0103
     """
     Recursively traverse a dictionary and replace key-value pairs where the key ends with `suffix`
     The value is replaced with the corresponding environment variable value if available.
@@ -214,7 +217,7 @@ def deep_traverse_and_replace(d: Dict[str, Any], suffix: str) -> Dict[str, Any]:
     keys_to_replace = [key for key in d if isinstance(key, str) and key.endswith(suffix)]
 
     for key in keys_to_replace:
-        new_key = key[:-len(suffix)]
+        new_key = key[: -len(suffix)]
         env_value = os.getenv(d[key])
         d[new_key] = env_value
         del d[key]
@@ -228,7 +231,8 @@ def deep_traverse_and_replace(d: Dict[str, Any], suffix: str) -> Dict[str, Any]:
                     value[i] = deep_traverse_and_replace(item, suffix)
 
     return d
-  
+
+
 def validate_config(config: dict, schema_path: Path) -> bool:
     """
     Validate a configuration dictionary against a JSON schema file
@@ -237,34 +241,35 @@ def validate_config(config: dict, schema_path: Path) -> bool:
         logging.info("Validating configuration")
         with schema_path.open("r", encoding="utf-8") as file:
             schema = json.load(file)
-        
+
         validate(instance=config, schema=schema, format_checker=Draft202012Validator.FORMAT_CHECKER)
-        
+
         logging.info("Configuration is valid")
         return True
-    except ValidationError as ve:
-        logging.error(f"Validation error: {ve.message}")
-    except SchemaError as se:
-        logging.error(f"Schema error: {se.message}")
+    except ValidationError as e:
+        logging.error(f"Validation error: {e.message}")
+    except SchemaError as e:
+        logging.error(f"Schema error: {e.message}")
     except json.JSONDecodeError:
         logging.error(f"Failed to parse JSON schema: {schema_path}")
-    except Exception as e:
+    except Exception as e:  # pylint: disable=W0718
         logging.error(f"Unexpected error: {e}")
-    
+
     return False
 
-def validate_config_schema(config: configmodel.RapidastConfigModel) -> bool:
 
+def validate_config_schema(config: configmodel.RapidastConfigModel) -> bool:
     config_version = config.get("config", {}).get("configVersion")
     if not config_version:
         logging.error("Missing 'configVersion' in configuration")
     else:
         schema_path = Path(f"config/schemas/{config_version}/rapidast_schema.json")
         if schema_path.exists():
-            return validate_config(config.conf, schema_path)            
+            return validate_config(config.conf, schema_path)
         else:
             logging.warning(f"Configuration schema missing: {schema_path}. Skipping validation")
     return False
+
 
 def run():
     parser = argparse.ArgumentParser(
@@ -298,7 +303,6 @@ def run():
 
     logging.debug(f"log level set to debug. Config file: '{config_file}'")
 
-    
     # Load config file
     try:
         config = configmodel.RapidastConfigModel(yaml.safe_load(load_config_file(config_file)))
@@ -315,7 +319,7 @@ def run():
             config.merge(yaml.safe_load(load_config_file(DEFAULT_CONFIG_FILE)), preserve=True)
         except yaml.YAMLError as exc:
             raise RuntimeError(f"YAML error in config {DEFAULT_CONFIG_FILE}':\n {str(exc)}") from exc
-    
+
     # Update to latest config schema if need be
     config = configmodel.converter.update_to_latest_config(config)
 
@@ -324,10 +328,9 @@ def run():
     logging.debug(f"The entire loaded configuration is as follow:\n=====\n{pp.pformat(config)}\n=====")
 
     validate_config_schema(config)
-            
+
     # Do early: load the environment file if one is there
     load_environment(config)
-
 
     # Prepare an export to Defect Dojo if one is configured.
     scan_exporter = None
@@ -348,7 +351,7 @@ def run():
             config.get("config.defectDojo.authorization.token"),
             config.get("config.defectDojo.ssl", default=True),
         )
-    
+
     # Run all scanners
     scan_error_count = 0
     for name in config.get("scanners"):

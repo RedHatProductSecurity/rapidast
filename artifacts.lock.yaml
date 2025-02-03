@@ -10,6 +10,6 @@ artifacts:
   - download_url: https://dl.k8s.io/release/v1.32.1/bin/linux/amd64/kubectl
     filename: kubectl
     checksum: "sha256:e16c80f1a9f94db31063477eb9e61a2e24c1a4eee09ba776b029048f5369db0c"
-  - download_url: https://github.com/aquasecurity/trivy/releases/download/v0.49.1/trivy_0.49.1_Linux-64bit.tar.gz
+  - download_url: https://github.com/aquasecurity/trivy/releases/download/v0.59.0/trivy_0.59.0_Linux-64bit.tar.gz
     filename: trivy.tar.gz
-    checksum: "sha256:8adc8236fafa42757fee770b7009893d2e4536cb2d5c0a2bb7fe00f7e91370e8"
+    checksum: "sha256:f9a7829aabfd116e79d3b05fa6ec30e2f1d767da6f7fed184905fa7d9125954b"

@@ -19,6 +19,10 @@ from exports.defect_dojo import DefectDojo
 from exports.google_cloud_storage import GoogleCloudStorage
 from utils import add_logging_level
 
+from jsonschema import validate, ValidationError, SchemaError
+import json
+
+
 pp = pprint.PrettyPrinter(indent=4)
 
 
@@ -234,6 +238,7 @@ def run():
 
     logging.debug(f"log level set to debug. Config file: '{config_file}'")
 
+    
     # Load config file
     try:
         config = configmodel.RapidastConfigModel(yaml.safe_load(load_config_file(config_file)))
@@ -250,16 +255,22 @@ def run():
             config.merge(yaml.safe_load(load_config_file(DEFAULT_CONFIG_FILE)), preserve=True)
         except yaml.YAMLError as exc:
             raise RuntimeError(f"YAML error in config {DEFAULT_CONFIG_FILE}':\n {str(exc)}") from exc
-
+    
     # Update to latest config schema if need be
     config = configmodel.converter.update_to_latest_config(config)
 
     config.set("config.results_dir", full_result_dir_path)
 
     logging.debug(f"The entire loaded configuration is as follow:\n=====\n{pp.pformat(config)}\n=====")
+    
+    print(config.conf)
+    validate_config(config.conf, "rapidast_schema.json")
+    
+    sys.exit(1)
 
     # Do early: load the environment file if one is there
     load_environment(config)
+
 
     # Prepare an export to Defect Dojo if one is configured.
     scan_exporter = None
@@ -280,7 +291,7 @@ def run():
             config.get("config.defectDojo.authorization.token"),
             config.get("config.defectDojo.ssl", default=True),
         )
-
+    
     # Run all scanners
     scan_error_count = 0
     for name in config.get("scanners"):
@@ -299,6 +310,19 @@ def run():
     else:
         sys.exit(0)
 
+def validate_config(config, schema_path):
+    try:
+        with open(schema_path, 'r') as file:
+            schema = json.load(file)
+            
+        validate(instance=config, schema=schema)
+        print("Configuration is valid.")
+    except ValidationError as ve:
+        print(f"Validation error: {ve.message}")
+    except SchemaError as se:
+        print(f"Schema error: {se.message}")
+    except Exception as e:
+        print(f"Unexpected error: {e}")
 
 if __name__ == "__main__":
     run()

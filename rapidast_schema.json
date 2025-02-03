@@ -1,0 +1,33 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "RapiDAST Configuration Schema",
+    "type": "object",
+    "properties": {
+        "application": {
+            "type": "object",
+            "properties": {
+                "name": { "type": "string" },
+                "description": { "type": "string" },
+                "url": { "type": "string", "format": "uri" }
+            },
+            "required": []
+        },
+        "scan": {
+            "type": "object",
+            "properties": {
+                "type": { "type": "string", "enum": ["passive", "active"] },
+                "depth": { "type": "integer", "minimum": 1 }
+            },
+            "required": ["type"]
+        },
+        "report": {
+            "type": "object",
+            "properties": {
+                "format": { "type": "string", "enum": ["html", "json", "xml"] },
+                "output_path": { "type": "string" }
+            },
+            "required": ["format"]
+        }
+    },
+    "required": ["application", "scan"]
+}

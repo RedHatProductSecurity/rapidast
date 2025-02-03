@@ -6,7 +6,7 @@
 FROM registry.access.redhat.com/ubi9-minimal AS deps
 
 # Indicate if dependencies were prefetched using Cachi2
-# They mush be located at /cachi2/output/deps
+# They must be located at /cachi2/output/deps
 ARG PREFETCH=false
 
 # These versions should be consistent with the listed in the artifacts.lock.yaml file

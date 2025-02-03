@@ -1,0 +1,13 @@
+default:
+  tags:
+  - shared # use shared gitlab runners
+
+job:
+  image:
+    name: quay.io/redhatproductsecurity/rapidast:development
+    entrypoint: [""] # setting entrypoint is required after rapidast v2.9.1
+  script:
+  - rapidast.py --config custom-config.yaml
+  artifacts:
+    paths:
+    - ./results/

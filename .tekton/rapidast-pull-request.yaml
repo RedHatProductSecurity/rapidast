@@ -29,6 +29,12 @@ spec:
     value: containerize/Containerfile
   - name: skip-checks
     value: "true"
+  - name: prefetch-input
+    value:
+    - {"type": "generic", "path": "."}
+    - {"type": "npm", "path": "."}
+  - name: build-args
+    value: [PREFETCH=true]
   pipelineSpec:
     description: |
       This pipeline is ideal for building container images from a Containerfile while maintaining trust after pipeline customization.
@@ -183,7 +189,7 @@ spec:
         - name: name
           value: prefetch-dependencies-oci-ta
         - name: bundle
-          value: quay.io/konflux-ci/tekton-catalog/task-prefetch-dependencies-oci-ta:0.1@sha256:3c11f5de6a0281bf93857f0c85bbbdfeda4cc118337da273fef0c138bda5eebb
+          value: quay.io/konflux-ci/tekton-catalog/task-prefetch-dependencies-oci-ta:0.1@sha256:90e1a4fd2c588f3f3b32d3bc7aa1e29ae0233dd8f976fa0532df508e60a345b3
         - name: kind
           value: task
         resolver: bundles

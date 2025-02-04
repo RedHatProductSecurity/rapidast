@@ -8,12 +8,16 @@
             "type": "object",
             "properties": {
                 "configVersion": {
+                    "default": 0,
+                    "$comment": "If no version is specified, the config converter will default to version 0",
                     "type": "integer"
                 },
                 "base_results_dir": {
+                    "default": "./results",
                     "type": "string"
                 },
                 "tls_verify_for_rapidast_downloads": {
+                    "default": true,
                     "type": "boolean"
                 },
                 "environ": {
@@ -23,9 +27,7 @@
                             "type": "string"
                         }
                     },
-                    "required": [
-                        "envFile"
-                    ]
+                    "required": []
                 },
                 "googleCloudStorage": {
                     "type": "object",
@@ -34,16 +36,15 @@
                             "type": "string"
                         },
                         "bucketName": {
+                            "default": "default-bucket-name",
                             "type": "string"
                         },
                         "directory": {
                             "type": "string"
                         }
                     },
-                    "required": [
-                        "keyFile",
-                        "bucketName"
-                    ]
+                    "comment": "Credentials are optional, as the client defaults to those inferred from the environment",
+                    "required": []
                 },
                 "defectDojo": {
                     "type": "object",
@@ -57,54 +58,46 @@
                                 "username": {
                                     "type": "string"
                                 },
-                                "parameters": {
+                                "password": {
                                     "type": "string"
                                 },
                                 "token": {
                                     "type": "string"
                                 }
-                            },
-                            "oneOf": [
-                                {
-                                    "required": [
-                                        "token"
-                                    ]
-                                },
-                                {
-                                    "required": [
-                                        "username",
-                                        "password"
-                                    ]
-                                }
-                            ]
+                            }
                         },
                         "ssl": {
+                            "default": true,
                             "type": "boolean"
                         }
                     },
-                    "required": [
-                        "url",
-                        "authorization"
+                    "oneOf": [
+                        {
+                            "required": [
+                                "url",
+                                "username",
+                                "password"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "url",
+                                "token"
+                            ]
+                        }
                     ]
                 }
             },
-            "required": [
-                "configVersion"
-            ]
+            "required": []
         },
         "application": {
             "type": "object",
             "properties": {
-                "name": {
-                    "type": "string"
-                },
                 "shortName": {
+                    "default": "scannedApp",
                     "type": "string"
                 },
                 "ProductName": {
-                    "type": "string"
-                },
-                "description": {
                     "type": "string"
                 },
                 "url": {
@@ -112,9 +105,7 @@
                     "format": "uri"
                 }
             },
-            "required": [
-                "shortName"
-            ]
+            "required": []
         },
         "general": {
             "oneOf": [
@@ -127,6 +118,7 @@
                                     "type": "string"
                                 },
                                 "proxyPort": {
+                                    "$comment": "@FIX: This should be an integer, but it is referenced as a string in the templates",
                                     "type": "string"
                                 }
                             },
@@ -150,52 +142,173 @@
                                 },
                                 "parameters": {
                                     "type": "object",
-                                    "properties": {
-                                        "username": {
-                                            "type": "string"
-                                        },
-                                        "password": {
-                                            "type": "string"
-                                        },
-                                        "token_endpoint": {
-                                            "type": "string"
-                                        },
-                                        "client_id": {
-                                            "type": "string"
-                                        },
-                                        "rtoken": {
-                                            "type": "string"
-                                        },
-                                        "preauth": {
-                                            "type": "string"
-                                        },
-                                        "name": {
-                                            "type": "string"
-                                        },
-                                        "value": {
-                                            "type": "string"
-                                        },
-                                        "loginPageUrl": {
-                                            "type": "string"
-                                        },
-                                        "loginPageWait": {
-                                            "type": "string"
-                                        },
-                                        "verifyUrl": {
-                                            "type": "string"
-                                        },
-                                        "loggedInRegex": {
-                                            "type": "string"
-                                        },
-                                        "loggedOutRegex": {
-                                            "type": "string"
-                                        }
-                                    }
+                                    "properties": {}
                                 }
                             },
                             "required": [
                                 "type",
                                 "parameters"
+                            ],
+                            "allOf": [
+                                {
+                                    "if": {
+                                        "properties": {
+                                            "type": {
+                                                "const": "oauth2_rtoken"
+                                            }
+                                        }
+                                    },
+                                    "then": {
+                                        "properties": {
+                                            "parameters": {
+                                                "properties": {
+                                                    "token_endpoint": {
+                                                        "type": "string"
+                                                    },
+                                                    "client_id": {
+                                                        "default": "cloud-services",
+                                                        "type": "string"
+                                                    },
+                                                    "rtoken": {
+                                                        "type": "string"
+                                                    },
+                                                    "preauth": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "rtoken"
+                                                ]
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "if": {
+                                        "properties": {
+                                            "type": {
+                                                "const": "http_basic"
+                                            }
+                                        }
+                                    },
+                                    "then": {
+                                        "properties": {
+                                            "parameters": {
+                                                "properties": {
+                                                    "username": {
+                                                        "type": "string"
+                                                    },
+                                                    "password": {
+                                                        "default": "cloud-services",
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "username",
+                                                    "password"
+                                                ]
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "if": {
+                                        "properties": {
+                                            "type": {
+                                                "const": "http_header"
+                                            }
+                                        }
+                                    },
+                                    "then": {
+                                        "properties": {
+                                            "parameters": {
+                                                "properties": {
+                                                    "name": {
+                                                        "default": "Authorization",
+                                                        "type": "string"
+                                                    },
+                                                    "value": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "value"
+                                                ]
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "if": {
+                                        "properties": {
+                                            "type": {
+                                                "const": "cookie"
+                                            }
+                                        }
+                                    },
+                                    "then": {
+                                        "properties": {
+                                            "parameters": {
+                                                "properties": {
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "value": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "name",
+                                                    "value"
+                                                ]
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "if": {
+                                        "properties": {
+                                            "type": {
+                                                "const": "browser"
+                                            }
+                                        }
+                                    },
+                                    "then": {
+                                        "properties": {
+                                            "parameters": {
+                                                "properties": {
+                                                    "username": {
+                                                        "type": "string"
+                                                    },
+                                                    "password": {
+                                                        "type": "string"
+                                                    },
+                                                    "loginPageUrl": {
+                                                        "type": "string"
+                                                    },
+                                                    "loginPageWait": {
+                                                        "type": "string"
+                                                    },
+                                                    "verifyUrl": {
+                                                        "type": "string"
+                                                    },
+                                                    "loggedInRegex": {
+                                                        "type": "string"
+                                                    },
+                                                    "loggedOutRegex": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "username",
+                                                    "password",
+                                                    "loginPageUrl",
+                                                    "verifyUrl"
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
                             ]
                         },
                         "container": {
@@ -205,21 +318,60 @@
                                     "properties": {
                                         "type": {
                                             "type": "string",
+                                            "default": "none",
                                             "enum": [
                                                 "podman",
                                                 "none"
                                             ]
+                                        },
+                                        "parameters": {
+                                            "type": "object",
+                                            "properties": {
+                                                "validReturns": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "integer"
+                                                    }
+                                                },
+                                                "image": {
+                                                    "type": "string"
+                                                },
+                                                "command": {
+                                                    "type": "string"
+                                                },
+                                                "podName": {
+                                                    "type": "string"
+                                                },
+                                                "volumes": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "integer"
+                                                    }
+                                                }
+                                            },
+                                            "required": []
                                         }
                                     }
                                 },
                                 {
+                                    "$comment": "An empty 'container' block will be interpreted as type 'none'",
                                     "type": "null"
                                 }
                             ]
+                        },
+                        "defectDojoExport": {
+                            "type": "object",
+                            "properties": {
+                                "parameters": {
+                                    "type": "object",
+                                    "$comment": "This options will directly be sent as parameters to DefectDojo's import/reimport endpoints"
+                                }
+                            }
                         }
                     }
                 },
                 {
+                    "$comment": "@FIX: Some templates reference an empty 'general' block. Adding this to ensure proper validation; otherwise, it will default to the 'object' type and fail validation",
                     "type": "null"
                 }
             ]
@@ -263,6 +415,61 @@
                                 "required": [
                                     "apis"
                                 ]
+                            },
+                            "importUrlsFromFile": {
+                                "type": "object",
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "default": "url",
+                                        "enum": [
+                                            "har",
+                                            "modsec2",
+                                            "url",
+                                            "zap_messages"
+                                        ]
+                                    },
+                                    "fileName": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "fileName"
+                                ]
+                            },
+                            "graphql": {
+                                "type": "object"
+                            },
+                            "spiderAjax": {
+                                "type": "object"
+                            },
+                            "replacer": {
+                                "type": "object",
+                                "properties": {
+                                    "rules": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "$comment": "@TODO: There are other properties, but they are passed directly to the Zap automation framework. These are the ones that have implications in Rapidast",
+                                            "properties": {
+                                                "matchRegex": {
+                                                    "type": "boolean"
+                                                },
+                                                "tokenProcessing": {
+                                                    "type": "boolean"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "parameters": {
+                                        "type": "object",
+                                        "properties": {
+                                            "deleteAllRules": {
+                                                "type": "boolean"
+                                            }
+                                        }
+                                    }
+                                }
                             },
                             "passiveScan": {
                                 "type": "object",
@@ -393,6 +600,6 @@
         }
     },
     "required": [
-        "application"
+        "scanners"
     ]
 }

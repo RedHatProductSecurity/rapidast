@@ -246,13 +246,12 @@ def validate_config(config: dict, schema_path: Path) -> bool:
             schema = json.load(file)
 
         validate(instance=config, schema=schema, format_checker=Draft202012Validator.FORMAT_CHECKER)
-
         logging.info("Configuration is valid")
         return True
     except ValidationError as e:
-        logging.error(f"Validation error: {e.message}")
+        logging.error(f"Validation error: {e.message}, json_path: {e.json_path}")
     except SchemaError as e:
-        logging.error(f"Schema error: {e.message}")
+        logging.error(f"Schema error: {e.message}, json_path: {e.json_path}")
     except json.JSONDecodeError:
         logging.error(f"Failed to parse JSON schema: {schema_path}")
     except Exception as e:  # pylint: disable=W0718
@@ -261,17 +260,21 @@ def validate_config(config: dict, schema_path: Path) -> bool:
     return False
 
 
-def validate_config_schema(config: configmodel.RapidastConfigModel) -> bool:
-    config_version = config.get("config", {}).get("configVersion")
-    if not config_version:
+def validate_config_schema(config_file) -> bool:
+    config = yaml.safe_load(load_config_file(config_file))
+
+    try:
+        config_version = config["config"]["configVersion"]
+    except KeyError:
         logging.error("Missing 'configVersion' in configuration")
+        return False
+
+    schema_path = Path(f"config/schemas/{config_version}/rapidast_schema.json")
+    if schema_path.exists():
+        resolved_config = deep_traverse_and_replace(config, "_from_var")
+        return validate_config(resolved_config, schema_path)
     else:
-        schema_path = Path(f"config/schemas/{config_version}/rapidast_schema.json")
-        if schema_path.exists():
-            resolved_config = deep_traverse_and_replace(config.conf, "_from_var")
-            return validate_config(resolved_config, schema_path)
-        else:
-            logging.warning(f"Configuration schema missing: {schema_path}. Skipping validation")
+        logging.warning(f"Configuration schema missing: {schema_path}. Skipping validation")
     return False
 
 
@@ -307,6 +310,8 @@ def run():
 
     logging.debug(f"log level set to debug. Config file: '{config_file}'")
 
+    validate_config_schema(config_file)
+
     # Load config file
     try:
         config = configmodel.RapidastConfigModel(yaml.safe_load(load_config_file(config_file)))
@@ -330,8 +335,6 @@ def run():
     config.set("config.results_dir", full_result_dir_path)
 
     logging.debug(f"The entire loaded configuration is as follow:\n=====\n{pp.pformat(config)}\n=====")
-
-    validate_config_schema(config)
 
     # Do early: load the environment file if one is there
     load_environment(config)

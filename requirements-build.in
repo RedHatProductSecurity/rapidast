@@ -1,4 +1,0 @@
-setuptools>=46.4.0
-wheel
-flit_core<4,>=3.8
-setuptools-scm

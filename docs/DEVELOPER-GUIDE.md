@@ -202,6 +202,7 @@ This project uses `pip-compile` from `pip-tools` to manage dependencies.
 Make sure you have an environment that closely matches the environment in the container build. This means it should have the same operating system and the same Python `$major.$minor` version.
 
 - `pip-tools`: Used for managing Python dependencies and generating `requirements.txt`
+- `pybuild-deps`: Generates build dependencies by compiling build-requirements.txt from `requirements.txt`
 
 ### Installing a new dependency
 
@@ -223,21 +224,9 @@ This step ensures that any build dependencies are also prefetched, in case extra
 
 1. Set up `requirements.txt` as described above
 
-2. Add any direct build dependencies to a separate file, `requirements-build.in`
-
-3. Run the [pip_find_builddeps.py](https://raw.githubusercontent.com/containerbuildsystem/cachito/master/bin/pip_find_builddeps.py) script to find the build dependencies:
-
-
+2. Generates build dependencies from `requirements.txt`, run the following command:
    ```sh
-    pip_find_builddeps.py requirements.txt --append --only-write-on-update -o requirements-build.in
+   pybuild-deps compile --output-file=requirements-build.txt
    ```
 
-   This will detect the build dependencies required by the packages in `requirements.txt` and append them to `requirements-build.in`
-
-4. Compile `requirements-build.in`** into a `requirements-build.txt` file:
-
-   ```sh
-   pip-compile requirements-build.in -o requirements-build.txt --allow-unsafe
-   ```
-
-   This will generate a `requirements-build.txt` file with the pinned build dependencies.
+The [Konflux documentation](https://konflux-ci.dev/docs/how-tos/configuring/prefetching-dependencies/#pip) recommends using the [pip_find_builddeps.py](https://raw.githubusercontent.com/containerbuildsystem/cachito/master/bin/pip_find_builddeps.py) script to identify build dependencies. However, `pybuild-deps` seems to generate a more comprehensive requirements file. This is also the recommended approach by [cachi2](https://github.com/containerbuildsystem/cachi2/blob/main/docs/pip.md#requirements-buildtxt)

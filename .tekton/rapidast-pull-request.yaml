@@ -35,6 +35,15 @@ spec:
     - {"type": "npm", "path": "."}
   - name: build-args
     value: [PREFETCH=true]
+  taskRunSpecs:
+    - pipelineTaskName: ecosystem-cert-preflight-checks
+      stepSpecs:
+        - name: check-container
+          computeResources:
+            requests:
+              memory: 512Mi
+            limits:
+              memory: 4Gi
   pipelineSpec:
     description: |
       This pipeline is ideal for building container images from a Containerfile while maintaining trust after pipeline customization.

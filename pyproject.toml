@@ -1,2 +1,13 @@
+[project]
+name = "rapidast"
+version = "0.1.0"
+dynamic = ["dependencies"]
+
+[tool.setuptools]
+packages = ["configmodel", "exports", "utils", "scanners"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.in"] }
+
 [tool.ruff]
 line-length = 120

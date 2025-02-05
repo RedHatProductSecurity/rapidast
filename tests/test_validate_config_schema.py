@@ -1,6 +1,9 @@
+import os
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
+from rapidast import validate_config
 from rapidast import validate_config_schema
 
 
@@ -67,3 +70,15 @@ class TestValidateConfigSchema(unittest.TestCase):
         result = validate_config_schema(config_file)
 
         self.assertTrue(result)
+
+    @patch("os.environ", {"RTOKEN": "dummy value", "EXPORTED_TOKEN": "dummy value"})
+    def test_valid_config_templates(self):
+        directory = "config"
+
+        for filename in os.listdir(directory):
+            file_path = os.path.join(directory, filename)
+
+            if os.path.isdir(file_path) or not filename.endswith(".yaml"):
+                continue
+
+            self.assertTrue(validate_config_schema(file_path))

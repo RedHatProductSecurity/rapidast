@@ -498,8 +498,32 @@
                                 }
                             }
                         },
-                        "required": [
-                            "apiScan"
+                        "anyOf": [
+                            {
+                                "required": [
+                                    "apiScan"
+                                ]
+                            },
+                            {
+                                "required": [
+                                    "importUrlsFromFile"
+                                ]
+                            },
+                            {
+                                "required": [
+                                    "spiderAjax"
+                                ]
+                            },
+                            {
+                                "required": [
+                                    "spider"
+                                ]
+                            },
+                            {
+                                "required": [
+                                    "graphql"
+                                ]
+                            }
                         ]
                     },
                     {

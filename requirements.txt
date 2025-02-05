@@ -50,7 +50,7 @@ protobuf==5.29.3
     #   google-api-core
     #   googleapis-common-protos
     #   proto-plus
-py-nessus-pro @ git+https://github.com/sfowl/py-nessus-pro.git@41abc31
+py-nessus-pro @ git+https://github.com/sfowl/py-nessus-pro.git@41abc315c0e7e1320bb60732830eaf8e8ed3ba84
     # via rapidast (pyproject.toml)
 pyasn1==0.6.1
     # via

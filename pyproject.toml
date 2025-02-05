@@ -1,20 +1,13 @@
-[build-system]
-# setuptools_scm requires setuptools 61 or later
-requires = ["setuptools >= 61.0", "setuptools_scm"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "rapidast"
-dynamic = ["version", "dependencies"]
+version = "0.0.1"
+dynamic = ["dependencies"]
 
 [tool.setuptools]
 packages = ["configmodel", "exports", "utils", "scanners"]
 
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.in"] }
-
-# Enable version inference from the latest git tag
-[tool.setuptools_scm]
 
 [tool.ruff]
 line-length = 120

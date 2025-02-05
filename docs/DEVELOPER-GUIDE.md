@@ -208,7 +208,7 @@ Make sure you have an environment that closely matches the environment in the co
 To add a new dependency, follow these steps:
 
 1. Add the dependency to `requirements.in`
-   
+
 2. Recompile `requirements.txt` to update dependencies, run the following command:
 
    ```sh

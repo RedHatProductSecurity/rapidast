@@ -447,6 +447,9 @@
                             "graphql": {
                                 "type": "object"
                             },
+                            "spider": {
+                                "type": "object"
+                            },
                             "spiderAjax": {
                                 "type": "object"
                             },

@@ -219,11 +219,17 @@ def deep_traverse_and_replace(d: dict, suffix: str) -> dict:  # pylint: disable=
     for key in keys_to_replace:
         new_key = key[: -len(suffix)]
 
-        # @FIX: This will raise an unhandled exception if the referenced environment variable is not defined
-        env_value = os.environ[d[key]]
-
-        d[new_key] = env_value
-        del d[key]
+        try:
+            env_value = os.environ[d[key]]
+            d[new_key] = env_value
+            del d[key]
+        except KeyError:
+            logging.error(
+                f"""
+                Environment variable '{d[key]}' referenced by key '{key}' could not be found.
+                No configuration replacement will be made. Please check your configuration and environment"
+                """
+            )
 
     for key, value in d.items():
         if isinstance(value, dict):

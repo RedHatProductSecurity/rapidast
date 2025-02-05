@@ -199,7 +199,6 @@
                                                         "type": "string"
                                                     },
                                                     "password": {
-                                                        "default": "cloud-services",
                                                         "type": "string"
                                                     }
                                                 },
@@ -385,35 +384,43 @@
                         "description": "ZAP Scanner",
                         "properties": {
                             "apiScan": {
-                                "type": "object",
-                                "properties": {
-                                    "apis": {
+                                "oneOf": [
+                                    {
                                         "type": "object",
                                         "properties": {
-                                            "apiUrl": {
-                                                "type": "string",
-                                                "format": "uri"
-                                            },
-                                            "apiFile": {
-                                                "type": "string"
+                                            "apis": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "apiUrl": {
+                                                        "type": "string",
+                                                        "format": "uri"
+                                                    },
+                                                    "apiFile": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "oneOf": [
+                                                    {
+                                                        "required": [
+                                                            "apiUrl"
+                                                        ]
+                                                    },
+                                                    {
+                                                        "required": [
+                                                            "apiFile"
+                                                        ]
+                                                    }
+                                                ]
                                             }
                                         },
-                                        "oneOf": [
-                                            {
-                                                "required": [
-                                                    "apiUrl"
-                                                ]
-                                            },
-                                            {
-                                                "required": [
-                                                    "apiFile"
-                                                ]
-                                            }
+                                        "required": [
+                                            "apis"
                                         ]
+                                    },
+                                    {
+                                        "$comment": "An empty 'apiScan' block will be skipped",
+                                        "type": "null"
                                     }
-                                },
-                                "required": [
-                                    "apis"
                                 ]
                             },
                             "importUrlsFromFile": {

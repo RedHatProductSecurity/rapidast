@@ -21,13 +21,21 @@
                     "type": "boolean"
                 },
                 "environ": {
-                    "type": "object",
-                    "properties": {
-                        "envFile": {
-                            "type": "string"
-                        }
+                    "oneOf": [
+                    {
+                        "type": "object",
+                        "properties": {
+                            "envFile": {
+                                "type": "string"
+                            }
+                        },
+                        "required": []
                     },
-                    "required": []
+                    {
+                        "$comment": "An empty 'environ' block will be skipped",
+                        "type": "null"
+                    }
+                ]
                 },
                 "googleCloudStorage": {
                     "type": "object",

@@ -227,7 +227,7 @@ def deep_traverse_and_replace(d: dict, suffix: str) -> dict:  # pylint: disable=
             logging.error(
                 f"""
                 Environment variable '{d[key]}' referenced by key '{key}' could not be found.
-                No configuration replacement will be made. Please check your configuration and environment"
+                No configuration replacement will be made for this key. Please check your configuration and environment"
                 """
             )
 

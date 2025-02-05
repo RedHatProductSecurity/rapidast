@@ -192,3 +192,52 @@ Every time there is an incompatible change:
 RapiDAST, when loading the configuration from file, will update the schema, version by version, by chaining all the converting functions one by one until `CURR_CONFIG_VERSION` is reached. e.g.: from 2 to 3, then 3 to 4, 4 to 5, etc.
 
 Note: it is possible for a converter function to warn the user, if necessary. As a last resort, if there is no conversion possible, it is also possible to output an error **BUT** the error should clearly express a methodology to manually update the configuration to the newest version
+
+## Python Requirements Management
+
+This project uses `pip-compile` from `pip-tools` to manage dependencies.
+
+### Requirements
+
+Make sure you have an environment that closely matches the environment in the container build. This means it should have the same operating system and the same Python `$major.$minor` version.
+
+- `pip-tools`: Used for managing Python dependencies and generating `requirements.txt`
+
+### Installing a new dependency
+
+To add a new dependency, follow these steps:
+
+1. Add the dependency to `requirements.in`
+   
+2. Recompile `requirements.txt` to update dependencies, run the following command:
+
+   ```sh
+   pip-compile requirements.in
+   ```
+
+   This will regenerate `requirements.txt` with the newly added dependency and its pinned versions.
+
+### Build dependencies
+
+This step ensures that any build dependencies are also prefetched, in case extra tools are needed to build standard dependencies. These tools must be fetched as well. Be sure to do this every time a new dependency is added
+
+1. Set up `requirements.txt` as described above
+
+2. Add any direct build dependencies to a separate file, `requirements-build.in`
+
+3. Run the [pip_find_builddeps.py](https://raw.githubusercontent.com/containerbuildsystem/cachito/master/bin/pip_find_builddeps.py) script to find the build dependencies:
+
+
+   ```sh
+    pip_find_builddeps.py requirements.txt --append --only-write-on-update -o requirements-build.in
+   ```
+
+   This will detect the build dependencies required by the packages in `requirements.txt` and append them to `requirements-build.in`
+
+4. Compile `requirements-build.in`** into a `requirements-build.txt` file:
+
+   ```sh
+   pip-compile requirements-build.in -o requirements-build.txt --allow-unsafe
+   ```
+
+   This will generate a `requirements-build.txt` file with the pinned build dependencies.

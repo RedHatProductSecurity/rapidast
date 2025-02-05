@@ -55,6 +55,10 @@ trove-classifiers==2025.1.15.22
     # via
     #   -r requirements-build.in
     #   hatchling
+types-psutil==6.1.0.20241221
+    # via -r requirements-build.in
+types-setuptools==75.8.0.20250110
+    # via -r requirements-build.in
 typing-extensions==4.12.2
     # via
     #   -r requirements-build.in

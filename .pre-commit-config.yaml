@@ -3,17 +3,17 @@ repos:
     rev: v4.6.0
     hooks:
       - id: trailing-whitespace
-        language_version: python3
+        language_version: python3.11
         exclude: \.csv$
       - id: end-of-file-fixer
       - id: debug-statements
-        language_version: python3
+        language_version: python3.11
 
   - repo: https://github.com/asottile/reorder_python_imports
     rev: v3.14.0
     hooks:
       - id: reorder-python-imports
-        language_version: python3
+        language_version: python3.11
   - repo: https://github.com/psf/black
     rev: 23.12.1
     hooks:
@@ -23,14 +23,14 @@ repos:
         - --quiet
         - --line-length
         - "120" # same as pylint below
-        language_version: python3
+        language_version: python3.11
         require_serial: true
 
   - repo: https://github.com/asottile/pyupgrade
     rev: v2.38.4
     hooks:
       - id: pyupgrade
-        language_version: python3
+        language_version: python3.11
 
   # E0401 - import errors (Used when pylint has been unable to import a module.)
   # C0411 - wrong-import-order, disabled because of conflicts with black
@@ -55,4 +55,4 @@ repos:
           - --min-public-methods=0
           - --good-names=o,w,q,f,fp,i,e
           - --disable=E0401,W1201,W1203,C0114,C0115,C0116,C0411,W0107,W0511,W0702,R0801,R1705,R1710
-        language_version: python3
+        language_version: python3.11

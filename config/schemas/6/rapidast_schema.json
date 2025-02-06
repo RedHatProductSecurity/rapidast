@@ -8,8 +8,6 @@
             "type": "object",
             "properties": {
                 "configVersion": {
-                    "default": 0,
-                    "$comment": "If no version is specified, the config converter will default to version 0",
                     "type": "integer"
                 },
                 "base_results_dir": {
@@ -96,7 +94,7 @@
                     ]
                 }
             },
-            "required": []
+            "required": ["configVersion"]
         },
         "application": {
             "type": "object",

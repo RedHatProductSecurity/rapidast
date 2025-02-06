@@ -209,11 +209,12 @@ def dump_rapidast_redacted_configs(main_config_file_location: str, destination_d
             sys.exit(2)
 
 
-def deep_traverse_and_replace(d: dict, suffix: str) -> dict:  # pylint: disable=C0103
+def deep_traverse_and_replace_with_var_content(d: dict) -> dict:  # pylint: disable=C0103
     """
-    Recursively traverse a dictionary and replace key-value pairs where the key ends with `suffix`
+    Recursively traverse a dictionary and replace key-value pairs where the key ends with `_from_var`
     The value is replaced with the corresponding environment variable value if available.
     """
+    suffix = "_from_var"
     keys_to_replace = [key for key in d if isinstance(key, str) and key.endswith(suffix)]
 
     for key in keys_to_replace:
@@ -233,11 +234,11 @@ def deep_traverse_and_replace(d: dict, suffix: str) -> dict:  # pylint: disable=
 
     for key, value in d.items():
         if isinstance(value, dict):
-            deep_traverse_and_replace(value, suffix)
+            deep_traverse_and_replace_with_var_content(value)
         elif isinstance(value, list):
             for i, item in enumerate(value):
                 if isinstance(item, dict):
-                    value[i] = deep_traverse_and_replace(item, suffix)
+                    value[i] = deep_traverse_and_replace_with_var_content(item)
 
     return d
 
@@ -277,7 +278,7 @@ def validate_config_schema(config_file) -> bool:
 
     schema_path = Path(f"config/schemas/{config_version}/rapidast_schema.json")
     if schema_path.exists():
-        resolved_config = deep_traverse_and_replace(config, "_from_var")
+        resolved_config = deep_traverse_and_replace_with_var_content(config)
         return validate_config(resolved_config, schema_path)
     else:
         logging.warning(f"Configuration schema missing: {schema_path}. Skipping validation")

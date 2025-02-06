@@ -36,7 +36,7 @@ class TestValidateConfigSchema(unittest.TestCase):
     @patch("rapidast.load_config_file")
     @patch("yaml.safe_load")
     @patch("pathlib.Path.exists")
-    @patch("rapidast.deep_traverse_and_replace")
+    @patch("rapidast.deep_traverse_and_replace_with_var_content")
     @patch("rapidast.validate_config")
     def test_failed_validation(self, mock_validate, mock_deep_traverse, mock_exists, mock_safe_load, mock_load_config):
         mock_load_config.return_value = "mocked_config_file_content"
@@ -54,7 +54,7 @@ class TestValidateConfigSchema(unittest.TestCase):
     @patch("rapidast.load_config_file")
     @patch("yaml.safe_load")
     @patch("pathlib.Path.exists")
-    @patch("rapidast.deep_traverse_and_replace")
+    @patch("rapidast.deep_traverse_and_replace_with_var_content")
     @patch("rapidast.validate_config")
     def test_valid_config_with_schema(
         self, mock_validate, mock_deep_traverse, mock_exists, mock_safe_load, mock_load_config

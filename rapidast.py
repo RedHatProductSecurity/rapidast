@@ -349,7 +349,7 @@ def run():
     scan_exporter = None
     if config.get("config.googleCloudStorage.bucketName"):
         scan_exporter = GoogleCloudStorage(
-            bucket_name=config.get("config.googleCloudStorage.bucketName", "default-bucket-name"),
+            bucket_name=config.get("config.googleCloudStorage.bucketName"),
             app_name=config.get_official_app_name(),
             directory=config.get("config.googleCloudStorage.directory", None),
             keyfile=config.get("config.googleCloudStorage.keyFile", None),

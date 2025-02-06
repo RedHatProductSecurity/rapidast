@@ -42,7 +42,6 @@
                             "type": "string"
                         },
                         "bucketName": {
-                            "default": "default-bucket-name",
                             "type": "string"
                         },
                         "directory": {
@@ -50,7 +49,7 @@
                         }
                     },
                     "comment": "Credentials are optional, as the client defaults to those inferred from the environment",
-                    "required": []
+                    "required": ["bucketName"]
                 },
                 "defectDojo": {
                     "type": "object",

@@ -640,6 +640,7 @@
         }
     },
     "required": [
+        "config",
         "scanners"
     ]
 }

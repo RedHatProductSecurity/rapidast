@@ -271,12 +271,14 @@ def validate_config_schema(config_file) -> bool:
     config = yaml.safe_load(load_config_file(config_file))
 
     try:
-        config_version = config["config"]["configVersion"]
+        config_version = str(config["config"]["configVersion"])
     except KeyError:
         logging.error("Missing 'configVersion' in configuration")
         return False
 
-    schema_path = Path(f"config/schemas/{config_version}/rapidast_schema.json")
+    script_dir = Path(__file__).parent
+    schema_path = script_dir / "config" / "schemas" / config_version / "rapidast_schema.json"
+
     if schema_path.exists():
         resolved_config = deep_traverse_and_replace_with_var_content(config)
         return validate_config(resolved_config, schema_path)

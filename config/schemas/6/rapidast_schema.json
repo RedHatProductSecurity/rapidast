@@ -171,7 +171,6 @@
                                                         "type": "string"
                                                     },
                                                     "client_id": {
-                                                        "default": "cloud-services",
                                                         "type": "string"
                                                     },
                                                     "rtoken": {
@@ -182,7 +181,9 @@
                                                     }
                                                 },
                                                 "required": [
-                                                    "rtoken"
+                                                    "rtoken",
+                                                    "client_id",
+                                                    "token_endpoint"
                                                 ]
                                             }
                                         }

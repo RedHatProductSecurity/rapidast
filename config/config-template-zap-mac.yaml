@@ -15,7 +15,7 @@ config:
 # `application` contains data related to the application, not to the scans.
 application:
   shortName: "service-name"
-  url: "<service-url>"
+  url: "https://myapp.example" # A valid URL (root URL of the application)
 
 # `general` is a section that will be applied to all scanners.
 general:

@@ -34,7 +34,7 @@ config:
 # `application` contains data related to the application, not to the scans.
 application:
   shortName: "MyApp-1.0"
-  url: "<Mandatory. root URL of the application>"
+  url: "https://myapp.example" # A valid URL (root URL of the application)
 
 # `general` is a section that will be applied to all scanners.
 # Any scanner can override a value by creating an entry of the same name in their own configuration
@@ -119,7 +119,7 @@ scanners:
     apiScan:
       target: "<optional, if different from application.url>"
       apis:
-        apiUrl: "<URL to openAPI>"
+        apiUrl: "https://api.myapp.example/v3/openapi.json"   # A valid URL to the OpenAPI specification
         # alternative to apiURL: apiFile: "<local path to openAPI file>"
 
     # A list of URLs can also be provided, type supported: 'har', 'modsec2', 'url' (default), 'zap_messages'

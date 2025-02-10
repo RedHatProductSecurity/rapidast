@@ -930,7 +930,7 @@ class Zap(RapidastScanner):
 
         context_ = find_context(self.automation_config)
         params_path = "authentication.parameters"
-        client_id = self.my_conf(f"{params_path}.client_id", "cloud-services")
+        client_id = self.my_conf(f"{params_path}.client_id")
         token_endpoint = self.my_conf(f"{params_path}.token_endpoint", None)
         rtoken = self.my_conf(f"{params_path}.rtoken", None)
         scripts_dir = self.container_scripts_dir

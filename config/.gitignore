@@ -4,3 +4,5 @@
 !*example*
 !older-schemas/
 !older-schemas/*.yaml
+!schemas/
+!schemas/**/*

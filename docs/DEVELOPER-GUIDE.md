@@ -188,6 +188,7 @@ Every time there is an incompatible change:
     a) `config.configVersion` must be set to ${X+1}
     b) all the changes are applied (`config-template-long.yaml` should contain all changes, and `config-template.yaml` only the user-friendly ones
 4) Provide explanation in the corresponding commit
+5) Create a new configuration schema in the appropriate file: config/schemas/$(X+1)/rapidast_schema.json
 
 RapiDAST, when loading the configuration from file, will update the schema, version by version, by chaining all the converting functions one by one until `CURR_CONFIG_VERSION` is reached. e.g.: from 2 to 3, then 3 to 4, 4 to 5, etc.
 

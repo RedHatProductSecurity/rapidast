@@ -15,7 +15,7 @@ config:
 # `application` contains data related to the application, not to the scans.
 application:
   shortName: "MyApp-1.0"
-  url: "<Mandatory. root URL of the application>"
+  url: "https://myapp.example" # A valid URL (root URL of the application)
 
 # `general` is a section that will be applied to all scanners.
 general:
@@ -41,7 +41,7 @@ scanners:
   zap:
     apiScan:
       apis:
-        apiUrl: "<URL to openAPI>"
+        apiUrl: "https://api.myapp.example/v3/openapi.json"   # A valid URL to the OpenAPI specification
         # alternative: apiFile: "<local path to openAPI file>"
 
     passiveScan:
@@ -63,7 +63,7 @@ scanners:
 
     # this config is used when container.type is not 'podman'
     # toolDir: scanners/generic/tools
-    # inline: "<command to run>"
+    inline: "<command to run>"
 
     # this config is only used when container.type is 'podman'
     #container:

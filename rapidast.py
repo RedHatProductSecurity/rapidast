@@ -1,23 +1,30 @@
 #!/usr/bin/env python3
 import argparse
+import json
 import logging
 import os
 import pprint
 import re
 import sys
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 from typing import Dict
 from urllib import request
 
 import yaml
 from dotenv import load_dotenv
+from jsonschema import Draft202012Validator
+from jsonschema import SchemaError
+from jsonschema import validate
+from jsonschema import ValidationError
 
 import configmodel.converter
 import scanners
 from exports.defect_dojo import DefectDojo
 from exports.google_cloud_storage import GoogleCloudStorage
 from utils import add_logging_level
+
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -202,6 +209,84 @@ def dump_rapidast_redacted_configs(main_config_file_location: str, destination_d
             sys.exit(2)
 
 
+def deep_traverse_and_replace_with_var_content(d: dict) -> dict:  # pylint: disable=C0103
+    """
+    Recursively traverse a dictionary and replace key-value pairs where the key ends with `_from_var`
+    The value is replaced with the corresponding environment variable value if available.
+    """
+    suffix = "_from_var"
+    keys_to_replace = [key for key in d if isinstance(key, str) and key.endswith(suffix)]
+
+    for key in keys_to_replace:
+        new_key = key[: -len(suffix)]
+
+        try:
+            env_value = os.environ[d[key]]
+            d[new_key] = env_value
+            del d[key]
+        except KeyError:
+            logging.error(
+                f"""
+                Environment variable '{d[key]}' referenced by key '{key}' could not be found.
+                No configuration replacement will be made for this key. Please check your configuration and environment"
+                """
+            )
+
+    for key, value in d.items():
+        if isinstance(value, dict):
+            deep_traverse_and_replace_with_var_content(value)
+        elif isinstance(value, list):
+            for i, item in enumerate(value):
+                if isinstance(item, dict):
+                    value[i] = deep_traverse_and_replace_with_var_content(item)
+
+    return d
+
+
+def validate_config(config: dict, schema_path: Path) -> bool:
+    """
+    Validate a configuration dictionary against a JSON schema file
+    """
+    try:
+        logging.info("Validating configuration")
+        with schema_path.open("r", encoding="utf-8") as file:
+            schema = json.load(file)
+
+        validate(instance=config, schema=schema, format_checker=Draft202012Validator.FORMAT_CHECKER)
+        logging.info("Configuration is valid")
+        return True
+    except ValidationError as e:
+        logging.error(f"Validation error: {e.message}, json_path: {e.json_path}")
+    except SchemaError as e:
+        logging.error(f"Schema error: {e.message}, json_path: {e.json_path}")
+    except json.JSONDecodeError:
+        logging.error(f"Failed to parse JSON schema: {schema_path}")
+    except Exception as e:  # pylint: disable=W0718
+        logging.error(f"Unexpected error: {e}")
+
+    return False
+
+
+def validate_config_schema(config_file) -> bool:
+    config = yaml.safe_load(load_config_file(config_file))
+
+    try:
+        config_version = str(config["config"]["configVersion"])
+    except KeyError:
+        logging.error("Missing 'configVersion' in configuration")
+        return False
+
+    script_dir = Path(__file__).parent
+    schema_path = script_dir / "config" / "schemas" / config_version / "rapidast_schema.json"
+
+    if schema_path.exists():
+        resolved_config = deep_traverse_and_replace_with_var_content(config)
+        return validate_config(resolved_config, schema_path)
+    else:
+        logging.warning(f"Configuration schema missing: {schema_path}. Skipping validation")
+    return False
+
+
 def run():
     parser = argparse.ArgumentParser(
         description="Runs various DAST scanners against a defined target, as configured by a configuration file."
@@ -234,6 +319,8 @@ def run():
 
     logging.debug(f"log level set to debug. Config file: '{config_file}'")
 
+    validate_config_schema(config_file)
+
     # Load config file
     try:
         config = configmodel.RapidastConfigModel(yaml.safe_load(load_config_file(config_file)))
@@ -265,7 +352,7 @@ def run():
     scan_exporter = None
     if config.get("config.googleCloudStorage.bucketName"):
         scan_exporter = GoogleCloudStorage(
-            bucket_name=config.get("config.googleCloudStorage.bucketName", "default-bucket-name"),
+            bucket_name=config.get("config.googleCloudStorage.bucketName"),
             app_name=config.get_official_app_name(),
             directory=config.get("config.googleCloudStorage.directory", None),
             keyfile=config.get("config.googleCloudStorage.keyFile", None),

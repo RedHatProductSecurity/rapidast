@@ -10,6 +10,7 @@ cython==3.0.11
     # via pyyaml
 flit-core==3.10.1
     # via
+    #   arrow
     #   click
     #   idna
     #   loguru
@@ -20,15 +21,31 @@ flit-core==3.10.1
     #   tomli
     #   typing-extensions
     #   wheel
+hatch-fancy-pypi-readme==24.1.0
+    # via
+    #   attrs
+    #   jsonschema
 hatch-vcs==0.4.0
-    # via urllib3
+    # via
+    #   attrs
+    #   jsonschema
+    #   jsonschema-specifications
+    #   referencing
+    #   urllib3
 hatchling==1.27.0
     # via
+    #   attrs
+    #   hatch-fancy-pypi-readme
     #   hatch-vcs
+    #   jsonschema
+    #   jsonschema-specifications
     #   pygments
+    #   referencing
     #   urllib3
 importlib-metadata==8.6.1
     # via pdm-backend
+maturin==1.8.2
+    # via rpds-py
 mypy-extensions==1.0.0
     # via mypy
 mypy==1.14.0
@@ -40,30 +57,41 @@ packaging==24.2
 pathspec==0.12.1
     # via hatchling
 pdm-backend==2.4.3
-    # via typer
+    # via
+    #   typer
+    #   webcolors
 pluggy==1.5.0
     # via hatchling
 poetry-core==2.0.1
     # via
     #   rich
     #   rsa
+semantic-version==2.10.0
+    # via setuptools-rust
+setuptools-rust==1.10.2
+    # via maturin
+setuptools-scm==7.1.0
+    # via python-dateutil
 setuptools-scm==8.1.0
     # via
     #   charset-normalizer
     #   hatch-vcs
     #   importlib-metadata
     #   pluggy
+    #   setuptools-rust
+    #   uri-template
     #   zipp
 tomli==2.2.1
     # via
     #   hatchling
+    #   maturin
     #   mypy
     #   setuptools-scm
 trove-classifiers==2025.1.15.22
     # via hatchling
 types-psutil==6.1.0.20241221
     # via mypy
-types-setuptools==75.8.0.20250110
+types-setuptools==75.8.0.20250210
     # via mypy
 typing-extensions==4.12.2
     # via
@@ -73,6 +101,8 @@ wheel==0.45.1
     # via
     #   cachetools
     #   google-crc32c
+    #   maturin
+    #   python-dateutil
     #   pyyaml
     #   shellingham
 zipp==3.21.0
@@ -87,14 +117,18 @@ setuptools==75.8.0
     #   google-api-core
     #   google-crc32c
     #   importlib-metadata
+    #   maturin
     #   mypy
     #   pathspec
     #   pluggy
     #   proto-plus
     #   pyasn1
     #   pyasn1-modules
+    #   python-dateutil
     #   pyyaml
+    #   setuptools-rust
     #   setuptools-scm
     #   shellingham
     #   trove-classifiers
+    #   uri-template
     #   zipp

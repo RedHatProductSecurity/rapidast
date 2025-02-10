@@ -4,6 +4,7 @@ import shutil
 import tempfile
 import time
 from functools import partial
+from typing import Optional
 
 import certifi
 from kubernetes import client
@@ -58,11 +59,14 @@ def wait_until_ready(**kwargs):
 
 
 # simulates: $ oc logs -f <pod> | tee <file>
-def tee_log(pod_name: str, filename: str):
+def tee_log(pod_name: str, filename: str, container: Optional[str] = None):
     corev1 = client.CoreV1Api()
     w = watch.Watch()
+    kwargs = {"name": pod_name, "namespace": NAMESPACE}
+    if container:
+        kwargs["container"] = container
     with open(filename, "w", encoding="utf-8") as f:
-        for e in w.stream(corev1.read_namespaced_pod_log, name=pod_name, namespace=NAMESPACE):
+        for e in w.stream(corev1.read_namespaced_pod_log, **kwargs):
             if not isinstance(e, str):
                 continue  # Watch.stream() can yield non-string types
             f.write(e + "\n")

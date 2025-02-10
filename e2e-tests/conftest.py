@@ -3,7 +3,9 @@ import os
 import shutil
 import tempfile
 import time
+from datetime import datetime
 from functools import partial
+from typing import Dict
 from typing import Optional
 
 import certifi
@@ -139,6 +141,25 @@ def create_namespace(namespace_name: str):
 def new_kclient():
     config.load_config()
     return client.ApiClient()
+
+
+# XXX hook called by pytest-json-report plugin
+def pytest_json_modifyreport(json_report: Dict):
+    num_passed = json_report["summary"].get("passed", 0)
+    num_failed = json_report["summary"].get("failed", 0)
+    num_total = json_report["summary"]["total"]
+    timestamp = datetime.fromtimestamp(json_report["created"] + json_report["duration"])
+    result = "ERROR"
+    if num_passed == num_total:
+        result = "SUCCESS"
+    elif num_failed > 0:
+        result = "FAILURE"
+    json_report.clear()
+    json_report["result"] = result
+    json_report["timestamp"] = timestamp
+    json_report["successes"] = num_passed
+    json_report["failures"] = num_failed
+    json_report["warnings"] = 0
 
 
 class TestBase:

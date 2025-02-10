@@ -38,7 +38,7 @@ spec:
   taskRunSpecs:
     - pipelineTaskName: ecosystem-cert-preflight-checks
       stepSpecs:
-        - name: check-container
+        - name: app-check
           computeResources:
             requests:
               memory: 512Mi

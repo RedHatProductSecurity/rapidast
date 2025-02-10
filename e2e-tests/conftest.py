@@ -3,7 +3,6 @@ import os
 import shutil
 import tempfile
 import time
-from datetime import datetime
 from functools import partial
 from typing import Dict
 from typing import Optional
@@ -148,7 +147,7 @@ def pytest_json_modifyreport(json_report: Dict):
     num_passed = json_report["summary"].get("passed", 0)
     num_failed = json_report["summary"].get("failed", 0)
     num_total = json_report["summary"]["total"]
-    timestamp = datetime.fromtimestamp(json_report["created"] + json_report["duration"])
+    timestamp = int(json_report["created"] + json_report["duration"])
     result = "ERROR"
     if num_passed == num_total:
         result = "SUCCESS"

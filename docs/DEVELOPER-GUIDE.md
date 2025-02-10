@@ -203,7 +203,6 @@ This project uses `pip-compile` from `pip-tools` to manage dependencies.
 Make sure you have an environment that closely matches the environment in the container build. This means it should have the same operating system and the same Python `$major.$minor` version.
 
 - `pip-tools`: Used for managing Python dependencies and generating `requirements.txt`
-- `pybuild-deps`: Generates build dependencies by compiling build-requirements.txt from `requirements.txt`
 
 ### Installing a new dependency
 
@@ -218,16 +217,3 @@ To add a new dependency, follow these steps:
    ```
 
    This will regenerate `requirements.txt` with the newly added dependency and its pinned versions.
-
-### Build dependencies
-
-This step ensures that any build dependencies are also prefetched, in case extra tools are needed to build standard dependencies. These tools must be fetched as well. Be sure to do this every time a new dependency is added
-
-1. Set up `requirements.txt` as described above
-
-2. Generates build dependencies from `requirements.txt`, run the following command:
-   ```sh
-   pybuild-deps compile --output-file=requirements-build.txt
-   ```
-
-The [Konflux documentation](https://konflux-ci.dev/docs/how-tos/configuring/prefetching-dependencies/#pip) recommends using the [pip_find_builddeps.py](https://raw.githubusercontent.com/containerbuildsystem/cachito/master/bin/pip_find_builddeps.py) script to identify build dependencies. However, `pybuild-deps` seems to generate a more comprehensive requirements file. This is also the recommended approach by [cachi2](https://github.com/containerbuildsystem/cachi2/blob/main/docs/pip.md#requirements-buildtxt)

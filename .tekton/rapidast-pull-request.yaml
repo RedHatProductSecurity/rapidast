@@ -33,6 +33,7 @@ spec:
     value:
     - {"type": "generic", "path": "."}
     - {"type": "npm", "path": "."}
+    - {"type": "pip", "path": ".", "allow_binary": "true"}
   - name: build-args
     value: [PREFETCH=true]
   taskRunSpecs:

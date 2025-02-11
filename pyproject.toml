@@ -1,2 +1,21 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = [
+    "setuptools>=64",
+    "setuptools-scm[toml]>=8",
+]
+
+[project]
+name = "rapidast"
+dynamic = ["dependencies", "version"]
+
+[tool.setuptools]
+packages = ["configmodel", "exports", "utils", "scanners"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.in"] }
+
+[tool.setuptools_scm]
+
 [tool.ruff]
 line-length = 120

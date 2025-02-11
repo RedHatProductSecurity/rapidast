@@ -24,6 +24,13 @@ spec:
     value: quay.io/redhatproductsecurity/rapidast:{{revision}}
   - name: dockerfile
     value: containerize/Containerfile
+  - name: prefetch-input
+    value:
+    - {"type": "generic", "path": "."}
+    - {"type": "npm", "path": "."}
+    - {"type": "pip", "path": ".", "allow_binary": "true"}
+  - name: build-args
+    value: [PREFETCH=true]
   taskRunSpecs:
     - pipelineTaskName: ecosystem-cert-preflight-checks
       stepSpecs:

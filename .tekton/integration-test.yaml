@@ -118,7 +118,7 @@ spec:
           - name: credentials
             emptyDir: {}
         results:
-          - name: TEST_RESULTS
+          - name: TEST_OUTPUT
             description: e2e test results
         steps:
 
@@ -160,8 +160,8 @@ spec:
               yum install -y python3.12 git
               python3.12 -m ensurepip
               pip3 install -r requirements.txt -r requirements-dev.txt
-              pytest -s e2e-tests/test_integration.py --json-report --json-report-summary --json-report-file $(results.TEST_RESULTS.path)
-              cat $(results.TEST_RESULTS.path)
+              pytest -s e2e-tests/test_integration.py --json-report --json-report-summary --json-report-file $(results.TEST_OUTPUT.path)
+              cat $(results.TEST_OUTPUT.path)
 
     - name: run-e2e-tests-nessus
       runAfter:
@@ -171,7 +171,7 @@ spec:
           - name: credentials
             emptyDir: {}
         results:
-          - name: TEST_RESULTS
+          - name: TEST_OUTPUT
             description: e2e test results
         steps:
 
@@ -211,11 +211,8 @@ spec:
               echo "$KUBECONFIG_VALUE" > "$KUBECONFIG"
               oc whoami
 
-              # XXX temp!
-              oc get secret sfowler-nessus-pull-secret
-
               yum install -y python3.12 git
               python3.12 -m ensurepip
               pip3 install -r requirements.txt -r requirements-dev.txt
-              pytest -sv e2e-tests/test_nessus.py --json-report --json-report-summary --json-report-file $(results.TEST_RESULTS.path)
-              cat $(results.TEST_RESULTS.path)
+              pytest -sv e2e-tests/test_nessus.py --json-report --json-report-summary --json-report-file $(results.TEST_OUTPUT.path)
+              cat $(results.TEST_OUTPUT.path)

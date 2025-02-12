@@ -92,6 +92,10 @@ def run_scanner(name, config, args, scan_exporter):
     )
 
     typ = config.get(f"scanners.{name}.container.type", default="none")
+    
+    if typ == "podman":
+        logging.warning("Podman mode is deprecated and will be removed in version 2.12")
+        
     try:
         class_ = scanners.str_to_scanner(name, typ)
     except ModuleNotFoundError:

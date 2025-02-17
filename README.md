@@ -21,7 +21,7 @@ RapiDAST is for testing purposes, and should not be used on production systems.
 **Podman Mode Deprecation**
 The `podman` execution environment is deprecated and will be removed in version **2.12**
 
-If you are using `podman`, please migrate to `none` before updating to version 2.12.
+If you are using `podman` fpr the `container.type` option, please migrate to `none` before updating to version 2.12.
 
 ## Quickstart
 

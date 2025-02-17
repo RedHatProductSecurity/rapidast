@@ -37,7 +37,7 @@ Run the pre-built [rapidast container image](https://quay.io/repository/redhatpr
 
 **Run**
 ```sh
-$ podman run -v ./config.yaml:/opt/rapidast/config/config.yaml:Z quay.io/redhatproductsecurity/rapidast:latest ./rapidast.py
+$ podman run -v ./config.yaml:/opt/rapidast/config/config.yaml:Z quay.io/redhatproductsecurity/rapidast:latest
 ```
 
 **Note**
@@ -148,7 +148,7 @@ This method describes required parameters needed to retrieve an access token, us
     + parameters :
         * `token_endpoint`: the URL to which send the refresh token
         * `client_id` : the client ID
-        * `rtoken_var_name`: for practical reasons, the refresh token is provided using environment variables. This entry describes the name of the variable containing the secret refresh token
+        * `rtoken_from_var`: for practical reasons, the refresh token is provided using environment variables. This entry describes the name of the variable containing the secret refresh token
         * `preauth`: Pre-generate a token and force ZAP to use it throughout the session (the session token will not be refreshed after it's expired). Default: False. This is only useful for scans sufficiently short that it will be finished before the token expires
 
 - HTTP Basic:

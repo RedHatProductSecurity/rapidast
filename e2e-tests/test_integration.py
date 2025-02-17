@@ -1,6 +1,5 @@
 import json
 import os
-import re
 
 from conftest import tee_log  # pylint: disable=E0611
 from conftest import TestBase  # pylint: disable=E0611
@@ -18,18 +17,16 @@ class TestRapiDAST(TestBase):
         self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-pod.yaml")
         wait_until_ready(field_selector="metadata.name=rapidast-vapi")
 
+        # two containers run in this pod, one for running rapidast and one for printing json results
         logfile = os.path.join(self.tempdir, "rapidast-vapi.log")
-        tee_log("rapidast-vapi", logfile)
+        results = os.path.join(self.tempdir, "rapidast-vapi-results.json")
+        tee_log("rapidast-vapi", logfile, container="rapidast")
+        tee_log("rapidast-vapi", results, container="results")
 
-        # XXX relies on rapidast-vapi pod cat-ing the result json file after execution
-        with open(logfile, "r", encoding="utf-8") as f:
-            logs = f.read()
-            pattern = r"^{\s*$.*$"
-            matches = re.findall(pattern, logs, re.MULTILINE | re.DOTALL)
-            assert matches, f"{logfile} did not contain expected json results"
-            results = json.loads(matches[0])
+        with open(results, "r", encoding="utf-8") as f:
+            data = json.load(f)
 
-        assert len(results["site"][0]["alerts"]) == 3
+        assert len(data["site"][0]["alerts"]) == 3
 
     def test_trivy(self):
         self.create_from_yaml(f"{self.tempdir}/rapidast-trivy-configmap.yaml")

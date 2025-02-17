@@ -188,7 +188,32 @@ Every time there is an incompatible change:
     a) `config.configVersion` must be set to ${X+1}
     b) all the changes are applied (`config-template-long.yaml` should contain all changes, and `config-template.yaml` only the user-friendly ones
 4) Provide explanation in the corresponding commit
+5) Create a new configuration schema in the appropriate file: config/schemas/$(X+1)/rapidast_schema.json
 
 RapiDAST, when loading the configuration from file, will update the schema, version by version, by chaining all the converting functions one by one until `CURR_CONFIG_VERSION` is reached. e.g.: from 2 to 3, then 3 to 4, 4 to 5, etc.
 
 Note: it is possible for a converter function to warn the user, if necessary. As a last resort, if there is no conversion possible, it is also possible to output an error **BUT** the error should clearly express a methodology to manually update the configuration to the newest version
+
+## Python Requirements Management
+
+This project uses `pip-compile` from `pip-tools` to manage dependencies.
+
+### Requirements
+
+Make sure you have an environment that closely matches the environment in the container build. This means it should have the same operating system and the same Python `$major.$minor` version.
+
+- `pip-tools`: Used for managing Python dependencies and generating `requirements.txt`
+
+### Installing a new dependency
+
+To add a new dependency, follow these steps:
+
+1. Add the dependency to `requirements.in`
+
+2. Recompile `requirements.txt` to update dependencies, run the following command:
+
+   ```sh
+   pip-compile requirements.in
+   ```
+
+   This will regenerate `requirements.txt` with the newly added dependency and its pinned versions.

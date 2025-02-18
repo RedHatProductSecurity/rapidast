@@ -41,5 +41,5 @@ def test_setup_garak(test_config):
     assert test_garak.garak_cli[:3] == [
         test_garak.cfg.garak_executable_path,
         "--config",
-        os.path.join(test_garak.work_dir, test_garak.GARAK_RUN_CONFIG_FILE),
+        os.path.join(test_garak.workdir, test_garak.GARAK_RUN_CONFIG_FILE),
     ]

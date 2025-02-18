@@ -17,5 +17,5 @@ scanners:
   garak:
     model_name: gpt2
     model_type: huggingface
-    probe_spec: dan.Dan_11_0         # default: all, or a list of probes like "probe1,probe2"
-    #garak_executable_path: /usr/local/bin/garak      # default: /usr/local/bin/garak
+    # probe_spec: all                               # default: all, or a list of probes like "probe1,probe2"
+    #garak_executable_path: /usr/local/bin/garak    # default: /usr/local/bin/garak

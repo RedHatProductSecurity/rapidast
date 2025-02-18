@@ -217,3 +217,17 @@ To add a new dependency, follow these steps:
    ```
 
    This will regenerate `requirements.txt` with the newly added dependency and its pinned versions.
+
+### Installing a new development only dependency
+
+To add a new dependency, follow these steps:
+
+1. Add the dependency to `requirements-dev.in`
+
+2. Recompile `requirements-dev.txt` to update dependencies, run the following command:
+
+   ```sh
+   pip-compile requirements-dev.in
+   ```
+
+   This will regenerate `requirements-dev.txt` with the newly added dependency and its pinned versions.

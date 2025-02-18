@@ -1,0 +1,10 @@
+-r ./requirements.txt
+
+python-dotenv
+pyyaml
+pytest >= 7.2.1
+black
+requests
+pre-commit == 3.7.1
+kubernetes
+pytest-json-report

@@ -13,8 +13,6 @@ def test_config():
 
 
 def test_setup_garak(test_config):
-    test_config.set("scanners.generic.inline", "tmp_cmd")
-
     config_data = rapidast.load_config("config/config-template-garak.yaml")
     test_config = configmodel.RapidastConfigModel(config_data)
 

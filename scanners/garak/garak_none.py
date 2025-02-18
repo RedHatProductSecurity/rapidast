@@ -35,8 +35,8 @@ class Garak(RapidastScanner):
     def __init__(self, config: RapidastConfigModel, ident: str = "garak"):
         super().__init__(config, ident)  # create a temporary directory (cleaned up during cleanup)
 
-        self.work_dir = self._create_temp_dir("workdir")
-        self.work_dir_reports_dir = self.work_dir + self.TMP_REPORTS_DIRNAME
+        self.workdir = self._create_temp_dir("workdir")
+        self.workdir_reports_dir = os.path.join(self.workdir, self.TMP_REPORTS_DIRNAME)
 
         garak_config_section = config.subtree_to_dict(f"scanners.{ident}")
         if garak_config_section is None:
@@ -66,12 +66,12 @@ class Garak(RapidastScanner):
                         "model_type": self.cfg.model_type,
                         "probe_spec": self.cfg.probe_spec,
                     },
-                    "reporting": {"report_dir": self.work_dir_reports_dir},
+                    "reporting": {"report_dir": self.workdir_reports_dir},
                 }
             )
 
             # Write updated config
-            garak_run_conf_path = os.path.join(self.work_dir, self.GARAK_RUN_CONFIG_FILE)
+            garak_run_conf_path = os.path.join(self.workdir, self.GARAK_RUN_CONFIG_FILE)
             with open(garak_run_conf_path, "w", encoding="utf-8") as f:
                 yaml.dump(self.automation_config, f)
 
@@ -115,7 +115,7 @@ class Garak(RapidastScanner):
         super().postprocess()
 
         try:
-            shutil.copytree(self.work_dir_reports_dir, self.results_dir, dirs_exist_ok=True)
+            shutil.copytree(self.workdir_reports_dir, self.results_dir, dirs_exist_ok=True)
         # pylint: disable=broad-exception-caught
         except Exception as excp:
             logging.error(f"Unable to save results: {excp}")
@@ -127,6 +127,8 @@ class Garak(RapidastScanner):
             self.state = State.PROCESSED
 
     def cleanup(self):
-        logging.debug("cleaning up")
         if not self.state == State.PROCESSED:
             raise RuntimeError(f"Unexpected state while cleaning up: PROCESSED != {self.state}")
+
+        logging.debug(f"cleaning up: the tmp directory: {self.workdir}")
+        shutil.rmtree(self.workdir)

@@ -1,0 +1,45 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: test-pipeline
+  metadata:
+    annotations:
+      pipelinesascode.tekton.dev/on-target-branch: "[prefetch-pip-deps-e2e-konflux]"
+      pipelinesascode.tekton.dev/on-event: "[push]"
+    creationTimestamp: null
+spec:
+  description: >-
+    This is an integration pipeline example
+  params:
+    - description: 'Snapshot of the application'
+      name: SNAPSHOT
+      default: |-
+          '{
+            "components": [
+              {
+                "name":"rapidast",
+                "containerImage": "quay.io/redhatproductsecurity/rapidast:latest",
+                "source":{
+                  "git":{
+                    "url":"git@github.com:RedHatProductSecurity/rapidast.git",
+                    "revision":"development",
+                  }
+                }
+              }
+            ]
+          }'
+      type: string
+  tasks:
+    - name: test-task
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/konflux-ci/integration-examples
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: examples/task.yaml
+      params:
+        - name: SNAPSHOT
+          value: $(params.SNAPSHOT)

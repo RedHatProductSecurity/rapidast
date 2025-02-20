@@ -3,11 +3,18 @@ default:
   - shared # use shared gitlab runners
 
 job:
+  # Target application to scan goes here. This contains a stub example for httpd.
+  # A more realistic example would target a custom container image built
+  # and pushed to a public container registry in an earlier build step.
+  #
+  # In the rapidast config file, for this example "http://httpd" would be the target URL.
+  services:
+    - name: registry.redhat.io/rhel9/httpd-24:latest
   image:
-    name: quay.io/redhatproductsecurity/rapidast:development
-    entrypoint: [""] # setting entrypoint is required after rapidast v2.9.1
+    name: quay.io/redhatproductsecurity/rapidast:latest
+    entrypoint: [""] # overwriting the entrypoint is required after rapidast v2.9.1
   script:
-  - rapidast.py --config custom-config.yaml
+  - rapidast.py --config rapidast-config.yml
   artifacts:
     paths:
     - ./results/

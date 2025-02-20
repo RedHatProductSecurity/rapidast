@@ -9,7 +9,7 @@ RapiDAST provides:
 - Automated HTTP/API security scanning using ZAP
 - Kubernetes operator scanning using OOBTKUBE
 - Automated vulnerability scanning using Nessus (requires a Nessus instance)
-- Command-line execution with yaml configuration, suitable for integration in CI/CD pipelines
+- Command-line execution with yaml configuration, suitable for integration in [CI/CD pipelines](./examples/)
 - Ability to run automated DAST scanning with pre-built or custom container images
 - HTML, JSON and XML report generation
 - Integration with Google Cloud Storage and [OWASP DefectDojo](https://owasp.org/www-project-defectdojo/)
@@ -111,6 +111,8 @@ This section summarize the basic workflow as follows:
     - First run with passive scanning only, which can save time at the initial scanning phase. There are various situations that can cause an issue, not only from scanning set up but also from your application or test environment. Active scanning takes a long time in general.
     - Once passive Scanning has run successfully, run another scan with active scanning enabled in the configuration file.
 
+See [here](./examples/) for examples on how to run RapiDAST in various CI/CD pipelines.
+
 ## Configuration
 
 The configuration file is presented as YAML, and contains several main entries:
@@ -121,7 +123,7 @@ The configuration file is presented as YAML, and contains several main entries:
   - Each scanner can override an entry from `general` by creating an entry with the same name
 - `scanners` : list of scanners, and their configuration
 
-See templates in the [config](./config/) directory for examples and ideas.
+See templates in the [config](./config/) directory for rapidast configuration examples.
 
 - `config-template-zap-tiny.yaml` : describes a bare minimum configuration, without authentication options.
 - `config-template-zap-simple.yaml` : describes a generic/minimal use of the ZAP scanner (i.e.: the minimum set of option to get a ZAP scan from RapiDAST)
@@ -129,6 +131,8 @@ See templates in the [config](./config/) directory for examples and ideas.
 - `config-template-zap-long.yaml` : describes a more extensive use of ZAP (all configuration options are presented)
 - `config-template-multi-scan.yaml` : describes how to combine multiple scanners in a single configuration
 - `config-template-generic-scan.yaml` : describes the use of the generic scanner
+
+See [here](./examples/) for examples on how to run RapiDAST in various CI/CD pipelines.
 
 ### Basic Example
 

@@ -1,4 +1,5 @@
 import os
+from unittest.mock import patch
 
 import pytest
 
@@ -12,7 +13,10 @@ def test_config():
     return configmodel.RapidastConfigModel()
 
 
-def test_setup_garak(test_config):
+# Mock the _check_garak_version method for the test to run successfully where Garak is not installed
+@patch("scanners.garak.garak_none.Garak._check_garak_version")
+def test_setup_garak(mock_check_garak_version, test_config):
+    mock_check_garak_version.return_value = None
     config_data = rapidast.load_config("config/config-template-garak.yaml")
     test_config = configmodel.RapidastConfigModel(config_data)
 

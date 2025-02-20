@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import shutil
 import subprocess
 from dataclasses import dataclass
@@ -9,6 +10,7 @@ from typing import Dict
 
 import dacite
 import yaml
+from packaging import version
 
 from configmodel import RapidastConfigModel
 from scanners import RapidastScanner
@@ -35,6 +37,28 @@ class Garak(RapidastScanner):
     GARAK_CONFIG_TEMPLATE = "garak-config-template.yaml"
     GARAK_RUN_CONFIG_FILE = "garak-run-config.yaml"
     TMP_REPORTS_DIRNAME = "garak_runs"
+    MIN_GARAK_VERSION = "0.10.2"
+
+    def _check_garak_version(self):
+        try:
+            result = subprocess.run(
+                [self.cfg.garak_executable_path, "--version"], capture_output=True, text=True, check=True
+            )
+            version_match = re.search(r"v(\d+\.\d+\.\d+)", result.stdout.strip())
+            if not version_match:
+                raise ValueError(f"Could not find version number in output: {result.stdout}")
+
+            current_version = version.parse(version_match.group(1))
+            min_version = version.parse(self.MIN_GARAK_VERSION)
+
+            if current_version < min_version:
+                raise RuntimeError(
+                    f"Garak version {current_version} is not supported. Version {min_version} or higher is required."
+                )
+        except FileNotFoundError as exc:
+            raise RuntimeError(f"Garak is not found at {self.cfg.garak_executable_path}") from exc
+        except (subprocess.SubprocessError, IndexError, ValueError) as e:
+            raise RuntimeError(f"Failed to check Garak version: {str(e)}") from e
 
     def __init__(self, config: RapidastConfigModel, ident: str = "garak"):
         super().__init__(config, ident)  # create a temporary directory (cleaned up during cleanup)
@@ -56,6 +80,9 @@ class Garak(RapidastScanner):
         """Set up the Garak scanner configuration."""
         if self.state != State.UNCONFIGURED:
             raise RuntimeError(f"Garak scanning setup encountered an unexpected state: {self.state}")
+
+        # Check Garak version
+        self._check_garak_version()
 
         try:
             template_path = os.path.join(MODULE_DIR, self.GARAK_CONFIG_TEMPLATE)

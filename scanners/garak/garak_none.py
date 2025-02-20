@@ -3,6 +3,9 @@ import os
 import shutil
 import subprocess
 from dataclasses import dataclass
+from dataclasses import field
+from typing import Any
+from typing import Dict
 
 import dacite
 import yaml
@@ -14,10 +17,11 @@ from scanners import State
 
 @dataclass
 class GarakConfig:
-    model_name: str
     model_type: str
-    probe_spec: str = "all"  # all or a list of probes like "probe1,probe2"
-    garak_executable_path: str = "/usr/local/bin/garak"
+    model_name: str = field(default="test_model")
+    probe_spec: str = field(default="all")  # all or a list of probes like "probe1,probe2"
+    garak_executable_path: str = field(default="/usr/local/bin/garak")
+    generators: Dict[str, Any] = field(default_factory=dict)
 
 
 CLASSNAME = "Garak"
@@ -65,6 +69,7 @@ class Garak(RapidastScanner):
                         "model_name": self.cfg.model_name,
                         "model_type": self.cfg.model_type,
                         "probe_spec": self.cfg.probe_spec,
+                        "generators": self.cfg.generators,
                     },
                     "reporting": {"report_dir": self.workdir_reports_dir},
                 }

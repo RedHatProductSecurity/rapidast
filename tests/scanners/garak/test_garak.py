@@ -19,11 +19,19 @@ def test_setup_garak(test_config):
     test_model_name = "testname"
     test_model_type = "testtype"
     test_probe_spec = "dan.Dan_11_0"
+    test_generators = {
+        "rest": {
+            "uri": "https://stage.test.com/api/",
+            "method": "POST",
+            "response_json_field": "text",
+        }
+    }
 
     test_garak_config_in_rapidast = {
         "model_name": test_model_name,
         "model_type": test_model_type,
         "probe_spec": test_probe_spec,
+        "generators": test_generators,
     }
 
     test_config.set("scanners.garak", test_garak_config_in_rapidast)
@@ -34,6 +42,7 @@ def test_setup_garak(test_config):
     assert test_garak.automation_config["plugins"]["model_name"] == test_model_name
     assert test_garak.automation_config["plugins"]["model_type"] == test_model_type
     assert test_garak.automation_config["plugins"]["probe_spec"] == test_probe_spec
+    assert test_garak.automation_config["plugins"]["generators"] == test_generators
 
     assert test_garak.garak_cli
     assert test_garak.garak_cli[:3] == [

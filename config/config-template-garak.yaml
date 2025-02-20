@@ -10,12 +10,20 @@ config:
 # `application` contains data related to the application, not to the scans.
 application:
   shortName: "garak-test-1.0"
-  # url: "<Mandatory. root URL of the application>" # unused for Garak
 
 # `scanners' is a section that configures scanning options
 scanners:
   garak:
-    model_name: gpt2
-    model_type: huggingface
-    # probe_spec: all                               # default: all, or a list of probes like "probe1,probe2"
+    model_type: huggingface                         # required, e.g. hugginngface, openai, rest
+    model_name: gpt2                                # optional, but a specific model type requires a model name or path
+    #generators:                                    # optional, providing more options for the selected model type, e.g. RestGenerator
+    #  rest:
+    #    RestGenerator:
+    #      uri:
+    #      method:
+    #      headers:
+    #      response_json_field:
+    #      req_template_json_object:
+    #      request_timeout: 60
+    #probe_spec: all                               # default: all, or a list of probes like "probe1,probe2"
     #garak_executable_path: /usr/local/bin/garak    # default: /usr/local/bin/garak

@@ -645,6 +645,10 @@
                             "model_type": {
                                 "type": "string"
                             },
+                            "generators": {
+                                "type": "object",
+                                "properties": {}
+                            },
                             "probe_spec": {
                                 "type": "string"
                             },
@@ -653,7 +657,6 @@
                             }
                         },
                         "required": [
-                            "model_name",
                             "model_type"
                         ]
                     }

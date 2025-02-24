@@ -201,8 +201,8 @@ spec:
               yum install -y python3.12 git
               python3.12 -m ensurepip
 
-              if [ -f "/cachi2/cachi2.env" ];
-                echo "Source Cachi2 environment"
+              if [ -f "/cachi2/cachi2.env" ]; then
+                echo "Sourcing Cachi2 environment"
                 source /cachi2/cachi2.env
               fi
 

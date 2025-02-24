@@ -109,6 +109,7 @@ spec:
           value: $(context.pipelineRun.uid)
 
     - name: prefetch-get-refs
+      onError: continue
       taskRef:
         resolver: git
         params:
@@ -154,12 +155,12 @@ spec:
             image: quay.io/redhat-appstudio/build-trusted-artifacts:latest@sha256:8391272c4e5011120e9e7fee2c1f339e9405366110bf239dadcbc21e953ce099
             env:
               - name: PREFETCH_CACHI2_ARTIFACT
-                value: $(tasks.prefetch-get-refs.results.PREFETCH_CACHI2_ARTIFACT.path)
+                value: $(tasks.prefetch-get-refs.results.PREFETCH_CACHI2_ARTIFACT)
             args:
               - use
-              - $(params.PREFETCH_CACHI2_ARTIFACT)=/cachi2
+              - $PREFETCH_CACHI2_ARTIFACT=/cachi2
             when:
-              - input: "$(tasks.prefetch-get-refs.results.PREFETCH_CACHI2_ARTIFACT.path)"
+              - input: "$(tasks.prefetch-get-refs.results.PREFETCH_CACHI2_ARTIFACT)"
                 operator: notin
                 values: [""]
           - name: inject-cachi2-files
@@ -168,7 +169,7 @@ spec:
             script: |
               cachi2 --log-level="debug" inject-files /cachi2/output
             when:
-              - input: "$(tasks.prefetch-get-refs.results.PREFETCH_CACHI2_ARTIFACT.path)"
+              - input: "$(tasks.prefetch-get-refs.results.PREFETCH_CACHI2_ARTIFACT)"
                 operator: notin
                 values: [""]
           - name: test

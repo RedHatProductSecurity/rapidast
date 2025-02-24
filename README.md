@@ -536,7 +536,7 @@ scanners:
 
 #### Generic scanner
 
-RapiDAST can run other scanning tools as well as ZAP. It is possible to request RapiDAST to run a command and process stdout results, using the `generic` plugin.
+In addition to the scanners mentioned above, RapiDAST can run any other scanning tools. It is possible to request RapiDAST to run a command and process stdout results, using the `generic` plugin. One use case is to run your own tools or scripts and export the results to Google Cloud Storage.
 
 The following is an example to run a command or a tool in the host where a RapiDAST scan runs:
 

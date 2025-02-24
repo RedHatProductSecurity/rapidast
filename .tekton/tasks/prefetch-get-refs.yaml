@@ -22,66 +22,65 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.labels['appstudio.openshift.io/component']
+        - name: PREFETCH_CACHI2_ARTIFACT_FILE
+          value: $(results.PREFETCH_CACHI2_ARTIFACT.path)
       script: |
         #!/bin/bash
         set -euo pipefail
 
         echo "Starting prefetch-get-refs task..."
 
-        # Extract component image from snapshot JSON
-        COMPONENT_CONTAINER_IMAGE=$(jq -r --arg component_name "$KONFLUX_COMPONENT_NAME" '
-          .components[] | select(.name == $component_name) | .containerImage' <<< "$SNAPSHOT")
+        # Extract the container image for the specified component from the snapshot
+        COMPONENT_CONTAINER_IMAGE=$(jq -r --arg COMPONENT_NAME "$KONFLUX_COMPONENT_NAME" '
+          .components[] | select(.name == $COMPONENT_NAME) | .containerImage' <<< "$SNAPSHOT")
 
         if [[ -z "$COMPONENT_CONTAINER_IMAGE" || "$COMPONENT_CONTAINER_IMAGE" == "null" ]]; then
-          echo "Error: Could not determine COMPONENT_CONTAINER_IMAGE for component: $KONFLUX_COMPONENT_NAME"
-          exit 1
+            echo "Error: Could not determine container image for component: $KONFLUX_COMPONENT_NAME"
+            exit 1
         fi
 
         echo "Component container image: $COMPONENT_CONTAINER_IMAGE"
 
-        # Download and save Cosign metadata
         echo "Downloading Cosign metadata..."
-        cosign download attestation "${COMPONENT_CONTAINER_IMAGE}" > cosign_metadata.json || {
-          echo "Error: Failed to download Cosign metadata"
-          exit 1
+        cosign download attestation "$COMPONENT_CONTAINER_IMAGE" > cosign_metadata.json || {
+            echo "Error: Failed to download Cosign metadata"
+            exit 1
         }
 
-        # Extract prefetch OCI storage location
-        PREFETCH_OCI_STORAGE=$(jq -r '
-          .payload | @base64d | fromjson | .predicate.buildConfig.tasks[] |
-          select(.name == "prefetch-dependencies") | .invocation.parameters.ociStorage' cosign_metadata.json)
+        # Extract the OCI storage location for prefetched dependencies
+        OCI_STORAGE_LOCATION=$(jq -r '
+            .payload | @base64d | fromjson | .predicate.buildConfig.tasks[] |
+            select(.name == "prefetch-dependencies") | .invocation.parameters.ociStorage // empty' cosign_metadata.json)
 
-        if [[ -z "$PREFETCH_OCI_STORAGE" || "$PREFETCH_OCI_STORAGE" == "null" ]]; then
-          echo "Error: PREFETCH_OCI_STORAGE is empty or not found"
-          exit 1
+        if [[ -z "$OCI_STORAGE_LOCATION" ]]; then
+            echo "OCI storage location for prefetching dependencies not found"
+            exit
         fi
 
-        echo "Prefetch OCI Storage: $PREFETCH_OCI_STORAGE"
+        echo "OCI storage location: $OCI_STORAGE_LOCATION"
 
-        # Fetch digest of the OCI storage
-        # Oras discover provides a list of available manifests for a given OCI storage location
-        # We need to filter out the output, extracting the first valid SHA-256 digest
-        PREFETCH_OCI_STORAGE_DIGEST=$(oras discover "$PREFETCH_OCI_STORAGE" | grep -E 'sha256:[a-f0-9]{64}' | head -1)
+        # Fetch the first available OCI storage digest
+        OCI_STORAGE_DIGEST=$(oras discover "$OCI_STORAGE_LOCATION" | grep -E 'sha256:[a-f0-9]{64}' | head -1)
 
-        if [[ -z "$PREFETCH_OCI_STORAGE_DIGEST" ]]; then
-          echo "Error: Failed to retrieve PREFETCH_OCI_STORAGE_DIGEST"
-          exit 1
+        if [[ -z "$OCI_STORAGE_DIGEST" ]]; then
+            echo "Error: Failed to retrieve OCI storage digest"
+            exit 1
         fi
 
-        echo "Prefetch OCI Storage Digest: $PREFETCH_OCI_STORAGE_DIGEST"
+        echo "OCI storage digest: $OCI_STORAGE_DIGEST"
 
-        # Fetch CACHI2 artifact digest from OCI storage
-        PREFETCH_CACHI2_DIGEST=$(oras manifest fetch "$PREFETCH_OCI_STORAGE_DIGEST" | jq -r '
-          .layers[] | select(.annotations["org.opencontainers.image.title"] == "CACHI2_ARTIFACT") | .digest')
+        # Fetch the CACHI2 artifact digest from the OCI storage
+        CACHI2_ARTIFACT_DIGEST=$(oras manifest fetch "$OCI_STORAGE_DIGEST" | jq -r '
+            .layers[] | select(.annotations["org.opencontainers.image.title"] == "CACHI2_ARTIFACT") | .digest // empty')
 
-        if [[ -z "$PREFETCH_CACHI2_DIGEST" || "$PREFETCH_CACHI2_DIGEST" == "null" ]]; then
-          echo "Error: Could not extract CACHI2_ARTIFACT digest"
-          exit 1
+        if [[ -z "$CACHI2_ARTIFACT_DIGEST" ]]; then
+            echo "No matching CACHI2 artifact found"
+            exit
+        else
+            OCI_REPOSITORY=$(echo "$OCI_STORAGE_DIGEST" | sed 's/@.*//')
+            FULL_OCI_ARTIFACT_PATH="$OCI_REPOSITORY@$CACHI2_ARTIFACT_DIGEST"
+            echo "Full OCI Artifact Path: $FULL_OCI_ARTIFACT_PATH"
         fi
 
-        echo "Prefetch Cachi2 Digest: $PREFETCH_CACHI2_DIGEST"
-
-        # Write result to Tekton results file
-        echo -n "oci:$PREFETCH_CACHI2_DIGEST" > "$(results.PREFETCH_CACHI2_ARTIFACT.path)"
-
-        echo "Task completed successfully!"
+        # Write the result to Tekton results file
+        echo -n "oci:$FULL_OCI_ARTIFACT_PATH" > "$PREFETCH_CACHI2_ARTIFACT_FILE"

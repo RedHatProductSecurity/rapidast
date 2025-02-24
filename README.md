@@ -6,8 +6,9 @@ RapiDAST (Rapid DAST) is an open-source security testing tool that automates DAS
 
 RapiDAST provides:
 
-- Automated HTTP/API security scanning using ZAP
-- Kubernetes operator scanning using OOBTKUBE
+- Automated HTTP/API security scanning leveraging ZAP
+- Automated LLM AI scanning leveraging Garak
+- Kubernetes operator scanning leveraging OOBTKUBE
 - Automated vulnerability scanning using Nessus (requires a Nessus instance)
 - Command-line execution with yaml configuration, suitable for integration in CI/CD pipelines
 - Ability to run automated DAST scanning with pre-built or custom container images
@@ -120,6 +121,7 @@ See templates in the [config](./config/) directory for examples and ideas.
 - `config-template-zap-long.yaml` : describes a more extensive use of ZAP (all configuration options are presented)
 - `config-template-multi-scan.yaml` : describes how to combine multiple scanners in a single configuration
 - `config-template-generic-scan.yaml` : describes the use of the generic scanner
+- `config-template-garak.yaml` : describes the use of the Garak LLM AI scanner
 
 ### Basic Example
 
@@ -518,6 +520,18 @@ scanners:
       # timeout: 600 # timeout in seconds to complete scan
       targets:
       - 127.0.0.1
+```
+
+#### Garak
+
+Garak is an LLM AI scanner developed by NVIDIA. It helps organizations identify and address security vulnerabilities across various systems, devices, and applications.
+
+The following is an example to launch a scan:
+```yaml
+scanners:
+  garak:
+    model_type: huggingface
+    model_name: gpt2
 ```
 
 #### Generic scanner

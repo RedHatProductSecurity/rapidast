@@ -524,7 +524,7 @@ scanners:
 
 #### Garak
 
-Garak is an LLM AI scanner developed by NVIDIA. It helps organizations identify and address security vulnerabilities across various systems, devices, and applications.
+Garak is an LLM AI scanner developed by NVIDIA. See https://github.com/NVIDIA/garak for more information.
 
 The following is an example to launch a scan:
 ```yaml

@@ -1,0 +1,39 @@
+---
+system:
+    verbose: 0
+    narrow_output: false
+    parallel_requests: false
+    parallel_attempts: false
+    lite: true
+    show_z: false
+
+run:
+    seed:
+    deprefix: true
+    eval_threshold: 0.5
+    generations: 5
+    probe_tags:
+
+plugins:
+    model_type:
+    model_name:
+    probe_spec: all
+    detector_spec: auto
+    extended_detectors: false
+    buff_spec:
+    buffs_include_original_prompt: false
+    buff_max:
+    detectors: {}
+    generators: {}
+    buffs: {}
+    harnesses: {}
+    probes:
+        encoding:
+            payloads:
+                - default
+
+reporting:
+    report_prefix:
+    taxonomy:
+    report_dir: garak_runs
+    show_100_pass_modules: true

@@ -22,7 +22,7 @@ pipelineJob('rapidast-scan-job') {
     }
     definition {
         cps {
-            script(readFileFromWorkspace('workflow_examples/jenkins/rapidastscan.groovy'))
+            script(readFileFromWorkspace('examples/jenkins/rapidastscan.groovy'))
             sandbox()
         }
     }

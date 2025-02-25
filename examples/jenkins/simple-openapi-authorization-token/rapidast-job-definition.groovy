@@ -18,7 +18,7 @@ pipelineJob('rapidast-simple-openapi-scan-job') {
     }
     definition {
         cps {
-            script(readFileFromWorkspace('/path/to/workflow_examples/jenkins/simple/rapidastscan.groovy'))
+            script(readFileFromWorkspace('/path/to/examples/jenkins/simple/rapidastscan.groovy'))
             sandbox()
         }
     }

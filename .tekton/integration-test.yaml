@@ -164,6 +164,14 @@ spec:
             image: quay.io/konflux-ci/cachi2:0.20.0@sha256:80402886bbc0f6b4deba65cf5f66dfe9a2c01ae0b57bf3454e3ea58e1a395720
             workingDir: /workspace
             script: |
+              #!/bin/bash -e
+
+              # The file cachi2/output/.build-config.json specifies where cachi2 expects to find
+              # the project sources. By default, Konflux points them to /var/workdir/source.
+              # Create a symbolic link from /workspace to /var/workdir/source
+
+              mkdir -p /var/workdir/
+              ln -s /workspace /var/workdir/source
               cachi2 --log-level="debug" inject-files /cachi2/output
             when:
               - input: "$(tasks.prefetch-get-refs.results.PREFETCH_CACHI2_ARTIFACT)"
@@ -205,7 +213,7 @@ spec:
                 # Python 3.12 doesn't include setuptools and wheel by default in ensurepip,
                 # so we manually install them to make them available for building and
                 # prefetched dependencies
-                PIP_NO_INDEX=  pip3 download setuptools wheel --dest "$PIP_FIND_LINKS"
+                # PIP_NO_INDEX=  pip3 download setuptools wheel --dest "$PIP_FIND_LINKS"
               fi
               pip3 install -r requirements-dev.txt
               pytest -s e2e-tests/test_integration.py --json-report --json-report-summary --json-report-file $(results.TEST_OUTPUT.path)

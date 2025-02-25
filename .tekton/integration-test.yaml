@@ -153,12 +153,9 @@ spec:
               git checkout "$(tasks.parse-metadata.results.source-git-revision)"
           - name: use-trusted-artifact
             image: quay.io/redhat-appstudio/build-trusted-artifacts:latest@sha256:8391272c4e5011120e9e7fee2c1f339e9405366110bf239dadcbc21e953ce099
-            env:
-              - name: PREFETCH_CACHI2_ARTIFACT
-                value: $(tasks.prefetch-get-refs.results.PREFETCH_CACHI2_ARTIFACT)
             args:
               - use
-              - $PREFETCH_CACHI2_ARTIFACT=/cachi2
+              - $(tasks.prefetch-get-refs.results.PREFETCH_CACHI2_ARTIFACT)=/cachi2
             when:
               - input: "$(tasks.prefetch-get-refs.results.PREFETCH_CACHI2_ARTIFACT)"
                 operator: notin

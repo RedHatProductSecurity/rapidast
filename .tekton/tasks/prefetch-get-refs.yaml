@@ -79,7 +79,7 @@ spec:
         else
             OCI_REPOSITORY=$(echo "$OCI_STORAGE_DIGEST" | sed 's/@.*//')
             FULL_OCI_ARTIFACT_PATH="$OCI_REPOSITORY@$CACHI2_ARTIFACT_DIGEST"
-            echo "Full OCI Artifact Path: $FULL_OCI_ARTIFACT_PATH"
+            echo "Full OCI artifact path: $FULL_OCI_ARTIFACT_PATH"
         fi
 
         # Write the result to Tekton results file

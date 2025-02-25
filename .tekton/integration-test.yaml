@@ -168,16 +168,8 @@ spec:
             image: quay.io/konflux-ci/cachi2:0.20.0@sha256:80402886bbc0f6b4deba65cf5f66dfe9a2c01ae0b57bf3454e3ea58e1a395720
             workingDir: /workspace
             script: |
-              #!/bin/bash -e
-
-              # The file cachi2/output/.build-config.json specifies where cachi2 expects to find
-              # the project sources. By default, Konflux points them to /var/workdir/source.
-              # Create a symbolic link from /workspace to /var/workdir/source
-
-              mkdir -p /var/workdir/
-              ln -s /workspace /var/workdir/source
-              echo "Symbolic link created: /workspace to /var/workdir/source"
-              cachi2 --log-level="debug" inject-files /cachi2/output
+              #!/bin/bash
+              source /workspace/.tekton/scripts/inject-cachi2-files.sh
             when:
               - input: "$(tasks.prefetch-get-refs.results.PREFETCH_CACHI2_ARTIFACT)"
                 operator: notin
@@ -211,15 +203,8 @@ spec:
               yum install -y python3.12 git
               python3.12 -m ensurepip
 
-              if [ -f "/cachi2/cachi2.env" ]; then
-                echo "Sourcing Cachi2 environment"
-                source /cachi2/cachi2.env
+              source /workspace/.tekton/scripts/setup-cachi2-env.sh
 
-                # Python 3.12 doesn't include setuptools and wheel by default in ensurepip,
-                # so we manually install them to make them available for building and
-                # prefetched dependencies
-                PIP_NO_INDEX=  pip3 download setuptools wheel --dest "$PIP_FIND_LINKS"
-              fi
               pip3 install -r requirements-dev.txt
               pytest -s e2e-tests/test_integration.py --json-report --json-report-summary --json-report-file $(results.TEST_OUTPUT.path)
               cat $(results.TEST_OUTPUT.path)
@@ -269,16 +254,8 @@ spec:
             image: quay.io/konflux-ci/cachi2:0.20.0@sha256:80402886bbc0f6b4deba65cf5f66dfe9a2c01ae0b57bf3454e3ea58e1a395720
             workingDir: /workspace
             script: |
-              #!/bin/bash -e
-
-              # The file cachi2/output/.build-config.json specifies where cachi2 expects to find
-              # the project sources. By default, Konflux points them to /var/workdir/source.
-              # Create a symbolic link from /workspace to /var/workdir/source
-
-              mkdir -p /var/workdir/
-              ln -s /workspace /var/workdir/source
-              echo "Symbolic link created: /workspace to /var/workdir/source"
-              cachi2 --log-level="debug" inject-files /cachi2/output
+              #!/bin/bash
+              source /workspace/.tekton/scripts/inject-cachi2-files.sh
             when:
               - input: "$(tasks.prefetch-get-refs.results.PREFETCH_CACHI2_ARTIFACT)"
                 operator: notin
@@ -311,15 +288,9 @@ spec:
 
               yum install -y python3.12 git
               python3.12 -m ensurepip
-              if [ -f "/cachi2/cachi2.env" ]; then
-                echo "Sourcing Cachi2 environment"
-                source /cachi2/cachi2.env
 
-                # Python 3.12 doesn't include setuptools and wheel by default in ensurepip,
-                # so we manually install them to make them available for building and
-                # prefetched dependencies
-                PIP_NO_INDEX=  pip3 download setuptools wheel --dest "$PIP_FIND_LINKS"
-              fi
+              source /workspace/.tekton/scripts/setup-cachi2-env.sh
+
               pip3 install -r requirements-dev.txt
               pytest -sv e2e-tests/test_nessus.py --json-report --json-report-summary --json-report-file $(results.TEST_OUTPUT.path)
               cat $(results.TEST_OUTPUT.path)

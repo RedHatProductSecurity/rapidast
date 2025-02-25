@@ -1,0 +1,38 @@
+# place in a location like .github/workflows/rapidast.yml
+name: rapidast-report
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  rapidast:
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/redhatproductsecurity/rapidast:latest
+      options: --user root # default rapidast user not compatible with github runners
+
+    # Target application to scan goes here. This contains a stub example for httpd.
+    # A more realistic example would target a custom container image built
+    # and pushed to a public container registry in an earlier build step.
+    #
+    # In the rapidast config file, for this example "http://httpd" would be the target URL.
+    #
+    services:
+      httpd:
+        image: docker.io/httpd:latest
+
+    # Scan target app with rapidast and upload results
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: run rapidast
+        run: |
+          rapidast.py --config rapidast-config.yml
+          # Display ZAP scan results in logs
+          cat results/*/*/zap/zap-report.json
+
+      - name: Upload rapidast results
+        uses: actions/upload-artifact@v4
+        with:
+          path: 'results/*/*/*'

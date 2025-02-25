@@ -52,5 +52,7 @@ spec:
           select(.name == "prefetch-dependencies") | .results[] | select(.name == "CACHI2_ARTIFACT") | .value' \
           cosign_metadata.json)"
 
+        echo "Cachi2 source artifact: $CACHI2_SOURCE_ARTIFACT"
+
         # Write the result to Tekton results file
         echo -n "$CACHI2_SOURCE_ARTIFACT" > "$PREFETCH_CACHI2_ARTIFACT_FILE"

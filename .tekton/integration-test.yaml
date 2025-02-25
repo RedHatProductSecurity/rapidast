@@ -201,9 +201,12 @@ spec:
               if [ -f "/cachi2/cachi2.env" ]; then
                 echo "Sourcing Cachi2 environment"
                 source /cachi2/cachi2.env
-                pip3 install setuptools
-              fi
 
+                # Python 3.12 doesn't include setuptools and wheel by default in ensurepip,
+                # so we manually install them to make them available for building and
+                # prefetched dependencies
+                PIP_NO_INDEX=  pip3 download setuptools wheel --dest "$PIP_FIND_LINKS"
+              fi
               pip3 install -r requirements-dev.txt
               pytest -s e2e-tests/test_integration.py --json-report --json-report-summary --json-report-file $(results.TEST_OUTPUT.path)
               cat $(results.TEST_OUTPUT.path)

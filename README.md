@@ -472,7 +472,7 @@ scanners:
       - 127.0.0.1
 ```
 
-#### Garak
+#### Garak (experimental)
 
 Garak is an LLM AI scanner developed by NVIDIA. See https://github.com/NVIDIA/garak for more information.
 

@@ -134,10 +134,14 @@ spec:
           volumeMounts:
             - mountPath: /cachi2
               name: cachi2
+            - mountPath: /workspace
+              name: workspace
         volumes:
           - name: credentials
             emptyDir: {}
           - name: cachi2
+            emptyDir: {}
+          - name: workspace
             emptyDir: {}
         results:
           - name: TEST_OUTPUT
@@ -164,7 +168,7 @@ spec:
             image: quay.io/konflux-ci/cachi2:0.20.0@sha256:80402886bbc0f6b4deba65cf5f66dfe9a2c01ae0b57bf3454e3ea58e1a395720
             workingDir: /workspace
             script: |
-              #!/bin/bash -e
+              #!/bin/bash -xe
 
               # The file cachi2/output/.build-config.json specifies where cachi2 expects to find
               # the project sources. By default, Konflux points them to /var/workdir/source.
@@ -173,6 +177,7 @@ spec:
               mkdir -p /var/workdir/
               ln -s /workspace /var/workdir/source
               cachi2 --log-level="debug" inject-files /cachi2/output
+              ls -l /var/workdir/source
             when:
               - input: "$(tasks.prefetch-get-refs.results.PREFETCH_CACHI2_ARTIFACT)"
                 operator: notin

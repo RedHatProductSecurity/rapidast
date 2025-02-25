@@ -195,10 +195,11 @@ spec:
               echo "$KUBECONFIG_VALUE" > "$KUBECONFIG"
               oc whoami
 
-              yum install -y python3.12 git python3-setuptools python3-setuptools-wheel
+              yum install -y python3.12 git
               python3.12 -m ensurepip
 
               if [ -f "/cachi2/cachi2.env" ]; then
+                pip3 install setuptools
                 echo "Sourcing Cachi2 environment"
                 source /cachi2/cachi2.env
               fi

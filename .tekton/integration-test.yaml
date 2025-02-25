@@ -199,9 +199,9 @@ spec:
               python3.12 -m ensurepip
 
               if [ -f "/cachi2/cachi2.env" ]; then
-                pip3 install setuptools
                 echo "Sourcing Cachi2 environment"
                 source /cachi2/cachi2.env
+                pip3 install setuptools
               fi
 
               pip3 install -r requirements-dev.txt

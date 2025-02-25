@@ -47,40 +47,10 @@ spec:
             exit 1
         }
 
-        # Extract the OCI storage location for prefetched dependencies
-        OCI_STORAGE_LOCATION=$(jq -r '
-            .payload | @base64d | fromjson | .predicate.buildConfig.tasks[] |
-            select(.name == "prefetch-dependencies") | .invocation.parameters.ociStorage // empty' cosign_metadata.json)
-
-        if [[ -z "$OCI_STORAGE_LOCATION" ]]; then
-            echo "OCI storage location for prefetching dependencies not found"
-            exit
-        fi
-
-        echo "OCI storage location: $OCI_STORAGE_LOCATION"
-
-        # Fetch the first available OCI storage digest
-        OCI_STORAGE_DIGEST=$(oras discover "$OCI_STORAGE_LOCATION" | grep -E 'sha256:[a-f0-9]{64}' | head -1)
-
-        if [[ -z "$OCI_STORAGE_DIGEST" ]]; then
-            echo "Error: Failed to retrieve OCI storage digest"
-            exit 1
-        fi
-
-        echo "OCI storage digest: $OCI_STORAGE_DIGEST"
-
-        # Fetch the CACHI2 artifact digest from the OCI storage
-        CACHI2_ARTIFACT_DIGEST=$(oras manifest fetch "$OCI_STORAGE_DIGEST" | jq -r '
-            .layers[] | select(.annotations["org.opencontainers.image.title"] == "CACHI2_ARTIFACT") | .digest // empty')
-
-        if [[ -z "$CACHI2_ARTIFACT_DIGEST" ]]; then
-            echo "No matching CACHI2 artifact found"
-            exit
-        else
-            OCI_REPOSITORY=$(echo "$OCI_STORAGE_DIGEST" | sed 's/@.*//')
-            FULL_OCI_ARTIFACT_PATH="$OCI_REPOSITORY@$CACHI2_ARTIFACT_DIGEST"
-            echo "Full OCI artifact path: $FULL_OCI_ARTIFACT_PATH"
-        fi
+        CACHI2_SOURCE_ARTIFACT="$(jq -r \
+          '.payload | @base64d | fromjson | .predicate.buildConfig.tasks[] |
+          select(.name == "prefetch-dependencies") | .results[] | select(.name == "CACHI2_ARTIFACT") | .value' \
+          cosign_metadata.json)"
 
         # Write the result to Tekton results file
-        echo -n "oci:$FULL_OCI_ARTIFACT_PATH" > "$PREFETCH_CACHI2_ARTIFACT_FILE"
+        echo -n "$CACHI2_SOURCE_ARTIFACT" > "$PREFETCH_CACHI2_ARTIFACT_FILE"

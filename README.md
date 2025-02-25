@@ -6,8 +6,9 @@ RapiDAST (Rapid DAST) is an open-source security testing tool that automates DAS
 
 RapiDAST provides:
 
-- Automated HTTP/API security scanning using ZAP
-- Kubernetes operator scanning using OOBTKUBE
+- Automated HTTP/API security scanning leveraging ZAP
+- Automated LLM AI scanning leveraging Garak
+- Kubernetes operator scanning leveraging OOBTKUBE
 - Automated vulnerability scanning using Nessus (requires a Nessus instance)
 - Command-line execution with yaml configuration, suitable for integration in [CI/CD pipelines](./examples/)
 - Ability to run automated DAST scanning with pre-built or custom container images
@@ -131,6 +132,7 @@ See templates in the [config](./config/) directory for rapidast configuration ex
 - `config-template-zap-long.yaml` : describes a more extensive use of ZAP (all configuration options are presented)
 - `config-template-multi-scan.yaml` : describes how to combine multiple scanners in a single configuration
 - `config-template-generic-scan.yaml` : describes the use of the generic scanner
+- `config-template-garak.yaml` : describes the use of the Garak LLM AI scanner
 
 See [here](./examples/) for examples on how to run RapiDAST in various CI/CD pipelines.
 
@@ -470,9 +472,21 @@ scanners:
       - 127.0.0.1
 ```
 
+#### Garak
+
+Garak is an LLM AI scanner developed by NVIDIA. See https://github.com/NVIDIA/garak for more information.
+
+The following is an example to launch a scan:
+```yaml
+scanners:
+  garak:
+    model_type: huggingface
+    model_name: gpt2
+```
+
 #### Generic scanner
 
-RapiDAST can run other scanning tools as well as ZAP. It is possible to request RapiDAST to run a command and process stdout results, using the `generic` plugin.
+In addition to the scanners mentioned above, RapiDAST can run any other scanning tools. It is possible to request RapiDAST to run a command and process stdout results, using the `generic` plugin. One use case is to run your own tools or scripts and export the results to Google Cloud Storage.
 
 The following is an example to run a command or a tool in the host where a RapiDAST scan runs:
 

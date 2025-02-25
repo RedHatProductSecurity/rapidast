@@ -634,6 +634,31 @@
                             "scan",
                             "server"
                         ]
+                    },
+                    {
+                        "type": "object",
+                        "description": "Garak Scanner",
+                        "properties": {
+                            "model_name": {
+                                "type": "string"
+                            },
+                            "model_type": {
+                                "type": "string"
+                            },
+                            "generators": {
+                                "type": "object",
+                                "properties": {}
+                            },
+                            "probe_spec": {
+                                "type": "string"
+                            },
+                            "garak_executable_path": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "model_type"
+                        ]
                     }
                 ]
             }

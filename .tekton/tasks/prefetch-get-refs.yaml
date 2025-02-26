@@ -1,0 +1,58 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/yamllint.json
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: prefetch-get-refs
+spec:
+  description: Fetches references for Cachi2 prefetch dependencies
+  results:
+    - name: PREFETCH_CACHI2_ARTIFACT
+      description: The OCI artifact containing the Cachi2 prefetched dependencies
+  params:
+    - name: SNAPSHOT
+      description: The JSON string of the Snapshot
+  steps:
+    - name: prefetch-get-refs
+      image: quay.io/konflux-qe-incubator/konflux-qe-tools:latest
+      env:
+        - name: SNAPSHOT
+          value: $(params.SNAPSHOT)
+        - name: KONFLUX_COMPONENT_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['appstudio.openshift.io/component']
+        - name: PREFETCH_CACHI2_ARTIFACT_FILE
+          value: $(results.PREFETCH_CACHI2_ARTIFACT.path)
+      script: |
+        #!/bin/bash
+        set -euo pipefail
+
+        echo "Starting prefetch-get-refs task..."
+
+        # Extract the container image for the specified component from the snapshot
+        COMPONENT_CONTAINER_IMAGE=$(jq -r --arg COMPONENT_NAME "$KONFLUX_COMPONENT_NAME" '
+          .components[] | select(.name == $COMPONENT_NAME) | .containerImage' <<< "$SNAPSHOT")
+
+        if [[ -z "$COMPONENT_CONTAINER_IMAGE" || "$COMPONENT_CONTAINER_IMAGE" == "null" ]]; then
+            echo "Error: Could not determine container image for component: $KONFLUX_COMPONENT_NAME"
+            exit 1
+        fi
+
+        echo "Component container image: $COMPONENT_CONTAINER_IMAGE"
+
+        echo "Downloading Cosign metadata..."
+        cosign download attestation "$COMPONENT_CONTAINER_IMAGE" > cosign_metadata.json || {
+            echo "Error: Failed to download Cosign metadata"
+            exit 1
+        }
+
+        CACHI2_SOURCE_ARTIFACT="$(jq -r \
+          '.payload | @base64d | fromjson | .predicate.buildConfig.tasks[] |
+          select(.name == "prefetch-dependencies") | .results[] | select(.name == "CACHI2_ARTIFACT") | .value' \
+          cosign_metadata.json)"
+
+        echo "Cachi2 source artifact: $CACHI2_SOURCE_ARTIFACT"
+
+        # Write the result to Tekton results file
+        echo -n "$CACHI2_SOURCE_ARTIFACT" > "$PREFETCH_CACHI2_ARTIFACT_FILE"

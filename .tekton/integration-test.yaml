@@ -108,20 +108,45 @@ spec:
         - name: ownerUid
           value: $(context.pipelineRun.uid)
 
+    - name: prefetch-get-refs
+      onError: continue
+      taskRef:
+        resolver: git
+        params:
+        - name: url
+          value: https://github.com/RedHatProductSecurity/rapidast
+        - name: revision
+          value: prefetch-pip-deps-e2e-konflux
+        - name: pathInRepo
+          value: .tekton/tasks/prefetch-get-refs.yaml
+      params:
+        - name: SNAPSHOT
+          value: $(params.SNAPSHOT)
+
     # XXX integrations tests can't reference Tasks in the same PR AFAICT
     # so need to repeat them inline, rather than define in a separate file
     - name: run-e2e-tests
       runAfter:
         - provision-eaas-space
+        - prefetch-get-refs
       taskSpec:
+        stepTemplate:
+          volumeMounts:
+            - mountPath: /cachi2
+              name: cachi2
+            - mountPath: /workspace
+              name: workspace
         volumes:
           - name: credentials
+            emptyDir: {}
+          - name: cachi2
+            emptyDir: {}
+          - name: workspace
             emptyDir: {}
         results:
           - name: TEST_OUTPUT
             description: e2e test results
         steps:
-
           # XXX not supported to use workspaces in integration tests
           - name: clone-repository
             image: quay.io/konflux-ci/git-clone:latest
@@ -130,7 +155,25 @@ spec:
               git clone "$(tasks.parse-metadata.results.source-git-url)" /workspace
               pushd /workspace
               git checkout "$(tasks.parse-metadata.results.source-git-revision)"
-
+          - name: use-trusted-artifact
+            image: quay.io/redhat-appstudio/build-trusted-artifacts:latest@sha256:8391272c4e5011120e9e7fee2c1f339e9405366110bf239dadcbc21e953ce099
+            args:
+              - use
+              - $(tasks.prefetch-get-refs.results.PREFETCH_CACHI2_ARTIFACT)=/cachi2
+            when:
+              - input: "$(tasks.prefetch-get-refs.results.PREFETCH_CACHI2_ARTIFACT)"
+                operator: notin
+                values: [""]
+          - name: inject-cachi2-files
+            image: quay.io/konflux-ci/cachi2:0.20.0@sha256:80402886bbc0f6b4deba65cf5f66dfe9a2c01ae0b57bf3454e3ea58e1a395720
+            workingDir: /workspace
+            script: |
+              #!/bin/bash
+              source /workspace/.tekton/scripts/inject-cachi2-files.sh
+            when:
+              - input: "$(tasks.prefetch-get-refs.results.PREFETCH_CACHI2_ARTIFACT)"
+                operator: notin
+                values: [""]
           - name: test
             image: registry.redhat.io/openshift4/ose-cli:latest
             env:
@@ -159,6 +202,9 @@ spec:
 
               yum install -y python3.12 git
               python3.12 -m ensurepip
+
+              source /workspace/.tekton/scripts/setup-cachi2-env.sh
+
               pip3 install -r requirements-dev.txt
               pytest -s e2e-tests/test_integration.py --json-report --json-report-summary --json-report-file $(results.TEST_OUTPUT.path)
               cat $(results.TEST_OUTPUT.path)
@@ -166,9 +212,20 @@ spec:
     - name: run-e2e-tests-nessus
       runAfter:
         - copy-nessus-secret
+        - prefetch-get-refs
       taskSpec:
+        stepTemplate:
+          volumeMounts:
+            - mountPath: /cachi2
+              name: cachi2
+            - mountPath: /workspace
+              name: workspace
         volumes:
           - name: credentials
+            emptyDir: {}
+          - name: cachi2
+            emptyDir: {}
+          - name: workspace
             emptyDir: {}
         results:
           - name: TEST_OUTPUT
@@ -184,7 +241,25 @@ spec:
               git clone "$(tasks.parse-metadata.results.source-git-url)" /workspace
               pushd /workspace
               git checkout "$(tasks.parse-metadata.results.source-git-revision)"
-
+          - name: use-trusted-artifact
+            image: quay.io/redhat-appstudio/build-trusted-artifacts:latest@sha256:8391272c4e5011120e9e7fee2c1f339e9405366110bf239dadcbc21e953ce099
+            args:
+              - use
+              - $(tasks.prefetch-get-refs.results.PREFETCH_CACHI2_ARTIFACT)=/cachi2
+            when:
+              - input: "$(tasks.prefetch-get-refs.results.PREFETCH_CACHI2_ARTIFACT)"
+                operator: notin
+                values: [""]
+          - name: inject-cachi2-files
+            image: quay.io/konflux-ci/cachi2:0.20.0@sha256:80402886bbc0f6b4deba65cf5f66dfe9a2c01ae0b57bf3454e3ea58e1a395720
+            workingDir: /workspace
+            script: |
+              #!/bin/bash
+              source /workspace/.tekton/scripts/inject-cachi2-files.sh
+            when:
+              - input: "$(tasks.prefetch-get-refs.results.PREFETCH_CACHI2_ARTIFACT)"
+                operator: notin
+                values: [""]
           - name: test
             image: registry.redhat.io/openshift4/ose-cli:latest
             env:
@@ -213,6 +288,9 @@ spec:
 
               yum install -y python3.12 git
               python3.12 -m ensurepip
+
+              source /workspace/.tekton/scripts/setup-cachi2-env.sh
+
               pip3 install -r requirements-dev.txt
               pytest -sv e2e-tests/test_nessus.py --json-report --json-report-summary --json-report-file $(results.TEST_OUTPUT.path)
               cat $(results.TEST_OUTPUT.path)

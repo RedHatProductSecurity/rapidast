@@ -113,15 +113,19 @@ spec:
       taskRef:
         resolver: git
         params:
-        - name: url
-          value: https://github.com/RedHatProductSecurity/rapidast
-        - name: revision
-          value: prefetch-pip-deps-e2e-konflux
-        - name: pathInRepo
-          value: .tekton/tasks/prefetch-get-refs.yaml
+          - name: url
+            value: https://github.com/konflux-ci/tekton-integration-catalog
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: tasks/test-metadata/0.2/test-metadata.yaml
       params:
         - name: SNAPSHOT
           value: $(params.SNAPSHOT)
+        - name: test-name
+          value: rapidast-e2e
+        - name: enable-prefetch
+          value: true
 
     # XXX integrations tests can't reference Tasks in the same PR AFAICT
     # so need to repeat them inline, rather than define in a separate file
@@ -159,9 +163,9 @@ spec:
             image: quay.io/redhat-appstudio/build-trusted-artifacts:latest@sha256:8391272c4e5011120e9e7fee2c1f339e9405366110bf239dadcbc21e953ce099
             args:
               - use
-              - $(tasks.prefetch-get-refs.results.PREFETCH_CACHI2_ARTIFACT)=/cachi2
+              - $(tasks.prefetch-get-refs.results.prefetch-artifact)=/cachi2
             when:
-              - input: "$(tasks.prefetch-get-refs.results.PREFETCH_CACHI2_ARTIFACT)"
+              - input: "$(tasks.prefetch-get-refs.results.prefetch-artifact)"
                 operator: notin
                 values: [""]
           - name: inject-cachi2-files
@@ -171,7 +175,7 @@ spec:
               #!/bin/bash
               source /workspace/.tekton/scripts/inject-cachi2-files.sh
             when:
-              - input: "$(tasks.prefetch-get-refs.results.PREFETCH_CACHI2_ARTIFACT)"
+              - input: "$(tasks.prefetch-get-refs.results.prefetch-artifact)"
                 operator: notin
                 values: [""]
           - name: test
@@ -245,9 +249,9 @@ spec:
             image: quay.io/redhat-appstudio/build-trusted-artifacts:latest@sha256:8391272c4e5011120e9e7fee2c1f339e9405366110bf239dadcbc21e953ce099
             args:
               - use
-              - $(tasks.prefetch-get-refs.results.PREFETCH_CACHI2_ARTIFACT)=/cachi2
+              - $(tasks.prefetch-get-refs.results.prefetch-artifact)=/cachi2
             when:
-              - input: "$(tasks.prefetch-get-refs.results.PREFETCH_CACHI2_ARTIFACT)"
+              - input: "$(tasks.prefetch-get-refs.results.prefetch-artifact)"
                 operator: notin
                 values: [""]
           - name: inject-cachi2-files
@@ -257,7 +261,7 @@ spec:
               #!/bin/bash
               source /workspace/.tekton/scripts/inject-cachi2-files.sh
             when:
-              - input: "$(tasks.prefetch-get-refs.results.PREFETCH_CACHI2_ARTIFACT)"
+              - input: "$(tasks.prefetch-get-refs.results.prefetch-artifact)"
                 operator: notin
                 values: [""]
           - name: test

@@ -125,7 +125,7 @@ spec:
         - name: test-name
           value: rapidast-e2e
         - name: enable-prefetch
-          value: true
+          value: "true"
 
     # XXX integrations tests can't reference Tasks in the same PR AFAICT
     # so need to repeat them inline, rather than define in a separate file

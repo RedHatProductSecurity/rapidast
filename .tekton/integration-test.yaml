@@ -160,7 +160,7 @@ spec:
               pushd /workspace
               git checkout "$(tasks.parse-metadata.results.source-git-revision)"
           - name: use-trusted-artifact
-            image: quay.io/redhat-appstudio/build-trusted-artifacts:latest@sha256:8391272c4e5011120e9e7fee2c1f339e9405366110bf239dadcbc21e953ce099
+            image: quay.io/redhat-appstudio/build-trusted-artifacts:latest@sha256:9b180776a41d9a22a1c51539f1647c60defbbd55b44bbebdd4130e33512d8b0d
             args:
               - use
               - $(tasks.prefetch-get-refs.results.prefetch-artifact)=/cachi2
@@ -246,7 +246,7 @@ spec:
               pushd /workspace
               git checkout "$(tasks.parse-metadata.results.source-git-revision)"
           - name: use-trusted-artifact
-            image: quay.io/redhat-appstudio/build-trusted-artifacts:latest@sha256:8391272c4e5011120e9e7fee2c1f339e9405366110bf239dadcbc21e953ce099
+            image: quay.io/redhat-appstudio/build-trusted-artifacts:latest@sha256:9b180776a41d9a22a1c51539f1647c60defbbd55b44bbebdd4130e33512d8b0d
             args:
               - use
               - $(tasks.prefetch-get-refs.results.prefetch-artifact)=/cachi2

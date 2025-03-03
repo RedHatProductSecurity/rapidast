@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
 from typing import Dict
+from typing import Optional
 
 import dacite
 import yaml
@@ -18,12 +19,19 @@ from scanners import State
 
 
 @dataclass
+# pylint: disable=too-many-instance-attributes
+# R0902: Too many instance attributes (8/7) (too-many-instance-attributes)
 class GarakConfig:
     model_type: str
     model_name: str = field(default="test_model")
     probe_spec: str = field(default="all")  # all or a list of probes like "probe1,probe2"
     garak_executable_path: str = field(default="/usr/local/bin/garak")
-    generators: Dict[str, Any] = field(default_factory=dict)
+    generators: Optional[Dict[str, Any]] = field(default_factory=dict)
+
+    # for advanced users - allowing the extension of configs using other Garak config items
+    system: Optional[Dict[str, Any]] = field(default_factory=dict)
+    run: Optional[Dict[str, Any]] = field(default_factory=dict)
+    plugins: Optional[Dict[str, Any]] = field(default_factory=dict)
 
 
 CLASSNAME = "Garak"
@@ -90,17 +98,31 @@ class Garak(RapidastScanner):
                 self.automation_config = yaml.safe_load(stream)
 
             # Update values from the config template with user configured values
-            self.automation_config.update(
-                {
-                    "plugins": {
-                        "model_name": self.cfg.model_name,
-                        "model_type": self.cfg.model_type,
-                        "probe_spec": self.cfg.probe_spec,
-                        "generators": self.cfg.generators,
-                    },
-                    "reporting": {"report_dir": self.workdir_reports_dir},
-                }
-            )
+            config_to_update = {}
+
+            config_to_update["plugins"] = {
+                "model_name": self.cfg.model_name,
+                "model_type": self.cfg.model_type,
+                "probe_spec": self.cfg.probe_spec,
+                "generators": self.cfg.generators,
+            }
+
+            if self.cfg.plugins:
+                # if the advanced user wants to configure more settings for Garak's 'plugins', they can do so
+                # by providing the 'plugins' key in the config. The config items under 'plugins' will override
+                # the root-level configs with the same name, such as 'model_name', 'model_type' if exists
+                config_to_update["plugins"].update(self.cfg.plugins)
+
+            if self.cfg.system:
+                config_to_update["system"] = self.cfg.system
+
+            if self.cfg.run:
+                config_to_update["run"] = self.cfg.run
+
+            # report_dir is set to Rapidast created temorary dir
+            config_to_update["reporting"] = {"report_dir": self.workdir_reports_dir}
+
+            self.automation_config.update(config_to_update)
 
             # Write updated config
             garak_run_conf_path = os.path.join(self.workdir, self.GARAK_RUN_CONFIG_FILE)

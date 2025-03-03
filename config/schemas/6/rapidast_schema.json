@@ -652,6 +652,18 @@
                             "probe_spec": {
                                 "type": "string"
                             },
+                            "system": {
+                                "type": "object",
+                                "properties": {}
+                            },
+                            "run": {
+                                "type": "object",
+                                "properties": {}
+                            },
+                            "plugins": {
+                                "type": "object",
+                                "properties": {}
+                            },
                             "garak_executable_path": {
                                 "type": "string"
                             }

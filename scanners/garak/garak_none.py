@@ -35,7 +35,6 @@ MODULE_DIR = os.path.dirname(__file__)
 class Garak(RapidastScanner):
     """Scanner implementation for Garak LLM security testing tool."""
 
-    GARAK_CONFIG_TEMPLATE = "garak-config-template.yaml"
     GARAK_RUN_CONFIG_FILE = "garak-run-config.yaml"
     TMP_REPORTS_DIRNAME = "garak_runs"
     MIN_GARAK_VERSION = "0.10.2"

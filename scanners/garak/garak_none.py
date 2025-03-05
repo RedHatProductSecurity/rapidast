@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
 from typing import Dict
+from typing import Optional
 
 import dacite
 import yaml
@@ -18,12 +19,12 @@ from scanners import State
 
 
 @dataclass
+# pylint: disable=too-many-instance-attributes
 class GarakConfig:
-    model_type: str
-    model_name: str = field(default="test_model")
-    probe_spec: str = field(default="all")  # all or a list of probes like "probe1,probe2"
-    garak_executable_path: str = field(default="/usr/local/bin/garak")
-    generators: Dict[str, Any] = field(default_factory=dict)
+    parameters: Optional[Dict[str, Any]] = field(default_factory=dict)
+
+    # The path to the Garak executable
+    executable_path: str = field(default="/usr/local/bin/garak")
 
 
 CLASSNAME = "Garak"
@@ -34,16 +35,13 @@ MODULE_DIR = os.path.dirname(__file__)
 class Garak(RapidastScanner):
     """Scanner implementation for Garak LLM security testing tool."""
 
-    GARAK_CONFIG_TEMPLATE = "garak-config-template.yaml"
     GARAK_RUN_CONFIG_FILE = "garak-run-config.yaml"
     TMP_REPORTS_DIRNAME = "garak_runs"
     MIN_GARAK_VERSION = "0.10.2"
 
     def _check_garak_version(self):
         try:
-            result = subprocess.run(
-                [self.cfg.garak_executable_path, "--version"], capture_output=True, text=True, check=True
-            )
+            result = subprocess.run([self.cfg.executable_path, "--version"], capture_output=True, text=True, check=True)
             version_match = re.search(r"v(\d+\.\d+\.\d+)", result.stdout.strip())
             if not version_match:
                 raise ValueError(f"Could not find version number in output: {result.stdout}")
@@ -56,7 +54,7 @@ class Garak(RapidastScanner):
                     f"Garak version {current_version} is not supported. Version {min_version} or higher is required."
                 )
         except FileNotFoundError as exc:
-            raise RuntimeError(f"Garak is not found at {self.cfg.garak_executable_path}") from exc
+            raise RuntimeError(f"Garak is not found at {self.cfg.executable_path}") from exc
         except (subprocess.SubprocessError, IndexError, ValueError) as e:
             raise RuntimeError(f"Failed to check Garak version: {str(e)}") from e
 
@@ -81,36 +79,37 @@ class Garak(RapidastScanner):
         if self.state != State.UNCONFIGURED:
             raise RuntimeError(f"Garak scanning setup encountered an unexpected state: {self.state}")
 
+        def _search_model_type(config):
+            if isinstance(config, dict):
+                for key, value in config.items():
+                    if key == "model_type":
+                        return True
+                    if isinstance(value, dict):
+                        if _search_model_type(value):  # Recursively search in sub-dictionaries
+                            return True
+            return False
+
         # Check Garak version
         self._check_garak_version()
 
+        self.automation_config = self.cfg.parameters
+
+        # Update reporting with RapiDAST workdir directory
+        self.automation_config["reporting"] = {"report_dir": self.workdir_reports_dir}
+
+        # XXX check at least if model_type is defined to prevent a Garak error in advance
+        if not _search_model_type(self.automation_config):
+            raise ValueError("model_type is not defined in the Garak configuration")
+
         try:
-            template_path = os.path.join(MODULE_DIR, self.GARAK_CONFIG_TEMPLATE)
-            with open(template_path, "r", encoding="utf-8") as stream:
-                self.automation_config = yaml.safe_load(stream)
-
-            # Update values from the config template with user configured values
-            self.automation_config.update(
-                {
-                    "plugins": {
-                        "model_name": self.cfg.model_name,
-                        "model_type": self.cfg.model_type,
-                        "probe_spec": self.cfg.probe_spec,
-                        "generators": self.cfg.generators,
-                    },
-                    "reporting": {"report_dir": self.workdir_reports_dir},
-                }
-            )
-
-            # Write updated config
             garak_run_conf_path = os.path.join(self.workdir, self.GARAK_RUN_CONFIG_FILE)
             with open(garak_run_conf_path, "w", encoding="utf-8") as f:
                 yaml.dump(self.automation_config, f)
 
         except yaml.YAMLError as exc:
-            raise RuntimeError(f"Failed to parse config '{template_path}': {exc}") from exc
+            raise RuntimeError(f"Failed to write a Garak config: {exc}") from exc
 
-        self.garak_cli = [self.cfg.garak_executable_path, "--config", garak_run_conf_path]
+        self.garak_cli = [self.cfg.executable_path, "--config", garak_run_conf_path]
 
         if self.state != State.ERROR:
             self.state = State.READY
@@ -133,7 +132,7 @@ class Garak(RapidastScanner):
 
         except FileNotFoundError:
             logging.error(
-                f"Garak is not found at {self.cfg.garak_executable_path}. Please ensure Garak is installed in your PATH"
+                f"Garak is not found at {self.cfg.executable_path}. Please ensure Garak is installed in your PATH"
             )
             self.state = State.ERROR
         except subprocess.SubprocessError as e:
@@ -146,13 +145,17 @@ class Garak(RapidastScanner):
 
         super().postprocess()
 
+        # pylint: disable=broad-exception-caught
         try:
             shutil.copytree(self.workdir_reports_dir, self.results_dir, dirs_exist_ok=True)
-        # pylint: disable=broad-exception-caught
+        except FileNotFoundError as exc:
+            logging.error(
+                f"There is no result, possibly because the configuration is not fully set up to run a scan: {exc}"
+            )
+            self.state = State.ERROR
         except Exception as excp:
             logging.error(f"Unable to save results: {excp}")
-            # pylint: disable=attribute-defined-outside-init
-            # it's a false positive: it's defined in the RapidastScanner class
+
             self.state = State.ERROR
 
         if not self.state == State.ERROR:

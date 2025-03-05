@@ -32,10 +32,14 @@ def test_setup_garak(mock_check_garak_version, test_config):
     }
 
     test_garak_config_in_rapidast = {
-        "model_name": test_model_name,
-        "model_type": test_model_type,
-        "probe_spec": test_probe_spec,
-        "generators": test_generators,
+        "garak_config": {
+            "plugins": {
+                "model_name": test_model_name,
+                "model_type": test_model_type,
+                "probe_spec": test_probe_spec,
+                "generators": test_generators,
+            }
+        }
     }
 
     test_config.set("scanners.garak", test_garak_config_in_rapidast)

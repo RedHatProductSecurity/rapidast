@@ -148,6 +148,7 @@ class Garak(RapidastScanner):
 
         super().postprocess()
 
+        # pylint: disable=broad-exception-caught
         try:
             shutil.copytree(self.workdir_reports_dir, self.results_dir, dirs_exist_ok=True)
         except FileNotFoundError as exc:
@@ -155,11 +156,9 @@ class Garak(RapidastScanner):
                 f"There is no result, possibly because the configuration is not fully set up to run a scan: {exc}"
             )
             self.state = State.ERROR
-        # pylint: disable=broad-exception-caught
         except Exception as excp:
             logging.error(f"Unable to save results: {excp}")
-            # pylint: disable=attribute-defined-outside-init
-            # it's a false positive: it's defined in the RapidastScanner class
+
             self.state = State.ERROR
 
         if not self.state == State.ERROR:

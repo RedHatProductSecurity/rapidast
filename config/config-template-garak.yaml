@@ -14,7 +14,7 @@ application:
 # `scanners' is a section that configures scanning options
 scanners:
   garak:
-    garak_config:
+    parameters:
       plugins:
         model_type: huggingface                         # required, e.g. hugginngface, openai, rest
         model_name: gpt2                                # optional, but a specific model type requires a model name or path

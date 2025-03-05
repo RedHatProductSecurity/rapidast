@@ -639,7 +639,7 @@
                         "type": "object",
                         "description": "Garak Scanner",
                         "properties": {
-                            "garak_config": {
+                            "parameters": {
                                 "type": "object",
                                 "properties": {}
                             },
@@ -648,7 +648,7 @@
                             }
                         },
                         "required": [
-                            "garak_config"
+                            "parameters"
                         ]
                     }
                 ]

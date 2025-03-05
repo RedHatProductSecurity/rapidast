@@ -32,7 +32,7 @@ def test_setup_garak(mock_check_garak_version, test_config):
     }
 
     test_garak_config_in_rapidast = {
-        "garak_config": {
+        "parameters": {
             "plugins": {
                 "model_name": test_model_name,
                 "model_type": test_model_type,

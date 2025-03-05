@@ -21,7 +21,7 @@ from scanners import State
 @dataclass
 # pylint: disable=too-many-instance-attributes
 class GarakConfig:
-    garak_config: Optional[Dict[str, Any]] = field(default_factory=dict)
+    parameters: Optional[Dict[str, Any]] = field(default_factory=dict)
 
     # The path to the Garak executable
     garak_executable_path: str = field(default="/usr/local/bin/garak")
@@ -94,7 +94,7 @@ class Garak(RapidastScanner):
         # Check Garak version
         self._check_garak_version()
 
-        self.automation_config = self.cfg.garak_config
+        self.automation_config = self.cfg.parameters
 
         # Update reporting with RapiDAST workdir directory
         self.automation_config["reporting"] = {"report_dir": self.workdir_reports_dir}

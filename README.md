@@ -480,8 +480,10 @@ The following is an example to launch a scan:
 ```yaml
 scanners:
   garak:
-    model_type: huggingface
-    model_name: gpt2
+    garak_config:
+      plugins:
+        model_type: huggingface
+        model_name: gpt2
 ```
 
 #### Generic scanner

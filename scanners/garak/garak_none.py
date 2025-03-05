@@ -24,7 +24,7 @@ class GarakConfig:
     parameters: Optional[Dict[str, Any]] = field(default_factory=dict)
 
     # The path to the Garak executable
-    garak_executable_path: str = field(default="/usr/local/bin/garak")
+    executable_path: str = field(default="/usr/local/bin/garak")
 
 
 CLASSNAME = "Garak"
@@ -41,9 +41,7 @@ class Garak(RapidastScanner):
 
     def _check_garak_version(self):
         try:
-            result = subprocess.run(
-                [self.cfg.garak_executable_path, "--version"], capture_output=True, text=True, check=True
-            )
+            result = subprocess.run([self.cfg.executable_path, "--version"], capture_output=True, text=True, check=True)
             version_match = re.search(r"v(\d+\.\d+\.\d+)", result.stdout.strip())
             if not version_match:
                 raise ValueError(f"Could not find version number in output: {result.stdout}")
@@ -56,7 +54,7 @@ class Garak(RapidastScanner):
                     f"Garak version {current_version} is not supported. Version {min_version} or higher is required."
                 )
         except FileNotFoundError as exc:
-            raise RuntimeError(f"Garak is not found at {self.cfg.garak_executable_path}") from exc
+            raise RuntimeError(f"Garak is not found at {self.cfg.executable_path}") from exc
         except (subprocess.SubprocessError, IndexError, ValueError) as e:
             raise RuntimeError(f"Failed to check Garak version: {str(e)}") from e
 
@@ -111,7 +109,7 @@ class Garak(RapidastScanner):
         except yaml.YAMLError as exc:
             raise RuntimeError(f"Failed to write a Garak config: {exc}") from exc
 
-        self.garak_cli = [self.cfg.garak_executable_path, "--config", garak_run_conf_path]
+        self.garak_cli = [self.cfg.executable_path, "--config", garak_run_conf_path]
 
         if self.state != State.ERROR:
             self.state = State.READY
@@ -134,7 +132,7 @@ class Garak(RapidastScanner):
 
         except FileNotFoundError:
             logging.error(
-                f"Garak is not found at {self.cfg.garak_executable_path}. Please ensure Garak is installed in your PATH"
+                f"Garak is not found at {self.cfg.executable_path}. Please ensure Garak is installed in your PATH"
             )
             self.state = State.ERROR
         except subprocess.SubprocessError as e:

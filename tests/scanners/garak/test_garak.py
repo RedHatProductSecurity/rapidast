@@ -54,7 +54,7 @@ def test_setup_garak(mock_check_garak_version, test_config):
 
     assert test_garak.garak_cli
     assert test_garak.garak_cli[:3] == [
-        test_garak.cfg.garak_executable_path,
+        test_garak.cfg.executable_path,
         "--config",
         os.path.join(test_garak.workdir, test_garak.GARAK_RUN_CONFIG_FILE),
     ]

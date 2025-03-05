@@ -31,4 +31,4 @@ scanners:
       #run:
       #  generations: 5                                 # optional, the number of times each prompt is sent for inference, affecting performance
 
-    #garak_executable_path: /usr/local/bin/garak    # default: /usr/local/bin/garak
+    #executable_path: /usr/local/bin/garak    # default: /usr/local/bin/garak

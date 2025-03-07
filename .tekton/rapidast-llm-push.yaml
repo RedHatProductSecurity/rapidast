@@ -30,7 +30,7 @@ spec:
     value:
     - {"type": "generic", "path": "."}
     - {"type": "npm", "path": "."}
-    - {"type": "pip", "path": ".", "allow_binary": "true", "requirements_files": ["requirements-dev.txt"]}
+    - {"type": "pip", "path": ".", "allow_binary": "true", "requirements_files": ["requirements-llm.txt", "requirements-dev.txt"]}
   - name: build-args
     value: [PREFETCH=true]
   taskRunSpecs:

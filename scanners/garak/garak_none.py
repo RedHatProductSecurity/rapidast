@@ -21,7 +21,7 @@ from scanners import State
 @dataclass
 # pylint: disable=too-many-instance-attributes
 class GarakConfig:
-    parameters: Optional[Dict[str, Any]] = field(default_factory=dict)
+    parameters: Dict[str, Any] = field(default_factory=dict)
 
     # The path to the Garak executable
     executable_path: str = field(default="/usr/local/bin/garak")
@@ -79,16 +79,6 @@ class Garak(RapidastScanner):
         if self.state != State.UNCONFIGURED:
             raise RuntimeError(f"Garak scanning setup encountered an unexpected state: {self.state}")
 
-        def _search_model_type(config):
-            if isinstance(config, dict):
-                for key, value in config.items():
-                    if key == "model_type":
-                        return True
-                    if isinstance(value, dict):
-                        if _search_model_type(value):  # Recursively search in sub-dictionaries
-                            return True
-            return False
-
         # Check Garak version
         self._check_garak_version()
 
@@ -96,10 +86,6 @@ class Garak(RapidastScanner):
 
         # Update reporting with RapiDAST workdir directory
         self.automation_config["reporting"] = {"report_dir": self.workdir_reports_dir}
-
-        # XXX check at least if model_type is defined to prevent a Garak error in advance
-        if not _search_model_type(self.automation_config):
-            raise ValueError("model_type is not defined in the Garak configuration")
 
         try:
             garak_run_conf_path = os.path.join(self.workdir, self.GARAK_RUN_CONFIG_FILE)

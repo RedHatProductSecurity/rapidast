@@ -59,9 +59,7 @@ def wait_until_ready(**kwargs):
     return False
 
 
-def is_pod_with_field_selector_successfully_completed(
-    field_selector: str, namespace: str = NAMESPACE, timeout: int = 120
-) -> bool:
+def is_pod_with_field_selector_successfully_completed(field_selector: str, timeout: int = 120) -> bool:
     """
     Checks if a given pod has successfully completed (Succeeded phase)
     """
@@ -69,13 +67,13 @@ def is_pod_with_field_selector_successfully_completed(
     start_time = time.time()
     while time.time() - start_time < timeout:
         try:
-            pods = corev1.list_namespaced_pod(namespace=namespace, field_selector=field_selector)
+            pods = corev1.list_namespaced_pod(namespace=NAMESPACE, field_selector=field_selector)
         except ApiException as e:
-            logging.error(f"Error retrieving pods in namespace {namespace} with selector {field_selector}: {e}")
+            logging.error(f"Error retrieving pods in namespace {NAMESPACE} with selector {field_selector}: {e}")
             return False
 
         if not pods.items:
-            logging.warning(f"No pods found in namespace {namespace} matching field selector: {field_selector}")
+            logging.warning(f"No pods found in namespace {NAMESPACE} matching field selector: {field_selector}")
         else:
             for pod in pods.items:
                 if pod.status.phase == "Succeeded":

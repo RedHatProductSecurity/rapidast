@@ -1,6 +1,7 @@
 import json
 import os
 
+from conftest import is_pod_with_field_selector_successfully_completed  # pylint: disable=E0611
 from conftest import tee_log  # pylint: disable=E0611
 from conftest import TestBase  # pylint: disable=E0611
 from conftest import wait_until_ready  # pylint: disable=E0611
@@ -15,7 +16,9 @@ class TestRapiDAST(TestBase):
 
         self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-configmap.yaml")
         self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-pod.yaml")
-        assert wait_until_ready(field_selector="metadata.name=rapidast-vapi", timeout=240)
+        assert is_pod_with_field_selector_successfully_completed(
+            field_selector="metadata.name=rapidast-vapi", timeout=240
+        )
 
         # two containers run in this pod, one for running rapidast and one for printing json results
         logfile = os.path.join(self.tempdir, "rapidast-vapi.log")
@@ -31,7 +34,7 @@ class TestRapiDAST(TestBase):
     def test_trivy(self):
         self.create_from_yaml(f"{self.tempdir}/rapidast-trivy-configmap.yaml")
         self.create_from_yaml(f"{self.tempdir}/rapidast-trivy-pod.yaml")
-        assert wait_until_ready(field_selector="metadata.name=rapidast-trivy")
+        assert is_pod_with_field_selector_successfully_completed(field_selector="metadata.name=rapidast-trivy")
 
         logfile = os.path.join(self.tempdir, "rapidast-trivy.log")
         tee_log("rapidast-trivy", logfile)
@@ -47,7 +50,9 @@ class TestRapiDAST(TestBase):
         self.create_from_yaml(f"{self.tempdir}/rapidast-oobtkube-configmap.yaml")
         self.create_from_yaml(f"{self.tempdir}/rapidast-oobtkube-service.yaml")
         self.create_from_yaml(f"{self.tempdir}/rapidast-oobtkube-pod.yaml")
-        assert wait_until_ready(field_selector="metadata.name=rapidast-oobtkube", timeout=240)
+        assert is_pod_with_field_selector_successfully_completed(
+            field_selector="metadata.name=rapidast-oobtkube", timeout=240
+        )
 
         logfile = os.path.join(self.tempdir, "rapidast-oobtkube.log")
         tee_log("rapidast-oobtkube", logfile)

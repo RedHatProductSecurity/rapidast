@@ -59,6 +59,41 @@ def wait_until_ready(**kwargs):
     return False
 
 
+def is_pod_with_field_selector_successfully_completed(
+    field_selector: str, namespace: str = NAMESPACE, timeout: int = 120
+) -> bool:
+    """
+    Checks if a given pod has successfully completed (Succeeded phase)
+    """
+    corev1 = client.CoreV1Api()
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            pods = corev1.list_namespaced_pod(namespace=namespace, field_selector=field_selector)
+        except ApiException as e:
+            logging.error(f"Error retrieving pods in namespace {namespace} with selector {field_selector}: {e}")
+            return False
+
+        if not pods.items:
+            logging.warning(f"No pods found in namespace {namespace} matching field selector: {field_selector}")
+        else:
+            for pod in pods.items:
+                if pod.status.phase == "Succeeded":
+                    logging.info(f"Pod {pod.metadata.name} has successfully completed")
+                    return True
+                elif pod.status.phase in ["Failed", "Unknown"]:
+                    logging.warning(f"Pod {pod.metadata.name} has failed or is in an unknown state: {pod.status.phase}")
+                    return False
+
+        logging.info("Matching pods are still running. Retrying...")
+        time.sleep(2)
+
+    logging.warning(
+        f"Timeout reached: No pod matching {field_selector} completed successfully within {timeout} seconds"
+    )
+    return False
+
+
 # simulates: $ oc logs -f <pod> | tee <file>
 def tee_log(pod_name: str, filename: str, container: Optional[str] = None):
     corev1 = client.CoreV1Api()

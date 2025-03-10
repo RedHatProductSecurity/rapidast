@@ -11,11 +11,11 @@ class TestRapiDAST(TestBase):
         """Test rapidast find expected number of findings in VAPI"""
         self.create_from_yaml(f"{self.tempdir}/vapi-deployment.yaml")
         self.create_from_yaml(f"{self.tempdir}/vapi-service.yaml")
-        wait_until_ready(label_selector="app=vapi")
+        assert wait_until_ready(label_selector="app=vapi")
 
         self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-configmap.yaml")
         self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-pod.yaml")
-        wait_until_ready(field_selector="metadata.name=rapidast-vapi")
+        assert wait_until_ready(field_selector="metadata.name=rapidast-vapi", timeout=240)
 
         # two containers run in this pod, one for running rapidast and one for printing json results
         logfile = os.path.join(self.tempdir, "rapidast-vapi.log")
@@ -31,7 +31,7 @@ class TestRapiDAST(TestBase):
     def test_trivy(self):
         self.create_from_yaml(f"{self.tempdir}/rapidast-trivy-configmap.yaml")
         self.create_from_yaml(f"{self.tempdir}/rapidast-trivy-pod.yaml")
-        wait_until_ready(field_selector="metadata.name=rapidast-trivy")
+        assert wait_until_ready(field_selector="metadata.name=rapidast-trivy")
 
         logfile = os.path.join(self.tempdir, "rapidast-trivy.log")
         tee_log("rapidast-trivy", logfile)
@@ -47,7 +47,7 @@ class TestRapiDAST(TestBase):
         self.create_from_yaml(f"{self.tempdir}/rapidast-oobtkube-configmap.yaml")
         self.create_from_yaml(f"{self.tempdir}/rapidast-oobtkube-service.yaml")
         self.create_from_yaml(f"{self.tempdir}/rapidast-oobtkube-pod.yaml")
-        wait_until_ready(field_selector="metadata.name=rapidast-oobtkube")
+        assert wait_until_ready(field_selector="metadata.name=rapidast-oobtkube", timeout=240)
 
         logfile = os.path.join(self.tempdir, "rapidast-oobtkube.log")
         tee_log("rapidast-oobtkube", logfile)

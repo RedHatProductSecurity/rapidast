@@ -641,7 +641,18 @@
                         "properties": {
                             "parameters": {
                                 "type": "object",
-                                "properties": {}
+                                "properties": {
+                                    "plugins": {
+                                        "type": "object",
+                                        "properties": {
+                                            "model_type": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": ["model_type"]
+                                    }
+                                },
+                                "required": ["plugins"]
                             },
                             "executable_path": {
                                 "type": "string"

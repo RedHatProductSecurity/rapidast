@@ -389,7 +389,7 @@ spec:
       - name: name
         value: coverity-availability-check
       - name: bundle
-        value: quay.io/konflux-ci/tekton-catalog/task-coverity-availability-check:0.2@sha256:d6b15fa9874cceb1e68f564942507939499971d17108b5540990de035d1a8266
+        value: quay.io/konflux-ci/tekton-catalog/task-coverity-availability-check:0.2@sha256:0804da1af0d43feced90a25fcce3cd11ff5bf290258e6b621d551a938bf9d2fe
       - name: kind
         value: task
       resolver: bundles

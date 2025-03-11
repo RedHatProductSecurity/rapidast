@@ -1,0 +1,3 @@
+-r ./requirements.txt
+
+garak>=0.10.3.1

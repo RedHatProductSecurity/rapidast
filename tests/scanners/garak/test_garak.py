@@ -17,7 +17,7 @@ def test_config():
 @patch("scanners.garak.garak_none.Garak._check_garak_version")
 def test_setup_garak(mock_check_garak_version, test_config):
     mock_check_garak_version.return_value = None
-    config_data = rapidast.load_config("config/config-template-garak.yaml")
+    config_data = rapidast.load_config("config/config-template-garak-full.yaml")
     test_config = configmodel.RapidastConfigModel(config_data)
 
     test_model_name = "testname"

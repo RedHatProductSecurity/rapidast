@@ -15,7 +15,7 @@ data:
           generators:
             rest:
               RestGenerator:
-                #uri: "http://tchat:8080/completions"
+                uri: "http://tchat:8080/completions"
                 response_json_field: text
                 req_template_json_object:
                   prompt: $INPUT

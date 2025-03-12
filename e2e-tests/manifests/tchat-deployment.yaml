@@ -1,0 +1,29 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+  name: tchat
+  labels:
+    app: tchat
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tchat
+  template:
+    metadata:
+      labels:
+        app: tchat
+    spec:
+      containers:
+      - name: tchat
+        image: quay.io/sfowler/tchat:latest
+        imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: 2
+            memory: 2Gi
+          requests:
+            cpu: 1
+            memory: 256Mi

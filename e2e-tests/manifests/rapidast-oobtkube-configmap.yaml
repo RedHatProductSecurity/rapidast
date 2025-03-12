@@ -20,7 +20,9 @@ data:
         #   if it is "*stdout" or unspecified, the command's standard output will be selected
         results: "/tmp/oobtkube.sarif.json"   # if None or "*stdout", the command's standard output is selected
         # toolDir: scanners/generic/tools
-        inline: "python3 oobtkube.py --log-level debug -d 60 -p 6000 -i rapidast-oobtkube -f /opt/rapidast/config/cr_example.yaml | tee /tmp/oobtkube.sarif.json"
+        inline: |
+          PYTHON_VERSION="${PYTHON_VERSION:-python3}"
+          $PYTHON_VERSION oobtkube.py --log-level debug -d 60 -p 6000 -i rapidast-oobtkube -f /opt/rapidast/config/cr_example.yaml | tee /tmp/oobtkube.sarif.json
   # ConfigMap is used as target because it is a default resource
   cr_example.yaml: |+
     apiVersion: v1

@@ -17,7 +17,7 @@ class TestRapiDAST(TestBase):
         self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-configmap.yaml")
         self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-pod.yaml")
         assert is_pod_with_field_selector_successfully_completed(
-            field_selector="metadata.name=rapidast-vapi", timeout=300  # llm-based image takes really long to download
+            field_selector="metadata.name=rapidast-vapi", timeout=360  # llm-based image takes really long to download
         )
 
         # two containers run in this pod, one for running rapidast and one for printing json results
@@ -35,7 +35,7 @@ class TestRapiDAST(TestBase):
         self.create_from_yaml(f"{self.tempdir}/rapidast-trivy-configmap.yaml")
         self.create_from_yaml(f"{self.tempdir}/rapidast-trivy-pod.yaml")
         assert is_pod_with_field_selector_successfully_completed(
-            field_selector="metadata.name=rapidast-trivy", timeout=300  # llm-based image takes really long to download
+            field_selector="metadata.name=rapidast-trivy", timeout=360  # llm-based image takes really long to download
         )
 
         logfile = os.path.join(self.tempdir, "rapidast-trivy.log")
@@ -54,7 +54,7 @@ class TestRapiDAST(TestBase):
         self.create_from_yaml(f"{self.tempdir}/rapidast-oobtkube-pod.yaml")
         assert is_pod_with_field_selector_successfully_completed(
             field_selector="metadata.name=rapidast-oobtkube",
-            timeout=300,  # llm-based image takes really long to download
+            timeout=360,  # llm-based image takes really long to download
         )
 
         logfile = os.path.join(self.tempdir, "rapidast-oobtkube.log")

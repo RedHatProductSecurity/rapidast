@@ -15,7 +15,7 @@ spec:
           '{
             "components": [
               {
-                "name":"rapidast",
+                "name":"rapidast-llm",
                 "containerImage": "quay.io/redhatproductsecurity/rapidast-llm:latest",
                 "source":{
                   "git":{

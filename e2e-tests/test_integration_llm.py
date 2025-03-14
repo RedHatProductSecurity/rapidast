@@ -21,3 +21,11 @@ class TestLLM(TestBase):
 
         logfile = os.path.join(self.tempdir, "rapidast-llm.log")
         tee_log("rapidast-llm", logfile)
+
+        expected_line = (
+            '{"entry_type": "eval", "probe": "dan.AntiDAN", "detector": "detector.dan.AntiDAN", '
+            '"passed": 0, "total": 5}'
+        )
+        with open(logfile, "r", encoding="utf-8") as f:
+            logs = f.read()
+            assert expected_line in logs, f"{logfile} does not contain expected line: {expected_line}"

@@ -117,6 +117,6 @@ spec:
               yum install -y python3.12 git
               python3.12 -m ensurepip
 
-              pip3 install -r requirements-llm-dev.txt
+              pip3 install -r requirements-dev.txt
               pytest -s e2e-tests/test_integration_llm.py --json-report --json-report-summary --json-report-file $(results.TEST_OUTPUT.path)
               cat $(results.TEST_OUTPUT.path)

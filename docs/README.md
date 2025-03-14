@@ -17,6 +17,9 @@ RapiDAST provides:
 
 RapiDAST is for testing purposes, and should not be used on production systems.
 
+See [User Guide](./USER-GUIDE.md)<br />
+See [Developer Guide](./DEVELOPER-GUIDE.md)
+
 ## Contributing
 
 Contribution to the project is more than welcome.

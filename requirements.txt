@@ -61,7 +61,7 @@ markdown-it-py==3.0.0
     # via rich
 mdurl==0.1.2
     # via markdown-it-py
-proto-plus==1.26.0
+proto-plus==1.26.1
     # via google-api-core
 protobuf==5.29.3
     # via

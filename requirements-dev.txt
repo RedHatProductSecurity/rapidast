@@ -43,7 +43,7 @@ durationpy==0.9
     # via kubernetes
 exceptiongroup==1.2.2
     # via pytest
-filelock==3.17.0
+filelock==3.18.0
     # via virtualenv
 fqdn==1.5.1
     # via

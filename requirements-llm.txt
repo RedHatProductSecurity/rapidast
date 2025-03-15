@@ -356,7 +356,7 @@ packaging==24.2
     #   transformers
 pandas==2.2.3
     # via datasets
-pillow==10.4.0
+pillow==11.1.0
     # via octoai-sdk
 ply==3.11
     # via jsonpath-ng

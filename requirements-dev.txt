@@ -247,7 +247,7 @@ tomli==2.2.1
     # via
     #   black
     #   pytest
-typer==0.15.1
+typer==0.15.2
     # via
     #   -r ./requirements.txt
     #   py-nessus-pro

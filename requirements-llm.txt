@@ -6,7 +6,7 @@
 #
 accelerate==1.4.0
     # via garak
-aiohappyeyeballs==2.5.0
+aiohappyeyeballs==2.6.1
     # via aiohttp
 aiohttp==3.11.13
     # via

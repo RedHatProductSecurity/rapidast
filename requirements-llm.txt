@@ -408,7 +408,7 @@ pydantic==2.10.6
     #   ollama
     #   openai
     #   replicate
-pydantic-core==2.27.2
+pydantic-core==2.32.0
     # via pydantic
 pygments==2.19.1
     # via

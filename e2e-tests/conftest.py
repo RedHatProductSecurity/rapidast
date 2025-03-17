@@ -8,6 +8,7 @@ from typing import Dict
 from typing import Optional
 
 import certifi
+import pytest
 from kubernetes import client
 from kubernetes import config
 from kubernetes import utils
@@ -215,11 +216,15 @@ class TestBase:
             for func in cls._teardowns:
                 logging.debug(f"calling {func}")
                 func()
-        # XXX oobtukbe does not clean up after itself
-        os.system(f"kubectl delete ConfigMap/vulnerable -n {NAMESPACE}")
 
     def create_from_yaml(self, path: str):
         # delete resources in teardown method later
         self._teardowns.append(partial(os.system, f"kubectl delete -f {path} -n {NAMESPACE}"))
         o = utils.create_from_yaml(self.kclient, path, namespace=NAMESPACE, verbose=True)
         logging.debug(o)
+
+
+@pytest.fixture
+def _setup_teardown_for_oobkube():
+    yield
+    os.system(f"kubectl delete ConfigMap/vulnerable -n {NAMESPACE}")

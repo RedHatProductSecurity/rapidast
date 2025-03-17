@@ -5,7 +5,7 @@ data:
       # WARNING: `configVersion` indicates the schema version of the config file.
       # This value tells RapiDAST what schema should be used to read this configuration.
       # Therefore you should only change it if you update the configuration to a newer schema
-      configVersion: 5
+      configVersion: 6
 
       # all the results of all scanners will be stored under that location
       # base_results_dir: "./results"
@@ -14,22 +14,6 @@ data:
     application:
       shortName: "nessus-test-1.0"
       # url: "<Mandatory. root URL of the application>" # XXX unused for nessus
-
-    # `general` is a section that will be applied to all scanners.
-    # Any scanner can override a value by creating an entry of the same name in their own configuration
-    general:
-      # container:
-      #   type: podman
-
-      # remove `authentication` entirely for unauthenticated connection
-      authentication:
-        type: "oauth2_rtoken"
-        parameters:
-          client_id: "cloud-services"
-          token_endpoint: "<token retrieval URL>"
-          # rtoken_from_var: "RTOKEN"     # referring to a env defined in general.environ.envFile
-          #preauth: false  # set to true to pregenerate a token, and stick to it (no refresh)
-
     # `scanners' is a section that configures scanning options
     scanners:
       nessus_foobar:

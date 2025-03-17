@@ -15,10 +15,7 @@ class TestNessus(TestBase):
 
         self.create_from_yaml(f"{self.tempdir}/rapidast-nessus-configmap.yaml")
         self.create_from_yaml(f"{self.tempdir}/rapidast-nessus-pod.yaml")
-        # @FIX: We don't assert the container's successful completion because it
-        # ends up in an 'Error' status. This happens because the configuration provided
-        # defines authentication, but the Nessus scanner doesn't support authentication
-        is_pod_with_field_selector_successfully_completed(
+        assert is_pod_with_field_selector_successfully_completed(
             field_selector="metadata.name=rapidast-nessus", timeout=360  # llm-based image takes really long to download
         )
 

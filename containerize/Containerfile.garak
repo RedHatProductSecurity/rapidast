@@ -108,4 +108,5 @@ RUN useradd -u 1000 -d /opt/rapidast -m -s /bin/bash rapidast && \
 USER rapidast
 WORKDIR /opt/rapidast
 ENV HOME /opt/rapidast
+ENV PYTHON_VERSION python3.12
 ENTRYPOINT ["python3.12", "rapidast.py"]

@@ -1,0 +1,30 @@
+apiVersion: v1
+data:
+  config.yaml: |+
+    config:
+      configVersion: 6
+
+    application:
+      shortName: "v6-garak-test"
+
+    scanners:
+      garak:
+        parameters:
+          plugins:
+            model_type: rest
+            probe_spec: dan.AntiDAN
+            generators:
+              rest:
+                RestGenerator:
+                  uri: "http://tchat:8080/completions"
+                  response_json_field: text
+                  req_template_json_object:
+                    prompt: $INPUT
+                    n_predict: 1
+                  method: POST
+                  request_timeout: 600
+
+
+kind: ConfigMap
+metadata:
+  name: rapidast-llm

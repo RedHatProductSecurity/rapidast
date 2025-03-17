@@ -10,10 +10,10 @@ RapiDAST provides:
 - Automated LLM AI scanning leveraging Garak
 - Kubernetes operator scanning leveraging OOBTKUBE
 - Automated vulnerability scanning using Nessus (requires a Nessus instance)
-- Command-line execution with yaml configuration, suitable for integration in [CI/CD pipelines](./examples/)
+- Command-line execution with yaml configuration, suitable for integration in CI/CD pipelines
 - Ability to run automated DAST scanning with pre-built or custom container images
 - HTML, JSON and XML report generation
-- Integration with Google Cloud Storage and [OWASP DefectDojo](https://owasp.org/www-project-defectdojo/)
+- Integration with Google Cloud Storage and OWASP DefectDojo
 
 RapiDAST is for testing purposes, and should not be used on production systems.
 

@@ -95,7 +95,7 @@ This section summarize the basic workflow as follows:
     - First run with passive scanning only, which can save time at the initial scanning phase. There are various situations that can cause an issue, not only from scanning set up but also from your application or test environment. Active scanning takes a long time in general.
     - Once passive Scanning has run successfully, run another scan with active scanning enabled in the configuration file.
 
-See [here](./examples/) for examples on how to run RapiDAST in various CI/CD pipelines.
+See [here](https://github.com/RedHatProductSecurity/rapidast/tree/development/examples) for examples on how to run RapiDAST in various CI/CD pipelines.
 
 ## Configuration
 
@@ -107,7 +107,7 @@ The configuration file is presented as YAML, and contains several main entries:
   - Each scanner can override an entry from `general` by creating an entry with the same name
 - `scanners` : list of scanners, and their configuration
 
-See templates in the [config](./config/) directory for rapidast configuration examples.
+See templates in the [config](https://github.com/RedHatProductSecurity/rapidast/blob/development/config/) directory for rapidast configuration examples.
 
 - `config-template-zap-tiny.yaml` : describes a bare minimum configuration, without authentication options.
 - `config-template-zap-simple.yaml` : describes a generic/minimal use of the ZAP scanner (i.e.: the minimum set of option to get a ZAP scan from RapiDAST)
@@ -117,11 +117,11 @@ See templates in the [config](./config/) directory for rapidast configuration ex
 - `config-template-generic-scan.yaml` : describes the use of the generic scanner
 - `config-template-garak.yaml` : describes the use of the Garak LLM AI scanner
 
-See [here](./examples/) for examples on how to run RapiDAST in various CI/CD pipelines.
+See [here](https://github.com/RedHatProductSecurity/rapidast/tree/development/examples/) for examples on how to run RapiDAST in various CI/CD pipelines.
 
 ### Basic Example
 
-Example bare minimum [config file](./config/config-template-zap-tiny.yaml), without any [Authentication](#authentication) options, and passive scanning only:
+Example bare minimum [config file](https://github.com/RedHatProductSecurity/rapidast/blob/development/config/config-template-zap-tiny.yaml), without any [Authentication](#authentication) options, and passive scanning only:
 
 ```yaml
 config:
@@ -270,7 +270,7 @@ Once this is set, scan results will be exported to the bucket automatically. The
 
 #### Exporting to DefectDojo
 
-RapiDAST supports integration with OWASP DefectDojo which is an open source vulnerability management tool. See [here](./docs/DEFECT_DOJO.md) for more information.
+RapiDAST supports integration with OWASP DefectDojo which is an open source vulnerability management tool. See [here](./DEFECT_DOJO.md) for more information.
 
 ## Execution
 
@@ -327,7 +327,7 @@ Disclaimer: This tool is not intended to be run as a long-running service. Inste
 
 Helm chart is provided to help with running RapiDAST on Kubernetes or OpenShift.
 
-See [helm/README.md](./helm/README.md)
+See [helm/README.md](https://github.com/RedHatProductSecurity/rapidast/tree/development/helm)
 
 ### Scanners
 

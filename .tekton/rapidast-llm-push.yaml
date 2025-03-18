@@ -25,7 +25,7 @@ spec:
   - name: revision
     value: '{{revision}}'
   - name: output-image
-    value: quay.io/repository/redhatproductsecurity/rapidast-llm:{{revision}}
+    value: quay.io/redhatproductsecurity/rapidast-llm:{{revision}}
   - name: dockerfile
     value: containerize/Containerfile.garak
   - name: build-args

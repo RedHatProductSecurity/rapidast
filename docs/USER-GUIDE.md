@@ -403,15 +403,15 @@ Helm chart is provided to help with running RapiDAST on Kubernetes or OpenShift.
 
 See [helm/README.md](https://github.com/RedHatProductSecurity/rapidast/tree/development/helm)
 
-### Scanners
+## Scanners
 
-#### ZAP
+### ZAP
 
 ZAP (Zed Attack Proxy) is an open-source DAST tool. It can be used for scanning web applications and API.
 
 See <https://www.zaproxy.org/> for more information.
 
-##### Methodology
+#### Methodology
 
 ZAP needs to be pointed to a list of endpoints to the tested application. Those can be:
 
@@ -423,12 +423,12 @@ The GraphQL interface can be provided to RapiDAST via the `graphql` configuratio
 
 The other endpoints can be provided via several methods, discussed in the chapters below.
 
-###### an OpenAPI schema
+##### an OpenAPI schema
 
 This is the prefered method, to be used whenever possible.
 RapiDAST accepts OpenAPI v2(formerly known as Swagger) and v3 schemas. These schemas will describe a list of endpoints, and for each of them, a list of parameters accepted by the application.
 
-###### Build the endpoint list using a spider/crawler
+##### Build the endpoint list using a spider/crawler
 
 In this method, RapiDAST is given a Web entrypoint. The crawler will download that page, extract a list of URLs and recursively crawl all of them. The entire list of URLs found is then provided to the scanner.
 
@@ -439,7 +439,7 @@ There are two crawlers available:
 
 See the `spider` and `spiderAjax` configuration entries in the `config-template-zap-long.yaml` configuration template file for a list of options available.
 
-###### A list of endpoints
+##### A list of endpoints
 
 A file containing a list of URLs corresponding to endpoints and their parameters.
 
@@ -452,7 +452,7 @@ https://example.com/api/v3/groupB/functionB?parameter1=def&parameter2=456
 
 Only GET requests will be scanned.
 
-##### ZAP scanner specific options
+#### ZAP scanner specific options
 
 Below are some configuration options that are worth noting, when running a RapiDAST scan with the ZAP scanner.
 
@@ -507,7 +507,7 @@ scanners:
       - formhandler.fields.field(0).value=default
 ```
 
-#### Nessus
+### Nessus
 
 Nessus is a vulnerability scanner developed by Tenable, Inc. It helps organizations identify and address security vulnerabilities across various systems, devices, and applications.
 
@@ -529,7 +529,7 @@ scanners:
       - 127.0.0.1
 ```
 
-#### Garak
+### Garak
 
 Garak is an LLM AI scanner developed by NVIDIA. See https://github.com/NVIDIA/garak for more information.
 
@@ -543,7 +543,7 @@ scanners:
         model_name: gpt2
 ```
 
-#### Generic scanner
+### Generic scanner
 
 In addition to the scanners mentioned above, RapiDAST can run any other scanning tools. It is possible to request RapiDAST to run a command and process stdout results, using the `generic` plugin. One use case is to run your own tools or scripts and export the results to Google Cloud Storage.
 

@@ -1,21 +1,4 @@
-# RapiDAST
-
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/redhatproductsecurity/rapidast/run-tests.yml?branch=development&logo=github&label=CI) ![GitHub License](https://img.shields.io/github/license/redhatproductsecurity/rapidast)
-
-RapiDAST (Rapid DAST) is an open-source security testing tool that automates DAST ([Dynamic Application Security Testing](https://owasp.org/www-project-devsecops-guideline/latest/02b-Dynamic-Application-Security-Testing)) and streamlines the integration of security testing into development workflows. It is designed to help Developers and/or QA engineers rapidly and effectively identify low-hanging security vulnerabilities in your applications, ideally in CI/CD pipelines. RapiDAST is for organizations implementing DevSecOps with a shift-left approach.
-
-RapiDAST provides:
-
-- Automated HTTP/API security scanning leveraging ZAP
-- Automated LLM AI scanning leveraging Garak
-- Kubernetes operator scanning leveraging OOBTKUBE
-- Automated vulnerability scanning using Nessus (requires a Nessus instance)
-- Command-line execution with yaml configuration, suitable for integration in [CI/CD pipelines](./examples/)
-- Ability to run automated DAST scanning with pre-built or custom container images
-- HTML, JSON and XML report generation
-- Integration with Google Cloud Storage and [OWASP DefectDojo](https://owasp.org/www-project-defectdojo/)
-
-RapiDAST is for testing purposes, and should not be used on production systems.
+# RapiDAST User Guide
 
 ## Deprecation Notice
 
@@ -112,7 +95,7 @@ This section summarize the basic workflow as follows:
     - First run with passive scanning only, which can save time at the initial scanning phase. There are various situations that can cause an issue, not only from scanning set up but also from your application or test environment. Active scanning takes a long time in general.
     - Once passive Scanning has run successfully, run another scan with active scanning enabled in the configuration file.
 
-See [here](./examples/) for examples on how to run RapiDAST in various CI/CD pipelines.
+See [here](https://github.com/RedHatProductSecurity/rapidast/tree/development/examples) for examples on how to run RapiDAST in various CI/CD pipelines.
 
 ## Configuration
 
@@ -124,7 +107,7 @@ The configuration file is presented as YAML, and contains several main entries:
   - Each scanner can override an entry from `general` by creating an entry with the same name
 - `scanners` : list of scanners, and their configuration
 
-See templates in the [config](./config/) directory for rapidast configuration examples.
+See templates in the [config](https://github.com/RedHatProductSecurity/rapidast/blob/development/config/) directory for rapidast configuration examples.
 
 - `config-template-zap-tiny.yaml` : describes a bare minimum configuration, without authentication options.
 - `config-template-zap-simple.yaml` : describes a generic/minimal use of the ZAP scanner (i.e.: the minimum set of option to get a ZAP scan from RapiDAST)
@@ -134,11 +117,11 @@ See templates in the [config](./config/) directory for rapidast configuration ex
 - `config-template-generic-scan.yaml` : describes the use of the generic scanner
 - `config-template-garak.yaml` : describes the use of the Garak LLM AI scanner
 
-See [here](./examples/) for examples on how to run RapiDAST in various CI/CD pipelines.
+See [here](https://github.com/RedHatProductSecurity/rapidast/tree/development/examples/) for examples on how to run RapiDAST in various CI/CD pipelines.
 
 ### Basic Example
 
-Example bare minimum [config file](./config/config-template-zap-tiny.yaml), without any [Authentication](#authentication) options, and passive scanning only:
+Example bare minimum [config file](https://github.com/RedHatProductSecurity/rapidast/blob/development/config/config-template-zap-tiny.yaml), without any [Authentication](#authentication) options, and passive scanning only:
 
 ```yaml
 config:
@@ -287,9 +270,83 @@ Once this is set, scan results will be exported to the bucket automatically. The
 
 #### Exporting to DefectDojo
 
-RapiDAST supports integration with OWASP DefectDojo which is an open source vulnerability management tool. See [here](./docs/DEFECT_DOJO.md) for more information.
+RapiDAST supports integration with OWASP DefectDojo which is an open source vulnerability management tool.
 
-## Execution
+##### Preamble: creating DefectDojo user
+
+RapiDAST needs to be able to authenticate to your DefectDojo instance. However, ideally, it should have the minimum set of permissions, such that it will not be allowed to modify products other than the one(s) it is supposed to.
+
+In order to do that:
+
+- create a user without any global role
+- add that user as a "writer" for the product(s) it is supposed to scan
+
+Then the product, as well as an engagement for that product, must be created in your DefectDojo instance. It would not be advised to give the RapiDAST user an "admin" role and simply set `auto_create_context` to True, as it would be both insecure and accident prone (a typo in the product name would let RapiDAST create a new product)
+
+##### Exporting to Defect Dojo
+
+RapiDAST will send the results directly to a DefectDojo service. This is a typical configuration:
+
+```yaml
+config:
+  # Defect dojo configuration
+  defectDojo:
+    url: "https://mydefectdojo.example.com/"
+    ssl: [True | False | "/path/to/CA"]
+    authorization:
+      username: "rapidast_productname"
+      password: "password"
+      # alternatively, a `token` entry can be set in place of username/password
+```
+
+The `ssl` parameter is provided as the Python Requests module's `verify` parameter. It can be either:
+
+- True: SSL verification is mandatory, against the default CA bundle
+- False: SSL verification is not mandatory (but prints a warning if it fails)
+- /path/to/CA: a bundle of CAs to verify from
+
+Alternatively, the `REQUESTS_CA_BUNDLE` environment variable can be used to select a CA bundle file. If nothing is provided, the default value will be `True`
+
+You can either authenticate using a username/password combination, or a token (make sure it is not expired). In either case, you can use the `_from_var` method described in the previous chapter to avoid hardcoding the value in the configuration.
+
+##### Configuration of exported data
+
+The data exported follows the Defectdojo methodology of "Product → Engagement → Test" : a test, such as a ZAP scan, belongs to an engagement for a product.
+Its configuration is made under the `scanners.<scanner>.defectDojoExport.parameters` configuration entries. As a baseline, parameters from the Defectdojo `import-scan` and `reimport-scan` are accepted.
+
+For each scan, the logic applied is the following, in order:
+
+- If a test ID is provided (parameter `test`), this scan will replace the previous one (a "reimport" in Defectdojo)
+- If an engagement ID is provided (parameter `engagement`), this scan will be added as a new test in that existing engagement
+- If an engagement and a product are given by name (`engagement_name` and `product_name` parameters), this scan will be added for that given engagement for the given product
+
+In each `defectDojoExport.parameters`, some defaults parameters are applied:
+
+- `product_name`, in order (the first non empty value found):
+  - `application.productName`
+  - `application.shortName` (this name should not contain non-printable characters, such as spaces)
+- `engagement_name` defaults to `RapiDAST-<product name>-<date>`
+- `scan_type` : filled by the scanner
+- `active`: `True`
+- `verified`: `False`
+
+As a reminder: values from `general` are applied to each scanner.
+
+Here is an example:
+
+```yaml
+scanners:
+  zap:
+    defectDojoExport:
+      parameters:
+        product_name: "My Product"
+        engagement_name: "RapiDAST" # or engagement: <engagement_id>
+        #test: <test_id>
+```
+
+See https://docs.defectdojo.com/en/connecting_your_tools/import_scan_files/api_pipeline_modelling/ for more information.
+
+##### Execution
 
 Once you have created a configuration file, you can run a scan with it.
 
@@ -344,17 +401,17 @@ Disclaimer: This tool is not intended to be run as a long-running service. Inste
 
 Helm chart is provided to help with running RapiDAST on Kubernetes or OpenShift.
 
-See [helm/README.md](./helm/README.md)
+See [helm/README.md](https://github.com/RedHatProductSecurity/rapidast/tree/development/helm)
 
-### Scanners
+## Scanners
 
-#### ZAP
+### ZAP
 
 ZAP (Zed Attack Proxy) is an open-source DAST tool. It can be used for scanning web applications and API.
 
 See <https://www.zaproxy.org/> for more information.
 
-##### Methodology
+#### Methodology
 
 ZAP needs to be pointed to a list of endpoints to the tested application. Those can be:
 
@@ -366,12 +423,12 @@ The GraphQL interface can be provided to RapiDAST via the `graphql` configuratio
 
 The other endpoints can be provided via several methods, discussed in the chapters below.
 
-###### an OpenAPI schema
+##### an OpenAPI schema
 
 This is the prefered method, to be used whenever possible.
 RapiDAST accepts OpenAPI v2(formerly known as Swagger) and v3 schemas. These schemas will describe a list of endpoints, and for each of them, a list of parameters accepted by the application.
 
-###### Build the endpoint list using a spider/crawler
+##### Build the endpoint list using a spider/crawler
 
 In this method, RapiDAST is given a Web entrypoint. The crawler will download that page, extract a list of URLs and recursively crawl all of them. The entire list of URLs found is then provided to the scanner.
 
@@ -382,7 +439,7 @@ There are two crawlers available:
 
 See the `spider` and `spiderAjax` configuration entries in the `config-template-zap-long.yaml` configuration template file for a list of options available.
 
-###### A list of endpoints
+##### A list of endpoints
 
 A file containing a list of URLs corresponding to endpoints and their parameters.
 
@@ -395,7 +452,7 @@ https://example.com/api/v3/groupB/functionB?parameter1=def&parameter2=456
 
 Only GET requests will be scanned.
 
-##### ZAP scanner specific options
+#### ZAP scanner specific options
 
 Below are some configuration options that are worth noting, when running a RapiDAST scan with the ZAP scanner.
 
@@ -450,7 +507,7 @@ scanners:
       - formhandler.fields.field(0).value=default
 ```
 
-#### Nessus
+### Nessus
 
 Nessus is a vulnerability scanner developed by Tenable, Inc. It helps organizations identify and address security vulnerabilities across various systems, devices, and applications.
 
@@ -472,7 +529,7 @@ scanners:
       - 127.0.0.1
 ```
 
-#### Garak
+### Garak
 
 Garak is an LLM AI scanner developed by NVIDIA. See https://github.com/NVIDIA/garak for more information.
 
@@ -486,7 +543,7 @@ scanners:
         model_name: gpt2
 ```
 
-#### Generic scanner
+### Generic scanner
 
 In addition to the scanners mentioned above, RapiDAST can run any other scanning tools. It is possible to request RapiDAST to run a command and process stdout results, using the `generic` plugin. One use case is to run your own tools or scripts and export the results to Google Cloud Storage.
 
@@ -709,11 +766,3 @@ This is to help with debugging the error. Once confirmed, it is necessary to man
 ## Support
 
 If you encounter any issues or have questions, please [open an issue](https://github.com/RedHatProductSecurity/rapidast/issues) on GitHub.
-
-## Contributing
-
-Contribution to the project is more than welcome.
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md)
-
-[ZAP]: #ZAP

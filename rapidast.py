@@ -42,6 +42,9 @@ SENSITIVE_KEYS = {
     "cookie",
     "x-api-key",
     "x-auth-token",
+    "x-csrf",
+    "x-csrf-token",
+    "x-xsrf-token",
 }
 
 

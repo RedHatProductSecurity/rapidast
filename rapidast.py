@@ -30,6 +30,22 @@ pp = pprint.PrettyPrinter(indent=4)
 
 
 DEFAULT_CONFIG_FILE = os.path.join(os.path.dirname(__file__), "rapidast-defaults.yaml")
+SENSITIVE_KEYS = {
+    "password",
+    "secret",
+    "api_key",
+    "token",
+    "access_key",
+    "private_key",
+    "authorization",
+    "proxy-authorization",
+    "cookie",
+    "x-api-key",
+    "x-auth-token",
+    "x-csrf",
+    "x-csrf-token",
+    "x-xsrf-token",
+}
 
 
 def load_environment(config):
@@ -157,7 +173,7 @@ def run_scanner(name, config, args, scan_exporter):
 
 def dump_redacted_config(config_file_location: str, destination_dir: str) -> bool:
     """
-    Redacts sensitive parameters from a configuration file and writes the redacted
+    Redacts sensitive parameters and values from a configuration file and writes the redacted
     version to a destination directory
 
     Args:
@@ -167,6 +183,27 @@ def dump_redacted_config(config_file_location: str, destination_dir: str) -> boo
     """
     logging.info(f"Starting the redaction and dumping process for the configuration file: {config_file_location}")
 
+    mask_value_str = "*****"
+
+    def _mask_sensitive_data(data):
+        """Recursively mask sensitive values in a dictionary or list."""
+
+        if isinstance(data, dict):
+            masked_data = {}
+            for key, value in data.items():
+                if key == "authentication" and isinstance(value, dict) and "parameters" in value:
+                    # Mask all values inside "authentication" -> "parameters"
+                    masked_data[key] = value.copy()
+                    masked_data[key]["parameters"] = {param: mask_value_str for param in value["parameters"]}
+                elif key.lower() in SENSITIVE_KEYS:
+                    masked_data[key] = mask_value_str
+                else:
+                    masked_data[key] = _mask_sensitive_data(value)  # Recurse for nested structures
+            return masked_data
+        elif isinstance(data, list):
+            return [_mask_sensitive_data(item) for item in data]  # Recurse for lists
+        return data
+
     try:
         if not os.path.exists(destination_dir):
             os.makedirs(destination_dir)
@@ -175,17 +212,12 @@ def dump_redacted_config(config_file_location: str, destination_dir: str) -> boo
         config = yaml.safe_load(load_config_file(config_file_location))
 
         logging.info(f"Redacting sensitive information from configuration {config_file_location}")
-        for key in config.keys():
-            if not isinstance(config[key], dict):
-                continue
-            if config[key].get("authentication") and config[key]["authentication"].get("parameters"):
-                for param in config[key]["authentication"]["parameters"]:
-                    config[key]["authentication"]["parameters"][param] = "*****"
+        redacted_config = _mask_sensitive_data(config)
 
         dest = os.path.join(destination_dir, os.path.basename(config_file_location))
         logging.info(f"Saving redacted configuration to {dest}")
         with open(dest, "w", encoding="utf-8") as file:
-            yaml.dump(config, file)
+            yaml.dump(redacted_config, file)
 
         logging.info("Redacted configuration saved successfully")
         return True

@@ -14,6 +14,8 @@ def mock_yaml_data() -> dict:
     return {
         "service1": {"authentication": {"parameters": {"username": "admin", "password": "secret"}}},
         "service2": {"authentication": {"parameters": {"api_key": "123456"}}},
+        "service3": {"RestGenerator": {"headers": {"Authorization": "token1234"}}},
+        "service4": {"Garak": {"RestGenerator": {"headers": {"Cookie": "session=token1234"}}}},
     }
 
 
@@ -27,6 +29,8 @@ def test_dump_redacted_config_success(
     expected_redacted_data = {
         "service1": {"authentication": {"parameters": {"username": "*****", "password": "*****"}}},
         "service2": {"authentication": {"parameters": {"api_key": "*****"}}},
+        "service3": {"RestGenerator": {"headers": {"Authorization": "*****"}}},
+        "service4": {"Garak": {"RestGenerator": {"headers": {"Cookie": "*****"}}}},
     }
     mock_yaml_load.return_value = mock_yaml_data
     success = dump_redacted_config("config.yaml", "destination_dir")

@@ -2,7 +2,7 @@ name: Run tests
 
 on:
   push:
-    branches: ["development", "main"]
+    branches: ["development"] # XXX for now 'main' is removed to reduce time. It may be added again later.
   pull_request:
     branches: ["development", "main"]
 

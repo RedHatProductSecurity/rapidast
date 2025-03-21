@@ -29,7 +29,7 @@ spec:
   - name: dockerfile
     value: containerize/Containerfile
   - name: skip-checks
-    value: "true"
+    value: "false"
   - name: prefetch-input
     value:
     - {"type": "generic", "path": "."}

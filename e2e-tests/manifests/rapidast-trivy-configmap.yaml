@@ -28,7 +28,7 @@ data:
         # 'inline' is used when container.type is not 'podman'
         # 'toolDir' specifies the default directory where inline scripts are located
         #toolDir: scanners/generic/tools
-        inline: "trivy k8s -n $(cat /run/secrets/kubernetes.io/serviceaccount/namespace) pod --scanners=misconfig --report all --format json --skip-policy-update | convert_trivy_k8s_to_sarif.py"
+        inline: "trivy k8s --include-namespaces $(cat /run/secrets/kubernetes.io/serviceaccount/namespace) --include-kinds pod --scanners=misconfig --report all --format json --skip-check-update | convert_trivy_k8s_to_sarif.py"
 
         container:
           parameters:

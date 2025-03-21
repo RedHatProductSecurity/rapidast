@@ -1,0 +1,112 @@
+#####
+# Build RapiDAST image with Garak LLM AI scanner: https://github.com/NVIDIA/garak
+#####
+
+# Prepare dependencies
+FROM registry.access.redhat.com/ubi9-minimal AS deps
+
+# Indicate if dependencies were prefetched using Cachi2
+# They must be located at /cachi2/output/deps
+ARG PREFETCH=false
+
+# These versions should be consistent with the listed in the artifacts.lock.yaml file
+ARG ZAP_VERSION=2.15.0
+ARG FF_VERSION=128.6.0esr
+ARG K8S_VERSION=1.32.1
+ARG TRIVY_VERSION=0.59.0
+
+ARG DEPS_DIR=/tmp/deps
+ARG ZAP_FILE=$DEPS_DIR/ZAP.tar.gz
+ARG FF_FILE=$DEPS_DIR/firefox.tar.bz2
+ARG TRIVY_FILE=$DEPS_DIR/trivy.tar.gz
+ARG KCTL_FILE=$DEPS_DIR/kubectl
+
+RUN microdnf install -y tar gzip bzip2 java-11-openjdk nodejs
+
+RUN mkdir "${DEPS_DIR}" /tmp/node_modules && if [ "$PREFETCH" == "true" ]; then \
+    echo "PREFETCH is true: Copying dependencies from /cachi2/output/deps..." && \
+    cp -r /cachi2/output/deps/generic/* "$DEPS_DIR"; \
+  else \
+    echo "PREFETCH is false: Downloading dependencies from remote sources..." && \
+    curl -sfL "https://github.com/zaproxy/zaproxy/releases/download/v${ZAP_VERSION}/ZAP_${ZAP_VERSION}_Linux.tar.gz" -o "$ZAP_FILE"; \
+    curl -sfL "https://releases.mozilla.org/pub/firefox/releases/${FF_VERSION}/linux-x86_64/en-US/firefox-${FF_VERSION}.tar.bz2" -o "$FF_FILE"; \
+    curl -sfL "https://dl.k8s.io/release/v${K8S_VERSION}/bin/linux/amd64/kubectl" -o "$KCTL_FILE"; \
+    curl -sfL "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" -o "$TRIVY_FILE"; \
+  fi
+## ZAP, build and install scanners in advance (more scanners will be added)
+RUN mkdir /opt/zap && \
+  tar zxvf "$ZAP_FILE" --strip-components=1 -C /opt/zap && \
+  ### Update add-ons
+  /opt/zap/zap.sh -cmd -silent -addonupdate && \
+  ### Copy them to installation directory
+  cp /root/.ZAP/plugin/*.zap /opt/zap/plugin/
+
+## Firefox, for Ajax
+RUN mkdir -p /opt/firefox && \
+  tar xjvf "$FF_FILE" -C /opt/firefox
+
+## kubectl
+RUN install -o root -g root -m 0755 "$KCTL_FILE" /usr/local/bin/kubectl
+
+## Trivy (https://github.com/aquasecurity/trivy/)
+RUN mkdir /tmp/trivy && \
+  tar xzvf "$TRIVY_FILE" -C /tmp/trivy && \
+  chmod +x /tmp/trivy/trivy
+
+## redocly (https://github.com/Redocly/redocly-cli)
+COPY package.json package-lock.json /tmp/redocly/
+RUN mkdir -p /tmp/redocly/node_modules && if [ "$PREFETCH" == "true" ]; then \
+    npm install --offline --prefix /tmp/redocly; \
+  else \
+    npm install --prefix /tmp/redocly; \
+  fi
+
+# Copy artifacts from deps to build RapiDAST
+FROM registry.access.redhat.com/ubi9-minimal
+
+COPY --from=deps /opt/zap /opt/zap
+COPY --from=deps /opt/firefox /opt/firefox
+COPY --from=deps /usr/local/bin/kubectl /usr/local/bin/kubectl
+COPY --from=deps /tmp/trivy/trivy /usr/local/bin/trivy
+COPY --from=deps /tmp/redocly/node_modules /opt/redocly/node_modules
+
+ENV PATH $PATH:/opt/zap/:/opt/rapidast/:/opt/firefox/
+
+## RapiDAST
+RUN mkdir /opt/rapidast
+COPY ./rapidast.py ./requirements-llm.txt /opt/rapidast/
+COPY ./scanners/ /opt/rapidast/scanners/
+COPY ./tools/ /opt/rapidast/tools/
+COPY ./exports/ /opt/rapidast/exports/
+COPY ./configmodel/ /opt/rapidast/configmodel/
+COPY ./utils/ /opt/rapidast/utils/
+COPY ./config/ /opt/rapidast/config/
+
+### Add generic tools in the PATH
+COPY ./scanners/generic/tools/convert_trivy_k8s_to_sarif.py /usr/local/bin/
+
+### Overload default config (set 'none' as default container type)
+COPY ./containerize/container_default_config.yaml /opt/rapidast/rapidast-defaults.yaml
+
+### Add /opt/{zap,rapidast}/ to the PATH (for any user and future user)
+COPY ./containerize/path_rapidast.sh /etc/profile.d/rapidast.sh
+
+### Install RapiDAST requirements, globally, so that it's available to any user
+RUN microdnf install -y --setopt=install_weak_deps=0 java-11-openjdk shadow-utils dbus-glib procps git nodejs npm && \
+  microdnf install -y gtk3 python3.12 && \
+  python3.12 -m ensurepip --upgrade && \
+  pip3.12 install --no-cache-dir -r /opt/rapidast/requirements-llm.txt && \
+  microdnf clean all -y && rm -rf /var/cache/dnf /tmp/*  && \
+  ln -s /opt/redocly/node_modules/@redocly/cli/bin/cli.js /usr/local/bin/redocly
+
+RUN useradd -u 1000 -d /opt/rapidast -m -s /bin/bash rapidast && \
+  chown -R 1000 /opt/rapidast && \
+  # OpenShift runs containers with arbitrary user ids, belonging to root group
+  chgrp -R 0 /opt/rapidast && \
+  chmod -R g=u /opt/rapidast
+
+USER rapidast
+WORKDIR /opt/rapidast
+ENV HOME /opt/rapidast
+ENV PYTHON_VERSION python3.12
+ENTRYPOINT ["python3.12", "rapidast.py"]

@@ -1,17 +1,23 @@
 #!/usr/bin/env python3
 import argparse
+import json
 import logging
 import os
 import pprint
 import re
 import sys
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 from typing import Dict
 from urllib import request
 
 import yaml
 from dotenv import load_dotenv
+from jsonschema import Draft202012Validator
+from jsonschema import SchemaError
+from jsonschema import validate
+from jsonschema import ValidationError
 
 import configmodel.converter
 import scanners
@@ -19,10 +25,27 @@ from exports.defect_dojo import DefectDojo
 from exports.google_cloud_storage import GoogleCloudStorage
 from utils import add_logging_level
 
+
 pp = pprint.PrettyPrinter(indent=4)
 
 
 DEFAULT_CONFIG_FILE = os.path.join(os.path.dirname(__file__), "rapidast-defaults.yaml")
+SENSITIVE_KEYS = {
+    "password",
+    "secret",
+    "api_key",
+    "token",
+    "access_key",
+    "private_key",
+    "authorization",
+    "proxy-authorization",
+    "cookie",
+    "x-api-key",
+    "x-auth-token",
+    "x-csrf",
+    "x-csrf-token",
+    "x-xsrf-token",
+}
 
 
 def load_environment(config):
@@ -85,6 +108,10 @@ def run_scanner(name, config, args, scan_exporter):
     )
 
     typ = config.get(f"scanners.{name}.container.type", default="none")
+
+    if typ == "podman":
+        logging.warning("Podman mode is deprecated and will be removed in version 2.12")
+
     try:
         class_ = scanners.str_to_scanner(name, typ)
     except ModuleNotFoundError:
@@ -146,7 +173,7 @@ def run_scanner(name, config, args, scan_exporter):
 
 def dump_redacted_config(config_file_location: str, destination_dir: str) -> bool:
     """
-    Redacts sensitive parameters from a configuration file and writes the redacted
+    Redacts sensitive parameters and values from a configuration file and writes the redacted
     version to a destination directory
 
     Args:
@@ -156,6 +183,27 @@ def dump_redacted_config(config_file_location: str, destination_dir: str) -> boo
     """
     logging.info(f"Starting the redaction and dumping process for the configuration file: {config_file_location}")
 
+    mask_value_str = "*****"
+
+    def _mask_sensitive_data(data):
+        """Recursively mask sensitive values in a dictionary or list."""
+
+        if isinstance(data, dict):
+            masked_data = {}
+            for key, value in data.items():
+                if key == "authentication" and isinstance(value, dict) and "parameters" in value:
+                    # Mask all values inside "authentication" -> "parameters"
+                    masked_data[key] = value.copy()
+                    masked_data[key]["parameters"] = {param: mask_value_str for param in value["parameters"]}
+                elif key.lower() in SENSITIVE_KEYS:
+                    masked_data[key] = mask_value_str
+                else:
+                    masked_data[key] = _mask_sensitive_data(value)  # Recurse for nested structures
+            return masked_data
+        elif isinstance(data, list):
+            return [_mask_sensitive_data(item) for item in data]  # Recurse for lists
+        return data
+
     try:
         if not os.path.exists(destination_dir):
             os.makedirs(destination_dir)
@@ -164,17 +212,12 @@ def dump_redacted_config(config_file_location: str, destination_dir: str) -> boo
         config = yaml.safe_load(load_config_file(config_file_location))
 
         logging.info(f"Redacting sensitive information from configuration {config_file_location}")
-        for key in config.keys():
-            if not isinstance(config[key], dict):
-                continue
-            if config[key].get("authentication") and config[key]["authentication"].get("parameters"):
-                for param in config[key]["authentication"]["parameters"]:
-                    config[key]["authentication"]["parameters"][param] = "*****"
+        redacted_config = _mask_sensitive_data(config)
 
         dest = os.path.join(destination_dir, os.path.basename(config_file_location))
         logging.info(f"Saving redacted configuration to {dest}")
         with open(dest, "w", encoding="utf-8") as file:
-            yaml.dump(config, file)
+            yaml.dump(redacted_config, file)
 
         logging.info("Redacted configuration saved successfully")
         return True
@@ -200,6 +243,84 @@ def dump_rapidast_redacted_configs(main_config_file_location: str, destination_d
         if not dump_redacted_config(DEFAULT_CONFIG_FILE, destination_dir):
             logging.error("Failed to dump configuration. Exiting.")
             sys.exit(2)
+
+
+def deep_traverse_and_replace_with_var_content(d: dict) -> dict:  # pylint: disable=C0103
+    """
+    Recursively traverse a dictionary and replace key-value pairs where the key ends with `_from_var`
+    The value is replaced with the corresponding environment variable value if available.
+    """
+    suffix = "_from_var"
+    keys_to_replace = [key for key in d if isinstance(key, str) and key.endswith(suffix)]
+
+    for key in keys_to_replace:
+        new_key = key[: -len(suffix)]
+
+        try:
+            env_value = os.environ[d[key]]
+            d[new_key] = env_value
+            del d[key]
+        except KeyError:
+            logging.error(
+                f"""
+                Environment variable '{d[key]}' referenced by key '{key}' could not be found.
+                No configuration replacement will be made for this key. Please check your configuration and environment"
+                """
+            )
+
+    for key, value in d.items():
+        if isinstance(value, dict):
+            deep_traverse_and_replace_with_var_content(value)
+        elif isinstance(value, list):
+            for i, item in enumerate(value):
+                if isinstance(item, dict):
+                    value[i] = deep_traverse_and_replace_with_var_content(item)
+
+    return d
+
+
+def validate_config(config: dict, schema_path: Path) -> bool:
+    """
+    Validate a configuration dictionary against a JSON schema file
+    """
+    try:
+        logging.info("Validating configuration")
+        with schema_path.open("r", encoding="utf-8") as file:
+            schema = json.load(file)
+
+        validate(instance=config, schema=schema, format_checker=Draft202012Validator.FORMAT_CHECKER)
+        logging.info("Configuration is valid")
+        return True
+    except ValidationError as e:
+        logging.error(f"Validation error: {e.message}, json_path: {e.json_path}")
+    except SchemaError as e:
+        logging.error(f"Schema error: {e.message}, json_path: {e.json_path}")
+    except json.JSONDecodeError:
+        logging.error(f"Failed to parse JSON schema: {schema_path}")
+    except Exception as e:  # pylint: disable=W0718
+        logging.error(f"Unexpected error: {e}")
+
+    return False
+
+
+def validate_config_schema(config_file) -> bool:
+    config = yaml.safe_load(load_config_file(config_file))
+
+    try:
+        config_version = str(config["config"]["configVersion"])
+    except KeyError:
+        logging.error("Missing 'configVersion' in configuration")
+        return False
+
+    script_dir = Path(__file__).parent
+    schema_path = script_dir / "config" / "schemas" / config_version / "rapidast_schema.json"
+
+    if schema_path.exists():
+        resolved_config = deep_traverse_and_replace_with_var_content(config)
+        return validate_config(resolved_config, schema_path)
+    else:
+        logging.warning(f"Configuration schema missing: {schema_path}. Skipping validation")
+    return False
 
 
 def run():
@@ -234,6 +355,8 @@ def run():
 
     logging.debug(f"log level set to debug. Config file: '{config_file}'")
 
+    validate_config_schema(config_file)
+
     # Load config file
     try:
         config = configmodel.RapidastConfigModel(yaml.safe_load(load_config_file(config_file)))
@@ -265,7 +388,7 @@ def run():
     scan_exporter = None
     if config.get("config.googleCloudStorage.bucketName"):
         scan_exporter = GoogleCloudStorage(
-            bucket_name=config.get("config.googleCloudStorage.bucketName", "default-bucket-name"),
+            bucket_name=config.get("config.googleCloudStorage.bucketName"),
             app_name=config.get_official_app_name(),
             directory=config.get("config.googleCloudStorage.directory", None),
             keyfile=config.get("config.googleCloudStorage.keyFile", None),

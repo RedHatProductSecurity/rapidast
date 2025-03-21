@@ -1,0 +1,35 @@
+config:
+  # WARNING: `configVersion` indicates the schema version of the config file.
+  # This value tells RapiDAST what schema should be used to read this configuration.
+  # Therefore you should only change it if you update the configuration to a newer schema
+  configVersion: 6
+
+  # all the results of all scanners will be stored under that location
+  # base_results_dir: "./results"
+
+# `application` contains data related to the application, not to the scans.
+application:
+  shortName: "garak-test-1.0"
+
+# `scanners' is a section that configures scanning options
+scanners:
+  garak:
+    parameters:
+      plugins:
+        model_type: huggingface                         # required, e.g. hugginngface, openai, rest
+        model_name: gpt2                                # optional, but a specific model type requires a model name or path
+        probe_spec: ansiescape.AnsiEscaped,av_spam_scanning,divergence,fileformats,grandma.Win11,leakreplay.NYTCloze,malwaregen.TopLevel,malwaregen.Evasion,malwaregen.Payload,packagehallucination.Python,promptinject.HijackLongPromptMini,suffix,xss
+        #generators:                                    # optional, providing more options for the selected model type, e.g. RestGenerator
+        #  rest:
+        #    RestGenerator:
+        #      uri:
+        #      method:
+        #      headers:
+        #      response_json_field:
+        #      req_template_json_object:
+        #      request_timeout: 1000
+      run:
+        generations: 5
+        parallel_attempts: 20
+
+    #executable_path: /usr/local/bin/garak    # default: /usr/local/bin/garak

@@ -4,14 +4,11 @@ metadata:
   annotations:
   name: rapidast-vapi
 spec:
-  containers:
-  - command:
-    - bash
-    - -c
-    - "./rapidast.py && cat results/*/*/zap/zap-report.json" # ugly, but saves needing a PVC to retrieve .json file after execution
-    image: ${IMAGE} # quay.io/redhatproductsecurity/rapidast:latest
+  initContainers:
+    # Run rapidast as initContainer, second container prints the results
+  - image: ${IMAGE} # quay.io/redhatproductsecurity/rapidast:latest
     imagePullPolicy: Always
-    name: rapidast-vapi
+    name: rapidast
     resources:
       limits:
         cpu: 1
@@ -22,8 +19,20 @@ spec:
     volumeMounts:
     - name: config-volume
       mountPath: /opt/rapidast/config
+    - name: results
+      mountPath: /opt/rapidast/results
+  containers:
+    # Expects initContainer to already have created results
+  - command: ["bash", "-c", "cat /opt/rapidast/results/*/*/zap/zap-report.json"]
+    image: registry.redhat.io/ubi9/ubi-micro
+    name: results
+    volumeMounts:
+    - name: results
+      mountPath: /opt/rapidast/results
   volumes:
   - name: config-volume
     configMap:
       name: rapidast-vapi
+  - name: results
+    emptyDir: {}
   restartPolicy: Never

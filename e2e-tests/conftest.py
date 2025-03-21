@@ -4,8 +4,11 @@ import shutil
 import tempfile
 import time
 from functools import partial
+from typing import Dict
+from typing import Optional
 
 import certifi
+import pytest
 from kubernetes import client
 from kubernetes import config
 from kubernetes import utils
@@ -15,6 +18,7 @@ from kubernetes.client.rest import ApiException
 NAMESPACE = os.getenv("RAPIDAST_NAMESPACE", "")  # e.g. rapidast--pipeline
 SERVICEACCOUNT = os.getenv("RAPIDAST_SERVICEACCOUNT", "pipeline")  # name of ServiceAccount used in rapidast pod
 RAPIDAST_IMAGE = os.getenv("RAPIDAST_IMAGE", "quay.io/redhatproductsecurity/rapidast:development")
+RAPIDAST_LLM_IMAGE = os.getenv("RAPIDAST_IMAGE", "quay.io/redhatproductsecurity/rapidast-llm:development")
 # delete resources created by tests
 RAPIDAST_CLEANUP = os.getenv("RAPIDAST_CLEANUP", "True").lower() in ("true", "1", "t", "y", "yes")
 
@@ -57,12 +61,48 @@ def wait_until_ready(**kwargs):
     return False
 
 
+def is_pod_with_field_selector_successfully_completed(field_selector: str, timeout: int = 120) -> bool:
+    """
+    Checks if a given pod has successfully completed (Succeeded phase)
+    """
+    corev1 = client.CoreV1Api()
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            pods = corev1.list_namespaced_pod(namespace=NAMESPACE, field_selector=field_selector)
+        except ApiException as e:
+            logging.error(f"Error retrieving pods in namespace {NAMESPACE} with selector {field_selector}: {e}")
+            return False
+
+        if not pods.items:
+            logging.warning(f"No pods found in namespace {NAMESPACE} matching field selector: {field_selector}")
+        else:
+            for pod in pods.items:
+                if pod.status.phase == "Succeeded":
+                    logging.info(f"Pod {pod.metadata.name} has successfully completed")
+                    return True
+                elif pod.status.phase in ["Failed", "Unknown"]:
+                    logging.warning(f"Pod {pod.metadata.name} has failed or is in an unknown state: {pod.status.phase}")
+                    return False
+
+        logging.info("Matching pods are still running. Retrying...")
+        time.sleep(2)
+
+    logging.warning(
+        f"Timeout reached: No pod matching {field_selector} completed successfully within {timeout} seconds"
+    )
+    return False
+
+
 # simulates: $ oc logs -f <pod> | tee <file>
-def tee_log(pod_name: str, filename: str):
+def tee_log(pod_name: str, filename: str, container: Optional[str] = None):
     corev1 = client.CoreV1Api()
     w = watch.Watch()
+    kwargs = {"name": pod_name, "namespace": NAMESPACE}
+    if container:
+        kwargs["container"] = container
     with open(filename, "w", encoding="utf-8") as f:
-        for e in w.stream(corev1.read_namespaced_pod_log, name=pod_name, namespace=NAMESPACE):
+        for e in w.stream(corev1.read_namespaced_pod_log, **kwargs):
             if not isinstance(e, str):
                 continue  # Watch.stream() can yield non-string types
             f.write(e + "\n")
@@ -77,6 +117,7 @@ def render_manifests(input_dir, output_dir):
     for filepath in os.scandir(output_dir):
         with open(filepath, "r", encoding="utf-8") as f:
             contents = f.read()
+        contents = contents.replace("${RAPIDAST_LLM_IMAGE}", RAPIDAST_LLM_IMAGE)
         contents = contents.replace("${IMAGE}", RAPIDAST_IMAGE)
         contents = contents.replace("${SERVICEACCOUNT}", SERVICEACCOUNT)
         with open(filepath, "w", encoding="utf-8") as f:
@@ -137,6 +178,25 @@ def new_kclient():
     return client.ApiClient()
 
 
+# XXX hook called by pytest-json-report plugin
+def pytest_json_modifyreport(json_report: Dict):
+    num_passed = json_report["summary"].get("passed", 0)
+    num_failed = json_report["summary"].get("failed", 0)
+    num_total = json_report["summary"]["total"]
+    timestamp = str(int(json_report["created"] + json_report["duration"]))
+    result = "ERROR"
+    if num_passed == num_total:
+        result = "SUCCESS"
+    elif num_failed > 0:
+        result = "FAILURE"
+    json_report.clear()
+    json_report["result"] = result
+    json_report["timestamp"] = timestamp
+    json_report["successes"] = num_passed
+    json_report["failures"] = num_failed
+    json_report["warnings"] = 0
+
+
 class TestBase:
     _teardowns = []
 
@@ -156,11 +216,15 @@ class TestBase:
             for func in cls._teardowns:
                 logging.debug(f"calling {func}")
                 func()
-        # XXX oobtukbe does not clean up after itself
-        os.system(f"kubectl delete ConfigMap/vulnerable -n {NAMESPACE}")
 
     def create_from_yaml(self, path: str):
         # delete resources in teardown method later
         self._teardowns.append(partial(os.system, f"kubectl delete -f {path} -n {NAMESPACE}"))
         o = utils.create_from_yaml(self.kclient, path, namespace=NAMESPACE, verbose=True)
         logging.debug(o)
+
+
+@pytest.fixture
+def _setup_teardown_for_oobkube():
+    yield
+    os.system(f"kubectl delete ConfigMap/vulnerable -n {NAMESPACE}")

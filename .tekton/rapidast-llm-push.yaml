@@ -1,0 +1,46 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://github.com/redHatProductSecurity/rapidast?rev={{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/cancel-in-progress: "false"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-cel-expression: event == "push" && target_branch
+      == "development"
+  creationTimestamp: null
+  labels:
+    appstudio.openshift.io/application: rapidast
+    appstudio.openshift.io/component: rapidast-llm
+    pipelines.appstudio.openshift.io/type: build
+  name: rapidast-llm-on-push
+  namespace: secaut-tenant
+spec:
+  pipelineRef:
+    name: rapidast-pipeline
+  params:
+  - name: git-url
+    value: '{{source_url}}'
+  - name: revision
+    value: '{{revision}}'
+  - name: output-image
+    value: quay.io/redhatproductsecurity/rapidast-llm:{{revision}}
+  - name: dockerfile
+    value: containerize/Containerfile.garak
+  - name: build-args
+    value: [PREFETCH=false]
+  taskRunSpecs:
+    - pipelineTaskName: ecosystem-cert-preflight-checks
+      stepSpecs:
+        - name: app-check
+          computeResources:
+            requests:
+              memory: 512Mi
+            limits:
+              memory: 4Gi
+  workspaces:
+  - name: git-auth
+    secret:
+      secretName: '{{ git_auth_secret }}'
+status: {}

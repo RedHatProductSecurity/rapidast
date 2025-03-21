@@ -108,20 +108,49 @@ spec:
         - name: ownerUid
           value: $(context.pipelineRun.uid)
 
+    - name: prefetch-get-refs
+      onError: continue
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/konflux-ci/tekton-integration-catalog
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: tasks/test-metadata/0.2/test-metadata.yaml
+      params:
+        - name: SNAPSHOT
+          value: $(params.SNAPSHOT)
+        - name: test-name
+          value: rapidast-e2e
+        - name: enable-prefetch
+          value: "true"
+
     # XXX integrations tests can't reference Tasks in the same PR AFAICT
     # so need to repeat them inline, rather than define in a separate file
     - name: run-e2e-tests
       runAfter:
         - provision-eaas-space
+        - prefetch-get-refs
       taskSpec:
+        stepTemplate:
+          volumeMounts:
+            - mountPath: /cachi2
+              name: cachi2
+            - mountPath: /workspace
+              name: workspace
         volumes:
           - name: credentials
             emptyDir: {}
+          - name: cachi2
+            emptyDir: {}
+          - name: workspace
+            emptyDir: {}
         results:
-          - name: TEST_RESULTS
+          - name: TEST_OUTPUT
             description: e2e test results
         steps:
-
           # XXX not supported to use workspaces in integration tests
           - name: clone-repository
             image: quay.io/konflux-ci/git-clone:latest
@@ -130,7 +159,25 @@ spec:
               git clone "$(tasks.parse-metadata.results.source-git-url)" /workspace
               pushd /workspace
               git checkout "$(tasks.parse-metadata.results.source-git-revision)"
-
+          - name: use-trusted-artifact
+            image: quay.io/redhat-appstudio/build-trusted-artifacts:latest@sha256:9b180776a41d9a22a1c51539f1647c60defbbd55b44bbebdd4130e33512d8b0d
+            args:
+              - use
+              - $(tasks.prefetch-get-refs.results.prefetch-artifact)=/cachi2
+            when:
+              - input: "$(tasks.prefetch-get-refs.results.prefetch-artifact)"
+                operator: notin
+                values: [""]
+          - name: inject-cachi2-files
+            image: quay.io/konflux-ci/cachi2:0.20.0@sha256:80402886bbc0f6b4deba65cf5f66dfe9a2c01ae0b57bf3454e3ea58e1a395720
+            workingDir: /workspace
+            script: |
+              #!/bin/bash
+              source /workspace/.tekton/scripts/inject-cachi2-files.sh
+            when:
+              - input: "$(tasks.prefetch-get-refs.results.prefetch-artifact)"
+                operator: notin
+                values: [""]
           - name: test
             image: registry.redhat.io/openshift4/ose-cli:latest
             env:
@@ -159,19 +206,33 @@ spec:
 
               yum install -y python3.12 git
               python3.12 -m ensurepip
-              pip3 install -r requirements.txt -r requirements-dev.txt
-              pytest -s e2e-tests/test_integration.py --json-report --json-report-summary --json-report-file $(results.TEST_RESULTS.path)
-              cat $(results.TEST_RESULTS.path)
+
+              source /workspace/.tekton/scripts/setup-cachi2-env.sh
+
+              pip3 install -r requirements-dev.txt
+              pytest -s e2e-tests/test_integration.py --json-report --json-report-summary --json-report-file $(results.TEST_OUTPUT.path)
+              cat $(results.TEST_OUTPUT.path)
 
     - name: run-e2e-tests-nessus
       runAfter:
         - copy-nessus-secret
+        - prefetch-get-refs
       taskSpec:
+        stepTemplate:
+          volumeMounts:
+            - mountPath: /cachi2
+              name: cachi2
+            - mountPath: /workspace
+              name: workspace
         volumes:
           - name: credentials
             emptyDir: {}
+          - name: cachi2
+            emptyDir: {}
+          - name: workspace
+            emptyDir: {}
         results:
-          - name: TEST_RESULTS
+          - name: TEST_OUTPUT
             description: e2e test results
         steps:
 
@@ -184,7 +245,25 @@ spec:
               git clone "$(tasks.parse-metadata.results.source-git-url)" /workspace
               pushd /workspace
               git checkout "$(tasks.parse-metadata.results.source-git-revision)"
-
+          - name: use-trusted-artifact
+            image: quay.io/redhat-appstudio/build-trusted-artifacts:latest@sha256:9b180776a41d9a22a1c51539f1647c60defbbd55b44bbebdd4130e33512d8b0d
+            args:
+              - use
+              - $(tasks.prefetch-get-refs.results.prefetch-artifact)=/cachi2
+            when:
+              - input: "$(tasks.prefetch-get-refs.results.prefetch-artifact)"
+                operator: notin
+                values: [""]
+          - name: inject-cachi2-files
+            image: quay.io/konflux-ci/cachi2:0.20.0@sha256:80402886bbc0f6b4deba65cf5f66dfe9a2c01ae0b57bf3454e3ea58e1a395720
+            workingDir: /workspace
+            script: |
+              #!/bin/bash
+              source /workspace/.tekton/scripts/inject-cachi2-files.sh
+            when:
+              - input: "$(tasks.prefetch-get-refs.results.prefetch-artifact)"
+                operator: notin
+                values: [""]
           - name: test
             image: registry.redhat.io/openshift4/ose-cli:latest
             env:
@@ -211,11 +290,11 @@ spec:
               echo "$KUBECONFIG_VALUE" > "$KUBECONFIG"
               oc whoami
 
-              # XXX temp!
-              oc get secret sfowler-nessus-pull-secret
-
               yum install -y python3.12 git
               python3.12 -m ensurepip
-              pip3 install -r requirements.txt -r requirements-dev.txt
-              pytest -sv e2e-tests/test_nessus.py --json-report --json-report-summary --json-report-file $(results.TEST_RESULTS.path)
-              cat $(results.TEST_RESULTS.path)
+
+              source /workspace/.tekton/scripts/setup-cachi2-env.sh
+
+              pip3 install -r requirements-dev.txt
+              pytest -sv e2e-tests/test_nessus.py --json-report --json-report-summary --json-report-file $(results.TEST_OUTPUT.path)
+              cat $(results.TEST_OUTPUT.path)

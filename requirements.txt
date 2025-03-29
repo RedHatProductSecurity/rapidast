@@ -80,7 +80,7 @@ pygments==2.19.1
     # via rich
 python-dateutil==2.9.0.post0
     # via arrow
-python-dotenv==1.0.1
+python-dotenv==1.1.0
     # via rapidast (pyproject.toml)
 python-slugify==8.0.4
     # via py-nessus-pro

@@ -1,4 +1,5 @@
 import datetime
+import os
 from unittest.mock import MagicMock
 from unittest.mock import Mock
 from unittest.mock import mock_open
@@ -84,11 +85,19 @@ def test_GCS_export_scan(MockRandom, MockDateTime, MockClient):
 
     gcs = GoogleCloudStorage("bucket_name", "app_name", "directory_name")
 
-    import_data = {"scan_type": "ABC", "foo": "bar"}
-
     # hack: use the pytest file itself as a scan
-    gcs.export_scan(import_data, __file__)
+    gcs.export_scan(os.path.dirname(__file__))
 
     mock_bucket.blob.assert_called_once_with("directory_name/2024-01-31T00:00:00-RapiDAST-app_name-abcdef.tgz")
 
     mock_open_method.assert_called_once_with(mode="wb")
+
+
+@patch("exports.google_cloud_storage.storage.Client")
+def test_GCS_init_unset_directory(MockClient):
+    mock_client = MagicMock()
+    MockClient.return_value = mock_client
+
+    with pytest.raises(ValueError) as e:
+        gcs = GoogleCloudStorage("bucket_name", "app_name")
+    assert str(e.value) == "Directory must be specified."

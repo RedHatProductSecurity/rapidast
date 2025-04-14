@@ -256,21 +256,17 @@ This simply stores the data as a compressed tarball in a Google Cloud Storage bu
 
 ```yaml
 config:
-  # Defect dojo configuration
   googleCloudStorage:
     keyFile: "/path/to/GCS/key"                           # optional: path to the GCS key file (alternatively: use GOOGLE_APPLICATION_CREDENTIALS)
-    bucketName: "<name-of-GCS-bucket-to-export-to>"       # Mandatory
-    directory: "<override-of-default-directory>"          # Optional directory where the credentials have write access, defaults to `RapiDAST-<product>`
+    bucketName: "<name-of-GCS-bucket-to-export-to>"       # Required
+    directory: "<name-of-directory-under-bucket>"         # Required, GCS directory(folder) name where write access is granted
 ```
 
-Once this is set, scan results will be exported to the bucket automatically. The tarball file will include:
-
- 1. metadata.json - the file that contains scan_type, uuid and import_data(could be changed later. Currently this comes from the previous DefectDojo integration feature)
- 2. scans - the directory that contains scan results
+Once this is set, scan results will be exported to the bucket automatically. The tarball file will include the results in the same structure as they are stored locally.
 
 #### Exporting to DefectDojo
 
-RapiDAST supports integration with OWASP DefectDojo which is an open source vulnerability management tool.
+RapiDAST supports integration with OWASP DefectDojo which is an open source vulnerability management tool. Note that currently, only ZAP scan results and generic plugin results(via SARIF format) are supported.
 
 ##### Preamble: creating DefectDojo user
 

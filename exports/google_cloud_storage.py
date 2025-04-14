@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import datetime
-import json
 import logging
 import os
 import random
@@ -8,7 +7,6 @@ import string
 import tarfile
 import uuid
 from io import BytesIO
-from io import StringIO
 
 from google.cloud import storage
 
@@ -23,8 +21,15 @@ class GoogleCloudStorage:
             client = storage.Client.from_service_account_json(keyfile)
         else:
             client = storage.Client()
-        self.bucket = client.get_bucket(bucket_name)
-        self.directory = directory or f"RapiDAST-{app_name}"
+        try:
+            self.bucket = client.get_bucket(bucket_name)
+        except Exception as e:
+            logging.error(f"Failed to get the bucket: {e}")
+            raise
+
+        if directory is None:
+            raise ValueError("Directory must be specified.")
+        self.directory = directory
         self.app_name = app_name
 
     def create_metadata(self, data):
@@ -40,40 +45,27 @@ class GoogleCloudStorage:
 
         return metadata
 
-    def export_scan(self, data, filename):
+    def export_scan(self, result_dir_name):
         """
-        Send the scan to GCS
+        Send the scan results to GCS.
+        The results are sent as a tar file containing the directory and its contents.
+        The results have the same structure as they are stored locallocay.
 
         Params:
-        data: a dictionary of key/values corresponding to Defectdojo's `import-scan` parameters
-        filename: path to the file containing scan
+        result_dir_name: path to the root directory that contains scan results
 
         """
-        if not data or not filename:
+        if not result_dir_name:
             # missing data means nothing to do
-            logging.debug("Insufficient data")
+            logging.error("GoogleCloudStorage: result_dir_name is not specified")
             return 1
 
-        metadata = self.create_metadata(data)
+        logging.info(f"GoogleCloudStorage: sending the contents of the directory: {result_dir_name}")
 
-        logging.info(f"GoogleCloudStorage: sending {filename}. UUID: {metadata['uuid']}")
-
-        # export data as a metadata.json file
-        json_stream = StringIO()
-        json.dump(metadata, json_stream)
-        json_stream = BytesIO(json_stream.getvalue().encode("utf-8"))
-        json_stream.seek(0)
-
-        # create a tar containing: "scans/<filename>" and metadata.json
+        # create a tar containing the directory and its contents
         tar_stream = BytesIO()
         with tarfile.open(fileobj=tar_stream, mode="w:gz") as tar:
-            # add the metadata
-            info = tarfile.TarInfo(name="metadata.json")
-            info.size = len(json_stream.getvalue())
-            tar.addfile(tarinfo=info, fileobj=json_stream)
-
-            # add the scan
-            tar.add(name=filename, arcname=f"scans/{os.path.basename(filename)}")
+            tar.add(name=result_dir_name, arcname=f"{os.path.basename(result_dir_name)}")
         tar_stream.seek(0)
 
         # generate the blob filename
@@ -88,3 +80,5 @@ class GoogleCloudStorage:
         blob = self.bucket.blob(blob_name)
         with blob.open(mode="wb") as dest:
             dest.write(tar_stream.getbuffer())
+
+        return 0

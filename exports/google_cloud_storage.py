@@ -27,9 +27,7 @@ class GoogleCloudStorage:
             logging.error(f"Failed to get the bucket: {e}")
             raise
 
-        if directory is None:
-            raise ValueError("Directory must be specified.")
-        self.directory = directory
+        self.directory = directory or f"RapiDAST-{app_name}"
         self.app_name = app_name
 
     def create_metadata(self, data):
@@ -48,8 +46,8 @@ class GoogleCloudStorage:
     def export_scan(self, result_dir_name):
         """
         Send the scan results to GCS.
-        The results are sent as a tar file containing the directory and its contents.
-        The results have the same structure as they are stored locallocay.
+        The results are sent as a tar file containing the results directory and its contents.
+        The results have the same structure as they are stored locally.
 
         Params:
         result_dir_name: path to the root directory that contains scan results

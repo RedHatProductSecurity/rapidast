@@ -50,8 +50,7 @@
                     },
                     "comment": "Credentials are optional, as the client defaults to those inferred from the environment",
                     "required": [
-                        "bucketName",
-                        "directory"
+                        "bucketName"
                     ]
                 },
                 "defectDojo": {

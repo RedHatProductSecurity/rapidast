@@ -258,8 +258,8 @@ This simply stores the data as a compressed tarball in a Google Cloud Storage bu
 config:
   googleCloudStorage:
     keyFile: "/path/to/GCS/key"                           # optional: path to the GCS key file (alternatively: use GOOGLE_APPLICATION_CREDENTIALS)
-    bucketName: "<name-of-GCS-bucket-to-export-to>"       # Required
-    directory: "<name-of-directory-under-bucket>"         # Required, GCS directory(folder) name where write access is granted
+    bucketName: "<name-of-GCS-bucket-to-export-to>"       # required
+    directory: "<name-of-directory-under-bucket>"         # optional, directory where write access is granted, if not speficied, it defaults to `RapiDAST-<app>`
 ```
 
 Once this is set, scan results will be exported to the bucket automatically. The tarball file will include the results in the same structure as they are stored locally.

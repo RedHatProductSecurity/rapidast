@@ -55,8 +55,7 @@ class GoogleCloudStorage:
         """
         if not result_dir_name:
             # missing data means nothing to do
-            logging.error("GoogleCloudStorage: result_dir_name is not specified")
-            return 1
+            raise RuntimeError("GoogleCloudStorage: result_dir_name is not specified")
 
         logging.info(f"GoogleCloudStorage: sending the contents of the directory: {result_dir_name}")
 
@@ -78,5 +77,3 @@ class GoogleCloudStorage:
         blob = self.bucket.blob(blob_name)
         with blob.open(mode="wb") as dest:
             dest.write(tar_stream.getbuffer())
-
-        return 0

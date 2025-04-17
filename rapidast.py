@@ -90,7 +90,7 @@ def load_config(config_file_location: str) -> Dict[str, Any]:
 
 # pylint: disable=R0911
 # too many return statements
-def run_scanner(name, config, args, scan_exporter):
+def run_scanner(name, config, args, dedo_exporter=None):
     """given the config `config`, runs scanner `name`.
     Returns:
         0 for success
@@ -160,11 +160,14 @@ def run_scanner(name, config, args, scan_exporter):
     if not args.no_cleanup:
         scanner.cleanup()
 
-    # Part 6: export to defect dojo, if the scanner is compatible
-    if scan_exporter and hasattr(scanner, "data_for_defect_dojo"):
+    # Optional: Export the scanner result to DefectDojo if set
+    # Note: Unlike exporting to GCS, this process needs to be run for each scanner,
+    #   because DefectDojo can only process one type of scanner result at a time
+
+    if dedo_exporter and hasattr(scanner, "data_for_defect_dojo"):
         logging.info("Exporting results to the Defect Dojo service as configured")
 
-        if scan_exporter.export_scan(*scanner.data_for_defect_dojo()) == 1:
+        if dedo_exporter.export_scan(*scanner.data_for_defect_dojo()) == 1:
             logging.error("Exporting results to DefectDojo failed")
             return 1
 
@@ -323,6 +326,9 @@ def validate_config_schema(config_file) -> bool:
     return False
 
 
+# pylint: disable=R0912, R0915
+# R0912(too-many-branches)
+# R0915(too many statements)
 def run():
     parser = argparse.ArgumentParser(
         description="Runs various DAST scanners against a defined target, as configured by a configuration file."
@@ -384,17 +390,10 @@ def run():
     # Do early: load the environment file if one is there
     load_environment(config)
 
-    # Prepare an export to Defect Dojo if one is configured.
-    scan_exporter = None
-    if config.get("config.googleCloudStorage.bucketName"):
-        scan_exporter = GoogleCloudStorage(
-            bucket_name=config.get("config.googleCloudStorage.bucketName"),
-            app_name=config.get_official_app_name(),
-            directory=config.get("config.googleCloudStorage.directory", None),
-            keyfile=config.get("config.googleCloudStorage.keyFile", None),
-        )
-    elif config.get("config.defectDojo.url"):
-        scan_exporter = DefectDojo(
+    # Check DefectDojo export configuration
+    dedo_exporter = None
+    if config.get("config.defectDojo.url"):
+        dedo_exporter = DefectDojo(
             config.get("config.defectDojo.url"),
             {
                 "username": config.get("config.defectDojo.authorization.username", default=""),
@@ -404,17 +403,36 @@ def run():
             config.get("config.defectDojo.ssl", default=True),
         )
 
+    # Check GCS export configuration
+    gcs_exporter = None
+    if config.get("config.googleCloudStorage.bucketName"):
+        gcs_exporter = GoogleCloudStorage(
+            bucket_name=config.get("config.googleCloudStorage.bucketName"),
+            app_name=config.get_official_app_name(),
+            directory=config.get("config.googleCloudStorage.directory", None),
+            keyfile=config.get("config.googleCloudStorage.keyFile", None),
+        )
+
     # Run all scanners
     scan_error_count = 0
     for name in config.get("scanners"):
         logging.info(f"Next scanner: '{name}'")
 
-        ret = run_scanner(name, config, args, scan_exporter)
+        ret = run_scanner(name, config, args, dedo_exporter)
         if ret == 1:
             logging.info(f"scanner: '{name}' failed")
             scan_error_count = scan_error_count + 1
         else:
             logging.info(f"scanner: '{name}' completed successfully")
+
+    # Export all the scan results to GCS
+    # Note: This is done after all scanners have run,
+    #   unlike the DefectDojo export which needs to be done at the individual scanner level.
+    try:
+        gcs_exporter.export_scan(full_result_dir_path)
+        logging.info("Export to Google Cloud Storage completed successfully")
+    except Exception as e:  # pylint: disable=W0718
+        logging.error("Export to Google Cloud Storage failed: %s", e)
 
     if scan_error_count > 0:
         logging.warning(f"Number of failed scanners: {scan_error_count}")

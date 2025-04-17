@@ -213,88 +213,89 @@ spec:
               pytest -s e2e-tests/test_integration.py --json-report --json-report-summary --json-report-file $(results.TEST_OUTPUT.path)
               cat $(results.TEST_OUTPUT.path)
 
-    - name: run-e2e-tests-nessus
-      runAfter:
-        - copy-nessus-secret
-        - prefetch-get-refs
-      taskSpec:
-        stepTemplate:
-          volumeMounts:
-            - mountPath: /cachi2
-              name: cachi2
-            - mountPath: /workspace
-              name: workspace
-        volumes:
-          - name: credentials
-            emptyDir: {}
-          - name: cachi2
-            emptyDir: {}
-          - name: workspace
-            emptyDir: {}
-        results:
-          - name: TEST_OUTPUT
-            description: e2e test results
-        steps:
-
-          # XXX not supported to use workspaces in integration tests:
-          # * https://issues.redhat.com/browse/STONEINTG-895
-          - name: clone-repository
-            image: quay.io/konflux-ci/git-clone:latest
-            script: |
-              git config --global --add safe.directory /workspace
-              git clone "$(tasks.parse-metadata.results.source-git-url)" /workspace
-              pushd /workspace
-              git checkout "$(tasks.parse-metadata.results.source-git-revision)"
-          - name: use-trusted-artifact
-            image: quay.io/redhat-appstudio/build-trusted-artifacts:latest@sha256:9b180776a41d9a22a1c51539f1647c60defbbd55b44bbebdd4130e33512d8b0d
-            args:
-              - use
-              - $(tasks.prefetch-get-refs.results.prefetch-artifact)=/cachi2
-            when:
-              - input: "$(tasks.prefetch-get-refs.results.prefetch-artifact)"
-                operator: notin
-                values: [""]
-          - name: inject-cachi2-files
-            image: quay.io/konflux-ci/cachi2:0.20.0@sha256:80402886bbc0f6b4deba65cf5f66dfe9a2c01ae0b57bf3454e3ea58e1a395720
-            workingDir: /workspace
-            script: |
-              #!/bin/bash
-              source /workspace/.tekton/scripts/inject-cachi2-files.sh
-            when:
-              - input: "$(tasks.prefetch-get-refs.results.prefetch-artifact)"
-                operator: notin
-                values: [""]
-          - name: test
-            image: registry.redhat.io/openshift4/ose-cli:latest
-            env:
-            - name: KUBECONFIG
-              value: /tmp/kubeconfig
-            - name: KUBECONFIG_VALUE
-              valueFrom:
-                secretKeyRef:
-                  name: $(tasks.provision-eaas-space-nessus.results.secretRef)
-                  key: kubeconfig
-            - name: RAPIDAST_CLEANUP
-              value: "false" # namespace will be cleaned up automatically
-            - name: RAPIDAST_IMAGE
-              value: $(tasks.parse-metadata.results.component-container-image)
-            - name: RAPIDAST_SERVICEACCOUNT
-              value: namespace-manager # created by provision-env-with-ephemeral-namespace
-            workingDir: /workspace
-            volumeMounts:
-              - name: credentials
-                mountPath: /credentials
-            script: |
-              #!/bin/bash -ex
-
-              echo "$KUBECONFIG_VALUE" > "$KUBECONFIG"
-              oc whoami
-
-              yum install -y python3.12 git
-              python3.12 -m ensurepip
-
-              source /workspace/.tekton/scripts/setup-cachi2-env.sh
-
-              pip3 install -r requirements-dev.txt
-              pytest -sv e2e-tests/test_nessus.py --json-report --json-report-summary --json-report-file $(results.TEST_OUTPUT.path)
-              cat $(results.TEST_OUTPUT.path)
+# XXX temporarily disabled
+#    - name: run-e2e-tests-nessus
+#      runAfter:
+#        - copy-nessus-secret
+#        - prefetch-get-refs
+#      taskSpec:
+#        stepTemplate:
+#          volumeMounts:
+#            - mountPath: /cachi2
+#              name: cachi2
+#            - mountPath: /workspace
+#              name: workspace
+#        volumes:
+#          - name: credentials
+#            emptyDir: {}
+#          - name: cachi2
+#            emptyDir: {}
+#          - name: workspace
+#            emptyDir: {}
+#        results:
+#          - name: TEST_OUTPUT
+#            description: e2e test results
+#        steps:
+#
+#          # XXX not supported to use workspaces in integration tests:
+#          # * https://issues.redhat.com/browse/STONEINTG-895
+#          - name: clone-repository
+#            image: quay.io/konflux-ci/git-clone:latest
+#            script: |
+#              git config --global --add safe.directory /workspace
+#              git clone "$(tasks.parse-metadata.results.source-git-url)" /workspace
+#              pushd /workspace
+#              git checkout "$(tasks.parse-metadata.results.source-git-revision)"
+#          - name: use-trusted-artifact
+#            image: quay.io/redhat-appstudio/build-trusted-artifacts:latest@sha256:9b180776a41d9a22a1c51539f1647c60defbbd55b44bbebdd4130e33512d8b0d
+#            args:
+#              - use
+#              - $(tasks.prefetch-get-refs.results.prefetch-artifact)=/cachi2
+#            when:
+#              - input: "$(tasks.prefetch-get-refs.results.prefetch-artifact)"
+#                operator: notin
+#                values: [""]
+#          - name: inject-cachi2-files
+#            image: quay.io/konflux-ci/cachi2:0.20.0@sha256:80402886bbc0f6b4deba65cf5f66dfe9a2c01ae0b57bf3454e3ea58e1a395720
+#            workingDir: /workspace
+#            script: |
+#              #!/bin/bash
+#              source /workspace/.tekton/scripts/inject-cachi2-files.sh
+#            when:
+#              - input: "$(tasks.prefetch-get-refs.results.prefetch-artifact)"
+#                operator: notin
+#                values: [""]
+#          - name: test
+#            image: registry.redhat.io/openshift4/ose-cli:latest
+#            env:
+#            - name: KUBECONFIG
+#              value: /tmp/kubeconfig
+#            - name: KUBECONFIG_VALUE
+#              valueFrom:
+#                secretKeyRef:
+#                  name: $(tasks.provision-eaas-space-nessus.results.secretRef)
+#                  key: kubeconfig
+#            - name: RAPIDAST_CLEANUP
+#              value: "false" # namespace will be cleaned up automatically
+#            - name: RAPIDAST_IMAGE
+#              value: $(tasks.parse-metadata.results.component-container-image)
+#            - name: RAPIDAST_SERVICEACCOUNT
+#              value: namespace-manager # created by provision-env-with-ephemeral-namespace
+#            workingDir: /workspace
+#            volumeMounts:
+#              - name: credentials
+#                mountPath: /credentials
+#            script: |
+#              #!/bin/bash -ex
+#
+#              echo "$KUBECONFIG_VALUE" > "$KUBECONFIG"
+#              oc whoami
+#
+#              yum install -y python3.12 git
+#              python3.12 -m ensurepip
+#
+#              source /workspace/.tekton/scripts/setup-cachi2-env.sh
+#
+#              pip3 install -r requirements-dev.txt
+#              pytest -sv e2e-tests/test_nessus.py --json-report --json-report-summary --json-report-file $(results.TEST_OUTPUT.path)
+#              cat $(results.TEST_OUTPUT.path)

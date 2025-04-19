@@ -47,7 +47,7 @@ mypy-extensions==1.0.0
     # via mypy
 mypy==1.14.0
     # via charset-normalizer
-packaging==24.2
+packaging==25.0
     # via
     #   hatchling
     #   setuptools-scm

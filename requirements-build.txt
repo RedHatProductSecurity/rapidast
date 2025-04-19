@@ -4,7 +4,7 @@
 #
 #    pybuild-deps compile --output-file=requirements-build.txt
 #
-calver==2022.6.26
+calver==2025.4.17
     # via trove-classifiers
 cython==3.0.12
     # via pyyaml

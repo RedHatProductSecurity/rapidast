@@ -757,7 +757,7 @@ class Zap(RapidastScanner):
             except KeyError as exc:
                 logging.warning(f"Reports: {exc.args[0]} is not a valid format. Ignoring")
         if not appended:
-            logging.warning("No valid report formats found. Adding default JSON and SARIF reports.")
+            logging.warning("No valid report formats found. Adding default JSON and SARIF reports")
             self.automation_config["jobs"].append(self._construct_report_af(reports["json"]))
             self.automation_config["jobs"].append(self._construct_report_af(reports["sarif"]))
 

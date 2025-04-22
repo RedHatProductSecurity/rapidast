@@ -462,13 +462,10 @@ def test_setup_report_format(test_config, result_format, expected_template):
     test_zap.setup()
 
     report_templates = [
-        job["parameters"]["template"]
-        for job in test_zap.automation_config["jobs"]
-        if job["type"] == "report"
+        job["parameters"]["template"] for job in test_zap.automation_config["jobs"] if job["type"] == "report"
     ]
 
     assert expected_template in report_templates, f"{expected_template} not found in {report_templates}"
-
 
 
 def test_setup_report_string_format(test_config):
@@ -482,7 +479,7 @@ def test_setup_report_string_format(test_config):
         if item["type"] == "report":
             assert item["parameters"]["template"] in {
                 "traditional-xml-plus",
-                "sarif-json", # Always enabled
+                "sarif-json",  # Always enabled
             }
             count += 1
 
@@ -516,7 +513,7 @@ def test_setup_report_several_formats(test_config):
             assert item["parameters"]["template"] in {
                 "traditional-json-plus",
                 "traditional-xml-plus",
-                "sarif-json" # Always enabled
+                "sarif-json",  # Always enabled
             }
             count += 1
 

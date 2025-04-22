@@ -731,12 +731,17 @@ class Zap(RapidastScanner):
             "xml": ReportFormat("traditional-xml-plus", "zap-report.xml"),
         }
 
-        formats = self.my_conf("report.format", {"json"})
+        formats = self.my_conf("report.format", {"json", "sarif"})
         # handle case where user provides a string
         if isinstance(formats, str):
             formats = [formats]
         # remove duplicates
         formats = set(formats)
+
+        # Ensure SARIF is always enabled, regardless of the user's configuration settings
+        if "sarif" not in formats:
+            logging.debug("SARIF report format enforced by default")
+            formats.add("sarif")
 
         # DefectDojo requires XML report type
         if self._should_export_to_defect_dojo():
@@ -752,8 +757,9 @@ class Zap(RapidastScanner):
             except KeyError as exc:
                 logging.warning(f"Reports: {exc.args[0]} is not a valid format. Ignoring")
         if not appended:
-            logging.warning("Creating a default report as no valid were found")
+            logging.warning("No valid report formats found. Adding default JSON and SARIF reports.")
             self.automation_config["jobs"].append(self._construct_report_af(reports["json"]))
+            self.automation_config["jobs"].append(self._construct_report_af(reports["sarif"]))
 
     def _setup_summary(self):
         """Adds a outputSummary job"""

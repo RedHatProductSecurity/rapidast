@@ -735,6 +735,9 @@ class Zap(RapidastScanner):
         # handle case where user provides a string
         if isinstance(formats, str):
             formats = [formats]
+
+        # Ensure SARIF is always enabled, regardless of the user's configuration settings
+        formats.append("sarif")
         # remove duplicates
         formats = set(formats)
 

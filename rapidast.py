@@ -428,11 +428,14 @@ def run():
     # Export all the scan results to GCS
     # Note: This is done after all scanners have run,
     #   unlike the DefectDojo export which needs to be done at the individual scanner level.
-    try:
-        gcs_exporter.export_scan(full_result_dir_path)
-        logging.info("Export to Google Cloud Storage completed successfully")
-    except Exception as e:  # pylint: disable=W0718
-        logging.error("Export to Google Cloud Storage failed: %s", e)
+    if gcs_exporter:
+        try:
+            gcs_exporter.export_scan(full_result_dir_path)
+            logging.info("Export to Google Cloud Storage completed successfully")
+        except Exception as e:  # pylint: disable=W0718
+            logging.error("Export to Google Cloud Storage failed: %s", e)
+    else:
+        logging.debug("GCS exporter not configured; skipping export")
 
     if scan_error_count > 0:
         logging.warning(f"Number of failed scanners: {scan_error_count}")

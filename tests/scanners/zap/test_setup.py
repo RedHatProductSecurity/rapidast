@@ -458,17 +458,14 @@ def test_setup_graphql(test_config):
 def test_setup_report_format(test_config, result_format, expected_template):
     test_config.set("scanners.zap.report.format", [result_format])
 
-    print(test_config)
-
     test_zap = ZapNone(config=test_config)
     test_zap.setup()
 
-    for item in test_zap.automation_config["jobs"]:
-        if item["type"] == "report":
-            assert item["parameters"]["template"] == expected_template
-            break
-    else:
-        assert False
+    report_templates = [
+        job["parameters"]["template"] for job in test_zap.automation_config["jobs"] if job["type"] == "report"
+    ]
+
+    assert expected_template in report_templates, f"{expected_template} not found in {report_templates}"
 
 
 def test_setup_report_string_format(test_config):
@@ -480,23 +477,29 @@ def test_setup_report_string_format(test_config):
     count = 0
     for item in test_zap.automation_config["jobs"]:
         if item["type"] == "report":
-            assert item["parameters"]["template"] == "traditional-xml-plus"
+            assert item["parameters"]["template"] in {
+                "traditional-xml-plus",
+                "sarif-json",  # Always enabled
+            }
             count += 1
 
-    assert count == 1
+    assert count == 2
 
 
-def test_setup_report_default_format(test_config):
+def test_setup_report_default_formats(test_config):
     test_zap = ZapNone(config=test_config)
     test_zap.setup()
 
     count = 0
     for item in test_zap.automation_config["jobs"]:
         if item["type"] == "report":
-            assert item["parameters"]["template"] == "traditional-json-plus"
+            assert item["parameters"]["template"] in {
+                "traditional-json-plus",
+                "sarif-json",
+            }
             count += 1
 
-    assert count == 1
+    assert count == 2
 
 
 def test_setup_report_several_formats(test_config):
@@ -510,10 +513,11 @@ def test_setup_report_several_formats(test_config):
             assert item["parameters"]["template"] in {
                 "traditional-json-plus",
                 "traditional-xml-plus",
+                "sarif-json",  # Always enabled
             }
             count += 1
 
-    assert count == 2
+    assert count == 3
 
 
 # Misc tests

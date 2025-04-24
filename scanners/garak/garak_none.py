@@ -236,8 +236,10 @@ class GarakHitLogSarifConverter:
         - probe: The test probe used (e.g., "ansiescape")
         - detector: The logic that flagged the output (e.g., "AnsiEscaped")
         - run_id: A unique identifier for the scan run
-        - attempt_id/seq: ID and sequence for a specific attempt to test a prompt (https://reference.garak.ai/en/latest/attempt.html)
-        - generations_per_prompt: The number of generations per prompt, basically, how many times it tried the same prompt
+        - attempt_id/seq: ID and sequence for a specific attempt to test a prompt
+            (https://reference.garak.ai/en/latest/attempt.html)
+        - generations_per_prompt: The number of generations per prompt, basically,
+            how many times it tried the same prompt
         ---
         SARIF Mappings:
         - `probe` + `detector` → `ruleId`: This forms a composite unique rule identifier for each detection type.

@@ -19,7 +19,7 @@ cachetools==5.5.1
     # via
     #   -r ./requirements.txt
     #   google-auth
-certifi==2025.1.31
+certifi==2025.4.26
     # via
     #   -r ./requirements.txt
     #   kubernetes

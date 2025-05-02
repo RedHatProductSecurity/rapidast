@@ -592,6 +592,18 @@ The `results` entry works as follow:
 - `command` can be either a list of string, or a single string which will be split using `shlex.split()` - when using `*.container.type: podman`, the results (if different from stdout) must be present on the host after podman has run, which likely means you will need to use the `container.parameters.volumes` entry to share the results between the container and the host.
 - See `config/config-template-generic-scan.yaml` for additional options.
 
+### SARIF report generation
+
+RapiDAST supports generating SARIF (Static Analysis Results Interchange Format) reports to provide a standardized format for scan results. The following scanners support SARIF report generation:
+
+- **Zap**: Built-in support for SARIF report generation. SARIF reports are generated in addition to the report format configured by the user
+- **Nessus**: Supports SARIF reports via a custom converter (CSV to SARIF)
+- **Garak**: Supports SARIF reports via a custom converter (Hitlog to SARIF)
+
+These scanners generate SARIF results **in addition** to their original or configured report formats, allowing for a unified approach to result analysis.
+
+Please note that this SARIF support is **not** applicable to the **Generic scanners** at this time. Specifically, for Trivy or OObkube, SARIF report generation will be implemented once these scanners are fully integrated with RapiDAST.
+
 ## Troubleshooting
 
 ### Hitting docker.io rate limits

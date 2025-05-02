@@ -422,14 +422,14 @@ def run():
     for name in config.get("scanners"):
         start_time = time.time()
         start_time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(start_time))
-        logging.info(f"Scanner '{name}' started at: {start_time}")
+        logging.info(f"Scanner '{name}' started at: {start_time_str}")
 
         ret = run_scanner(name, config, args, dedo_exporter)
 
         end_time = time.time()
         end_time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(end_time))
         duration = end_time - start_time
-        logging.info(f"Scanner '{name}' finished at: {end_time}")
+        logging.info(f"Scanner '{name}' finished at: {end_time_str}")
         logging.info(f"Scanner '{name}' took {duration:.2f} seconds to run")
 
         scanner_results[name] = {

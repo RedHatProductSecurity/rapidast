@@ -25,10 +25,10 @@
                "guid": "3716e880-7ee2-34d2-9cf1-0f88c0dc613a",
                "informationUri": "https:\/\/www.zaproxy.org\/",
                "name": "ZAP",
-               "rules": [ 
+               "rules": [
                ],
                "semanticVersion": "2.15.0",
-               "supportedTaxonomies": [ 
+               "supportedTaxonomies": [
                   {
                      "guid": "b000a760-3e52-3565-a35c-f61369da53b7",
                      "name": "CWE"

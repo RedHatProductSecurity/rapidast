@@ -433,10 +433,8 @@ def run():
         logging.info(f"Scanner '{name}' took {duration:.2f} seconds to run")
 
         scanner_results[name] = {
-            'start_time': start_time,
-            'start_time_str': start_time_str,
-            'end_time': end_time,
-            'end_time_str': end_time_str,
+            'start_time': start_time_str,
+            'end_time': end_time_str,
             'duration': duration,
             'return_code': ret
         }
@@ -446,6 +444,13 @@ def run():
             scan_error_count = scan_error_count + 1
         else:
             logging.info(f"scanner: '{name}' completed successfully")
+
+    sarif_properties = {
+        "config_version": config.get("config.configVersion"),
+        "scanner_results": scanner_results
+    }
+
+    merge_sarif_files(directory=full_result_dir_path, properties=sarif_properties, output_filename=f"{full_result_dir_path}/rapidast-scan-results.sarif" )
 
     # Export all the scan results to GCS
     # Note: This is done after all scanners have run,
@@ -465,6 +470,51 @@ def run():
     else:
         sys.exit(0)
 
+def merge_sarif_files(directory:str, properties:dict, output_filename:str):
+    """
+    Searches for .sarif and .sarif.json files in a directory, merges them,
+    and adds "properties" as properties to the merged SARIF log
+
+    Args:
+        directory: The directory to search for SARIF files
+        properties: A dictionary containing arbitrary properties for each scanner
+        output_filename: The name of the output merged SARIF file
+    """
+    merged_runs = []
+    for filename in os.listdir(directory):
+        if filename.endswith(".sarif") or filename.endswith(".sarif.json"):
+            filepath = os.path.join(directory, filename)
+            logging.info(f"Found SARIF file: {filepath}")
+            try:
+                with open(filepath, 'r') as f:
+                    data = json.load(f)
+                    logging.warning(data)
+                    if 'runs' in data and isinstance(data['runs'], list):
+                        merged_runs.extend(data['runs'])
+                    elif isinstance(data, dict) and 'version' in data and 'runs' in data and isinstance(data['runs'], list):
+                        merged_runs.extend(data['runs'])
+                    else:
+                        logging.warning(f"SARIF file '{filepath}' does not appear to have a top-level 'runs' array.")
+
+            except Exception as e:
+                logging.error(f"Error reading SARIF file '{filepath}': {e}")
+
+    if not merged_runs:
+        logging.warning(f"No SARIF files found in directory: {directory}")
+
+    merged_sarif = {
+        "version": "2.1.0",
+        "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+        "runs": merged_runs,
+        "properties": properties
+    }
+
+    try:
+        with open(output_filename, 'w') as outfile:
+            json.dump(merged_sarif, outfile, indent=2)
+        logging.info(f"Successfully merged SARIF files into: {output_filename}")
+    except Exception as e:
+        logging.error(f"Error writing merged SARIF file: {e}")
 
 if __name__ == "__main__":
     run()

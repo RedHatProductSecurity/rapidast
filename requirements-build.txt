@@ -20,7 +20,7 @@ flit-core==3.11.0
     #   pathspec
     #   typing-extensions
     #   wheel
-hatch-fancy-pypi-readme==24.1.0
+hatch-fancy-pypi-readme==25.1.0
     # via
     #   attrs
     #   jsonschema

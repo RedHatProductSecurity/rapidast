@@ -249,7 +249,7 @@ langsmith==0.3.12
     # via
     #   langchain
     #   langchain-core
-latex2mathml==3.77.0
+latex2mathml==3.78.0
     # via markdown2
 litellm==1.63.2
     # via garak

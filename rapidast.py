@@ -490,15 +490,7 @@ def merge_sarif_files(directory: str, properties: dict, output_filename: str):
             try:
                 with open(filepath, "r", encoding="utf8") as f:
                     data = json.load(f)
-                    logging.warning(data)
                     if "runs" in data and isinstance(data["runs"], list):
-                        merged_runs.extend(data["runs"])
-                    elif (
-                        isinstance(data, dict)
-                        and "version" in data
-                        and "runs" in data
-                        and isinstance(data["runs"], list)
-                    ):
                         merged_runs.extend(data["runs"])
                     else:
                         logging.warning(f"SARIF file '{filepath}' does not appear to have a top-level 'runs' array.")

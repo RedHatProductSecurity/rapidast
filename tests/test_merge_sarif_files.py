@@ -58,18 +58,22 @@ class TestCollectSarifFiles(unittest.TestCase):
     def test_collect_sarif_files(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             os.makedirs(os.path.join(tmpdir, "subdir"), exist_ok=True)
+            os.makedirs(os.path.join(tmpdir, "subdir1", "subdir2"), exist_ok=True)
             with open(os.path.join(tmpdir, "file1.sarif"), "w") as f:
                 f.write("{}")
             with open(os.path.join(tmpdir, "subdir", "file2.sarif.json"), "w") as f:
                 f.write("{}")
             with open(os.path.join(tmpdir, "file3.txt"), "w") as f:
                 f.write("not a sarif file")
+            with open(os.path.join(tmpdir, "subdir1", "subdir2", "file4.sarif"), "w") as f:
+                f.write("{}")
 
             sarif_files = collect_sarif_files(tmpdir)
 
             expected_files = [
                 os.path.join(tmpdir, "file1.sarif"),
                 os.path.join(tmpdir, "subdir", "file2.sarif.json"),
+                os.path.join(tmpdir, "subdir1", "subdir2", "file4.sarif"),
             ]
             self.assertEqual(sorted(sarif_files), sorted(expected_files))
 

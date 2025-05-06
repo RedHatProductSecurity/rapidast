@@ -1,10 +1,10 @@
 import json
-import logging
 import os
+import tempfile
 import unittest
-from unittest.mock import mock_open
 from unittest.mock import patch
 
+from rapidast import collect_sarif_files
 from rapidast import merge_sarif_files
 
 
@@ -19,30 +19,19 @@ class TestMergeSarifFiles(unittest.TestCase):
     def tearDown(self):
         if os.path.exists(self.output_file):
             os.remove(self.output_file)
-        # We might not need to remove the fixtures directory
 
     def _load_fixture_json(self, filename):
         filepath = os.path.join(self.fixtures_dir, filename)
-        with open(filepath, "r") as f:
-            logging.warning(filepath)
+        with open(filepath, "r", encoding="utf8") as f:
             return json.load(f)
 
-    @patch("os.listdir")
+    @patch("rapidast.collect_sarif_files")
     @patch("json.dump")
-    @patch("logging.warning")
-    def test_no_sarif_files(self, mock_log_warning, mock_dump, mock_listdir):
-        mock_listdir.return_value = []
-        merge_sarif_files(self.fixtures_dir, self.scanner_results, self.output_file)
-        args, _ = mock_dump.call_args
-        self.assertEqual(args[0]["properties"], self.scanner_results)
-        self.assertEqual(len(args[0]["runs"]), 0)
-        self.assertEqual(args[0]["version"], "2.1.0")
-        mock_log_warning.assert_called_once()
-
-    @patch("os.listdir")
-    @patch("json.dump")
-    def test_merge_sarif_files(self, mock_dump, mock_listdir):
-        mock_listdir.return_value = ["zap-report.sarif.json", "garak-report.sarif"]
+    def test_merge_sarif_files(self, mock_dump, mock_collect_sarif_files):
+        mock_collect_sarif_files.return_value = [
+            os.path.join(self.fixtures_dir, "zap-report.sarif.json"),
+            os.path.join(self.fixtures_dir, "garak-report.sarif"),
+        ]
         zap_log = self._load_fixture_json("zap-report.sarif.json")
         garak_log = self._load_fixture_json("garak-report.sarif")
         merge_sarif_files(self.fixtures_dir, self.scanner_results, self.output_file)
@@ -52,14 +41,42 @@ class TestMergeSarifFiles(unittest.TestCase):
         self.assertEqual(args[0]["runs"][1], garak_log["runs"][0])
         self.assertEqual(args[0]["properties"], self.scanner_results)
 
-    @patch("os.listdir")
+    @patch("rapidast.collect_sarif_files")
     @patch("json.dump")
     @patch("logging.error")
-    def test_error_reading_sarif_file(self, mock_log_error, mock_dump, mock_listdir):
-        mock_listdir.return_value = ["bad_report.sarif"]
+    def test_error_reading_sarif_file(self, mock_log_error, mock_dump, mock_collect_sarif_files):
+        mock_collect_sarif_files.return_value = ["bad_report.sarif"]
         merge_sarif_files(self.fixtures_dir, self.scanner_results, self.output_file)
         args, _ = mock_dump.call_args
         self.assertEqual(args[0]["properties"], self.scanner_results)
         self.assertEqual(len(args[0]["runs"]), 0)
         self.assertEqual(args[0]["version"], "2.1.0")
         mock_log_error.assert_called_once()
+
+
+class TestCollectSarifFiles(unittest.TestCase):
+    def test_collect_sarif_files(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            os.makedirs(os.path.join(tmpdir, "subdir"), exist_ok=True)
+            with open(os.path.join(tmpdir, "file1.sarif"), "w") as f:
+                f.write("{}")
+            with open(os.path.join(tmpdir, "subdir", "file2.sarif.json"), "w") as f:
+                f.write("{}")
+            with open(os.path.join(tmpdir, "file3.txt"), "w") as f:
+                f.write("not a sarif file")
+
+            sarif_files = collect_sarif_files(tmpdir)
+
+            expected_files = [
+                os.path.join(tmpdir, "file1.sarif"),
+                os.path.join(tmpdir, "subdir", "file2.sarif.json"),
+            ]
+            self.assertEqual(sorted(sarif_files), sorted(expected_files))
+
+    @patch("logging.warning")
+    def test_no_sarif_files(self, mock_log_warning):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            sarif_files = collect_sarif_files(tmpdir)
+            self.assertEqual([], sarif_files)
+
+        mock_log_warning.assert_called_once()

@@ -11,6 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 from typing import Dict
+from typing import List
 from urllib import request
 
 import yaml
@@ -472,34 +473,49 @@ def run():
         sys.exit(0)
 
 
-def merge_sarif_files(directory: str, properties: dict, output_filename: str):
+def collect_sarif_files(directory: str) -> List[str]:
     """
-    Searches for .sarif and .sarif.json files in a directory, merges them,
-    and adds "properties" as properties to the merged SARIF log
+    Collects all SARIF files within a specified directory and its subdirectories
 
     Args:
         directory: The directory to search for SARIF files
-        properties: A dictionary containing arbitrary properties for each scanner
-        output_filename: The name of the output merged SARIF file
+    """
+    sarif_files = []
+    for root, _, files in os.walk(directory):
+        for file in files:
+            filepath = os.path.join(root, file)
+            if os.path.isfile(filepath) and (file.endswith(".sarif") or file.endswith(".sarif.json")):
+                logging.info(f"Found SARIF file: {filepath}")
+                sarif_files.append(filepath)
+
+    if not sarif_files:
+        logging.warning(f"No SARIF files found in directory: {directory}")
+
+    return sarif_files
+
+
+def merge_sarif_files(directory: str, properties: dict, output_filename: str):
+    """
+    Merges multiple SARIF files found within a directory and adds custom properties to the merged output
+
+    Args:
+        directory: The directory to search for SARIF files. The function will recursively search subdirectories.
+        properties: Arbitrary properties to add to the 'properties' section of the merged SARIF output.
+                    This can include metadata about the scan, such as scanner versions, configurations, or timestamps.
+        output_filename: The full path and filename for the output merged SARIF file
     """
     merged_runs = []
-    for filename in os.listdir(directory):
-        if filename.endswith(".sarif") or filename.endswith(".sarif.json"):
-            filepath = os.path.join(directory, filename)
-            logging.info(f"Found SARIF file: {filepath}")
-            try:
-                with open(filepath, "r", encoding="utf8") as f:
-                    data = json.load(f)
-                    if "runs" in data and isinstance(data["runs"], list):
-                        merged_runs.extend(data["runs"])
-                    else:
-                        logging.warning(f"SARIF file '{filepath}' does not appear to have a top-level 'runs' array.")
+    for filename in collect_sarif_files(directory):
+        try:
+            with open(filename, "r", encoding="utf8") as f:
+                data = json.load(f)
+                if "runs" in data and isinstance(data["runs"], list):
+                    merged_runs.extend(data["runs"])
+                else:
+                    logging.warning(f"SARIF file '{filename}' does not appear to have a top-level 'runs' array")
 
-            except Exception as e:  # pylint: disable=W0718
-                logging.error(f"Error reading SARIF file '{filepath}': {e}")
-
-    if not merged_runs:
-        logging.warning(f"No SARIF files found in directory: {directory}")
+        except Exception as e:  # pylint: disable=W0718
+            logging.error(f"Error reading SARIF file '{filename}': {e}")
 
     merged_sarif = {
         "version": "2.1.0",

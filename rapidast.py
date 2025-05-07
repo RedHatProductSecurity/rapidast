@@ -6,10 +6,12 @@ import os
 import pprint
 import re
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 from typing import Dict
+from typing import List
 from urllib import request
 
 import yaml
@@ -326,9 +328,10 @@ def validate_config_schema(config_file) -> bool:
     return False
 
 
-# pylint: disable=R0912, R0915
+# pylint: disable=R0912, R0915, R0914
 # R0912(too-many-branches)
 # R0915(too many statements)
+# R0914(too-many-local)
 def run():
     parser = argparse.ArgumentParser(
         description="Runs various DAST scanners against a defined target, as configured by a configuration file."
@@ -415,15 +418,41 @@ def run():
 
     # Run all scanners
     scan_error_count = 0
+    scanner_results = {}
+
     for name in config.get("scanners"):
-        logging.info(f"Next scanner: '{name}'")
+        start_time = time.time()
+        start_time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(start_time))
+        logging.info(f"Scanner '{name}' started at: {start_time_str}")
 
         ret = run_scanner(name, config, args, dedo_exporter)
+
+        end_time = time.time()
+        end_time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(end_time))
+        duration = end_time - start_time
+        logging.info(f"Scanner '{name}' finished at: {end_time_str}")
+        logging.info(f"Scanner '{name}' took {duration:.2f} seconds to run")
+
+        scanner_results[name] = {
+            "start_time": start_time_str,
+            "end_time": end_time_str,
+            "duration": duration,
+            "return_code": ret,
+        }
+
         if ret == 1:
             logging.info(f"scanner: '{name}' failed")
             scan_error_count = scan_error_count + 1
         else:
             logging.info(f"scanner: '{name}' completed successfully")
+
+    sarif_properties = {"config_version": config.get("config.configVersion"), "scanner_results": scanner_results}
+
+    merge_sarif_files(
+        directory=full_result_dir_path,
+        properties=sarif_properties,
+        output_filename=f"{full_result_dir_path}/rapidast-scan-results.sarif",
+    )
 
     # Export all the scan results to GCS
     # Note: This is done after all scanners have run,
@@ -442,6 +471,65 @@ def run():
         sys.exit(2)
     else:
         sys.exit(0)
+
+
+def collect_sarif_files(directory: str) -> List[str]:
+    """
+    Collects all SARIF files within a specified directory and its subdirectories
+
+    Args:
+        directory: The directory to search for SARIF files
+    """
+    sarif_files = []
+    for root, _, files in os.walk(directory):
+        for file in files:
+            filepath = os.path.join(root, file)
+            if os.path.isfile(filepath) and (file.endswith(".sarif") or file.endswith(".sarif.json")):
+                logging.info(f"Found SARIF file: {filepath}")
+                sarif_files.append(filepath)
+
+    if not sarif_files:
+        logging.warning(f"No SARIF files found in directory: {directory}")
+
+    return sarif_files
+
+
+def merge_sarif_files(directory: str, properties: dict, output_filename: str):
+    """
+    Merges multiple SARIF files found within a directory and adds custom properties to the merged output
+
+    Args:
+        directory: The directory to search for SARIF files. The function will recursively search subdirectories.
+        properties: Arbitrary properties to add to the 'properties' section of the merged SARIF output.
+                    This can include metadata about the scan, such as scanner versions, configurations, or timestamps.
+        output_filename: The full path and filename for the output merged SARIF file
+    """
+    merged_runs = []
+    for filename in collect_sarif_files(directory):
+        try:
+            with open(filename, "r", encoding="utf8") as f:
+                data = json.load(f)
+                if "runs" in data and isinstance(data["runs"], list):
+                    merged_runs.extend(data["runs"])
+                else:
+                    logging.warning(f"SARIF file '{filename}' does not appear to have a top-level 'runs' array")
+
+        except Exception as e:  # pylint: disable=W0718
+            logging.error(f"Error reading SARIF file '{filename}': {e}")
+
+    merged_sarif = {
+        "version": "2.1.0",
+        "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+        "runs": merged_runs,
+        "properties": properties,
+    }
+
+    try:
+        with open(output_filename, "w", encoding="utf8") as outfile:
+            json.dump(merged_sarif, outfile, indent=2)
+        logging.info(f"Successfully merged SARIF files into: {output_filename}")
+    except Exception as e:  # pylint: disable=W0718
+        logging.error(f"Error writing merged SARIF file: {e}")
 
 
 if __name__ == "__main__":

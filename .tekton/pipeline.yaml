@@ -122,6 +122,8 @@ spec:
       value: $(params.output-image).git
     - name: ociArtifactExpiresAfter
       value: $(params.image-expires-after)
+    - name: fetchTags
+      value: "true"
     runAfter:
     - init
     taskRef:
@@ -178,10 +180,7 @@ spec:
             #!/bin/bash -ex
             microdnf install -y python-pip
             pip install -U --no-cache-dir setuptools setuptools-scm GitPython
-            ls -R
-            cd source
             python -m setuptools_scm --force-write-version-files
-
   - name: build-container
     params:
     - name: IMAGE

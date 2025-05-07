@@ -170,13 +170,7 @@ spec:
   - name: generate-version
     runAfter:
     - prefetch-dependencies
-    params:
-      - name: TARGET_BRANCH
-        value: "{{target_branch}}"
     taskSpec:
-      params:
-        - name: TARGET_BRANCH
-          type: string
       steps:
         - name: select-tags-based-on-branch
           image: registry.access.redhat.com/ubi9/ubi-minimal:9.5-1739420147@sha256:fb77e447ab97f3fecd15d2fa5361a99fe2f34b41422e8ebb3612eecd33922fa0
@@ -184,7 +178,10 @@ spec:
             #!/bin/bash -ex
             microdnf install -y python-pip
             pip install -U --no-cache-dir setuptools setuptools-scm GitPython
+            ls -R
+            cd source
             python -m setuptools_scm --force-write-version-files
+
   - name: build-container
     params:
     - name: IMAGE

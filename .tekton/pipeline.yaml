@@ -124,6 +124,8 @@ spec:
       value: $(params.image-expires-after)
     - name: fetchTags
       value: "true"
+    - name: refspec
+      value: "main"
     runAfter:
     - init
     taskRef:

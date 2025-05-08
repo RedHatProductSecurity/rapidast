@@ -74,7 +74,7 @@ ENV PATH $PATH:/opt/zap/:/opt/rapidast/:/opt/firefox/
 
 ## RapiDAST
 RUN mkdir /opt/rapidast
-COPY ./rapidast.py ./requirements.txt /opt/rapidast/
+COPY ./VERSION.TXT /rapidast.py ./requirements.txt /opt/rapidast/
 COPY ./scanners/ /opt/rapidast/scanners/
 COPY ./tools/ /opt/rapidast/tools/
 COPY ./exports/ /opt/rapidast/exports/

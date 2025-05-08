@@ -6,3 +6,4 @@ py-nessus-pro @ git+https://github.com/sfowl/py-nessus-pro.git@41abc315c0e7e1320
 dacite >= 1.8.1
 jsonschema >= 4.23.0
 jsonschema[format]
+GitPython

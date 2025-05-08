@@ -81,7 +81,6 @@ COPY ./exports/ /opt/rapidast/exports/
 COPY ./configmodel/ /opt/rapidast/configmodel/
 COPY ./utils/ /opt/rapidast/utils/
 COPY ./config/ /opt/rapidast/config/
-COPY VERSION.txt /opt/rapidast/VERSION.txt
 
 ### Add generic tools in the PATH
 COPY ./scanners/generic/tools/convert_trivy_k8s_to_sarif.py /usr/local/bin/
@@ -106,7 +105,10 @@ RUN useradd -u 1000 -d /opt/rapidast -m -s /bin/bash rapidast && \
   chgrp -R 0 /opt/rapidast && \
   chmod -R g=u /opt/rapidast
 
+RUN pip install -U --no-cache-dir setuptools setuptools-scm GitPython
+
 USER rapidast
 WORKDIR /opt/rapidast
+RUN python -m setuptools_scm --force-write-version-files
 ENV HOME /opt/rapidast
 ENTRYPOINT ["./rapidast.py"]

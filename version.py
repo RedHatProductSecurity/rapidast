@@ -21,11 +21,13 @@ def get_latest_main_tag() -> str:
     try:
         repo_path = os.getcwd()
         repo = Repo(repo_path)
-        current_branch = get_current_branch()
-        main_branch = repo.heads.main
-        repo.git.checkout(main_branch)
-        tags = sorted(repo.tags, key=lambda t: t.commit.committed_date, reverse=True)
-        repo.git.checkout(current_branch)
+
+        remote_name = "origin"
+        remote_ref_name = f"{remote_name}/main"
+        remote_main_branch = repo.heads[remote_ref_name]
+        tags = repo.tags
+        relevant_tags = [tag for tag in tags if remote_main_branch.is_ancestor(tag.commit)]
+        tags = sorted(relevant_tags, key=lambda t: t.commit.committed_date, reverse=True)
 
         if tags:
             return str(tags[0])

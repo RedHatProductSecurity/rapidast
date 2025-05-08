@@ -122,6 +122,10 @@ spec:
       value: $(params.output-image).git
     - name: ociArtifactExpiresAfter
       value: $(params.image-expires-after)
+    - name: fetchTags
+      value: "true"
+    - name: depth
+      value: 0
     runAfter:
     - init
     taskRef:
@@ -193,7 +197,7 @@ spec:
     - name: CACHI2_ARTIFACT
       value: $(tasks.prefetch-dependencies.results.CACHI2_ARTIFACT)
     runAfter:
-    - prefetch-dependencies
+    - clone-repository
     taskRef:
       params:
       - name: name

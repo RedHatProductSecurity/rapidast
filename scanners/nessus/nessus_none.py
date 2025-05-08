@@ -174,7 +174,7 @@ class Nessus(RapidastScanner):
             sarif_output = convert_csv_to_sarif(path.join(scan_reports, file))
             # Save sarif file
             with open(
-                path.join(scan_reports, file.replace(".csv", "-sarif.json")),
+                path.join(scan_reports, file.replace(".csv", ".sarif.json")),
                 "w",
                 encoding="utf-8",
             ) as output:

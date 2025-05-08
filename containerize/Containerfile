@@ -66,8 +66,10 @@ FROM registry.access.redhat.com/ubi9-minimal AS version
 RUN mkdir /opt/rapidast
 COPY ./ /opt/rapidast/
 WORKDIR /opt/rapidast
-RUN  microdnf install -y --setopt=install_weak_deps=0 python3 git && \
-  python3 -m ensurepip --upgrade && \
+# Using Python 3.12 to match the environment where requirements-build.txt was generated.
+# This avoids potential dependency conflicts with setuptools_scm on older Python versions.
+RUN  microdnf install -y --setopt=install_weak_deps=0 python3.12 git && \
+  python3.12 -m ensurepip --upgrade && \
   pip3 install --no-cache-dir -r /opt/rapidast/requirements.txt && \
   pip3 install setuptools-scm==8.2.0 && \
   python3 -m setuptools_scm --force-write-version-files

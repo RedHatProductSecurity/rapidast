@@ -72,7 +72,7 @@ RUN  microdnf install -y --setopt=install_weak_deps=0 python3.12 git && \
   python3.12 -m ensurepip --upgrade && \
   pip3 install --no-cache-dir -r /opt/rapidast/requirements.txt && \
   pip3 install setuptools-scm==8.2.0 && \
-  python3 -m setuptools_scm --force-write-version-files
+  python3.12 -m setuptools_scm --force-write-version-files
 
 # Copy artifacts from deps to build RapiDAST
 FROM registry.access.redhat.com/ubi9-minimal

@@ -22,12 +22,10 @@ def get_latest_main_tag() -> str:
         repo_path = os.getcwd()
         repo = Repo(repo_path)
 
-        remote_name = "origin"
-        remote_ref_name = f"{remote_name}/main"
-        remote_main_branch = repo.heads[remote_ref_name]
+        # We could filter tags just in main, however Konflux doesn't
+        # provide branches information
         tags = repo.tags
-        relevant_tags = [tag for tag in tags if remote_main_branch.is_ancestor(tag.commit)]
-        tags = sorted(relevant_tags, key=lambda t: t.commit.committed_date, reverse=True)
+        tags = sorted(tags, key=lambda t: t.commit.committed_date, reverse=True)
 
         if tags:
             return str(tags[0])

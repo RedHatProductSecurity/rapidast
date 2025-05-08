@@ -16,7 +16,7 @@ packages = ["configmodel", "exports", "utils", "scanners"]
 dependencies = { file = ["requirements.in"] }
 
 [tool.setuptools_scm]
-version_file = "VERSION.TXT"
+version_file = "VERSION.txt"
 version_scheme = "version:custom_version_scheme"
 local_scheme = "version:custom_local_scheme"
 

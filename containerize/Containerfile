@@ -94,7 +94,7 @@ COPY ./exports/ /opt/rapidast/exports/
 COPY ./configmodel/ /opt/rapidast/configmodel/
 COPY ./utils/ /opt/rapidast/utils/
 COPY ./config/ /opt/rapidast/config/
-COPY --from=version /opt/rapidast/VERSION.TXT /opt/rapidast/VERSION.TXT
+COPY --from=version /opt/rapidast/VERSION.txt /opt/rapidast/VERSION.txt
 
 
 ### Add generic tools in the PATH

@@ -107,6 +107,7 @@ RUN useradd -u 1000 -d /opt/rapidast -m -s /bin/bash rapidast && \
 
 USER rapidast
 WORKDIR /opt/rapidast
+RUN pip3 install setuptools-scm
 RUN python3 -m setuptools_scm --force-write-version-files
 ENV HOME /opt/rapidast
 ENTRYPOINT ["./rapidast.py"]

@@ -1,0 +1,60 @@
+name: Update VERSION.TXT
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - development
+
+jobs:
+  update_version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get latest tag from main
+        id: get_latest_tag
+        run: |
+          git fetch origin --tags main
+          latest_tag=$(git describe --abbrev=0 --tags origin/main 2>/dev/null)
+          if [ -z "$latest_tag" ]; then
+            echo "found=false" >> $GITHUB_OUTPUT
+            echo "latest_tag=0.0.0" >> $GITHUB_OUTPUT # Default tag if none found
+          else
+            echo "found=true" >> $GITHUB_OUTPUT
+            echo "latest_tag=$latest_tag" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Calculate next version
+        id: calculate_version
+        run: |
+          if ${{ steps.get_latest_tag.outputs.found }} == 'true'; then
+            latest_tag="${{ steps.get_latest_tag.outputs.latest_tag }}"
+            IFS='.' read -r major minor patch <<< "$latest_tag"
+            minor=$((minor + 1))
+            next_version="$major.$minor.0"
+            echo "Calculated next version: $next_version"
+            echo "next_version=$next_version" >> $GITHUB_OUTPUT
+          else
+            echo "No previous tag found on main. Defaulting to 0.0.1"
+            echo "next_version=0.0.1" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update VERSION.TXT for development
+        run: |
+          echo "Updating VERSION.TXT for development branch"
+          echo "Next Version: ${{ steps.calculate_version.outputs.next_version }}"
+          short_sha=$(git rev-parse --short "${{ github.sha }}")
+          echo "$(echo ${{ steps.calculate_version.outputs.next_version }})+$short_sha-$(date +%Y%m%d)" > VERSION.TXT
+
+      - name: Commit and push VERSION.TXT
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
+          git add VERSION.TXT
+          git commit -m "Update VERSION.TXT to ${{ steps.calculate_version.outputs.next_version }} for ${{ github.base_ref }} merge"
+          git push origin HEAD:development

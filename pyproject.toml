@@ -2,7 +2,6 @@
 build-backend = "setuptools.build_meta"
 requires = [
     "setuptools>=64",
-    "setuptools-scm[toml]>=8",
 ]
 
 [project]
@@ -14,8 +13,7 @@ packages = ["configmodel", "exports", "utils", "scanners"]
 
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.in"] }
-
-[tool.setuptools_scm]
+version = {file = "VERSION.TXT"}
 
 [tool.ruff]
 line-length = 120

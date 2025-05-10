@@ -6,7 +6,9 @@ metadata:
     build.appstudio.redhat.com/commit_sha: '{{revision}}'
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
     pipelinesascode.tekton.dev/max-keep-runs: "3"
-    pipelinesascode.tekton.dev/on-cel-expression: event == "push" && (target_branch == "development" || target_branch == "main")
+    pipelinesascode.tekton.dev/on-cel-expression: event == "push" && (target_branch
+      == "development" || target_branch == "main")
+  creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rapidast
     appstudio.openshift.io/component: rapidast
@@ -14,8 +16,6 @@ metadata:
   name: rapidast-on-push
   namespace: secaut-tenant
 spec:
-  pipelineRef:
-    name: rapidast-pipeline
   params:
   - name: git-url
     value: '{{source_url}}'
@@ -26,22 +26,25 @@ spec:
   - name: dockerfile
     value: containerize/Containerfile
   - name: prefetch-input
-    value:
-    - {"type": "generic", "path": "."}
-    - {"type": "npm", "path": "."}
-    - {"type": "pip", "path": ".", "allow_binary": "true", "requirements_files": ["requirements-dev.txt"]}
+    value: '[{"path":".","type":"generic"},{"path":".","type":"npm"},{"allow_binary":"true","path":".","requirements_files":["requirements-dev.txt"],"type":"pip"}]'
   - name: build-args
-    value: [PREFETCH=true]
+    value:
+    - PREFETCH=true
+  pipelineRef:
+    name: rapidast-pipeline
   taskRunSpecs:
-    - pipelineTaskName: ecosystem-cert-preflight-checks
-      stepSpecs:
-        - name: app-check
-          computeResources:
-            requests:
-              memory: 512Mi
-            limits:
-              memory: 4Gi
+  - pipelineTaskName: ecosystem-cert-preflight-checks
+    stepSpecs:
+    - computeResources:
+        limits:
+          memory: 4Gi
+        requests:
+          memory: 512Mi
+      name: app-check
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-rapidast
   workspaces:
   - name: git-auth
     secret:
       secretName: '{{ git_auth_secret }}'
+status: {}

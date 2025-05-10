@@ -7,7 +7,8 @@ metadata:
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
-    pipelinesascode.tekton.dev/on-cel-expression: event == "push" && (target_branch == "development" || target_branch == "main")
+    pipelinesascode.tekton.dev/on-cel-expression: event == "push" && (target_branch
+      == "development" || target_branch == "main")
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: rapidast
@@ -16,8 +17,6 @@ metadata:
   name: rapidast-llm-on-push
   namespace: secaut-tenant
 spec:
-  pipelineRef:
-    name: rapidast-pipeline
   params:
   - name: git-url
     value: '{{source_url}}'
@@ -28,16 +27,21 @@ spec:
   - name: dockerfile
     value: containerize/Containerfile.garak
   - name: build-args
-    value: [PREFETCH=false]
+    value:
+    - PREFETCH=false
+  pipelineRef:
+    name: rapidast-pipeline
   taskRunSpecs:
-    - pipelineTaskName: ecosystem-cert-preflight-checks
-      stepSpecs:
-        - name: app-check
-          computeResources:
-            requests:
-              memory: 512Mi
-            limits:
-              memory: 4Gi
+  - pipelineTaskName: ecosystem-cert-preflight-checks
+    stepSpecs:
+    - computeResources:
+        limits:
+          memory: 4Gi
+        requests:
+          memory: 512Mi
+      name: app-check
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-rapidast-llm
   workspaces:
   - name: git-auth
     secret:

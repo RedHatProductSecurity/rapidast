@@ -531,7 +531,10 @@ def merge_sarif_files(directory: str, properties: dict, output_filename: str):
     except Exception as e:  # pylint: disable=W0718
         logging.error(f"Error writing merged SARIF file: {e}")
 
-def generate_sarif_properties(config: configmodel.RapidastConfigModel, scanner_results: dict, commit_sha_filename: str) -> dict:
+
+def generate_sarif_properties(
+    config: configmodel.RapidastConfigModel, scanner_results: dict, commit_sha_filename: str
+) -> dict:
     """
     Generates the dictionary containing properties for the SARIF output
 
@@ -542,7 +545,7 @@ def generate_sarif_properties(config: configmodel.RapidastConfigModel, scanner_r
     """
     commit_sha = None
     try:
-        with open(commit_sha_filename, 'r', encoding='utf-8') as file:
+        with open(commit_sha_filename, "r", encoding="utf-8") as file:
             commit_sha = file.read().strip()
     except FileNotFoundError:
         logging.warning(f"File '{commit_sha_filename}' not found. Falling back to `null`")
@@ -552,9 +555,10 @@ def generate_sarif_properties(config: configmodel.RapidastConfigModel, scanner_r
     sarif_properties = {
         "config_version": config.get("config.configVersion"),
         "scanner_results": scanner_results,
-        "commit_sha": commit_sha
+        "commit_sha": commit_sha,
     }
     return sarif_properties
+
 
 if __name__ == "__main__":
     run()

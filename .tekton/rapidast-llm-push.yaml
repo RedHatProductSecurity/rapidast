@@ -28,7 +28,9 @@ spec:
   - name: dockerfile
     value: containerize/Containerfile.garak
   - name: build-args
-    value: [PREFETCH=false]
+    value:
+    - PREFETCH=false
+    - COMMIT_SHA={{revision}}
   taskRunSpecs:
     - pipelineTaskName: ecosystem-cert-preflight-checks
       stepSpecs:

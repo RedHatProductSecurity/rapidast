@@ -545,7 +545,7 @@ def generate_sarif_properties(config: configmodel.RapidastConfigModel, scanner_r
         with open(commit_sha_filename, 'r', encoding='utf-8') as file:
             commit_sha = file.read().strip()
     except FileNotFoundError:
-        logging.warning(f"Error: File '{commit_sha_filename}' not found")
+        logging.warning(f"File '{commit_sha_filename}' not found. Falling back to `null`")
     except Exception as e:  # pylint: disable=W0718
         logging.warning(f"An error occurred while reading '{commit_sha_filename}': {e}")
 

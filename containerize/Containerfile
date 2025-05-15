@@ -10,7 +10,7 @@ FROM registry.access.redhat.com/ubi9-minimal AS deps
 ARG PREFETCH=false
 
 # These versions should be consistent with the listed in the artifacts.lock.yaml file
-ARG ZAP_VERSION=2.15.0
+ARG ZAP_VERSION=2.16.1
 ARG FF_VERSION=128.6.0esr
 ARG K8S_VERSION=1.32.1
 ARG TRIVY_VERSION=0.59.0
@@ -21,7 +21,7 @@ ARG FF_FILE=$DEPS_DIR/firefox.tar.bz2
 ARG TRIVY_FILE=$DEPS_DIR/trivy.tar.gz
 ARG KCTL_FILE=$DEPS_DIR/kubectl
 
-RUN microdnf install -y tar gzip bzip2 java-11-openjdk nodejs
+RUN microdnf install -y tar gzip bzip2 java-21-openjdk nodejs
 
 RUN mkdir "${DEPS_DIR}" /tmp/node_modules && if [ "$PREFETCH" == "true" ]; then \
     echo "PREFETCH is true: Copying dependencies from /cachi2/output/deps..." && \
@@ -88,7 +88,7 @@ COPY ./containerize/container_default_config.yaml /opt/rapidast/rapidast-default
 COPY ./containerize/path_rapidast.sh /etc/profile.d/rapidast.sh
 
 ### Install RapiDAST requirements, globally, so that it's available to any user
-RUN microdnf install -y --setopt=install_weak_deps=0 java-11-openjdk shadow-utils dbus-glib procps git nodejs npm && \
+RUN microdnf install -y --setopt=install_weak_deps=0 java-21-openjdk shadow-utils dbus-glib procps git nodejs npm && \
   microdnf install -y gtk3 && \
   python3 -m ensurepip --upgrade && \
   pip3 install --no-cache-dir -r /opt/rapidast/requirements.txt && \

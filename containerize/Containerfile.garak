@@ -64,6 +64,9 @@ RUN mkdir -p /tmp/redocly/node_modules && if [ "$PREFETCH" == "true" ]; then \
 # Copy artifacts from deps to build RapiDAST
 FROM registry.access.redhat.com/ubi9-minimal
 
+# Specify the Git commit SHA that this image was built from
+ARG COMMIT_SHA=UNKNOWN
+
 COPY --from=deps /opt/zap /opt/zap
 COPY --from=deps /opt/firefox /opt/firefox
 COPY --from=deps /usr/local/bin/kubectl /usr/local/bin/kubectl
@@ -73,7 +76,8 @@ COPY --from=deps /tmp/redocly/node_modules /opt/redocly/node_modules
 ENV PATH $PATH:/opt/zap/:/opt/rapidast/:/opt/firefox/
 
 ## RapiDAST
-RUN mkdir /opt/rapidast
+RUN mkdir /opt/rapidast && \
+  echo "$COMMIT_SHA" > /opt/rapidast/commit_sha.txt
 COPY ./rapidast.py ./requirements-llm.txt /opt/rapidast/
 COPY ./scanners/ /opt/rapidast/scanners/
 COPY ./tools/ /opt/rapidast/tools/

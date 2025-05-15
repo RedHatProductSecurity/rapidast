@@ -31,7 +31,9 @@ spec:
     - {"type": "npm", "path": "."}
     - {"type": "pip", "path": ".", "allow_binary": "true", "requirements_files": ["requirements-dev.txt"]}
   - name: build-args
-    value: [PREFETCH=true]
+    value:
+    - PREFETCH=true
+    - COMMIT_SHA={{revision}}
   taskRunSpecs:
     - pipelineTaskName: ecosystem-cert-preflight-checks
       stepSpecs:

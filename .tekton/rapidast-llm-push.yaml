@@ -32,14 +32,27 @@ spec:
     - PREFETCH=false
     - COMMIT_SHA={{revision}}
   taskRunSpecs:
+    - pipelineTaskName: clair-scan
+      stepSpecs:
+        - name: clair-scan-spec
+          computeResources:
+            requests:
+              cpu: '8'
+              memory: 16Gi
+            limits:
+              cpu: '16'
+              memory: 32Gi
     - pipelineTaskName: ecosystem-cert-preflight-checks
       stepSpecs:
         - name: app-check
           computeResources:
             requests:
-              memory: 512Mi
+              cpu: '8'
+              memory: 16Gi
             limits:
-              memory: 4Gi
+              cpu: '16'
+              memory: 32Gi
+
   workspaces:
   - name: git-auth
     secret:

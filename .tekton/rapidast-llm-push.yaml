@@ -34,24 +34,21 @@ spec:
   taskRunSpecs:
     - pipelineTaskName: clair-scan
       stepSpecs:
-        - name: clair-scan-spec
+        - name: get-vulnerabilities
           computeResources:
             requests:
-              cpu: '8'
-              memory: 16Gi
+              cpu: '2'
+              memory: 8Gi
             limits:
-              cpu: '16'
-              memory: 32Gi
+              memory: 16Gi
     - pipelineTaskName: ecosystem-cert-preflight-checks
       stepSpecs:
         - name: app-check
           computeResources:
             requests:
-              cpu: '8'
-              memory: 16Gi
+              memory: 512Mi
             limits:
-              cpu: '16'
-              memory: 32Gi
+              memory: 4Gi
 
   workspaces:
   - name: git-auth

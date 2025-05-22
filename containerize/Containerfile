@@ -39,7 +39,7 @@ RUN mkdir /opt/zap && \
 
 ## Firefox, for Ajax
 RUN mkdir -p /opt/firefox && \
-  tar xjvf "$FF_FILE" -C /opt/firefox
+  tar xjvf "$FF_FILE" --strip-components=1 -C /opt/firefox
 
 ## kubectl
 RUN install -o root -g root -m 0755 "$KCTL_FILE" /usr/local/bin/kubectl
@@ -99,6 +99,12 @@ RUN microdnf install -y --setopt=install_weak_deps=0 java-21-openjdk shadow-util
   pip3 install --no-cache-dir -r /opt/rapidast/requirements.txt && \
   microdnf clean all -y && rm -rf /var/cache/dnf /tmp/*  && \
   ln -s /opt/redocly/node_modules/@redocly/cli/bin/cli.js /usr/local/bin/redocly
+
+### Validate that required dependencies are available in the system PATH
+RUN zap.sh -cmd -version && \
+  firefox --headless -version && \
+  kubectl version --client && \
+  trivy --version
 
 RUN useradd -u 1000 -d /opt/rapidast -m -s /bin/bash rapidast && \
   chown -R 1000 /opt/rapidast && \

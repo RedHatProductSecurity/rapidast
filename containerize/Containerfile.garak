@@ -99,12 +99,6 @@ RUN microdnf install -y --setopt=install_weak_deps=0 java-21-openjdk shadow-util
   microdnf clean all -y && rm -rf /var/cache/dnf /tmp/*  && \
   ln -s /opt/redocly/node_modules/@redocly/cli/bin/cli.js /usr/local/bin/redocly
 
-### Validate that required dependencies are available in the system PATH
-RUN zap.sh -cmd -version && \
-  firefox --headless -version && \
-  kubectl version --client && \
-  trivy --version
-
 RUN useradd -u 1000 -d /opt/rapidast -m -s /bin/bash rapidast && \
   chown -R 1000 /opt/rapidast && \
   # OpenShift runs containers with arbitrary user ids, belonging to root group
@@ -112,6 +106,13 @@ RUN useradd -u 1000 -d /opt/rapidast -m -s /bin/bash rapidast && \
   chmod -R g=u /opt/rapidast
 
 USER rapidast
+
+### Validate that required dependencies are available in the system PATH
+RUN command -v zap.sh && \
+  command -v firefox && \
+  command -v kubectl && \
+  command -v trivy
+
 WORKDIR /opt/rapidast
 ENV HOME /opt/rapidast
 ENV PYTHON_VERSION python3.12

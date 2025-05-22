@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 from conftest import is_pod_with_field_selector_successfully_completed  # pylint: disable=E0611
 from conftest import tee_log  # pylint: disable=E0611
@@ -30,6 +31,18 @@ class TestRapiDAST(TestBase):
             data = json.load(f)
 
         assert len(data["site"][0]["alerts"]) == 3
+
+        with open(logfile, "r", encoding="utf-8") as f:
+            logs = f.read()
+
+        # Verify that the spiderAjax job is functioning correctly
+        # @TODO: Consider implementing this using ZAP's built-in monitor test framework
+        #        https://www.zaproxy.org/docs/desktop/addons/automation-framework/test-monitor/
+        #        This will require refining how parameters are passed within the automation framework
+        match = re.search(r"Job spiderAjax found (\d+) URLs", logs)
+        assert match is not None, f"{logfile} does not contain a line matching 'Job spiderAjax found X URLs'"
+        url_count = int(match.group(1))
+        assert url_count > 1, f"{logfile} indicates only {url_count} URL(s) found, expected more than 1"
 
     def test_trivy(self):
         self.create_from_yaml(f"{self.tempdir}/rapidast-trivy-configmap.yaml")

@@ -343,7 +343,7 @@
                                                 "image": {
                                                     "type": "string"
                                                 },
-                                                "command": {
+                                                "executable": {
                                                     "type": "string"
                                                 },
                                                 "podName": {

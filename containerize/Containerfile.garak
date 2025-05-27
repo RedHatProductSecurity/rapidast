@@ -39,7 +39,7 @@ RUN mkdir /opt/zap && \
 
 ## Firefox, for Ajax
 RUN mkdir -p /opt/firefox && \
-  tar xjvf "$FF_FILE" -C /opt/firefox
+  tar xjvf "$FF_FILE" --strip-components=1 -C /opt/firefox
 
 ## kubectl
 RUN install -o root -g root -m 0755 "$KCTL_FILE" /usr/local/bin/kubectl
@@ -106,6 +106,13 @@ RUN useradd -u 1000 -d /opt/rapidast -m -s /bin/bash rapidast && \
   chmod -R g=u /opt/rapidast
 
 USER rapidast
+
+### Validate that required dependencies are available in the system PATH
+RUN command -v zap.sh && \
+  command -v firefox && \
+  command -v kubectl && \
+  command -v trivy
+
 WORKDIR /opt/rapidast
 ENV HOME /opt/rapidast
 ENV PYTHON_VERSION python3.12

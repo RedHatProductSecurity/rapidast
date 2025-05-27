@@ -27,6 +27,11 @@ data:
           parameters:
             executable: "zap.sh"
 
+        spiderAjax:
+          maxDuration: 1
+          url: "http://vapi:3000"
+          maxCrawlDepth: 1
+
         miscOptions:
           # enableUI (default: false), requires a compatible runtime (e.g.: flatpak or no containment)
           #enableUI: True

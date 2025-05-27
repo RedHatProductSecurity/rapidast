@@ -13,6 +13,11 @@ spec:
   - port: 5000
     protocol: TCP
     targetPort: 5000
+    name: backend
+  - port: 3000
+    protocol: TCP
+    targetPort: 3000
+    name: frontend
   selector:
     app: vapi
   sessionAffinity: None

@@ -17,13 +17,24 @@ spec:
         app: vapi
     spec:
       containers:
-      # command is custom because:
-      # - default entrypoint runs frontend and based on rapidast-consolidated-e2e.sh we only want backend
-      # - running start_backend.sh on its own is not sufficient, a sleep is needed to keep the pod alive
       - command:
         - bash
         - -c
-        - . start_backend.sh && sleep infinity
+        - . start.sh && sleep infinity
         image: quay.io/sfowler/vapi:latest
         imagePullPolicy: Always
         name: vapi
+        # The pod should only be marked as "ready" once both
+        # the frontend and backend services are listening on their respective ports
+        lifecycle:
+          postStart:
+            exec:
+              command:
+              - /bin/bash
+              - -c
+              - |
+                echo "Checking services..."
+                echo "Waiting for ports 3000 and 5000..."
+                while ! (echo > /dev/tcp/localhost/3000) 2>/dev/null; do echo "Port 3000 not ready" && sleep 1; done
+                while ! (echo > /dev/tcp/localhost/5000) 2>/dev/null; do echo "Port 5000 not ready" && sleep 1; done
+                echo "All ports are ready"

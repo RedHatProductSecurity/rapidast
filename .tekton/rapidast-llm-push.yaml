@@ -2,7 +2,7 @@ apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
   annotations:
-    build.appstudio.openshift.io/repo: https://github.com/redHatProductSecurity/rapidast?rev={{revision}}
+    build.appstudio.openshift.io/repo: https://github.com/RedHatProductSecurity/rapidast?rev={{revision}}
     build.appstudio.redhat.com/commit_sha: '{{revision}}'
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
@@ -28,8 +28,19 @@ spec:
   - name: dockerfile
     value: containerize/Containerfile.garak
   - name: build-args
-    value: [PREFETCH=false]
+    value:
+    - PREFETCH=false
+    - COMMIT_SHA={{revision}}
   taskRunSpecs:
+    - pipelineTaskName: clair-scan
+      stepSpecs:
+        - name: get-vulnerabilities
+          computeResources:
+            requests:
+              cpu: '2'
+              memory: 8Gi
+            limits:
+              memory: 16Gi
     - pipelineTaskName: ecosystem-cert-preflight-checks
       stepSpecs:
         - name: app-check
@@ -38,6 +49,7 @@ spec:
               memory: 512Mi
             limits:
               memory: 4Gi
+
   workspaces:
   - name: git-auth
     secret:

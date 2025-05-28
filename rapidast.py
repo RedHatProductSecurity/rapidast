@@ -6,10 +6,12 @@ import os
 import pprint
 import re
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 from typing import Dict
+from typing import List
 from urllib import request
 
 import yaml
@@ -90,7 +92,7 @@ def load_config(config_file_location: str) -> Dict[str, Any]:
 
 # pylint: disable=R0911
 # too many return statements
-def run_scanner(name, config, args, scan_exporter):
+def run_scanner(name, config, args, dedo_exporter=None):
     """given the config `config`, runs scanner `name`.
     Returns:
         0 for success
@@ -160,11 +162,14 @@ def run_scanner(name, config, args, scan_exporter):
     if not args.no_cleanup:
         scanner.cleanup()
 
-    # Part 6: export to defect dojo, if the scanner is compatible
-    if scan_exporter and hasattr(scanner, "data_for_defect_dojo"):
+    # Optional: Export the scanner result to DefectDojo if set
+    # Note: Unlike exporting to GCS, this process needs to be run for each scanner,
+    #   because DefectDojo can only process one type of scanner result at a time
+
+    if dedo_exporter and hasattr(scanner, "data_for_defect_dojo"):
         logging.info("Exporting results to the Defect Dojo service as configured")
 
-        if scan_exporter.export_scan(*scanner.data_for_defect_dojo()) == 1:
+        if dedo_exporter.export_scan(*scanner.data_for_defect_dojo()) == 1:
             logging.error("Exporting results to DefectDojo failed")
             return 1
 
@@ -323,6 +328,10 @@ def validate_config_schema(config_file) -> bool:
     return False
 
 
+# pylint: disable=R0912, R0915, R0914
+# R0912(too-many-branches)
+# R0915(too many statements)
+# R0914(too-many-local)
 def run():
     parser = argparse.ArgumentParser(
         description="Runs various DAST scanners against a defined target, as configured by a configuration file."
@@ -384,17 +393,10 @@ def run():
     # Do early: load the environment file if one is there
     load_environment(config)
 
-    # Prepare an export to Defect Dojo if one is configured.
-    scan_exporter = None
-    if config.get("config.googleCloudStorage.bucketName"):
-        scan_exporter = GoogleCloudStorage(
-            bucket_name=config.get("config.googleCloudStorage.bucketName"),
-            app_name=config.get_official_app_name(),
-            directory=config.get("config.googleCloudStorage.directory", None),
-            keyfile=config.get("config.googleCloudStorage.keyFile", None),
-        )
-    elif config.get("config.defectDojo.url"):
-        scan_exporter = DefectDojo(
+    # Check DefectDojo export configuration
+    dedo_exporter = None
+    if config.get("config.defectDojo.url"):
+        dedo_exporter = DefectDojo(
             config.get("config.defectDojo.url"),
             {
                 "username": config.get("config.defectDojo.authorization.username", default=""),
@@ -404,23 +406,158 @@ def run():
             config.get("config.defectDojo.ssl", default=True),
         )
 
+    # Check GCS export configuration
+    gcs_exporter = None
+    if config.get("config.googleCloudStorage.bucketName"):
+        gcs_exporter = GoogleCloudStorage(
+            bucket_name=config.get("config.googleCloudStorage.bucketName"),
+            app_name=config.get_official_app_name(),
+            directory=config.get("config.googleCloudStorage.directory", None),
+            keyfile=config.get("config.googleCloudStorage.keyFile", None),
+        )
+
     # Run all scanners
     scan_error_count = 0
-    for name in config.get("scanners"):
-        logging.info(f"Next scanner: '{name}'")
+    scanner_results = {}
 
-        ret = run_scanner(name, config, args, scan_exporter)
+    for name in config.get("scanners"):
+        start_time = time.time()
+        start_time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(start_time))
+        logging.info(f"Scanner '{name}' started at: {start_time_str}")
+
+        ret = run_scanner(name, config, args, dedo_exporter)
+
+        end_time = time.time()
+        end_time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(end_time))
+        duration = end_time - start_time
+        logging.info(f"Scanner '{name}' finished at: {end_time_str}")
+        logging.info(f"Scanner '{name}' took {duration:.2f} seconds to run")
+
+        scanner_results[name] = {
+            "start_time": start_time_str,
+            "end_time": end_time_str,
+            "duration": duration,
+            "return_code": ret,
+        }
+
         if ret == 1:
             logging.info(f"scanner: '{name}' failed")
             scan_error_count = scan_error_count + 1
         else:
             logging.info(f"scanner: '{name}' completed successfully")
 
+    sarif_properties = generate_sarif_properties(config, scanner_results, "commit_sha.txt")
+
+    merge_sarif_files(
+        directory=full_result_dir_path,
+        properties=sarif_properties,
+        output_filename=f"{full_result_dir_path}/rapidast-scan-results.sarif",
+    )
+
+    # Export all the scan results to GCS
+    # Note: This is done after all scanners have run,
+    #   unlike the DefectDojo export which needs to be done at the individual scanner level.
+    if gcs_exporter:
+        try:
+            gcs_exporter.export_scan(full_result_dir_path)
+            logging.info("Export to Google Cloud Storage completed successfully")
+        except Exception as e:  # pylint: disable=W0718
+            logging.error("Export to Google Cloud Storage failed: %s", e)
+    else:
+        logging.debug("GCS exporter not configured; skipping export")
+
     if scan_error_count > 0:
         logging.warning(f"Number of failed scanners: {scan_error_count}")
         sys.exit(2)
     else:
         sys.exit(0)
+
+
+def collect_sarif_files(directory: str) -> List[str]:
+    """
+    Collects all SARIF files within a specified directory and its subdirectories
+
+    Args:
+        directory: The directory to search for SARIF files
+    """
+    sarif_files = []
+    for root, _, files in os.walk(directory):
+        for file in files:
+            filepath = os.path.join(root, file)
+            if os.path.isfile(filepath) and (file.endswith(".sarif") or file.endswith(".sarif.json")):
+                logging.info(f"Found SARIF file: {filepath}")
+                sarif_files.append(filepath)
+
+    if not sarif_files:
+        logging.warning(f"No SARIF files found in directory: {directory}")
+
+    return sarif_files
+
+
+def merge_sarif_files(directory: str, properties: dict, output_filename: str):
+    """
+    Merges multiple SARIF files found within a directory and adds custom properties to the merged output
+
+    Args:
+        directory: The directory to search for SARIF files. The function will recursively search subdirectories.
+        properties: Arbitrary properties to add to the 'properties' section of the merged SARIF output.
+                    This can include metadata about the scan, such as scanner versions, configurations, or timestamps.
+        output_filename: The full path and filename for the output merged SARIF file
+    """
+    merged_runs = []
+    for filename in collect_sarif_files(directory):
+        try:
+            with open(filename, "r", encoding="utf8") as f:
+                data = json.load(f)
+                if "runs" in data and isinstance(data["runs"], list):
+                    merged_runs.extend(data["runs"])
+                else:
+                    logging.warning(f"SARIF file '{filename}' does not appear to have a top-level 'runs' array")
+
+        except Exception as e:  # pylint: disable=W0718
+            logging.error(f"Error reading SARIF file '{filename}': {e}")
+
+    merged_sarif = {
+        "version": "2.1.0",
+        "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+        "runs": merged_runs,
+        "properties": properties,
+    }
+
+    try:
+        with open(output_filename, "w", encoding="utf8") as outfile:
+            json.dump(merged_sarif, outfile, indent=2)
+        logging.info(f"Successfully merged SARIF files into: {output_filename}")
+    except Exception as e:  # pylint: disable=W0718
+        logging.error(f"Error writing merged SARIF file: {e}")
+
+
+def generate_sarif_properties(
+    config: configmodel.RapidastConfigModel, scanner_results: dict, commit_sha_filename: str
+) -> dict:
+    """
+    Generates the dictionary containing properties for the SARIF output
+
+    Args:
+        config: The RapiDAST configuration object
+        scanner_results: A dictionary containing the results of each scanner
+        commit_sha_filename: The name of the file containing the commit SHA
+    """
+    commit_sha = None
+    try:
+        with open(commit_sha_filename, "r", encoding="utf-8") as file:
+            commit_sha = file.read().strip()
+    except FileNotFoundError:
+        logging.warning(f"File '{commit_sha_filename}' not found. Falling back to `null`")
+    except Exception as e:  # pylint: disable=W0718
+        logging.warning(f"An error occurred while reading '{commit_sha_filename}': {e}")
+
+    sarif_properties = {
+        "config_version": config.get("config.configVersion"),
+        "scanner_results": scanner_results,
+        "commit_sha": commit_sha,
+    }
+    return sarif_properties
 
 
 if __name__ == "__main__":

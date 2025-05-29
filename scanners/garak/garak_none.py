@@ -5,27 +5,15 @@ import os
 import re
 import shutil
 import subprocess
-from dataclasses import dataclass
-from dataclasses import field
-from typing import Any
-from typing import Dict
 
 import dacite
 import yaml
 from packaging import version
 
 from configmodel import RapidastConfigModel
+from configmodel.models.scanners.garak import GarakConfig
 from scanners import RapidastScanner
 from scanners import State
-
-
-@dataclass
-# pylint: disable=too-many-instance-attributes
-class GarakConfig:
-    parameters: Dict[str, Any] = field(default_factory=dict)
-
-    # The path to the Garak executable
-    executable_path: str = field(default="/usr/local/bin/garak")
 
 
 CLASSNAME = "Garak"
@@ -72,7 +60,7 @@ class Garak(RapidastScanner):
 
         garak_config_section = config.subtree_to_dict(f"scanners.{ident}")
         if garak_config_section is None:
-            raise ValueError("'scanners.garak' section not in config")
+            raise ValueError(f"'scanners.{ident}' section not in config")
 
         # XXX self.config is already a dict with raw config values
         self.cfg = dacite.from_dict(data_class=GarakConfig, data=garak_config_section)

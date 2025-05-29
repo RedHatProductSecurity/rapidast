@@ -44,9 +44,10 @@ class GenericConfig:
                 "must be specified in the Generic Scanner settings"
                 "Both are currently missing or empty"
             )
-
+        # @TODO: Consider raising an exception here
+        # However, to maintain backward compatibility, we currently log an error instead
         if has_inline and has_container_paramenters_image:
-            raise ValueError(
+            logging.error(
                 "Configuration error: Only one of 'inline' content or 'container.image' "
                 "can be specified in the Beneric Scanner settings. "
                 "Both are currently configured, which is not allowed."

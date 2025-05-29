@@ -575,7 +575,26 @@
                                     }
                                 }
                             }
-                        }
+                        },
+                        "oneOf": [
+                            {
+                                "required": [
+                                    "inline"
+                                ]
+                            },
+                            {
+                                "required": [
+                                    "container"
+                                ],
+                                "properties": {
+                                    "container": {
+                                        "required": [
+                                            "type"
+                                        ]
+                                    }
+                                }
+                            }
+                        ]
                     },
                     {
                         "type": "object",

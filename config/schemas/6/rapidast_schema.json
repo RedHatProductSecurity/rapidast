@@ -589,7 +589,7 @@
                                 "properties": {
                                     "container": {
                                         "required": [
-                                            "type"
+                                            "image"
                                         ]
                                     }
                                 }

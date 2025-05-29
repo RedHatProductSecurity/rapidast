@@ -47,12 +47,13 @@ class Generic(RapidastScanner):
             raise ValueError(f"'scanners.{ident}' section not in config")
 
         dacite_config = dacite.Config(
+            strict=True,
             type_hooks={
                 # Dacite doesn't natively support enums, so we use `type_hooks` as a workaround
                 # to properly resolve enum values
                 # https://github.com/konradhalas/dacite/issues/61
                 ContainerType: ContainerType
-            }
+            },
         )
 
         self.cfg = dacite.from_dict(data_class=GenericConfig, data=generic_config_section, config=dacite_config)

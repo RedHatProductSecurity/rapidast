@@ -3,6 +3,7 @@ from dataclasses import field
 from typing import Any
 from typing import Dict
 
+
 @dataclass
 class GarakConfig:
     parameters: Dict[str, Any] = field(default_factory=dict)

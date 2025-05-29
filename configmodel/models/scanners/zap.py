@@ -1,14 +1,19 @@
+# pylint: disable=invalid-name
 import logging
-
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from dataclasses import field
 from enum import Enum
-from typing import Optional, List, Union
+from typing import List
+from typing import Optional
+from typing import Union
+
 
 class ImportUrlsFromFileType(str, Enum):
     HAR = "har"
     MODSEC2 = "modsec2"
     URL = "url"
     ZAP_MESSAGES = "zap_messages"
+
 
 @dataclass
 class ZapApis:
@@ -22,31 +27,37 @@ class ZapApis:
         if not (has_url or has_file):
             raise ValueError("No apiUrl or apiFile is defined in the config, in apiScan.apis")
 
+
 @dataclass
 class ZapApiScan:
     apis: ZapApis
+
 
 @dataclass
 class ZapImportUrlsFromFile:
     fileName: str
     type: ImportUrlsFromFileType = ImportUrlsFromFileType.URL
 
+
 @dataclass
 class ZapGraphql:
-    endpoint: Optional[str] =  None
-    schemaUrl: Optional[str] = None
-    schemaFile: Optional[str] = None
+    endpoint: Optional[str] = None  # pylint: disable=invalid-name
+    schemaUrl: Optional[str] = None  # pylint: disable=invalid-name
+    schemaFile: Optional[str] = None  # pylint: disable=invalid-name
+
 
 @dataclass
 class ZapSpider:
     pass
 
+
 @dataclass
 class ZapSpiderAjax:
-    maxDuration: Optional[int] = None
+    maxDuration: Optional[int] = None  # pylint: disable=invalid-name
     url: Optional[str] = None
-    browserId: Optional[str] = None
-    maxCrawlState: Optional[int] = None
+    browserId: Optional[str] = None  # pylint: disable=invalid-name
+    maxCrawlState: Optional[int] = None  # pylint: disable=invalid-name
+
 
 @dataclass
 class ReplacerRule:
@@ -58,23 +69,28 @@ class ReplacerRule:
     replacementString: Optional[str] = None
     tokenProcessing: Optional[bool] = None
 
+
 @dataclass
 class ReplacerParameters:
     deleteAllRules: Optional[bool] = None
+
 
 @dataclass
 class ZapReplacer:
     rules: Optional[List[ReplacerRule]] = field(default_factory=list)
     parameters: Optional[ReplacerParameters] = None
 
+
 @dataclass
 class ZapPassiveScan:
     disabledRules: Optional[str] = None
+
 
 @dataclass
 class ZapActiveScan:
     policy: Optional[str] = None
     maxRuleDurationInMins: Optional[int] = None
+
 
 @dataclass
 class ZapMiscOptions:
@@ -83,9 +99,11 @@ class ZapMiscOptions:
     updateAddons: Optional[bool] = None
     additionalAddons: Optional[str] = None
 
+
 @dataclass
 class ZapReport:
     format: Optional[Union[list[str], str]] = field(default_factory=list)
+
 
 @dataclass
 class ZapUrls:
@@ -94,7 +112,7 @@ class ZapUrls:
 
 
 @dataclass
-class ZapConfig:
+class ZapConfig:  # pylint: disable=R0902
     apiScan: Optional[ZapApiScan] = None
     importUrlsFromFile: Optional[ZapImportUrlsFromFile] = None
     graphql: Optional[ZapGraphql] = None
@@ -108,11 +126,10 @@ class ZapConfig:
     urls: Optional[ZapUrls] = None
 
     def __post_init__(self):
-        required_flags = ['apiScan', 'importUrlsFromFile', 'graphql', 'spider', 'spiderAjax']
+        required_flags = ["apiScan", "importUrlsFromFile", "graphql", "spider", "spiderAjax"]
         if not any(getattr(self, flag) for flag in required_flags):
-            error_msg = (
-                "ZAP Scanner requires at least one of the following to be enabled: "
-                + ", ".join(f"'{flag}'" for flag in required_flags)
+            error_msg = "ZAP Scanner requires at least one of the following to be enabled: " + ", ".join(
+                f"'{flag}'" for flag in required_flags
             )
             # @TODO: Consider raising an exception here
             # However, to maintain backward compatibility, we currently log an error instead

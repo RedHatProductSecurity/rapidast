@@ -14,7 +14,6 @@ from pathlib import Path
 import dacite
 import yaml
 
-from configmodel.models.general import AuthenticationType
 from configmodel.models.scanners.zap import ImportUrlsFromFileType
 from configmodel.models.scanners.zap import ZapConfig
 from scanners import RapidastScanner
@@ -76,7 +75,6 @@ class Zap(RapidastScanner):
                 # to properly resolve enum values
                 # https://github.com/konradhalas/dacite/issues/61
                 ImportUrlsFromFileType: ImportUrlsFromFileType,
-                AuthenticationType: AuthenticationType,
             }
         )
 

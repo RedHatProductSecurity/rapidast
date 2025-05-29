@@ -80,5 +80,4 @@ class TestValidateConfigSchema(unittest.TestCase):
 
             if os.path.isdir(file_path) or not filename.endswith(".yaml"):
                 continue
-            print(file_path)
             self.assertTrue(validate_config_schema(file_path))

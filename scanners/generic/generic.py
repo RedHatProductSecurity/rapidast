@@ -3,6 +3,10 @@ import os
 import pprint
 import shutil
 
+import dacite
+
+from configmodel.models.general import ContainerType
+from configmodel.models.scanners.generic import GenericConfig
 from scanners import RapidastScanner
 from scanners import State
 
@@ -37,6 +41,21 @@ class Generic(RapidastScanner):
 
         # The command to run (excluding the "container" layer)
         self.generic_cli = []
+
+        generic_config_section = config.subtree_to_dict(f"scanners.{ident}")
+        if generic_config_section is None:
+            raise ValueError(f"'scanners.{ident}' section not in config")
+
+        dacite_config = dacite.Config(
+            type_hooks={
+                # Dacite doesn't natively support enums, so we use `type_hooks` as a workaround
+                # to properly resolve enum values
+                # https://github.com/konradhalas/dacite/issues/61
+                ContainerType: ContainerType
+            }
+        )
+
+        self.cfg = dacite.from_dict(data_class=GenericConfig, data=generic_config_section, config=dacite_config)
 
     ###############################################################
     # PUBLIC METHODS                                              #

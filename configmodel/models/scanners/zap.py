@@ -41,9 +41,9 @@ class ZapImportUrlsFromFile:
 
 @dataclass
 class ZapGraphql:
-    endpoint: Optional[str] = None  # pylint: disable=invalid-name
-    schemaUrl: Optional[str] = None  # pylint: disable=invalid-name
-    schemaFile: Optional[str] = None  # pylint: disable=invalid-name
+    endpoint: Optional[str] = None
+    schemaUrl: Optional[str] = None
+    schemaFile: Optional[str] = None
 
 
 @dataclass
@@ -53,10 +53,10 @@ class ZapSpider:
 
 @dataclass
 class ZapSpiderAjax:
-    maxDuration: Optional[int] = None  # pylint: disable=invalid-name
+    maxDuration: Optional[int] = None
     url: Optional[str] = None
-    browserId: Optional[str] = None  # pylint: disable=invalid-name
-    maxCrawlState: Optional[int] = None  # pylint: disable=invalid-name
+    browserId: Optional[str] = None
+    maxCrawlState: Optional[int] = None
 
 
 @dataclass

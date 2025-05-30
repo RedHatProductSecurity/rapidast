@@ -1,13 +1,8 @@
 import json
 import logging
 import time
-from dataclasses import dataclass
-from dataclasses import field
 from os import listdir
 from os import path
-from typing import Any
-from typing import Dict
-from typing import List
 from typing import Optional
 
 import dacite
@@ -15,42 +10,11 @@ import requests.exceptions
 from py_nessus_pro import PyNessusPro
 
 from configmodel import RapidastConfigModel
+from configmodel.models.scanners.nessus import NessusConfig
 from scanners import RapidastScanner
 from scanners import State
 from scanners.authentication_factory import generic_authentication_factory
 from scanners.nessus.tools.convert_nessus_csv_to_sarif import convert_csv_to_sarif
-
-
-@dataclass
-class NessusAuthenticationConfig:
-    type: str
-    parameters: Dict[str, Any]
-
-
-@dataclass
-class NessusServerConfig:
-    url: str
-    username: str
-    password: str
-
-
-@dataclass
-class NessusScanConfig:
-    name: str
-    policy: str
-    targets: List[str]
-    folder: str = field(default="rapidast")
-    timeout: int = field(default=600)  # seconds
-
-    def targets_as_str(self) -> str:
-        return " ".join(self.targets)
-
-
-@dataclass
-class NessusConfig:
-    authentication: Optional[NessusAuthenticationConfig]
-    server: NessusServerConfig
-    scan: NessusScanConfig
 
 
 # XXX required by ./rapidast.py
@@ -71,7 +35,7 @@ class Nessus(RapidastScanner):
         self._scan_id: Optional[int] = None
         nessus_config_section = config.subtree_to_dict(f"scanners.{ident}")
         if nessus_config_section is None:
-            raise ValueError("'scanners.nessus' section not in config")
+            raise ValueError(f"'scanners.{ident}' section not in config")
 
         # XXX self.config is already a dict with raw config values
         self.cfg = dacite.from_dict(data_class=NessusConfig, data=nessus_config_section)

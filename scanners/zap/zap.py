@@ -11,8 +11,11 @@ from base64 import urlsafe_b64encode
 from collections import namedtuple
 from pathlib import Path
 
+import dacite
 import yaml
 
+from configmodel.models.scanners.zap import ImportUrlsFromFileType
+from configmodel.models.scanners.zap import ZapConfig
 from scanners import RapidastScanner
 from scanners.authentication_factory import generic_authentication_factory
 from scanners.downloaders import authenticated_download_with_rtoken
@@ -61,6 +64,21 @@ class Zap(RapidastScanner):
         # + scripts: where scripts are stored
         # + zaphomedir: a temporary location where policies and logs will be found
         self.path_map = None  # to be defined by the typed scanner
+
+        zap_config_section = config.subtree_to_dict(f"scanners.{ident}")
+        if zap_config_section is None:
+            raise ValueError(f"'scanners.{ident}' section not in config")
+
+        dacite_config = dacite.Config(
+            type_hooks={
+                # Dacite doesn't natively support enums, so we use `type_hooks` as a workaround
+                # to properly resolve enum values
+                # https://github.com/konradhalas/dacite/issues/61
+                ImportUrlsFromFileType: ImportUrlsFromFileType,
+            }
+        )
+
+        self.cfg = dacite.from_dict(data_class=ZapConfig, data=zap_config_section, config=dacite_config)
 
     ###############################################################
     # PUBLIC METHODS                                              #
@@ -393,17 +411,10 @@ class Zap(RapidastScanner):
             "parameters": {"fileName": f"{self.container_work_dir}/importUrls.txt"},
         }
 
-        types = ("har", "modsec2", "url", "zap_messages")
-
         source = ""  # Location of the import file on the host
 
         source = self.my_conf("importUrlsFromFile.fileName")
-        if not source:
-            raise ValueError("ZAP config error: importUrlsFromFile must have a `fileName` entry")
         job["parameters"]["type"] = self.my_conf("importUrlsFromFile.type", "url")
-
-        if not job["parameters"]["type"] in types:
-            raise ValueError(f"ZAP config error: importUrlsFromFile.type must be within {types}")
 
         self._include_file(source, job["parameters"]["fileName"])
         self.automation_config["jobs"].append(job)
@@ -481,8 +492,6 @@ class Zap(RapidastScanner):
             self._include_file(host_path=api_file, dest_in_container=container_openapi_file)
 
             openapi["parameters"]["apiFile"] = container_openapi_file
-        else:
-            raise ValueError("No apiUrl or apiFile is defined in the config, in apiScan.apis")
 
         # default target: main URL, or can be overridden in apiScan
         openapi["parameters"]["targetUrl"] = self._append_slash_to_url(
@@ -661,8 +670,6 @@ class Zap(RapidastScanner):
             raise ValueError("replacer must have a rule at least")
 
         delete_all_rules = self.my_conf("replacer.parameters.deleteAllRules", default=True)
-        if not isinstance(delete_all_rules, bool):
-            raise ValueError("replacer.parameters.deleteAllRules must be set to a Boolean value")
 
         # replacer schema
         replacer = {

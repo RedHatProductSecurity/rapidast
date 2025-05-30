@@ -3,16 +3,8 @@ from collections import namedtuple
 from unittest.mock import mock_open
 from unittest.mock import patch
 
-import pytest
-
-import configmodel
 from scanners import State
 from scanners.zap.zap_none import ZapNone
-
-
-@pytest.fixture(scope="function")
-def test_config():
-    return configmodel.RapidastConfigModel({"application": {"url": "http://example.com"}})
 
 
 @patch("scanners.zap.zap_none.platform.system")

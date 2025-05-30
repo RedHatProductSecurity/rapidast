@@ -7,7 +7,7 @@ from scanners.generic.generic_podman import GenericPodman
 
 @pytest.fixture(scope="function")
 def test_config():
-    return configmodel.RapidastConfigModel()
+    return configmodel.RapidastConfigModel({"application": {"url": "http://example.com"}, "scanners": {"generic": {}}})
 
 
 ## Basic test for generic ##

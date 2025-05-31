@@ -96,7 +96,7 @@ wheel==0.45.1
     #   shellingham
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==75.8.2
+setuptools==80.9.0
     # via
     #   cachetools
     #   calver

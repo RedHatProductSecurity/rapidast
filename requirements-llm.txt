@@ -339,7 +339,7 @@ octoai-sdk==0.10.1
     # via garak
 ollama==0.4.7
     # via garak
-openai==1.65.4
+openai==1.82.1
     # via
     #   garak
     #   litellm

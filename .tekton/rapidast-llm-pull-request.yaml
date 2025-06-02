@@ -44,6 +44,8 @@ spec:
               memory: 512Mi
             limits:
               memory: 4Gi
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-rapidast-llm
   workspaces:
   - name: git-auth
     secret:

@@ -14,6 +14,7 @@ from pathlib import Path
 import dacite
 import yaml
 
+from configmodel import deep_traverse_and_replace_with_var_content
 from configmodel.models.scanners.zap import ImportUrlsFromFileType
 from configmodel.models.scanners.zap import ZapConfig
 from scanners import RapidastScanner
@@ -77,8 +78,8 @@ class Zap(RapidastScanner):
                 ImportUrlsFromFileType: ImportUrlsFromFileType,
             }
         )
-
-        self.cfg = dacite.from_dict(data_class=ZapConfig, data=zap_config_section, config=dacite_config)
+        processed_data = deep_traverse_and_replace_with_var_content(zap_config_section)
+        self.cfg = dacite.from_dict(data_class=ZapConfig, data=processed_data, config=dacite_config)
 
     ###############################################################
     # PUBLIC METHODS                                              #

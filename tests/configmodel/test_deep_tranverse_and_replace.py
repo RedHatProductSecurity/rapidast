@@ -2,7 +2,7 @@ import os
 import unittest
 from unittest.mock import patch
 
-from rapidast import deep_traverse_and_replace_with_var_content
+from configmodel import deep_traverse_and_replace_with_var_content
 
 
 class TestDeepTraverseAndReplace(unittest.TestCase):
@@ -52,3 +52,42 @@ class TestDeepTraverseAndReplace(unittest.TestCase):
         result = deep_traverse_and_replace_with_var_content(input_dict)
 
         self.assertEqual(result, expected)
+
+    @patch.dict(os.environ, {"TEST_VAR": "value_from_env"})
+    def test_original_value_prevents_overwrite(self):
+
+        original_value = "existing_truthy_value"
+        input_dict = {
+            "myKey": original_value,
+            "myKey_from_var": "TEST_VAR"
+        }
+
+        result = deep_traverse_and_replace_with_var_content(input_dict)
+
+        self.assertIn("myKey", result)
+        self.assertEqual(result["myKey"], original_value)
+        self.assertIn("myKey_from_var", result)
+
+        data_none = {"key_none": None, "key_none_from_var": "TEST_ENV_VAR"}
+        result = deep_traverse_and_replace_with_var_content(data_none)
+        self.assertEqual(result["key_none"], None)
+        self.assertIn("key_none_from_var", result)
+
+        data_empty_str = {"key_empty": "", "key_empty_from_var": "TEST_ENV_VAR"}
+        result = deep_traverse_and_replace_with_var_content(data_empty_str)
+        self.assertEqual(result["key_empty"], "")
+        self.assertIn("key_empty_from_var", result)
+
+    def test_key_error_pass_and_env_var_not_found(self):
+        """
+        Verifies that if `new_key` is missing AND the environment variable is not found,
+        the KeyError is caught (allowing pass), and then the logging.error is triggered.
+        """
+        data = {
+            "non_existent_key_from_var": "NON_EXISTENT_ENV_VAR"
+        }
+
+        result = deep_traverse_and_replace_with_var_content(data)
+
+        self.assertNotIn("non_existent_key", result)
+        self.assertIn("non_existent_key_from_var", result)

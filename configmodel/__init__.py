@@ -2,7 +2,8 @@ import copy
 import logging
 import os
 from pprint import pformat
-from typing import Dict, Any
+from typing import Any
+from typing import Dict
 
 
 class RapidastConfigModel:
@@ -298,6 +299,7 @@ def deep_dict_merge(dest, merge, preserve=False):
         elif not preserve:
             dest[key] = copy.deepcopy(val)
     return dest
+
 
 def deep_traverse_and_replace_with_var_content(d: dict) -> dict:  # pylint: disable=C0103
     """

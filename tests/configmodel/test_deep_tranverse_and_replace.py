@@ -55,12 +55,8 @@ class TestDeepTraverseAndReplace(unittest.TestCase):
 
     @patch.dict(os.environ, {"TEST_VAR": "value_from_env"})
     def test_original_value_prevents_overwrite(self):
-
         original_value = "existing_truthy_value"
-        input_dict = {
-            "myKey": original_value,
-            "myKey_from_var": "TEST_VAR"
-        }
+        input_dict = {"myKey": original_value, "myKey_from_var": "TEST_VAR"}
 
         result = deep_traverse_and_replace_with_var_content(input_dict)
 
@@ -83,9 +79,7 @@ class TestDeepTraverseAndReplace(unittest.TestCase):
         Verifies that if `new_key` is missing AND the environment variable is not found,
         the KeyError is caught (allowing pass), and then the logging.error is triggered.
         """
-        data = {
-            "non_existent_key_from_var": "NON_EXISTENT_ENV_VAR"
-        }
+        data = {"non_existent_key_from_var": "NON_EXISTENT_ENV_VAR"}
 
         result = deep_traverse_and_replace_with_var_content(data)
 

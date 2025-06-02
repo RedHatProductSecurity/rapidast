@@ -37,9 +37,9 @@ class TestZapReplacer:
     def test_to_rules_dict_list_excludes_none(self):
         data = {
             "rules": [
-                {"description": "rule1", "matchRegex": True, "tokenProcessing": False},
-                {"description": "rule2", "tokenProcessing": True},
-                {"description": "rule3", "matchRegex": False},
+                {"matchRegex": True, "tokenProcessing": False},
+                {"tokenProcessing": True},
+                {"matchRegex": False},
             ]
         }
         instance = from_dict(data_class=ZapReplacer, data=data, config=DACITE_TEST_CONFIG)

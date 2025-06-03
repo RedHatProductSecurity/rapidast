@@ -2,6 +2,8 @@ import copy
 import logging
 import os
 from pprint import pformat
+from typing import Any
+from typing import Dict
 
 
 class RapidastConfigModel:
@@ -297,3 +299,44 @@ def deep_dict_merge(dest, merge, preserve=False):
         elif not preserve:
             dest[key] = copy.deepcopy(val)
     return dest
+
+
+def deep_traverse_and_replace_with_var_content(d: dict) -> dict:  # pylint: disable=C0103
+    """
+    Recursively traverse a dictionary and replace key-value pairs where the key ends with `_from_var`
+    The value is replaced with the corresponding environment variable value if available.
+    Existing truthy values for the base key will not be overwritten.
+    """
+    suffix = "_from_var"
+    keys_to_replace = [key for key in d if isinstance(key, str) and key.endswith(suffix)]
+
+    for key in keys_to_replace:
+        new_key = key[: -len(suffix)]
+
+        try:
+            if new_key in d:
+                continue
+        except KeyError:
+            pass
+
+        try:
+            env_value = os.environ[d[key]]
+            d[new_key] = env_value
+            del d[key]
+        except KeyError:
+            logging.error(
+                f"""
+                Environment variable '{d[key]}' referenced by key '{key}' could not be found.
+                No configuration replacement will be made for this key. Please check your configuration and environment"
+                """
+            )
+
+    for key, value in d.items():
+        if isinstance(value, dict):
+            deep_traverse_and_replace_with_var_content(value)
+        elif isinstance(value, list):
+            for i, item in enumerate(value):
+                if isinstance(item, dict):
+                    value[i] = deep_traverse_and_replace_with_var_content(item)
+
+    return d

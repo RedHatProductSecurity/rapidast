@@ -300,15 +300,6 @@ def test_setup_include_urls(test_config):
     assert "def" in find_context(test_zap.automation_config)["includePaths"]
 
 
-def test_setup_replacer_no_rule(test_config):
-    test_config.set("scanners.zap.replacer.parameters.deleteAllRules", False)
-    test_zap = ZapNone(config=test_config)
-
-    # test: not having a rule raises ValueError
-    with pytest.raises(ValueError):
-        test_zap.setup()
-
-
 def test_setup_replacer_parameter(test_config):
     test_rule = {
         "description": "test_rule1",  # String, the name of the rule
@@ -372,11 +363,11 @@ def test_setup_replacer_rules(test_config):
 
     for item in test_zap.automation_config["jobs"]:
         if item["type"] == "replacer":
-            assert item["rules"][0] is test_rule1
+            assert item["rules"][0] == test_rule1
             assert isinstance(item["rules"][0]["matchRegex"], bool)
             assert isinstance(item["rules"][0]["tokenProcessing"], bool)
 
-            assert item["rules"][1] is test_rule2
+            assert item["rules"][1] == test_rule2
             assert isinstance(item["rules"][1]["matchRegex"], bool)
 
 

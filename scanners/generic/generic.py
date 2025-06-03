@@ -5,6 +5,7 @@ import shutil
 
 import dacite
 
+from configmodel import deep_traverse_and_replace_with_var_content
 from configmodel.models.general import ContainerType
 from configmodel.models.scanners.generic import GenericConfig
 from scanners import RapidastScanner
@@ -55,8 +56,8 @@ class Generic(RapidastScanner):
                 ContainerType: ContainerType
             },
         )
-
-        self.cfg = dacite.from_dict(data_class=GenericConfig, data=generic_config_section, config=dacite_config)
+        processed_data = deep_traverse_and_replace_with_var_content(generic_config_section)
+        self.cfg = dacite.from_dict(data_class=GenericConfig, data=processed_data, config=dacite_config)
 
     ###############################################################
     # PUBLIC METHODS                                              #

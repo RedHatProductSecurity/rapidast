@@ -14,6 +14,7 @@ from pathlib import Path
 import dacite
 import yaml
 
+from configmodel import deep_traverse_and_replace_with_var_content
 from configmodel.models.scanners.zap import ImportUrlsFromFileType
 from configmodel.models.scanners.zap import ZapConfig
 from scanners import RapidastScanner
@@ -77,8 +78,8 @@ class Zap(RapidastScanner):
                 ImportUrlsFromFileType: ImportUrlsFromFileType,
             }
         )
-
-        self.cfg = dacite.from_dict(data_class=ZapConfig, data=zap_config_section, config=dacite_config)
+        processed_data = deep_traverse_and_replace_with_var_content(zap_config_section)
+        self.cfg = dacite.from_dict(data_class=ZapConfig, data=processed_data, config=dacite_config)
 
     ###############################################################
     # PUBLIC METHODS                                              #
@@ -649,35 +650,16 @@ class Zap(RapidastScanner):
     def _setup_replacer(self):
         """Adds the replacer to the job list"""
 
-        def _validate_rule_boolean_values(rule):
-            if not isinstance(rule["matchRegex"], bool):
-                raise ValueError("The matchRegex in the replacer rule must be set to a Boolean value")
-
-            if "tokenProcessing" in rule and not isinstance(rule["tokenProcessing"], bool):
-                raise ValueError("The tokenProcessing in the replacer rule must be set to a Boolean value")
-
-        if not self.my_conf("replacer"):
+        if not self.cfg.replacer:
             return
 
-        rules = self.my_conf("replacer.rules")
-        if rules:
-            if not isinstance(rules, list):
-                raise ValueError("replacer.rules must be a list")
-
-            for item in rules:
-                _validate_rule_boolean_values(item)
-        else:
-            raise ValueError("replacer must have a rule at least")
-
-        delete_all_rules = self.my_conf("replacer.parameters.deleteAllRules", default=True)
+        rules = self.cfg.replacer.to_rules_dict_list()
 
         # replacer schema
         replacer = {
             "name": "replacer",
             "type": "replacer",
-            "parameters": {
-                "deleteAllRules": delete_all_rules,
-            },
+            "parameters": {"deleteAllRules": self.cfg.replacer.parameters.deleteAllRules},
             "rules": rules,
         }
 

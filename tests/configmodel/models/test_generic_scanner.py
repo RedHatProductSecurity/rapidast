@@ -1,6 +1,5 @@
 import logging
 
-from configmodel.models.general import ContainerType
 from configmodel.models.scanners.generic import GenericConfig
 from configmodel.models.scanners.generic import GenericContainer
 from configmodel.models.scanners.generic import GenericContainerParameters

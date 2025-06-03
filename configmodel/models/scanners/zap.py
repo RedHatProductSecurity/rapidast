@@ -1,8 +1,11 @@
 # pylint: disable=invalid-name
 import logging
+from dataclasses import asdict
 from dataclasses import dataclass
 from dataclasses import field
 from enum import Enum
+from typing import Any
+from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Union
@@ -72,13 +75,31 @@ class ReplacerRule:
 
 @dataclass
 class ReplacerParameters:
-    deleteAllRules: Optional[bool] = None
+    deleteAllRules: Optional[bool] = True
 
 
 @dataclass
 class ZapReplacer:
-    rules: Optional[List[ReplacerRule]] = field(default_factory=list)
-    parameters: Optional[ReplacerParameters] = None
+    rules: List[ReplacerRule] = field(default_factory=list)
+    parameters: Optional[ReplacerParameters] = field(default_factory=ReplacerParameters)
+
+    def __post_init__(self):
+        if not self.rules:
+            raise ValueError("replacer must have a rule at least")
+
+    def to_rules_dict_list(self) -> List[Dict[str, Any]]:
+        """
+        Converts the list of ReplacerRule objects into a list of dictionaries,
+        excluding keys with None values. This format is required by the ZAP
+        automation framework for replacer rules
+        """
+        result_list = []
+        for rule_obj in self.rules:
+            rule_dict = asdict(rule_obj)
+            # Filter out keys where the value is None
+            filtered_dict = {k: v for k, v in rule_dict.items() if v is not None}
+            result_list.append(filtered_dict)
+        return result_list
 
 
 @dataclass

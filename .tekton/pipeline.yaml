@@ -331,6 +331,8 @@ spec:
       - "false"
   - name: sast-unicode-check
     params:
+    - name: image-digest
+      value: $(tasks.build-image-index.results.IMAGE_DIGEST)
     - name: image-url
       value: $(tasks.build-image-index.results.IMAGE_URL)
     - name: SOURCE_ARTIFACT
@@ -344,7 +346,7 @@ spec:
       - name: name
         value: sast-unicode-check-oci-ta
       - name: bundle
-        value: quay.io/konflux-ci/tekton-catalog/task-sast-unicode-check-oci-ta:0.1@sha256:a8e5bec59687de42b77c579e931827de755623244a2c006701b4f9e08a3713b1
+        value: quay.io/konflux-ci/tekton-catalog/task-sast-unicode-check-oci-ta:0.2@sha256:54d50169b4860b90d38d41b00a973489b1db83612ae4aa40f1bdf0a151bff80d
       - name: kind
         value: task
       resolver: bundles
@@ -371,7 +373,7 @@ spec:
       - name: name
         value: sast-shell-check-oci-ta
       - name: bundle
-        value: quay.io/konflux-ci/tekton-catalog/task-sast-shell-check-oci-ta:0.1@sha256:b1b78cb0b9eb6b6e333b35f90db182d4e86ef8e93acb4f3450dd1ad88ea3fab2
+        value: quay.io/konflux-ci/tekton-catalog/task-sast-shell-check-oci-ta:0.1@sha256:57b3262138eb06186ae7375f84ca53788bba2a66cfd03d39cb82c78df050aba5
       - name: kind
         value: task
       resolver: bundles
@@ -400,6 +402,8 @@ spec:
       - "false"
   - name: sast-coverity-check
     params:
+    - name: image-digest
+      value: $(tasks.build-image-index.results.IMAGE_DIGEST)
     - name: image-url
       value: $(tasks.build-image-index.results.IMAGE_URL)
     - name: IMAGE
@@ -432,7 +436,7 @@ spec:
       - name: name
         value: sast-coverity-check-oci-ta
       - name: bundle
-        value: quay.io/konflux-ci/tekton-catalog/task-sast-coverity-check-oci-ta:0.2@sha256:61a4b5afd0c49cd999fbe60b36e2d92750c7fb337942015929b3d3f393e3bde5
+        value: quay.io/konflux-ci/tekton-catalog/task-sast-coverity-check-oci-ta:0.3@sha256:87af64576088ba68f2a5b89998b7ae9e92d7e4f039274e4be6000eff6ce0d95d
       - name: kind
         value: task
       resolver: bundles
@@ -463,7 +467,7 @@ spec:
       - name: name
         value: sast-snyk-check-oci-ta
       - name: bundle
-        value: quay.io/konflux-ci/tekton-catalog/task-sast-snyk-check-oci-ta:0.3@sha256:6673cbd19e4f1872dd194c91d0b1fe14cacd3768050f6516d3888f660e0732de
+        value: quay.io/konflux-ci/tekton-catalog/task-sast-snyk-check-oci-ta:0.4@sha256:6078ec8ec7caacbb8203138fcaa63db24e88dbf838544340bb0752d5b69f20ae
       - name: kind
         value: task
       resolver: bundles

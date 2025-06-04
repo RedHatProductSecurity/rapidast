@@ -30,6 +30,8 @@ spec:
     value: containerize/Containerfile
   - name: skip-checks
     value: "true"
+  - name: rebuild
+    value: "true"
   - name: prefetch-input
     value:
     - {"type": "generic", "path": "."}

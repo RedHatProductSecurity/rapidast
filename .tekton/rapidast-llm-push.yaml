@@ -27,6 +27,8 @@ spec:
     value: quay.io/redhatproductsecurity/rapidast-llm:{{revision}}
   - name: dockerfile
     value: containerize/Containerfile.garak
+  - name: rebuild
+    value: "true"
   - name: build-args
     value:
     - PREFETCH=false

@@ -31,6 +31,8 @@ spec:
     value: containerize/Containerfile.garak
   - name: skip-checks
     value: "true"
+  - name: rebuild
+    value: "true"
   - name: build-args
     value:
     - PREFETCH=false

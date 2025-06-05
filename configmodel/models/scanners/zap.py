@@ -118,7 +118,7 @@ class ZapMiscOptions:
     overrideConfigs: Optional[List[str]] = field(default_factory=list)
     memMaxHeap: Optional[str] = None
     updateAddons: Optional[bool] = None
-    additionalAddons: Optional[str] = None
+    additionalAddons: Optional[Union[str, List[str]]] = field(default_factory=list)
 
 
 @dataclass

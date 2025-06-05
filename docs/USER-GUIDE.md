@@ -192,6 +192,49 @@ This method uses firefox in the background to load a login page and fill in user
     - `loggedInRegex`: Regex pattern used to identify Logged in messages (default: `\\Q 200 OK\\`)
     - `loggedOutRegex`: Regex pattern used to identify Logged Out messages (default: `\\Q 403 Forbidden\\`)
 
+### False Positive Removal
+
+This feature enables you to refine your RapiDAST consolidated report (`rapidast-scan-results.sarif`) by automatically filtering out unwanted SARIF findings. This is achieved using Common Expression Language (CEL) rules.
+
+#### How it Works:
+
+CEL is a powerful expression language. You define conditions using CEL expressions that, when evaluated as `true` for a specific SARIF finding, will cause that finding to be marked as a "false positive" and excluded from the final report (`rapidast-filtered-scan-results.sarif`).
+
+Each filtering rule you define will operate on a single SARIF `result` (i.e., a single finding). If any of your defined cel_expression rules evaluates to `true` for a given finding, that finding will be filtered out. In essence, the rules are evaluated with an OR logic.
+
+#### Available Data for Expressions
+Inside your CEL expressions, you can access various properties of a SARIF `result` object (which represents a single finding). Here are some commonly used properties:
+
+- `.result.ruleId`: The ID of the rule that generated the finding (e.g., "DAST-1234-KnownFP")
+- `.result.message.text`: The text content of the finding's message
+- `.result.locations[0].physicalLocation.artifactLocation.uri`: The URI of the file where the finding was located
+- `.result.level`: The severity level of the finding (e.g., "error", "warning", "note")
+
+#### Basic Syntax
+- Equality: `.result.ruleId == "DAST-1234-KnownFP"`
+- String Matching: `.result.message.text.contains('sensitive data')`
+- Logical AND/OR: `.result.ruleId == 'DAST-1234-KnownFP' && result.level == 'warning'`
+- List Membership: `.result.ruleId in ["DAST-1234-KnownFP", "DAST-5678-KnownF"]`
+
+
+Here's an example of how you might define a rule in your configuration file:
+
+```
+config:
+  false_positive_filtering:
+    enabled: True # Set to 'False' to temporarily disable all false positive filtering, while keeping your defined rules for future use
+    rules:
+      - name: "Exclude findings on admin paths"
+        description: "This rule filters out any findings located on URLs that start with 'https://admin.example.com'"
+        cel_expression: 'result.locations.exists(loc, loc.physicalLocation.artifactLocation.uri.startsWith("https://admin.example.com"))'
+      - name: "Exclude a specific known false positive rule ID"
+        description: "Filters out findings with the exact rule ID 'DAST-1234-KnownFP'. This is ideal for specific findings that your security team has already reviewed and confirmed as not exploitable or irrelevant"
+        cel_expression: 'result.ruleId == "DAST-1234-KnownFP"'
+      - name: "Exclude findings related to HTTP 308 redirects"
+        description: "This rule removes findings where the web response's status code is 308 (Permanent Redirect). Such redirects might be expected behavior and not indicative of a true vulnerability"
+        cel_expression: 'result.webResponse.statusCode == 308'
+```
+
 ### MacOS
 
 RapiDAST supports executing scanners like [ZAP] on the MacOS host directly only.

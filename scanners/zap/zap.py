@@ -24,7 +24,6 @@ from scanners.downloaders import oauth2_get_token_from_rtoken
 
 CLASSNAME = "Zap"
 
-
 pp = pprint.PrettyPrinter(indent=4)
 
 # Helper: absolute path to this directory (which is not the current directory)
@@ -78,6 +77,7 @@ class Zap(RapidastScanner):
                 ImportUrlsFromFileType: ImportUrlsFromFileType,
             }
         )
+
         processed_data = deep_traverse_and_replace_with_var_content(zap_config_section)
         self.cfg = dacite.from_dict(data_class=ZapConfig, data=processed_data, config=dacite_config)
 
@@ -164,7 +164,15 @@ class Zap(RapidastScanner):
     def get_update_command(self):
         """Returns a list of all options required to update ZAP plugins"""
 
-        if not (self.my_conf("miscOptions.updateAddons") or self.my_conf("miscOptions.additionalAddons")):
+        misc_options = self.cfg.miscOptions
+
+        if misc_options is None:
+            return []
+
+        update_addons = getattr(misc_options, "updateAddons", False)
+        additional_addons = getattr(misc_options, "additionalAddons", False)
+
+        if not (update_addons or additional_addons):
             return []
 
         command = [
@@ -172,18 +180,16 @@ class Zap(RapidastScanner):
             *self._get_standard_options(),
             "-cmd",
         ]
-        if self.my_conf("miscOptions.updateAddons"):
+        if update_addons:
             command.append("-addonupdate")
 
-        addons = self.my_conf("miscOptions.additionalAddons", default=[])
-        if isinstance(addons, str):
-            addons = addons.split(",") if len(addons) else []
-        if not isinstance(addons, list):
-            logging.warning("miscOptions.additionalAddons MUST be either a list or a string of comma-separated values")
-            addons = []
+        if additional_addons:
+            addons = additional_addons
+            if isinstance(addons, str):
+                addons = addons.split(",") if len(addons) else []
 
-        for addon in addons:
-            command.extend(["-addoninstall", addon])
+            for addon in addons:
+                command.extend(["-addoninstall", addon])
 
         return command
 

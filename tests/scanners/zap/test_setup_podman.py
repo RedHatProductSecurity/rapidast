@@ -199,3 +199,15 @@ def test_podman_handling_plugins(test_config):
         "pluginB",
     ]
     assert shell == assert_shell
+
+    # additionalAddons As list
+    test_config.set("scanners.zap.miscOptions.additionalAddons", ["pluginA", "pluginB"])
+    test_zap = ZapPodman(config=test_config)
+    assert "pluginA" in test_zap.get_update_command()
+    assert "pluginB" in test_zap.get_update_command()
+
+    # no additionalAddons
+    test_config.delete("scanners.zap.miscOptions.additionalAddons")
+    test_zap = ZapPodman(config=test_config)
+    print(test_zap.get_update_command())
+    assert "-addoninstall" not in test_zap.get_update_command()

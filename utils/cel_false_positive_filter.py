@@ -1,12 +1,15 @@
 import copy
-import celpy
 import logging
+from typing import Any
+from typing import Dict
+from typing import Optional
 
-from typing import Optional, Dict, Any
+import celpy
 
 from configmodel.models.false_positive_filtering import FalsePositiveFiltering
 
 logger = logging.getLogger(f"{__name__}")
+
 
 class CELFalsePositiveFilter:
     def __init__(self, config: FalsePositiveFiltering):
@@ -18,7 +21,9 @@ class CELFalsePositiveFilter:
             try:
                 self.compiled_cel_program = self._compile_combined_cel_expression()
             except Exception as e:  # pylint: disable=W0718
-                logger.warning(f"Failed to compile CEL filter expressions. False positive filtering will be disabled. Error: {e}")
+                logger.warning(
+                    f"Failed to compile CEL filter expressions. False positive filtering will be disabled. Error: {e}"
+                )
                 self.config.enabled = False
 
         # cel-python loggers are very verbose at the INFO level.
@@ -73,41 +78,63 @@ class CELFalsePositiveFilter:
 
             return bool(is_fp)
         except Exception as e:  # pylint: disable=W0718
-            logger.warning(f"Error evaluating CEL expression for result (ruleId: {sarif_result.get('ruleId', 'N/A')}): {e}. Treating as NOT a false positive")
+            logger.warning(
+                f"""
+                Error evaluating CEL expression for result (ruleId: {sarif_result.get('ruleId', 'N/A')}): {e}.
+                Treating as NOT a false positive
+                """
+            )
             return False
 
     def filter_sarif_results(self, sarif_data: Dict[str, Any]) -> Dict[str, Any]:
         if not self.config.enabled or not self.config.rules or self.compiled_cel_program is None:
-            logger.info("False positive filtering is disabled or no rules are configured/compiled. Returning original SARIF data.")
+            logger.info(
+                """
+                False positive filtering is disabled or no rules are
+                configured/compiled. Returning original SARIF data
+                """
+            )
             return sarif_data
 
         filtered_sarif_data = copy.deepcopy(sarif_data)
 
-        if not filtered_sarif_data.get('runs'):
+        if not filtered_sarif_data.get("runs"):
             logger.warning("SARIF data has no 'runs' array. Nothing to filter. Returning original data.")
             return sarif_data
 
         total_original_results = 0
         total_filtered_results = 0
 
-        for run_index, run in enumerate(filtered_sarif_data['runs']):
-            original_run_results = run.get('results', [])
+        for run_index, run in enumerate(filtered_sarif_data["runs"]):
+            original_run_results = run.get("results", [])
             total_original_results += len(original_run_results)
 
             filtered_run_results = []
 
-            logger.info(f"Filtering results for run {run_index+1}/{len(filtered_sarif_data['runs'])}. Original results in this run: {len(original_run_results)}")
+            logger.info(
+                f"""
+                Filtering results for run {run_index+1}/{len(filtered_sarif_data['runs'])}.
+                Original results in this run: {len(original_run_results)}
+                """
+            )
 
             for sarif_result in original_run_results:
                 if not self.is_false_positive(sarif_result):
                     filtered_run_results.append(sarif_result)
                 else:
-                    rule_id = sarif_result.get('ruleId', 'N/A')
-                    level = sarif_result.get('level', 'N/A')
-                    logger.debug(f"Filtered out SARIF result in run {run_index+1}: Rule ID '{rule_id}', Level '{level}'")
+                    rule_id = sarif_result.get("ruleId", "N/A")
+                    level = sarif_result.get("level", "N/A")
+                    logger.debug(
+                        f"Filtered out SARIF result in run {run_index+1}: Rule ID '{rule_id}', Level '{level}'"
+                    )
 
-            run['results'] = filtered_run_results
+            run["results"] = filtered_run_results
             total_filtered_results += len(filtered_run_results)
 
-        logger.info(f"False positive filtering complete. Total original results: {total_original_results}. Total filtered results: {total_filtered_results}")
+        logger.info(
+            f"""
+            False positive filtering complete. Total original results: {total_original_results}.
+            Total filtered results: {total_filtered_results}
+            """
+        )
         return filtered_sarif_data

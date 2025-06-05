@@ -1,12 +1,14 @@
-import tempfile
-import pytest
-import json
-from unittest.mock import mock_open
 import copy
+import json
 import os
+import tempfile
+from unittest.mock import mock_open
 
+import pytest
+
+from configmodel.models.false_positive_filtering import FalsePositiveFiltering
+from configmodel.models.false_positive_filtering import FalsePositiveRule
 from rapidast import filter_sarif_report
-from configmodel.models.false_positive_filtering import FalsePositiveFiltering, FalsePositiveRule
 
 
 @pytest.fixture
@@ -19,12 +21,31 @@ def sample_sarif_data_single_run():
             {
                 "tool": {"driver": {"name": "TestScanner"}},
                 "results": [
-                    {"ruleId": "CWE-79", "level": "error", "message": {"text": "Kept finding."}, "locations": [{"physicalLocation": {"artifactLocation": {"uri": "https://www.example.com/app/index.html"}}}]},
-                    {"ruleId": "DAST-1234-KnownFP", "level": "warning", "message": {"text": "False positive finding."}, "locations": [{"physicalLocation": {"artifactLocation": {"uri": "https://www.example.com/app/test.php"}}}]}
-                ]
+                    {
+                        "ruleId": "CWE-79",
+                        "level": "error",
+                        "message": {"text": "Kept finding."},
+                        "locations": [
+                            {
+                                "physicalLocation": {
+                                    "artifactLocation": {"uri": "https://www.example.com/app/index.html"}
+                                }
+                            }
+                        ],
+                    },
+                    {
+                        "ruleId": "DAST-1234-KnownFP",
+                        "level": "warning",
+                        "message": {"text": "False positive finding."},
+                        "locations": [
+                            {"physicalLocation": {"artifactLocation": {"uri": "https://www.example.com/app/test.php"}}}
+                        ],
+                    },
+                ],
             }
-        ]
+        ],
     }
+
 
 @pytest.fixture
 def fp_config_to_filter_fp_rule_id():
@@ -32,28 +53,24 @@ def fp_config_to_filter_fp_rule_id():
     return FalsePositiveFiltering(
         enabled=True,
         rules=[
-            FalsePositiveRule(
-                name="Exclude known FP ruleId",
-                cel_expression='result.ruleId == "DAST-1234-KnownFP"'
-            )
-        ]
+            FalsePositiveRule(name="Exclude known FP ruleId", cel_expression='result.ruleId == "DAST-1234-KnownFP"')
+        ],
     )
+
 
 @pytest.fixture
 def fp_config_no_rules():
     """FalsePositiveFiltering config with no rules"""
     return FalsePositiveFiltering(enabled=True, rules=[])
 
+
 @pytest.fixture
 def fp_config_disabled():
     """FalsePositiveFiltering config with filtering disabled"""
-    return FalsePositiveFiltering(enabled=False, rules=[
-        FalsePositiveRule(name="Some rule", cel_expression='true')
-    ])
+    return FalsePositiveFiltering(enabled=False, rules=[FalsePositiveRule(name="Some rule", cel_expression="true")])
 
 
 class TestFilterSarifReport:
-
     def test_filter_sarif_report_success(
         self,
         sample_sarif_data_single_run,
@@ -63,18 +80,20 @@ class TestFilterSarifReport:
         Tests successful filtering and saving of a SARIF report
         """
 
-        with tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix=".sarif", encoding="utf-8") as temp_input_file:
+        with tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=".sarif", encoding="utf-8") as temp_input_file:
             json.dump(sample_sarif_data_single_run, temp_input_file)
             temp_input_file_path = temp_input_file.name
 
-        with tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix=".sarif", encoding="utf-8") as temp_output_file:
+        with tempfile.NamedTemporaryFile(
+            mode="w+", delete=False, suffix=".sarif", encoding="utf-8"
+        ) as temp_output_file:
             temp_output_file_path = temp_output_file.name
 
         try:
             filter_sarif_report(
                 input_report_path=temp_input_file_path,
                 output_report_path=temp_output_file_path,
-                fp_filter_config=fp_config_to_filter_fp_rule_id
+                fp_filter_config=fp_config_to_filter_fp_rule_id,
             )
 
             with open(temp_output_file_path, "r", encoding="utf-8") as f:
@@ -82,9 +101,7 @@ class TestFilterSarifReport:
             loaded_written_content = json.loads(written_content)
 
             expected_filtered_data = copy.deepcopy(sample_sarif_data_single_run)
-            expected_filtered_data['runs'][0]['results'] = [
-                sample_sarif_data_single_run['runs'][0]['results'][0]
-            ]
+            expected_filtered_data["runs"][0]["results"] = [sample_sarif_data_single_run["runs"][0]["results"][0]]
 
             assert loaded_written_content == expected_filtered_data
 
@@ -106,15 +123,14 @@ class TestFilterSarifReport:
         mock_input_path = "non_existent_input.sarif"
         mock_output_path = "output.sarif"
 
-        mocker.patch('os.path.exists', return_value=False)
+        mocker.patch("os.path.exists", return_value=False)
 
         with pytest.raises(FileNotFoundError):
             filter_sarif_report(
                 input_report_path=mock_input_path,
                 output_report_path=mock_output_path,
-                fp_filter_config=fp_config_to_filter_fp_rule_id
+                fp_filter_config=fp_config_to_filter_fp_rule_id,
             )
-
 
     def test_filter_sarif_report_invalid_json(
         self,
@@ -129,17 +145,16 @@ class TestFilterSarifReport:
         mock_output_path = "output.sarif"
         invalid_json_content = "{This is not valid json"
 
-        mocker.patch('os.path.exists', return_value=True)
+        mocker.patch("os.path.exists", return_value=True)
 
-        mocker.patch('builtins.open', mock_open(read_data=invalid_json_content))
+        mocker.patch("builtins.open", mock_open(read_data=invalid_json_content))
 
         with pytest.raises(json.JSONDecodeError):
             filter_sarif_report(
                 input_report_path=mock_input_path,
                 output_report_path=mock_output_path,
-                fp_filter_config=fp_config_to_filter_fp_rule_id
+                fp_filter_config=fp_config_to_filter_fp_rule_id,
             )
-
 
     def test_filter_sarif_report_output_io_error(
         self,
@@ -154,22 +169,24 @@ class TestFilterSarifReport:
         mock_input_path = "input.sarif"
         mock_output_path = "/nonexistent/path/to/output.sarif"
 
-        mocker.patch('os.path.exists', return_value=True)
+        mocker.patch("os.path.exists", return_value=True)
 
         mock_read_file = mock_open(read_data=json.dumps(sample_sarif_data_single_run))
 
         def mock_open_side_effect(file, mode, **kwargs):
-            if mode == 'r': return mock_read_file.return_value
-            elif mode == 'w': raise IOError("Permission denied")
+            if mode == "r":
+                return mock_read_file.return_value
+            elif mode == "w":
+                raise IOError("Permission denied")
             raise ValueError(f"Unexpected mode: {mode}")
 
-        mocker.patch('builtins.open', side_effect=mock_open_side_effect)
+        mocker.patch("builtins.open", side_effect=mock_open_side_effect)
 
         with pytest.raises(IOError):
             filter_sarif_report(
                 input_report_path=mock_input_path,
                 output_report_path=mock_output_path,
-                fp_filter_config=fp_config_to_filter_fp_rule_id
+                fp_filter_config=fp_config_to_filter_fp_rule_id,
             )
 
     def test_filter_sarif_report_filtering_disabled(
@@ -185,21 +202,21 @@ class TestFilterSarifReport:
         mock_input_path = "input.sarif"
         mock_output_path = "output_disabled.sarif"
 
-        mocker.patch('os.path.exists', return_value=True)
+        mocker.patch("os.path.exists", return_value=True)
         mock_read_file = mock_open(read_data=json.dumps(sample_sarif_data_single_run))
         mock_write_file = mock_open()
 
         def mock_open_side_effect(file, mode, **kwargs):
-            if mode == 'r': return mock_read_file.return_value
-            elif mode == 'w': return mock_write_file.return_value
+            if mode == "r":
+                return mock_read_file.return_value
+            elif mode == "w":
+                return mock_write_file.return_value
             raise ValueError(f"Unexpected mode: {mode}")
 
-        mocker.patch('builtins.open', side_effect=mock_open_side_effect)
+        mocker.patch("builtins.open", side_effect=mock_open_side_effect)
 
         filter_sarif_report(
-            input_report_path=mock_input_path,
-            output_report_path=mock_output_path,
-            fp_filter_config=fp_config_disabled
+            input_report_path=mock_input_path, output_report_path=mock_output_path, fp_filter_config=fp_config_disabled
         )
 
         written_content = "".join([call.args[0] for call in mock_write_file.return_value.write.call_args_list])
@@ -220,20 +237,21 @@ class TestFilterSarifReport:
         mock_input_path = "input.sarif"
         mock_output_path = "output_no_rules.sarif"
 
-        mocker.patch('os.path.exists', return_value=True)
+        mocker.patch("os.path.exists", return_value=True)
         mock_read_file = mock_open(read_data=json.dumps(sample_sarif_data_single_run))
         mock_write_file = mock_open()
 
         def mock_open_side_effect(file, mode, **kwargs):
-            if mode == 'r': return mock_read_file.return_value
-            elif mode == 'w': return mock_write_file.return_value
+            if mode == "r":
+                return mock_read_file.return_value
+            elif mode == "w":
+                return mock_write_file.return_value
             raise ValueError(f"Unexpected mode: {mode}")
-        mocker.patch('builtins.open', side_effect=mock_open_side_effect)
+
+        mocker.patch("builtins.open", side_effect=mock_open_side_effect)
 
         filter_sarif_report(
-            input_report_path=mock_input_path,
-            output_report_path=mock_output_path,
-            fp_filter_config=fp_config_no_rules
+            input_report_path=mock_input_path, output_report_path=mock_output_path, fp_filter_config=fp_config_no_rules
         )
 
         written_content = "".join([call.args[0] for call in mock_write_file.return_value.write.call_args_list])

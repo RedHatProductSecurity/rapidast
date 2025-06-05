@@ -8,3 +8,4 @@ requests
 pre-commit == 3.7.1
 kubernetes
 pytest-json-report
+pytest-mock

@@ -203,19 +203,25 @@ CEL is a powerful expression language. You define conditions using CEL expressio
 Each filtering rule you define will operate on a single SARIF `result` (i.e., a single finding). If any of your defined cel_expression rules evaluates to `true` for a given finding, that finding will be filtered out. In essence, the rules are evaluated with an OR logic.
 
 #### Available Data for Expressions
-Inside your CEL expressions, you can access various properties of a SARIF `result` object (which represents a single finding). Here are some commonly used properties:
+Inside your CEL expressions, you can access various properties of a SARIF `result` object (which represents a single finding). While the specific properties available can vary depending on the scanner used, the following are commonly utilized properties, particularly those found when using ZAP:
 
 - `.result.ruleId`: The ID of the rule that generated the finding (e.g., "DAST-1234-KnownFP")
 - `.result.message.text`: The text content of the finding's message
 - `.result.locations[0].physicalLocation.artifactLocation.uri`: The URI of the file where the finding was located
 - `.result.level`: The severity level of the finding (e.g., "error", "warning", "note")
+- `.result.webResponse`: Information about the web response associated with the finding. This typically includes:
+  - `.result.webResponse.protocol`: The protocol used for the response
+  - `.result.webResponse.statusCode`: The HTTP status code of the response (e.g., 200, 404, 500)
+  - `.result.webResponse.headers`: A collection of response headers
+  - `.result.webResponse.body.text`: The body of the response
 
 #### Basic Syntax
 - Equality: `.result.ruleId == "DAST-1234-KnownFP"`
 - String Matching: `.result.message.text.contains('sensitive data')`
-- Logical AND/OR: `.result.ruleId == 'DAST-1234-KnownFP' && result.level == 'warning'`
+- Logical AND/OR: `.result.ruleId == 'DAST-1234-KnownFP' && .result.level == 'warning'`
 - List Membership: `.result.ruleId in ["DAST-1234-KnownFP", "DAST-5678-KnownF"]`
 
+For more details, refer to the official [documentation](https://github.com/google/cel-spec/blob/master/doc/langdef.md).
 
 Here's an example of how you might define a rule in your configuration file:
 

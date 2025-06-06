@@ -14,6 +14,7 @@ from typing import Dict
 from typing import List
 from urllib import request
 
+import dacite
 import yaml
 from dotenv import load_dotenv
 from jsonschema import Draft202012Validator
@@ -24,9 +25,11 @@ from jsonschema import ValidationError
 import configmodel.converter
 import scanners
 from configmodel import deep_traverse_and_replace_with_var_content
+from configmodel.models.false_positive_filtering import FalsePositiveFiltering
 from exports.defect_dojo import DefectDojo
 from exports.google_cloud_storage import GoogleCloudStorage
 from utils import add_logging_level
+from utils.cel_false_positive_filter import CELFalsePositiveFilter
 
 
 pp = pprint.PrettyPrinter(indent=4)
@@ -415,11 +418,36 @@ def run():
 
     sarif_properties = generate_sarif_properties(config, scanner_results, "commit_sha.txt")
 
+    input_report_filename = "rapidast-scan-results.sarif"
+    output_report_filename = "rapidast-filtered-scan-results.sarif"
+
+    input_report_path = os.path.join(full_result_dir_path, input_report_filename)
+    output_report_path = os.path.join(full_result_dir_path, output_report_filename)
+
     merge_sarif_files(
         directory=full_result_dir_path,
         properties=sarif_properties,
-        output_filename=f"{full_result_dir_path}/rapidast-scan-results.sarif",
+        output_filename=input_report_path,
     )
+
+    try:
+        if (
+            "config" not in config.conf
+            or "false_positive_filtering" not in config.conf["config"]
+            or not config.conf["config"]["false_positive_filtering"]
+        ):
+            logging.info("Configuration section 'false_positive_filtering' not found in config.conf")
+        else:
+            fp_config_data = config.conf["config"]["false_positive_filtering"]
+            fp_filter_config = dacite.from_dict(data_class=FalsePositiveFiltering, data=fp_config_data)
+
+            filter_sarif_report(
+                input_report_path=input_report_path,
+                output_report_path=output_report_path,
+                fp_filter_config=fp_filter_config,
+            )
+    except Exception as e:  # pylint: disable=W0718
+        logging.error(f"An error occurred during SARIF report filtering: {e}")
 
     # Export all the scan results to GCS
     # Note: This is done after all scanners have run,
@@ -459,6 +487,49 @@ def collect_sarif_files(directory: str) -> List[str]:
         logging.warning(f"No SARIF files found in directory: {directory}")
 
     return sarif_files
+
+
+def filter_sarif_report(
+    input_report_path: str, output_report_path: str, fp_filter_config: FalsePositiveFiltering
+) -> None:
+    """
+    Applies false positive filtering to a SARIF report file and saves the result to a new file.
+
+    Args:
+        input_report_path: The file path to the original SARIF report
+        output_report_path: The file path where the filtered SARIF report will be saved
+        fp_filter_config: Configuration for false positive filtering rules
+
+    """
+
+    if not os.path.exists(input_report_path):
+        logging.error(f"Input SARIF report not found: {input_report_path}")
+        raise FileNotFoundError(f"Input SARIF report not found: {input_report_path}")
+
+    logging.info(f"Starting SARIF false positive filtering from '{input_report_path}' to '{output_report_path}'.")
+
+    try:
+        with open(input_report_path, "r", encoding="utf-8") as file_handle:
+            original_sarif_report_data = json.load(file_handle)
+    except json.JSONDecodeError as e:
+        logging.error(f"Failed to parse input SARIF file '{input_report_path}': {e}")
+        raise
+    except IOError as e:
+        logging.error(f"Error reading input SARIF file '{input_report_path}': {e}")
+        raise
+
+    cel_fp_engine = CELFalsePositiveFilter(fp_filter_config)
+    filtered_sarif_report_data = cel_fp_engine.filter_sarif_results(original_sarif_report_data)
+
+    try:
+        with open(output_report_path, "w", encoding="utf-8") as file_handle:
+            json.dump(filtered_sarif_report_data, file_handle, indent=2)
+        logging.info(f"Filtered SARIF report successfully saved to: '{output_report_path}'")
+    except IOError as e:
+        logging.error(f"Error writing filtered SARIF report to '{output_report_path}': {e}")
+        raise
+
+    logging.info("SARIF false positive filtering process completed")
 
 
 def merge_sarif_files(directory: str, properties: dict, output_filename: str):

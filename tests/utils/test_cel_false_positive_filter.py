@@ -28,10 +28,14 @@ def sample_sarif_data():
                     },
                     {
                         "ruleId": "DAST-1234-KnownFP",
-                        "level": "warning",
+                        "level": "note",
                         "message": {"text": "A known false positive issue."},
                         "locations": [
-                            {"physicalLocation": {"artifactLocation": {"uri": "https://www.example.com/app/test.php"}}}
+                            {
+                                "physicalLocation": {
+                                    "artifactLocation": {"uri": "https://www.example.com/app/styles.css"}
+                                }
+                            }
                         ],
                     },
                     {
@@ -82,6 +86,61 @@ def sample_sarif_data():
                             }
                         ],
                     },
+                    {
+                        "level": "none",
+                        "locations": [
+                            {
+                                "physicalLocation": {
+                                    "artifactLocation": {"uri": "https://www.example.com/api/v1/me/"},
+                                    "region": {
+                                        "startLine": 1,
+                                        "properties": {
+                                            "startLineFailure": "Resolved invalid start line: 0 - used fallback value instead."
+                                        },
+                                        "snippet": {"text": "5555493a9bc4a6dc8784af232a42c883"},
+                                    },
+                                },
+                                "properties": {"attack": ""},
+                            }
+                        ],
+                        "message": {"text": "\ncookie:r_s_session"},
+                        "ruleId": "10112",
+                        "webRequest": {
+                            "protocol": "HTTP",
+                            "version": "1.1",
+                            "target": "https://www.example.com/api/v1/me/",
+                            "method": "GET",
+                            "headers": {
+                                "accept": "application/json",
+                                "cache-control": "no-cache",
+                                "content-length": "0",
+                                "host": "stage.ai.ansible.redhat.com",
+                                "pragma": "no-cache",
+                                "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+                            },
+                            "body": {},
+                        },
+                        "webResponse": {
+                            "statusCode": 401,
+                            "reasonPhrase": "Unauthorized",
+                            "protocol": "HTTP",
+                            "version": "1.1",
+                            "headers": {
+                                "Connection": "keep-alive",
+                                "Content-Length": "98",
+                                "Content-Type": "application/json",
+                                "Server": "CloudFront",
+                                "Strict-Transport-Security": "max-age=31536000",
+                                "Vary": "Origin",
+                                "x-frame-options": "DENY",
+                                "x-robots-tag": "noindex, nofollow",
+                            },
+                            "body": {
+                                "text": '{"code":"not_authenticated","message":"Authentication credentials were not provided.","detail":{}}'
+                            },
+                            "noResponseReceived": False,
+                        },
+                    },
                 ],
             }
         ],
@@ -107,12 +166,59 @@ def multi_run_sarif_data():
                         ],
                     },
                     {
-                        "ruleId": "DAST-1234-KnownFP",
-                        "level": "warning",
-                        "message": {"text": "RunA FP."},
+                        "level": "none",
                         "locations": [
-                            {"physicalLocation": {"artifactLocation": {"uri": "https://hosta.example.com/a2"}}}
+                            {
+                                "physicalLocation": {
+                                    "artifactLocation": {"uri": "https://www.example.com/api/v1/me/"},
+                                    "region": {
+                                        "startLine": 1,
+                                        "properties": {
+                                            "startLineFailure": "Resolved invalid start line: 0 - used fallback value instead."
+                                        },
+                                        "snippet": {"text": "5555493a9bc4a6dc8784af232a42c883"},
+                                    },
+                                },
+                                "properties": {"attack": ""},
+                            }
                         ],
+                        "message": {"text": "\ncookie:r_s_session"},
+                        "ruleId": "10112",
+                        "webRequest": {
+                            "protocol": "HTTP",
+                            "version": "1.1",
+                            "target": "https://www.example.com/api/v1/me/",
+                            "method": "GET",
+                            "headers": {
+                                "accept": "application/json",
+                                "cache-control": "no-cache",
+                                "content-length": "0",
+                                "host": "stage.ai.ansible.redhat.com",
+                                "pragma": "no-cache",
+                                "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+                            },
+                            "body": {},
+                        },
+                        "webResponse": {
+                            "statusCode": 401,
+                            "reasonPhrase": "Unauthorized",
+                            "protocol": "HTTP",
+                            "version": "1.1",
+                            "headers": {
+                                "Connection": "keep-alive",
+                                "Content-Length": "98",
+                                "Content-Type": "application/json",
+                                "Server": "CloudFront",
+                                "Strict-Transport-Security": "max-age=31536000",
+                                "Vary": "Origin",
+                                "x-frame-options": "DENY",
+                                "x-robots-tag": "noindex, nofollow",
+                            },
+                            "body": {
+                                "text": '{"code":"not_authenticated","message":"Authentication credentials were not provided.","detail":{}}'
+                            },
+                            "noResponseReceived": False,
+                        },
                     },
                 ],
             },
@@ -130,9 +236,13 @@ def multi_run_sarif_data():
                     {
                         "ruleId": "DAST-1234-KnownFP",
                         "level": "note",
-                        "message": {"text": "RunB FP."},
+                        "message": {"text": "A known false positive issue."},
                         "locations": [
-                            {"physicalLocation": {"artifactLocation": {"uri": "https://hostb.example.com/b2"}}}
+                            {
+                                "physicalLocation": {
+                                    "artifactLocation": {"uri": "https://www.example.com/app/styles.css"}
+                                }
+                            }
                         ],
                     },
                     {
@@ -166,24 +276,13 @@ def basic_fp_rules():
                 name="Exclude admin paths",
                 cel_expression='.result.locations.exists(loc, loc.physicalLocation.artifactLocation.uri.startsWith("https://admin.example.com"))',
             ),
-            FalsePositiveRule(name="Exclude known FP ruleId", cel_expression='.result.ruleId == "DAST-1234-KnownFP"'),
-        ],
-    )
-
-
-@pytest.fixture
-def complex_fp_rules():
-    """Config with more complex FP rules"""
-    return FalsePositiveFiltering(
-        enabled=True,
-        rules=[
             FalsePositiveRule(
-                name="Exclude specific ruleId OR level note on static assets",
-                cel_expression='.result.ruleId == "DAST-1234-KnownFP" || (.result.level == "note" && .result.locations.exists(loc, loc.physicalLocation.artifactLocation.uri.endsWith(".css") || loc.physicalLocation.artifactLocation.uri.endsWith(".png")))',
+                name="Exclude known FP ruleId with specific response code",
+                cel_expression='.result.ruleId == "10112" && .result.webResponse.statusCode == 401',
             ),
             FalsePositiveRule(
-                name="Exclude admin path",
-                cel_expression='.result.locations.exists(loc, loc.physicalLocation.artifactLocation.uri.startsWith("https://admin.example.com"))',
+                name="Exclude specific ruleId and level note on static assets",
+                cel_expression='.result.ruleId == "DAST-1234-KnownFP" && .result.level == "note" && .result.locations.exists(loc, loc.physicalLocation.artifactLocation.uri.endsWith(".css") || loc.physicalLocation.artifactLocation.uri.endsWith(".html"))',
             ),
         ],
     )
@@ -239,7 +338,7 @@ class TestCELFalsePositiveFilter:
 
     @pytest.mark.parametrize(
         "result_index, expected_is_fp",
-        [(0, False), (1, True), (2, True), (3, False), (4, False), (5, False), (6, True)],
+        [(0, False), (1, True), (2, True), (3, False), (4, False), (5, False), (6, True), (7, True)],
     )
     def test_is_false_positive(self, basic_fp_rules, sample_sarif_data, result_index, expected_is_fp):
         """Test is_false_positive"""
@@ -272,6 +371,7 @@ class TestCELFalsePositiveFilter:
 
         assert "DAST-1234-KnownFP" not in kept_rule_ids
         assert "CWE-200" not in kept_rule_ids
+        assert "10112" not in kept_rule_ids
 
     def test_filter_sarif_results_disabled(self, disabled_config, sample_sarif_data):
         """Test that no filtering occurs when filtering is disabled"""

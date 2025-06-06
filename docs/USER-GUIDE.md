@@ -226,13 +226,13 @@ config:
     rules:
       - name: "Exclude findings on admin paths"
         description: "This rule filters out any findings located on URLs that start with 'https://admin.example.com'"
-        cel_expression: 'result.locations.exists(loc, loc.physicalLocation.artifactLocation.uri.startsWith("https://admin.example.com"))'
+        cel_expression: '.result.locations.exists(loc, loc.physicalLocation.artifactLocation.uri.startsWith("https://admin.example.com"))'
       - name: "Exclude a specific known false positive rule ID"
         description: "Filters out findings with the exact rule ID 'DAST-1234-KnownFP'. This is ideal for specific findings that your security team has already reviewed and confirmed as not exploitable or irrelevant"
-        cel_expression: 'result.ruleId == "DAST-1234-KnownFP"'
-      - name: "Exclude findings related to HTTP 308 redirects"
-        description: "This rule removes findings where the web response's status code is 308 (Permanent Redirect). Such redirects might be expected behavior and not indicative of a true vulnerability"
-        cel_expression: 'result.webResponse.statusCode == 308'
+        cel_expression: '.result.ruleId == "DAST-1234-KnownFP"'
+      - name: "Exclude rule ID 10112 with specific unauthorized response"
+        description: "Filters out findings with rule ID '10112' only when their associated web response is 401. This helps narrow down false positives for this particular rule"
+        cel_expression: '.result.ruleId == "10112" && .result.webResponse.statusCode == 401'
 ```
 
 ### MacOS

@@ -354,7 +354,7 @@ packaging==24.2
     #   langsmith
     #   replicate
     #   transformers
-pandas==2.2.3
+pandas==2.3.0
     # via datasets
 pillow==10.4.0
     # via octoai-sdk

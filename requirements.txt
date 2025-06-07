@@ -122,7 +122,7 @@ types-python-dateutil==2.9.0.20241206
     # via arrow
 typing==3.7.4.3
     # via py-nessus-pro
-typing-extensions==4.12.2
+typing-extensions==4.14.0
     # via
     #   referencing
     #   rich

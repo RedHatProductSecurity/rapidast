@@ -21,9 +21,7 @@ class CELExclusions:
             try:
                 self.compiled_cel_program = self._compile_combined_cel_expression()
             except Exception as e:  # pylint: disable=W0718
-                logger.warning(
-                    f"Failed to compile CEL filter expressions. Filtering will be disabled. Error: {e}"
-                )
+                logger.warning(f"Failed to compile CEL filter expressions. Filtering will be disabled. Error: {e}")
                 self.config.enabled = False
 
         # cel-python loggers are very verbose at the INFO level.

@@ -291,9 +291,7 @@ def basic_fp_rules():
 @pytest.fixture
 def malformed_cel_rule():
     """Config with a malformed CEL expression."""
-    return Exclusions(
-        enabled=True, rules=[Rule(name="Malformed rule", cel_expression='.result.level == "error" && (')]
-    )
+    return Exclusions(enabled=True, rules=[Rule(name="Malformed rule", cel_expression='.result.level == "error" && (')])
 
 
 @pytest.fixture
@@ -305,9 +303,7 @@ def empty_rules_config():
 @pytest.fixture
 def disabled_config():
     """Config with filtering disabled"""
-    return Exclusions(
-        enabled=False, rules=[Rule(name="Some rule", cel_expression="true")]  # Rule exists but disabled
-    )
+    return Exclusions(enabled=False, rules=[Rule(name="Some rule", cel_expression="true")])  # Rule exists but disabled
 
 
 class TestCELExclusions:

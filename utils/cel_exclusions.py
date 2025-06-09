@@ -6,13 +6,13 @@ from typing import Optional
 
 import celpy
 
-from configmodel.models.false_positive_filtering import FalsePositiveFiltering
+from configmodel.models.exclusions import Exclusions
 
 logger = logging.getLogger(f"{__name__}")
 
 
-class CELFalsePositiveFilter:
-    def __init__(self, config: FalsePositiveFiltering):
+class CELExclusions:
+    def __init__(self, config: Exclusions):
         self.config = config
         self.cel_env = celpy.Environment()
         self.compiled_cel_program = None
@@ -22,7 +22,7 @@ class CELFalsePositiveFilter:
                 self.compiled_cel_program = self._compile_combined_cel_expression()
             except Exception as e:  # pylint: disable=W0718
                 logger.warning(
-                    f"Failed to compile CEL filter expressions. False positive filtering will be disabled. Error: {e}"
+                    f"Failed to compile CEL filter expressions. Filtering will be disabled. Error: {e}"
                 )
                 self.config.enabled = False
 
@@ -55,16 +55,16 @@ class CELFalsePositiveFilter:
         ast = self.cel_env.compile(combined_cel_expression)
         return self.cel_env.program(ast)
 
-    def is_false_positive(self, sarif_result: Dict[str, Any]) -> bool:
+    def is_excluded(self, sarif_result: Dict[str, Any]) -> bool:
         """
-        Evaluates if a given SARIF result is a false positive based on the compiled CEL rules.
+        Evaluates if a given SARIF result should be excluded based on the compiled CEL rules
 
         Args:
             sarif_result: The individual SARIF result dictionary to evaluate.
             full_sarif_data: The entire SARIF file dictionary, for context if needed by rules.
 
         Returns:
-            True if the result is a false positive and should be filtered out, False otherwise.
+            True if the result should be filtered out, False otherwise.
         """
         if not self.config.enabled or self.compiled_cel_program is None:
             return False
@@ -81,7 +81,7 @@ class CELFalsePositiveFilter:
             logger.warning(
                 f"""
                 Error evaluating CEL expression for result (ruleId: {sarif_result.get('ruleId', 'N/A')}): {e}.
-                Treating as NOT a false positive
+                Treating as NOT excluded
                 """
             )
             return False
@@ -90,8 +90,7 @@ class CELFalsePositiveFilter:
         if not self.config.enabled or not self.config.rules or self.compiled_cel_program is None:
             logger.info(
                 """
-                False positive filtering is disabled or no rules are
-                configured/compiled. Returning original SARIF data
+                Filtering is disabled or no rules are configured/compiled. Returning original SARIF data
                 """
             )
             return sarif_data
@@ -119,7 +118,7 @@ class CELFalsePositiveFilter:
             )
 
             for sarif_result in original_run_results:
-                if not self.is_false_positive(sarif_result):
+                if not self.is_excluded(sarif_result):
                     filtered_run_results.append(sarif_result)
                 else:
                     rule_id = sarif_result.get("ruleId", "N/A")
@@ -133,7 +132,7 @@ class CELFalsePositiveFilter:
 
         logger.info(
             f"""
-            False positive filtering complete. Total original results: {total_original_results}.
+            Filtering complete. Total original results: {total_original_results}.
             Total filtered results: {total_filtered_results}
             """
         )

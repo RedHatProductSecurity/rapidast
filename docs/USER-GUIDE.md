@@ -192,13 +192,13 @@ This method uses firefox in the background to load a login page and fill in user
     - `loggedInRegex`: Regex pattern used to identify Logged in messages (default: `\\Q 200 OK\\`)
     - `loggedOutRegex`: Regex pattern used to identify Logged Out messages (default: `\\Q 403 Forbidden\\`)
 
-### False Positive Removal
+### Exclusions
 
-This feature enables you to refine your RapiDAST consolidated report (`rapidast-scan-results.sarif`) by automatically filtering out unwanted SARIF findings. This is achieved using Common Expression Language (CEL) rules.
+This feature enables you to refine your RapiDAST consolidated report (`rapidast-scan-results.sarif`) by automatically filtering out unwanted SARIF findings (e.g.: filtering out false positives). This is achieved using Common Expression Language (CEL) rules.
 
 #### How it Works:
 
-CEL is a powerful expression language. You define conditions using CEL expressions that, when evaluated as `true` for a specific SARIF finding, will cause that finding to be marked as a "false positive" and excluded from the final report (`rapidast-filtered-scan-results.sarif`).
+CEL is a powerful expression language. You define conditions using CEL expressions that, when evaluated as `true` for a specific SARIF finding, will cause that finding will be excluded from the final report (`rapidast-filtered-scan-results.sarif`).
 
 Each filtering rule you define will operate on a single SARIF `result` (i.e., a single finding). If any of your defined cel_expression rules evaluates to `true` for a given finding, that finding will be filtered out. In essence, the rules are evaluated with an OR logic.
 
@@ -227,8 +227,8 @@ Here's an example of how you might define a rule in your configuration file:
 
 ```
 config:
-  false_positive_filtering:
-    enabled: True # Set to 'False' to temporarily disable all false positive filtering, while keeping your defined rules for future use
+  exclusions:
+    enabled: True # Set to 'False' to temporarily disable all filtering rules, while keeping your defined rules for future use
     rules:
       - name: "Exclude findings on admin paths"
         description: "This rule filters out any findings located on URLs that start with 'https://admin.example.com'"

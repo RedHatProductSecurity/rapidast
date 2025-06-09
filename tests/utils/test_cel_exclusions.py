@@ -1,8 +1,8 @@
 import pytest
 
-from configmodel.models.false_positive_filtering import FalsePositiveFiltering
-from configmodel.models.false_positive_filtering import FalsePositiveRule
-from utils.cel_false_positive_filter import CELFalsePositiveFilter
+from configmodel.models.exclusions import Exclusions
+from configmodel.models.exclusions import Rule
+from utils.cel_exclusions import CELExclusions
 
 
 @pytest.fixture
@@ -29,7 +29,7 @@ def sample_sarif_data():
                     {
                         "ruleId": "DAST-1234-KnownFP",
                         "level": "note",
-                        "message": {"text": "A known false positive issue."},
+                        "message": {"text": "A known false positive issue"},
                         "locations": [
                             {
                                 "physicalLocation": {
@@ -41,7 +41,7 @@ def sample_sarif_data():
                     {
                         "ruleId": "CWE-200",
                         "level": "error",
-                        "message": {"text": "Information exposure."},
+                        "message": {"text": "Information exposure"},
                         "locations": [
                             {
                                 "physicalLocation": {
@@ -236,7 +236,7 @@ def multi_run_sarif_data():
                     {
                         "ruleId": "DAST-1234-KnownFP",
                         "level": "note",
-                        "message": {"text": "A known false positive issue."},
+                        "message": {"text": "A known false positive issue"},
                         "locations": [
                             {
                                 "physicalLocation": {
@@ -248,7 +248,7 @@ def multi_run_sarif_data():
                     {
                         "ruleId": "CWE-456",
                         "level": "warning",
-                        "message": {"text": "RunB kept warning."},
+                        "message": {"text": "RunB kept warning"},
                         "locations": [
                             {"physicalLocation": {"artifactLocation": {"uri": "https://hostb.example.com/b3"}}}
                         ],
@@ -262,25 +262,25 @@ def multi_run_sarif_data():
 
 @pytest.fixture
 def default_config():
-    """A default FalsePositiveFiltering config."""
-    return FalsePositiveFiltering(enabled=True, rules=[])
+    """A default Exclusions config."""
+    return Exclusions(enabled=True, rules=[])
 
 
 @pytest.fixture
 def basic_fp_rules():
     """Config with basic FP rules"""
-    return FalsePositiveFiltering(
+    return Exclusions(
         enabled=True,
         rules=[
-            FalsePositiveRule(
+            Rule(
                 name="Exclude admin paths",
                 cel_expression='.result.locations.exists(loc, loc.physicalLocation.artifactLocation.uri.startsWith("https://admin.example.com"))',
             ),
-            FalsePositiveRule(
+            Rule(
                 name="Exclude known FP ruleId with specific response code",
                 cel_expression='.result.ruleId == "10112" && .result.webResponse.statusCode == 401',
             ),
-            FalsePositiveRule(
+            Rule(
                 name="Exclude specific ruleId and level note on static assets",
                 cel_expression='.result.ruleId == "DAST-1234-KnownFP" && .result.level == "note" && .result.locations.exists(loc, loc.physicalLocation.artifactLocation.uri.endsWith(".css") || loc.physicalLocation.artifactLocation.uri.endsWith(".html"))',
             ),
@@ -291,48 +291,48 @@ def basic_fp_rules():
 @pytest.fixture
 def malformed_cel_rule():
     """Config with a malformed CEL expression."""
-    return FalsePositiveFiltering(
-        enabled=True, rules=[FalsePositiveRule(name="Malformed rule", cel_expression='.result.level == "error" && (')]
+    return Exclusions(
+        enabled=True, rules=[Rule(name="Malformed rule", cel_expression='.result.level == "error" && (')]
     )
 
 
 @pytest.fixture
 def empty_rules_config():
     """Config with no rules"""
-    return FalsePositiveFiltering(enabled=True, rules=[])
+    return Exclusions(enabled=True, rules=[])
 
 
 @pytest.fixture
 def disabled_config():
     """Config with filtering disabled"""
-    return FalsePositiveFiltering(
-        enabled=False, rules=[FalsePositiveRule(name="Some rule", cel_expression="true")]  # Rule exists but disabled
+    return Exclusions(
+        enabled=False, rules=[Rule(name="Some rule", cel_expression="true")]  # Rule exists but disabled
     )
 
 
-class TestCELFalsePositiveFilter:
+class TestCELExclusions:
     def test_init_enabled_and_compiled(self, basic_fp_rules):
         """Test that filter is enabled and program compiles on init"""
-        filter_instance = CELFalsePositiveFilter(basic_fp_rules)
+        filter_instance = CELExclusions(basic_fp_rules)
         assert filter_instance.config.enabled is True
         assert filter_instance.compiled_cel_program is not None
 
     def test_init_disabled(self, disabled_config):
         """Test that filter is disabled on init if config says so"""
-        filter_instance = CELFalsePositiveFilter(disabled_config)
+        filter_instance = CELExclusions(disabled_config)
         assert filter_instance.config.enabled is False
         assert filter_instance.compiled_cel_program is None
 
     def test_init_compilation_failure(self, malformed_cel_rule, caplog):
         """Test that compilation failure disables filtering and prints warning"""
-        filter_instance = CELFalsePositiveFilter(malformed_cel_rule)
+        filter_instance = CELExclusions(malformed_cel_rule)
         assert filter_instance.config.enabled is False
         assert filter_instance.compiled_cel_program is None
         assert any(record.levelname == "WARNING" for record in caplog.records)
 
     def test_init_no_rules(self, empty_rules_config):
         """Test that filter is disabled if no rules are provided"""
-        filter_instance = CELFalsePositiveFilter(empty_rules_config)
+        filter_instance = CELExclusions(empty_rules_config)
         assert filter_instance.config.enabled is True
         assert filter_instance.compiled_cel_program is None
 
@@ -340,25 +340,25 @@ class TestCELFalsePositiveFilter:
         "result_index, expected_is_fp",
         [(0, False), (1, True), (2, True), (3, False), (4, False), (5, False), (6, True), (7, True)],
     )
-    def test_is_false_positive(self, basic_fp_rules, sample_sarif_data, result_index, expected_is_fp):
-        """Test is_false_positive"""
-        filter_instance = CELFalsePositiveFilter(basic_fp_rules)
+    def test_is_excluded(self, basic_fp_rules, sample_sarif_data, result_index, expected_is_fp):
+        """Test is_excluded"""
+        filter_instance = CELExclusions(basic_fp_rules)
         sarif_result = sample_sarif_data["runs"][0]["results"][result_index]
 
-        assert filter_instance.is_false_positive(sarif_result) == expected_is_fp
+        assert filter_instance.is_excluded(sarif_result) == expected_is_fp
 
-    def test_is_false_positive_malformed_expression_error(self, malformed_cel_rule, sample_sarif_data, caplog):
-        """Test that errors during CEL evaluation result in not filtering."""
-        filter_instance = CELFalsePositiveFilter(malformed_cel_rule)
+    def test_is_excluded_malformed_expression_error(self, malformed_cel_rule, sample_sarif_data, caplog):
+        """Test that errors during CEL evaluation result in not filtering"""
+        filter_instance = CELExclusions(malformed_cel_rule)
         sarif_result = sample_sarif_data["runs"][0]["results"][0]
 
-        assert filter_instance.is_false_positive(sarif_result) is False
+        assert filter_instance.is_excluded(sarif_result) is False
 
         assert any(record.levelname == "WARNING" for record in caplog.records)
 
     def test_filter_sarif_results_enabled(self, basic_fp_rules, sample_sarif_data):
         """Test filtering"""
-        filter_instance = CELFalsePositiveFilter(basic_fp_rules)
+        filter_instance = CELExclusions(basic_fp_rules)
         filtered_sarif = filter_instance.filter_sarif_results(sample_sarif_data)
 
         assert len(filtered_sarif["runs"][0]["results"]) == 4
@@ -375,7 +375,7 @@ class TestCELFalsePositiveFilter:
 
     def test_filter_sarif_results_disabled(self, disabled_config, sample_sarif_data):
         """Test that no filtering occurs when filtering is disabled"""
-        filter_instance = CELFalsePositiveFilter(disabled_config)
+        filter_instance = CELExclusions(disabled_config)
         filtered_sarif = filter_instance.filter_sarif_results(sample_sarif_data)
 
         assert len(filtered_sarif["runs"][0]["results"]) == len(sample_sarif_data["runs"][0]["results"])
@@ -383,7 +383,7 @@ class TestCELFalsePositiveFilter:
 
     def test_filter_sarif_results_no_rules(self, empty_rules_config, sample_sarif_data):
         """Test that no filtering occurs when no rules are configured."""
-        filter_instance = CELFalsePositiveFilter(empty_rules_config)
+        filter_instance = CELExclusions(empty_rules_config)
         filtered_sarif = filter_instance.filter_sarif_results(sample_sarif_data)
 
         assert len(filtered_sarif["runs"][0]["results"]) == len(sample_sarif_data["runs"][0]["results"])
@@ -396,21 +396,21 @@ class TestCELFalsePositiveFilter:
             "version": "...",
             "runs": [{"tool": {"driver": {"name": "Test"}}, "results": []}],
         }
-        filter_instance = CELFalsePositiveFilter(basic_fp_rules)
+        filter_instance = CELExclusions(basic_fp_rules)
         filtered_sarif = filter_instance.filter_sarif_results(empty_sarif)
         assert len(filtered_sarif["runs"][0]["results"]) == 0
 
     def test_filter_sarif_results_no_runs_in_sarif(self, basic_fp_rules):
         """Test filtering with SARIF data missing the 'runs' key"""
         sarif_no_runs = {"$schema": "...", "version": "..."}
-        filter_instance = CELFalsePositiveFilter(basic_fp_rules)
+        filter_instance = CELExclusions(basic_fp_rules)
         filtered_sarif = filter_instance.filter_sarif_results(sarif_no_runs)
         assert filtered_sarif == sarif_no_runs
 
     def test_filter_sarif_results_no_results_in_run(self, basic_fp_rules):
         """Test filtering with SARIF data having 'runs' but no 'results' in the first run"""
         sarif_no_results = {"$schema": "...", "version": "...", "runs": [{"tool": {"driver": {"name": "Test"}}}]}
-        filter_instance = CELFalsePositiveFilter(basic_fp_rules)
+        filter_instance = CELExclusions(basic_fp_rules)
         filtered_sarif = filter_instance.filter_sarif_results(sarif_no_results)
         assert filtered_sarif["runs"][0]["results"] == []
 
@@ -418,7 +418,7 @@ class TestCELFalsePositiveFilter:
         """
         Test that filter_sarif_results correctly filters results across multiple runs
         """
-        filter_instance = CELFalsePositiveFilter(basic_fp_rules)
+        filter_instance = CELExclusions(basic_fp_rules)
         filtered_sarif = filter_instance.filter_sarif_results(multi_run_sarif_data)
 
         total_original_results = 0

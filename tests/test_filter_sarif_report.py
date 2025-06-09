@@ -6,8 +6,8 @@ from unittest.mock import mock_open
 
 import pytest
 
-from configmodel.models.false_positive_filtering import FalsePositiveFiltering
-from configmodel.models.false_positive_filtering import FalsePositiveRule
+from configmodel.models.exclusions import Exclusions
+from configmodel.models.exclusions import Rule
 from rapidast import filter_sarif_report
 
 
@@ -24,7 +24,7 @@ def sample_sarif_data_single_run():
                     {
                         "ruleId": "CWE-79",
                         "level": "error",
-                        "message": {"text": "Kept finding."},
+                        "message": {"text": "Kept finding"},
                         "locations": [
                             {
                                 "physicalLocation": {
@@ -36,7 +36,7 @@ def sample_sarif_data_single_run():
                     {
                         "ruleId": "DAST-1234-KnownFP",
                         "level": "warning",
-                        "message": {"text": "False positive finding."},
+                        "message": {"text": "False positive finding"},
                         "locations": [
                             {"physicalLocation": {"artifactLocation": {"uri": "https://www.example.com/app/test.php"}}}
                         ],
@@ -48,33 +48,31 @@ def sample_sarif_data_single_run():
 
 
 @pytest.fixture
-def fp_config_to_filter_fp_rule_id():
-    """FalsePositiveFiltering config to filter DAST-1234-KnownFP"""
-    return FalsePositiveFiltering(
+def config_to_filter_fp_rule_id():
+    """Exclusions config to filter DAST-1234-KnownFP"""
+    return Exclusions(
         enabled=True,
-        rules=[
-            FalsePositiveRule(name="Exclude known FP ruleId", cel_expression='result.ruleId == "DAST-1234-KnownFP"')
-        ],
+        rules=[Rule(name="Exclude known FP ruleId", cel_expression='result.ruleId == "DAST-1234-KnownFP"')],
     )
 
 
 @pytest.fixture
-def fp_config_no_rules():
-    """FalsePositiveFiltering config with no rules"""
-    return FalsePositiveFiltering(enabled=True, rules=[])
+def config_no_rules():
+    """Exclusions config with no rules"""
+    return Exclusions(enabled=True, rules=[])
 
 
 @pytest.fixture
-def fp_config_disabled():
-    """FalsePositiveFiltering config with filtering disabled"""
-    return FalsePositiveFiltering(enabled=False, rules=[FalsePositiveRule(name="Some rule", cel_expression="true")])
+def exclusion_config_disabled():
+    """Exclusions config with filtering disabled"""
+    return Exclusions(enabled=False, rules=[Rule(name="Some rule", cel_expression="true")])
 
 
 class TestFilterSarifReport:
     def test_filter_sarif_report_success(
         self,
         sample_sarif_data_single_run,
-        fp_config_to_filter_fp_rule_id,
+        config_to_filter_fp_rule_id,
     ):
         """
         Tests successful filtering and saving of a SARIF report
@@ -93,7 +91,7 @@ class TestFilterSarifReport:
             filter_sarif_report(
                 input_report_path=temp_input_file_path,
                 output_report_path=temp_output_file_path,
-                fp_filter_config=fp_config_to_filter_fp_rule_id,
+                exclusions_config=config_to_filter_fp_rule_id,
             )
 
             with open(temp_output_file_path, "r", encoding="utf-8") as f:
@@ -114,7 +112,7 @@ class TestFilterSarifReport:
     def test_filter_sarif_report_input_file_not_found(
         self,
         mocker,
-        fp_config_to_filter_fp_rule_id,
+        config_to_filter_fp_rule_id,
     ):
         """
         Tests that FileNotFoundError is raised if the input file does not exist.
@@ -129,13 +127,13 @@ class TestFilterSarifReport:
             filter_sarif_report(
                 input_report_path=mock_input_path,
                 output_report_path=mock_output_path,
-                fp_filter_config=fp_config_to_filter_fp_rule_id,
+                exclusions_config=config_to_filter_fp_rule_id,
             )
 
     def test_filter_sarif_report_invalid_json(
         self,
         mocker,
-        fp_config_to_filter_fp_rule_id,
+        config_to_filter_fp_rule_id,
     ):
         """
         Tests that JSONDecodeError is raised if the input file is not valid JSON
@@ -153,14 +151,14 @@ class TestFilterSarifReport:
             filter_sarif_report(
                 input_report_path=mock_input_path,
                 output_report_path=mock_output_path,
-                fp_filter_config=fp_config_to_filter_fp_rule_id,
+                exclusions_config=config_to_filter_fp_rule_id,
             )
 
     def test_filter_sarif_report_output_io_error(
         self,
         mocker,
         sample_sarif_data_single_run,
-        fp_config_to_filter_fp_rule_id,
+        config_to_filter_fp_rule_id,
     ):
         """
         Tests that IOError is raised if there's an error writing the output file
@@ -186,14 +184,14 @@ class TestFilterSarifReport:
             filter_sarif_report(
                 input_report_path=mock_input_path,
                 output_report_path=mock_output_path,
-                fp_filter_config=fp_config_to_filter_fp_rule_id,
+                exclusions_config=config_to_filter_fp_rule_id,
             )
 
     def test_filter_sarif_report_filtering_disabled(
         self,
         mocker,
         sample_sarif_data_single_run,
-        fp_config_disabled,
+        exclusion_config_disabled,
     ):
         """
         Tests that filtering is skipped if the config has filtering disabled.
@@ -216,7 +214,9 @@ class TestFilterSarifReport:
         mocker.patch("builtins.open", side_effect=mock_open_side_effect)
 
         filter_sarif_report(
-            input_report_path=mock_input_path, output_report_path=mock_output_path, fp_filter_config=fp_config_disabled
+            input_report_path=mock_input_path,
+            output_report_path=mock_output_path,
+            exclusions_config=exclusion_config_disabled,
         )
 
         written_content = "".join([call.args[0] for call in mock_write_file.return_value.write.call_args_list])
@@ -227,7 +227,7 @@ class TestFilterSarifReport:
         self,
         mocker,
         sample_sarif_data_single_run,
-        fp_config_no_rules,
+        config_no_rules,
     ):
         """
         Tests that filtering is skipped if the config has no rules.
@@ -251,7 +251,7 @@ class TestFilterSarifReport:
         mocker.patch("builtins.open", side_effect=mock_open_side_effect)
 
         filter_sarif_report(
-            input_report_path=mock_input_path, output_report_path=mock_output_path, fp_filter_config=fp_config_no_rules
+            input_report_path=mock_input_path, output_report_path=mock_output_path, exclusions_config=config_no_rules
         )
 
         written_content = "".join([call.args[0] for call in mock_write_file.return_value.write.call_args_list])

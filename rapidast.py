@@ -25,11 +25,11 @@ from jsonschema import ValidationError
 import configmodel.converter
 import scanners
 from configmodel import deep_traverse_and_replace_with_var_content
-from configmodel.models.false_positive_filtering import FalsePositiveFiltering
+from configmodel.models.exclusions import Exclusions
 from exports.defect_dojo import DefectDojo
 from exports.google_cloud_storage import GoogleCloudStorage
 from utils import add_logging_level
-from utils.cel_false_positive_filter import CELFalsePositiveFilter
+from utils.cel_exclusions import CELExclusions
 
 
 pp = pprint.PrettyPrinter(indent=4)
@@ -433,18 +433,18 @@ def run():
     try:
         if (
             "config" not in config.conf
-            or "false_positive_filtering" not in config.conf["config"]
-            or not config.conf["config"]["false_positive_filtering"]
+            or "exclusions" not in config.conf["config"]
+            or not config.conf["config"]["exclusions"]
         ):
-            logging.info("Configuration section 'false_positive_filtering' not found in config.conf")
+            logging.info("Configuration section 'exclusions' not found in config.conf")
         else:
-            fp_config_data = config.conf["config"]["false_positive_filtering"]
-            fp_filter_config = dacite.from_dict(data_class=FalsePositiveFiltering, data=fp_config_data)
+            exclusions_config_data = config.conf["config"]["exclusions"]
+            filter_config = dacite.from_dict(data_class=Exclusions, data=exclusions_config_data)
 
             filter_sarif_report(
                 input_report_path=input_report_path,
                 output_report_path=output_report_path,
-                fp_filter_config=fp_filter_config,
+                exclusions_config=filter_config,
             )
     except Exception as e:  # pylint: disable=W0718
         logging.error(f"An error occurred during SARIF report filtering: {e}")
@@ -489,16 +489,14 @@ def collect_sarif_files(directory: str) -> List[str]:
     return sarif_files
 
 
-def filter_sarif_report(
-    input_report_path: str, output_report_path: str, fp_filter_config: FalsePositiveFiltering
-) -> None:
+def filter_sarif_report(input_report_path: str, output_report_path: str, exclusions_config: Exclusions) -> None:
     """
-    Applies false positive filtering to a SARIF report file and saves the result to a new file.
+    Applies exclusions to a SARIF report file and saves the result to a new file
 
     Args:
         input_report_path: The file path to the original SARIF report
         output_report_path: The file path where the filtered SARIF report will be saved
-        fp_filter_config: Configuration for false positive filtering rules
+        exclusions_config: Configuration for filtering rules
 
     """
 
@@ -506,7 +504,7 @@ def filter_sarif_report(
         logging.error(f"Input SARIF report not found: {input_report_path}")
         raise FileNotFoundError(f"Input SARIF report not found: {input_report_path}")
 
-    logging.info(f"Starting SARIF false positive filtering from '{input_report_path}' to '{output_report_path}'.")
+    logging.info(f"Starting SARIF filtering from '{input_report_path}' to '{output_report_path}'.")
 
     try:
         with open(input_report_path, "r", encoding="utf-8") as file_handle:
@@ -518,8 +516,8 @@ def filter_sarif_report(
         logging.error(f"Error reading input SARIF file '{input_report_path}': {e}")
         raise
 
-    cel_fp_engine = CELFalsePositiveFilter(fp_filter_config)
-    filtered_sarif_report_data = cel_fp_engine.filter_sarif_results(original_sarif_report_data)
+    cel_exclusions_engine = CELExclusions(exclusions_config)
+    filtered_sarif_report_data = cel_exclusions_engine.filter_sarif_results(original_sarif_report_data)
 
     try:
         with open(output_report_path, "w", encoding="utf-8") as file_handle:
@@ -529,7 +527,7 @@ def filter_sarif_report(
         logging.error(f"Error writing filtered SARIF report to '{output_report_path}': {e}")
         raise
 
-    logging.info("SARIF false positive filtering process completed")
+    logging.info("SARIF filtering process completed")
 
 
 def merge_sarif_files(directory: str, properties: dict, output_filename: str):

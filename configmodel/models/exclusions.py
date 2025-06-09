@@ -5,13 +5,13 @@ from typing import Optional
 
 
 @dataclass
-class FalsePositiveRule:
+class Rule:
     name: str
     cel_expression: str
     description: Optional[str] = None
 
 
 @dataclass
-class FalsePositiveFiltering:
+class Exclusions:
     enabled: bool = True
-    rules: List[FalsePositiveRule] = field(default_factory=list)
+    rules: List[Rule] = field(default_factory=list)

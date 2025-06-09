@@ -120,7 +120,7 @@ typer==0.15.1
     # via py-nessus-pro
 types-python-dateutil==2.9.0.20241206
     # via arrow
-typing==3.7.4.3
+typing==3.10.0.0
     # via py-nessus-pro
 typing-extensions==4.12.2
     # via

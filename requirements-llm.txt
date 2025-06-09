@@ -598,7 +598,7 @@ types-pyyaml==6.0.12.20241230
     # via octoai-sdk
 types-requests==2.32.0.20250306
     # via octoai-sdk
-typing==3.7.4.3
+typing==3.10.0.0
     # via
     #   -r ./requirements.txt
     #   py-nessus-pro

@@ -159,7 +159,7 @@ google-resumable-media==2.7.2
     # via
     #   -r ./requirements.txt
     #   google-cloud-storage
-googleapis-common-protos==1.66.0
+googleapis-common-protos==1.70.0
     # via
     #   -r ./requirements.txt
     #   google-api-core

@@ -418,29 +418,30 @@ def run():
 
     sarif_properties = generate_sarif_properties(config, scanner_results, "commit_sha.txt")
 
-    input_report_filename = "rapidast-scan-results-unfiltered.sarif"
-    output_report_filename = "rapidast-scan-results.sarif"
+    report_filename = "rapidast-scan-results.sarif"
+    unfiltered_report_filename = "rapidast-scan-results-unfiltered.sarif"
 
-    input_report_path = os.path.join(full_result_dir_path, input_report_filename)
-    output_report_path = os.path.join(full_result_dir_path, output_report_filename)
+    report_path = os.path.join(full_result_dir_path, report_filename)
+    unfiltered_report_path = os.path.join(full_result_dir_path, unfiltered_report_filename)
 
     merge_sarif_files(
         directory=full_result_dir_path,
         properties=sarif_properties,
-        output_filename=input_report_path,
+        output_filename=report_path,
     )
 
     try:
         exclusions_config_data = config.conf.get("config", {}).get("results", {}).get("exclusions")
 
         if not exclusions_config_data:
-            logging.info("Configuration section 'exclusions' not found in config.results")
+            logging.info("Configuration section 'exclusions' not found in config.results. Skipping SARIF filtering")
+
         else:
             filter_config = dacite.from_dict(data_class=Exclusions, data=exclusions_config_data)
 
             filter_sarif_report(
-                input_report_path=input_report_path,
-                output_report_path=output_report_path,
+                report_path=report_path,
+                unfiltered_report_path=unfiltered_report_path,
                 exclusions_config=filter_config,
             )
     except Exception as e:  # pylint: disable=W0718
@@ -486,51 +487,47 @@ def collect_sarif_files(directory: str) -> List[str]:
     return sarif_files
 
 
-def filter_sarif_report(input_report_path: str, output_report_path: str, exclusions_config: Exclusions) -> None:
+def filter_sarif_report(report_path: Path, unfiltered_report_path: Path, exclusions_config: Exclusions) -> None:
     """
-    Applies exclusions to a SARIF report file and saves the result to a new file
+    Applies exclusion rules to a SARIF report and writes the filtered results to a new file
 
     Args:
-        input_report_path: The file path to the original SARIF report
-        output_report_path: The file path where the filtered SARIF report will be saved
-        exclusions_config: Configuration for filtering rules
-
+        report_path: Path to the SARIF report to be filtered. This file will be overwritten with the filtered results
+        unfiltered_report_path: Path where the original, unfiltered SARIF report will be saved
+        exclusions_config: Configuration object specifying the filtering rules to apply
     """
-    try:
-        if not exclusions_config.enabled:
-            logging.info("SARIF filtering is disabled in configuration. Skipping")
-            os.rename(input_report_path, output_report_path)
-            logging.info(f"Renamed input report from '{input_report_path}' to '{output_report_path}'")
-            return
-    except Exception as e:  # pylint: disable=W0718
-        logging.error(f"An error occurred during SARIF report filtering: {e}")
+    if not exclusions_config.enabled:
+        logging.info("SARIF filtering is disabled in configuration. Skipping")
         return
 
-    if not os.path.exists(input_report_path):
-        logging.error(f"Input SARIF report not found: {input_report_path}")
-        raise FileNotFoundError(f"Input SARIF report not found: {input_report_path}")
+    if not os.path.exists(report_path):
+        logging.error(f"Input SARIF report not found: {report_path}")
+        raise FileNotFoundError(f"Input SARIF report not found: {report_path}")
 
-    logging.info(f"Starting SARIF filtering from '{input_report_path}' to '{output_report_path}'.")
+    logging.info(f"Starting SARIF filtering from '{report_path}'")
 
     try:
-        with open(input_report_path, "r", encoding="utf-8") as file_handle:
+        with open(report_path, "r", encoding="utf-8") as file_handle:
             original_sarif_report_data = json.load(file_handle)
     except json.JSONDecodeError as e:
-        logging.error(f"Failed to parse input SARIF file '{input_report_path}': {e}")
+        logging.error(f"Failed to parse input SARIF file '{report_path}': {e}")
         raise
     except IOError as e:
-        logging.error(f"Error reading input SARIF file '{input_report_path}': {e}")
+        logging.error(f"Error reading input SARIF file '{report_path}': {e}")
         raise
 
     cel_exclusions_engine = CELExclusions(exclusions_config)
     filtered_sarif_report_data = cel_exclusions_engine.filter_sarif_results(original_sarif_report_data)
 
+    os.rename(report_path, unfiltered_report_path)
+    logging.info(f"Renamed input report from '{report_path}' to '{unfiltered_report_path}'")
+
     try:
-        with open(output_report_path, "w", encoding="utf-8") as file_handle:
+        with open(report_path, "w", encoding="utf-8") as file_handle:
             json.dump(filtered_sarif_report_data, file_handle, indent=2)
-        logging.info(f"Filtered SARIF report successfully saved to: '{output_report_path}'")
+        logging.info(f"Filtered SARIF report successfully saved to: '{report_path}'")
     except IOError as e:
-        logging.error(f"Error writing filtered SARIF report to '{output_report_path}': {e}")
+        logging.error(f"Error writing filtered SARIF report to '{report_path}': {e}")
         raise
 
     logging.info("SARIF filtering process completed")

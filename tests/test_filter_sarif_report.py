@@ -78,36 +78,43 @@ class TestFilterSarifReport:
         Tests successful filtering and saving of a SARIF report
         """
 
-        with tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=".sarif", encoding="utf-8") as temp_input_file:
-            json.dump(sample_sarif_data_single_run, temp_input_file)
-            temp_input_file_path = temp_input_file.name
+        with tempfile.NamedTemporaryFile(
+            mode="w+", delete=False, suffix=".sarif", encoding="utf-8"
+        ) as temp_report_file:
+            json.dump(sample_sarif_data_single_run, temp_report_file)
+            temp_report_file_path = temp_report_file.name
 
         with tempfile.NamedTemporaryFile(
             mode="w+", delete=False, suffix=".sarif", encoding="utf-8"
-        ) as temp_output_file:
-            temp_output_file_path = temp_output_file.name
+        ) as temp_nonfiltered_file:
+            temp_nonfiltered_file_path = temp_nonfiltered_file.name
 
         try:
             filter_sarif_report(
-                input_report_path=temp_input_file_path,
-                output_report_path=temp_output_file_path,
+                report_path=temp_report_file_path,
+                unfiltered_report_path=temp_nonfiltered_file_path,
                 exclusions_config=config_to_filter_fp_rule_id,
             )
 
-            with open(temp_output_file_path, "r", encoding="utf-8") as f:
+            with open(temp_nonfiltered_file_path, "r", encoding="utf-8") as f:
                 written_content = f.read()
-            loaded_written_content = json.loads(written_content)
+            non_filtered_content = json.loads(written_content)
+
+            with open(temp_report_file_path, "r", encoding="utf-8") as f:
+                written_content = f.read()
+            filtered_content = json.loads(written_content)
 
             expected_filtered_data = copy.deepcopy(sample_sarif_data_single_run)
             expected_filtered_data["runs"][0]["results"] = [sample_sarif_data_single_run["runs"][0]["results"][0]]
 
-            assert loaded_written_content == expected_filtered_data
+            assert non_filtered_content == sample_sarif_data_single_run
+            assert filtered_content == expected_filtered_data
 
         finally:
-            if os.path.exists(temp_input_file_path):
-                os.remove(temp_input_file_path)
-            if os.path.exists(temp_output_file_path):
-                os.remove(temp_output_file_path)
+            if os.path.exists(temp_nonfiltered_file_path):
+                os.remove(temp_nonfiltered_file_path)
+            if os.path.exists(temp_nonfiltered_file_path):
+                os.remove(temp_nonfiltered_file_path)
 
     def test_filter_sarif_report_input_file_not_found(
         self,
@@ -118,15 +125,15 @@ class TestFilterSarifReport:
         Tests that FileNotFoundError is raised if the input file does not exist.
         """
 
-        mock_input_path = "non_existent_input.sarif"
-        mock_output_path = "output.sarif"
+        mock_report_path = "non_existent_input.sarif"
+        mock_nonfiltered_path = "report.sarif"
 
         mocker.patch("os.path.exists", return_value=False)
 
         with pytest.raises(FileNotFoundError):
             filter_sarif_report(
-                input_report_path=mock_input_path,
-                output_report_path=mock_output_path,
+                report_path=mock_report_path,
+                unfiltered_report_path=mock_nonfiltered_path,
                 exclusions_config=config_to_filter_fp_rule_id,
             )
 
@@ -139,8 +146,8 @@ class TestFilterSarifReport:
         Tests that JSONDecodeError is raised if the input file is not valid JSON
         """
 
-        mock_input_path = "invalid.sarif"
-        mock_output_path = "output.sarif"
+        mock_report_path = "invalid.sarif"
+        mock_nonfiltered_path = "report.sarif"
         invalid_json_content = "{This is not valid json"
 
         mocker.patch("os.path.exists", return_value=True)
@@ -149,8 +156,8 @@ class TestFilterSarifReport:
 
         with pytest.raises(json.JSONDecodeError):
             filter_sarif_report(
-                input_report_path=mock_input_path,
-                output_report_path=mock_output_path,
+                report_path=mock_report_path,
+                unfiltered_report_path=mock_nonfiltered_path,
                 exclusions_config=config_to_filter_fp_rule_id,
             )
 
@@ -164,8 +171,8 @@ class TestFilterSarifReport:
         Tests that IOError is raised if there's an error writing the output file
         """
 
-        mock_input_path = "input.sarif"
-        mock_output_path = "/nonexistent/path/to/output.sarif"
+        mock_report_path = "invalid.sarif"
+        mock_nonfiltered_path = "/nonexistent/path/to/output.sarif"
 
         mocker.patch("os.path.exists", return_value=True)
 
@@ -182,8 +189,8 @@ class TestFilterSarifReport:
 
         with pytest.raises(IOError):
             filter_sarif_report(
-                input_report_path=mock_input_path,
-                output_report_path=mock_output_path,
+                report_path=mock_report_path,
+                unfiltered_report_path=mock_nonfiltered_path,
                 exclusions_config=config_to_filter_fp_rule_id,
             )
 
@@ -194,60 +201,59 @@ class TestFilterSarifReport:
         exclusion_config_disabled,
     ):
         """
-        Tests that filtering is skipped if the config has filtering disabled.
-        The final output file should be identical to the unfiltered input
+        Test that when filtering is disabled via config:
+        - No unfiltered report is created.
+        - The original report remains unchanged.
         """
 
-        input_report_filename = tmp_path / "rapidast-scan-results-unfiltered.sarif"
-        output_report_filename = tmp_path / "rapidast-scan-results.sarif"
+        report_path = tmp_path / "rapidast-scan-results-unfiltered.sarif"
+        unfiltered_report_path = tmp_path / "rapidast-scan-results.sarif"
 
-        with open(input_report_filename, "w") as f:
+        with open(report_path, "w") as f:
             json.dump(sample_sarif_data_single_run, f)
 
         filter_sarif_report(
-            input_report_path=input_report_filename,
-            output_report_path=output_report_filename,
+            report_path=report_path,
+            unfiltered_report_path=unfiltered_report_path,
             exclusions_config=exclusion_config_disabled,
         )
 
-        assert output_report_filename.exists()
-        assert not input_report_filename.exists()
+        assert not unfiltered_report_path.exists()
+        assert report_path.exists()
 
-        with open(output_report_filename) as f:
+        with open(report_path) as f:
             data = json.load(f)
         assert data == sample_sarif_data_single_run
 
     def test_filter_sarif_report_no_rules(
         self,
-        mocker,
+        tmp_path,
         sample_sarif_data_single_run,
         config_no_rules,
     ):
         """
-        Tests that filtering is skipped if the config has no rules.
-        The output file should be identical to the input.
+        Test that filtering is skipped when no exclusion rules are provided.
+        The unfiltered report should be identical to the original input.
         """
 
-        mock_input_path = "input.sarif"
-        mock_output_path = "output_no_rules.sarif"
+        report_path = tmp_path / "rapidast-scan-results-unfiltered.sarif"
+        unfiltered_report_path = tmp_path / "rapidast-scan-results-unfiltered.sarif"
 
-        mocker.patch("os.path.exists", return_value=True)
-        mock_read_file = mock_open(read_data=json.dumps(sample_sarif_data_single_run))
-        mock_write_file = mock_open()
-
-        def mock_open_side_effect(file, mode, **kwargs):
-            if mode == "r":
-                return mock_read_file.return_value
-            elif mode == "w":
-                return mock_write_file.return_value
-            raise ValueError(f"Unexpected mode: {mode}")
-
-        mocker.patch("builtins.open", side_effect=mock_open_side_effect)
+        with open(report_path, "w") as f:
+            json.dump(sample_sarif_data_single_run, f)
 
         filter_sarif_report(
-            input_report_path=mock_input_path, output_report_path=mock_output_path, exclusions_config=config_no_rules
+            report_path=report_path, unfiltered_report_path=unfiltered_report_path, exclusions_config=config_no_rules
         )
 
-        written_content = "".join([call.args[0] for call in mock_write_file.return_value.write.call_args_list])
-        loaded_written_content = json.loads(written_content)
-        assert loaded_written_content == sample_sarif_data_single_run
+        assert unfiltered_report_path.exists()
+        assert report_path.exists()
+
+        with open(report_path) as f:
+            report_data = json.load(f)
+
+        with open(unfiltered_report_path) as f:
+            unfiltered_data = json.load(f)
+
+        assert report_data == sample_sarif_data_single_run
+        assert unfiltered_data == sample_sarif_data_single_run

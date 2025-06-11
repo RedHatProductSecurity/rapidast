@@ -418,8 +418,8 @@ def run():
 
     sarif_properties = generate_sarif_properties(config, scanner_results, "commit_sha.txt")
 
-    input_report_filename = "rapidast-scan-results.sarif"
-    output_report_filename = "rapidast-filtered-scan-results.sarif"
+    input_report_filename = "rapidast-scan-results-unfiltered.sarif"
+    output_report_filename = "rapidast-scan-results.sarif"
 
     input_report_path = os.path.join(full_result_dir_path, input_report_filename)
     output_report_path = os.path.join(full_result_dir_path, output_report_filename)
@@ -436,7 +436,6 @@ def run():
         if not exclusions_config_data:
             logging.info("Configuration section 'exclusions' not found in config.results")
         else:
-            exclusions_config_data = config.conf["config"]["results"]["exclusions"]
             filter_config = dacite.from_dict(data_class=Exclusions, data=exclusions_config_data)
 
             filter_sarif_report(
@@ -497,6 +496,15 @@ def filter_sarif_report(input_report_path: str, output_report_path: str, exclusi
         exclusions_config: Configuration for filtering rules
 
     """
+    try:
+        if not exclusions_config.enabled:
+            logging.info("SARIF filtering is disabled in configuration. Skipping")
+            os.rename(input_report_path, output_report_path)
+            logging.info(f"Renamed input report from '{input_report_path}' to '{output_report_path}'")
+            return
+    except Exception as e:  # pylint: disable=W0718
+        logging.error(f"An error occurred during SARIF report filtering: {e}")
+        return
 
     if not os.path.exists(input_report_path):
         logging.error(f"Input SARIF report not found: {input_report_path}")

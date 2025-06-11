@@ -189,39 +189,33 @@ class TestFilterSarifReport:
 
     def test_filter_sarif_report_filtering_disabled(
         self,
-        mocker,
+        tmp_path,
         sample_sarif_data_single_run,
         exclusion_config_disabled,
     ):
         """
         Tests that filtering is skipped if the config has filtering disabled.
-        The output file should be identical to the input.
+        The final output file should be identical to the unfiltered input
         """
-        mock_input_path = "input.sarif"
-        mock_output_path = "output_disabled.sarif"
 
-        mocker.patch("os.path.exists", return_value=True)
-        mock_read_file = mock_open(read_data=json.dumps(sample_sarif_data_single_run))
-        mock_write_file = mock_open()
+        input_report_filename = tmp_path / "rapidast-scan-results-unfiltered.sarif"
+        output_report_filename = tmp_path / "rapidast-scan-results.sarif"
 
-        def mock_open_side_effect(file, mode, **kwargs):
-            if mode == "r":
-                return mock_read_file.return_value
-            elif mode == "w":
-                return mock_write_file.return_value
-            raise ValueError(f"Unexpected mode: {mode}")
-
-        mocker.patch("builtins.open", side_effect=mock_open_side_effect)
+        with open(input_report_filename, "w") as f:
+            json.dump(sample_sarif_data_single_run, f)
 
         filter_sarif_report(
-            input_report_path=mock_input_path,
-            output_report_path=mock_output_path,
+            input_report_path=input_report_filename,
+            output_report_path=output_report_filename,
             exclusions_config=exclusion_config_disabled,
         )
 
-        written_content = "".join([call.args[0] for call in mock_write_file.return_value.write.call_args_list])
-        loaded_written_content = json.loads(written_content)
-        assert loaded_written_content == sample_sarif_data_single_run
+        assert output_report_filename.exists()
+        assert not input_report_filename.exists()
+
+        with open(output_report_filename) as f:
+            data = json.load(f)
+        assert data == sample_sarif_data_single_run
 
     def test_filter_sarif_report_no_rules(
         self,

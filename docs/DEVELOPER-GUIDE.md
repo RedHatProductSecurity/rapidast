@@ -210,13 +210,14 @@ To add a new dependency, follow these steps:
 
 1. Add the dependency to `requirements.in`
 
-2. Recompile `requirements.txt` to update dependencies, run the following command:
+2. Recompile `requirements.txt` and `requirements-llm.txt` to update dependencies, run the following command:
 
    ```sh
    pip-compile requirements.in
+   pip-compile --output-file=requirements-llm.txt requirements-llm.in
    ```
 
-   This will regenerate `requirements.txt` with the newly added dependency and its pinned versions.
+   This will regenerate `requirements.txt` and `requirements-llm.txt` with the newly added dependency and its pinned versions.
 
 3. **IMPORTANT: Prefetching will not reflect new dependencies unless this step is completed**.
     Recompile `requirements-dev.txt` to update development dependencies that rely on `requirements.txt`.

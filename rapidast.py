@@ -3,6 +3,7 @@ import argparse
 import json
 import logging
 import os
+import pkgutil
 import pprint
 import re
 import sys
@@ -91,6 +92,13 @@ def load_config(config_file_location: str) -> Dict[str, Any]:
     return yaml.safe_load(load_config_file(config_file_location))
 
 
+def get_valid_scanners():
+    return [
+        name
+        for _, name, ispkg in pkgutil.iter_modules(scanners.__path__)
+        if ispkg
+    ]
+
 # pylint: disable=R0911
 # too many return statements
 def run_scanner(name, config, args, dedo_exporter=None):
@@ -118,9 +126,15 @@ def run_scanner(name, config, args, dedo_exporter=None):
     try:
         class_ = scanners.str_to_scanner(name, typ)
     except ModuleNotFoundError:
-        logging.error(f"Scanner `{name.split('_')[0]}` of type `{typ}` does not exist")
-        logging.error(f"Ignoring failed Scanner `name.split('_')[0]` of type `{typ}`")
-        logging.error(f"Please verify your configuration file: `scanners.{name}`")
+        base_name = name.split("_")[0]
+        valid_scanners = get_valid_scanners()
+        logging.error(f"Unknown scanner `{base_name}` of type `{typ}`")
+        logging.error(f"Skipping invalid scanner entry: `{name}`")
+        logging.error(
+            "Please check your configuration. Scanner names must follow the pattern "
+            "'<scanner>' or '<scanner>_<suffix>', where '<scanner>' is one of: "
+            f"{', '.join(valid_scanners)}"
+        )
         return 1
 
     # Part 1: create a instance based on configuration

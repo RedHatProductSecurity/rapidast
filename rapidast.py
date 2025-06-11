@@ -431,14 +431,12 @@ def run():
     )
 
     try:
-        if (
-            "config" not in config.conf
-            or "exclusions" not in config.conf["config"]
-            or not config.conf["config"]["exclusions"]
-        ):
-            logging.info("Configuration section 'exclusions' not found in config.conf")
+        exclusions_config_data = config.conf.get("config", {}).get("results", {}).get("exclusions")
+
+        if not exclusions_config_data:
+            logging.info("Configuration section 'exclusions' not found in config.results")
         else:
-            exclusions_config_data = config.conf["config"]["exclusions"]
+            exclusions_config_data = config.conf["config"]["results"]["exclusions"]
             filter_config = dacite.from_dict(data_class=Exclusions, data=exclusions_config_data)
 
             filter_sarif_report(

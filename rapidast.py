@@ -93,11 +93,8 @@ def load_config(config_file_location: str) -> Dict[str, Any]:
 
 
 def get_valid_scanners():
-    return [
-        name
-        for _, name, ispkg in pkgutil.iter_modules(scanners.__path__)
-        if ispkg
-    ]
+    return [name for _, name, ispkg in pkgutil.iter_modules(scanners.__path__) if ispkg]
+
 
 # pylint: disable=R0911
 # too many return statements

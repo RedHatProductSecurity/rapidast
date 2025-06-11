@@ -14,6 +14,7 @@ from typing import Dict
 from typing import List
 from urllib import request
 
+import dacite
 import yaml
 from dotenv import load_dotenv
 from jsonschema import Draft202012Validator
@@ -24,9 +25,11 @@ from jsonschema import ValidationError
 import configmodel.converter
 import scanners
 from configmodel import deep_traverse_and_replace_with_var_content
+from configmodel.models.exclusions import Exclusions
 from exports.defect_dojo import DefectDojo
 from exports.google_cloud_storage import GoogleCloudStorage
 from utils import add_logging_level
+from utils.cel_exclusions import CELExclusions
 
 
 pp = pprint.PrettyPrinter(indent=4)
@@ -415,11 +418,34 @@ def run():
 
     sarif_properties = generate_sarif_properties(config, scanner_results, "commit_sha.txt")
 
+    report_filename = "rapidast-scan-results.sarif"
+    unfiltered_report_filename = "rapidast-scan-results-unfiltered.sarif"
+
+    report_path = os.path.join(full_result_dir_path, report_filename)
+    unfiltered_report_path = os.path.join(full_result_dir_path, unfiltered_report_filename)
+
     merge_sarif_files(
         directory=full_result_dir_path,
         properties=sarif_properties,
-        output_filename=f"{full_result_dir_path}/rapidast-scan-results.sarif",
+        output_filename=report_path,
     )
+
+    try:
+        exclusions_config_data = config.conf.get("config", {}).get("results", {}).get("exclusions")
+
+        if not exclusions_config_data:
+            logging.info("Configuration section 'exclusions' not found in config.results. Skipping SARIF filtering")
+
+        else:
+            filter_config = dacite.from_dict(data_class=Exclusions, data=exclusions_config_data)
+
+            filter_sarif_report(
+                report_path=report_path,
+                unfiltered_report_path=unfiltered_report_path,
+                exclusions_config=filter_config,
+            )
+    except Exception as e:  # pylint: disable=W0718
+        logging.error(f"An error occurred during SARIF report filtering: {e}")
 
     # Export all the scan results to GCS
     # Note: This is done after all scanners have run,
@@ -459,6 +485,52 @@ def collect_sarif_files(directory: str) -> List[str]:
         logging.warning(f"No SARIF files found in directory: {directory}")
 
     return sarif_files
+
+
+def filter_sarif_report(report_path: Path, unfiltered_report_path: Path, exclusions_config: Exclusions) -> None:
+    """
+    Applies exclusion rules to a SARIF report and writes the filtered results to a new file
+
+    Args:
+        report_path: Path to the SARIF report to be filtered. This file will be overwritten with the filtered results
+        unfiltered_report_path: Path where the original, unfiltered SARIF report will be saved
+        exclusions_config: Configuration object specifying the filtering rules to apply
+    """
+    if not exclusions_config.enabled:
+        logging.info("SARIF filtering is disabled in configuration. Skipping")
+        return
+
+    if not os.path.exists(report_path):
+        logging.error(f"Input SARIF report not found: {report_path}")
+        raise FileNotFoundError(f"Input SARIF report not found: {report_path}")
+
+    logging.info(f"Starting SARIF filtering from '{report_path}'")
+
+    try:
+        with open(report_path, "r", encoding="utf-8") as file_handle:
+            original_sarif_report_data = json.load(file_handle)
+    except json.JSONDecodeError as e:
+        logging.error(f"Failed to parse input SARIF file '{report_path}': {e}")
+        raise
+    except IOError as e:
+        logging.error(f"Error reading input SARIF file '{report_path}': {e}")
+        raise
+
+    cel_exclusions_engine = CELExclusions(exclusions_config)
+    filtered_sarif_report_data = cel_exclusions_engine.filter_sarif_results(original_sarif_report_data)
+
+    os.rename(report_path, unfiltered_report_path)
+    logging.info(f"Renamed input report from '{report_path}' to '{unfiltered_report_path}'")
+
+    try:
+        with open(report_path, "w", encoding="utf-8") as file_handle:
+            json.dump(filtered_sarif_report_data, file_handle, indent=2)
+        logging.info(f"Filtered SARIF report successfully saved to: '{report_path}'")
+    except IOError as e:
+        logging.error(f"Error writing filtered SARIF report to '{report_path}': {e}")
+        raise
+
+    logging.info("SARIF filtering process completed")
 
 
 def merge_sarif_files(directory: str, properties: dict, output_filename: str):

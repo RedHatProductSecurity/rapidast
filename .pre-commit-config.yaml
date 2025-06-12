@@ -47,7 +47,7 @@ repos:
 
   - repo: https://github.com/PyCQA/pylint
     #rev: v3.0.3
-    rev: v2.17.7
+    rev: v3.3.7
     hooks:
       - id: pylint
         exclude: ^tests/

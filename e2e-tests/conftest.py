@@ -225,7 +225,10 @@ class TestBase:
 
     def replace_from_yaml(self, path: str):
         self._teardowns.append(partial(os.system, f"kubectl delete -f {path} -n {NAMESPACE} --ignore-not-found"))
-        os.system(f"kubectl replace -f {path} -n {NAMESPACE}")
+        # We need to delete the existing resource and create a new one instead of replacing it,
+        # because some resources, like pods, cannot be updated in place in Openshift due to SCC
+        os.system(f"kubectl delete -f {path} -n {NAMESPACE} --ignore-not-found")
+        os.system(f"kubectl apply -f {path} -n {NAMESPACE}")
 
 
 @pytest.fixture

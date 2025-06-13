@@ -1,0 +1,51 @@
+apiVersion: v1
+data:
+  config.yaml: |+
+    config:
+      configVersion: 5
+
+    # `application` contains data related to the application, not to the scans.
+    application:
+      shortName: "v5-none-release-test"
+      url: "http://vapi:5000"
+
+    scanners:
+      zap:
+      # define a scan through the ZAP scanner
+        apiScan:
+          apis:
+            apiUrl: "http://vapi:5000/docs/openapi.json"
+
+        passiveScan:
+          # optional list of passive rules to disable
+          disabledRules: "2,10015,10027,10096,10024,10098,10023,10105"
+
+        activeScan:
+          policy: API-scan-minimal
+
+        container:
+          parameters:
+            executable: "zap.sh"
+
+        spiderAjax:
+          maxDuration: 1
+          url: "http://vapi:3000"
+          maxCrawlDepth: 1
+
+        miscOptions:
+          # enableUI (default: false), requires a compatible runtime (e.g.: flatpak or no containment)
+          #enableUI: True
+          # Defaults to False, set True to force auto update of ZAP plugins
+          updateAddons: False
+          # additionalAddons: ascanrulesBeta
+          # If set to True and authentication is oauth2_rtoken and api.apiUrl is set, download the API outside of ZAP
+          oauth2OpenapiManualDownload: False
+
+        urls:
+          excludes:
+          - "http://vapi:5000/api/pets/id/.*"
+          - "http://vapi:3000/_next/static/css/.*.css"
+
+kind: ConfigMap
+metadata:
+  name: rapidast-vapi

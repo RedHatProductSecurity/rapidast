@@ -35,9 +35,10 @@ class TestRapiDAST(TestBase):
         with open(logfile, "r", encoding="utf-8") as f:
             logs = f.read()
 
-        # Verify that URLs intended for exclusion in subsequent tests are present in the report
-        # if they are not excluded (defined in rapidast-vapi-configmap-urls-exclusions.yaml)
-        excluded_urls = ["http://vapi:5000/api/pets/id/.*", "http://vapi:3000/_next/static/css/*.css"]
+        # Verify that URLs listed for exclusion in subsequent tests are present in the report.
+        # This list should be kept in sync with the configuration scanners.zap.urls.excludes in
+        # manifests/rapidast-vapi-configmap-urls-exclusions.yaml
+        excluded_urls = ["http://vapi:5000/api/pets/id/.*", "http://vapi:3000/_next/static/css/.*.css"]
 
         excluded = verify_zap_report_urls_exclusions(data, excluded_urls)
 
@@ -52,8 +53,7 @@ class TestRapiDAST(TestBase):
         url_count = int(match.group(1))
         assert url_count > 1, f"{logfile} indicates only {url_count} URL(s) found, expected more than 1"
 
-        # This step validates that the ZAP report does not contain alerts
-        # for URLs that should have been excluded in the scan configuration.
+        # Verify that ZAP report does not contain alerts for URLs excluded in the scan configuration
         self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-configmap-urls-exclusions.yaml")
         self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-pod.yaml")
         assert is_pod_with_field_selector_successfully_completed(

@@ -54,8 +54,8 @@ class TestRapiDAST(TestBase):
         assert url_count > 1, f"{logfile} indicates only {url_count} URL(s) found, expected more than 1"
 
         # Verify that ZAP report does not contain alerts for URLs excluded in the scan configuration
-        self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-configmap-urls-exclusions.yaml")
-        self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-pod.yaml")
+        self.replace_from_yaml(f"{self.tempdir}/rapidast-vapi-configmap-urls-exclusions.yaml")
+        self.replace_from_yaml(f"{self.tempdir}/rapidast-vapi-pod.yaml")
         assert is_pod_with_field_selector_successfully_completed(
             field_selector="metadata.name=rapidast-vapi", timeout=360  # llm-based image takes really long to download
         )

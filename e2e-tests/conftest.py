@@ -219,9 +219,13 @@ class TestBase:
 
     def create_from_yaml(self, path: str):
         # delete resources in teardown method later
-        self._teardowns.append(partial(os.system, f"kubectl delete -f {path} -n {NAMESPACE}"))
+        self._teardowns.append(partial(os.system, f"kubectl delete -f {path} -n {NAMESPACE} --ignore-not-found"))
         o = utils.create_from_yaml(self.kclient, path, namespace=NAMESPACE, verbose=True)
         logging.debug(o)
+
+    def replace_from_yaml(self, path: str):
+        self._teardowns.append(partial(os.system, f"kubectl delete -f {path} -n {NAMESPACE} --ignore-not-found"))
+        os.system(f"kubectl replace -f {path} -n {NAMESPACE}")
 
 
 @pytest.fixture

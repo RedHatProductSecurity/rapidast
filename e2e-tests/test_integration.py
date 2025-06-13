@@ -60,6 +60,7 @@ class TestRapiDAST(TestBase):
             field_selector="metadata.name=rapidast-vapi", timeout=360  # llm-based image takes really long to download
         )
 
+        tee_log("rapidast-vapi", results, container="results")
         with open(results, "r", encoding="utf-8") as f:
             data = json.load(f)
 

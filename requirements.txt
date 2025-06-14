@@ -110,7 +110,7 @@ rfc3339-validator==0.1.4
     # via jsonschema
 rfc3987==1.3.8
     # via jsonschema
-rich==13.9.4
+rich==14.0.0
     # via typer
 rpds-py==0.22.3
     # via

@@ -514,7 +514,7 @@ rfc3987==1.3.8
     # via
     #   -r ./requirements.txt
     #   jsonschema
-rich==13.9.4
+rich==14.0.0
     # via
     #   -r ./requirements.txt
     #   fschat

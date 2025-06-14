@@ -285,7 +285,7 @@ multidict==6.1.0
     # via
     #   aiohttp
     #   yarl
-multiprocess==0.70.15
+multiprocess==0.70.18
     # via datasets
 nemollm==0.3.5
     # via garak

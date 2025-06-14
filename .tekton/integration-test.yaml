@@ -169,7 +169,7 @@ spec:
                 operator: notin
                 values: [""]
           - name: inject-cachi2-files
-            image: quay.io/konflux-ci/cachi2:0.20.0@sha256:80402886bbc0f6b4deba65cf5f66dfe9a2c01ae0b57bf3454e3ea58e1a395720
+            image: quay.io/konflux-ci/cachi2:0.22.2@sha256:c24dbc207b0eca1fe742a53b50feca2182dc0f998e5b91af6a7c94c3132bdcd0
             workingDir: /workspace
             script: |
               #!/bin/bash

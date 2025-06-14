@@ -41,7 +41,7 @@ dacite==1.9.2
     # via -r ./requirements.txt
 distlib==0.3.9
     # via virtualenv
-durationpy==0.9
+durationpy==0.10
     # via kubernetes
 filelock==3.17.0
     # via virtualenv

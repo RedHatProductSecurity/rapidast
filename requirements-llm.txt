@@ -305,7 +305,7 @@ numpy==1.26.4
     #   pandas
     #   soundfile
     #   transformers
-nvdlib==0.7.9
+nvdlib==0.8.1
     # via avidtools
 nvidia-cublas-cu12==12.4.5.8
     # via

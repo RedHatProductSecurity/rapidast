@@ -343,7 +343,7 @@ nvidia-nvtx-cu12==12.4.127
     # via torch
 octoai-sdk==0.10.1
     # via garak
-ollama==0.4.7
+ollama==0.5.1
     # via garak
 openai==1.65.4
     # via

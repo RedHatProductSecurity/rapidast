@@ -15,7 +15,7 @@ attrs==25.1.0
     #   referencing
 black==25.1.0
     # via -r requirements-dev.in
-cachetools==5.5.1
+cachetools==5.5.2
     # via
     #   -r ./requirements.txt
     #   google-auth

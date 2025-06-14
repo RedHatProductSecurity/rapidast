@@ -129,7 +129,7 @@ oauthlib==3.2.2
     # via
     #   kubernetes
     #   requests-oauthlib
-packaging==24.2
+packaging==25.0
     # via
     #   black
     #   pytest

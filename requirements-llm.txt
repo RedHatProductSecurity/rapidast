@@ -289,7 +289,7 @@ multiprocess==0.70.15
     # via datasets
 nemollm==0.3.5
     # via garak
-networkx==3.4.2
+networkx==3.5
     # via torch
 nh3==0.2.21
     # via fschat

@@ -121,7 +121,7 @@ frozenlist==1.5.0
     #   aiosignal
 fschat==0.2.36
     # via garak
-fsspec[http]==2023.10.0
+fsspec[http]==2023.12.2
     # via
     #   datasets
     #   huggingface-hub

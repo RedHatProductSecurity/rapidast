@@ -67,7 +67,7 @@ google-cloud-core==2.4.1
     #   google-cloud-storage
 google-cloud-storage==3.0.0
     # via -r ./requirements.txt
-google-crc32c==1.6.0
+google-crc32c==1.7.1
     # via
     #   -r ./requirements.txt
     #   google-cloud-storage

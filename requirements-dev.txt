@@ -43,7 +43,7 @@ distlib==0.3.9
     # via virtualenv
 durationpy==0.9
     # via kubernetes
-filelock==3.17.0
+filelock==3.18.0
     # via virtualenv
 fqdn==1.5.1
     # via

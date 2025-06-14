@@ -380,7 +380,7 @@ proto-plus==1.26.0
     # via
     #   -r ./requirements.txt
     #   google-api-core
-protobuf==5.29.3
+protobuf==5.29.5
     # via
     #   -r ./requirements.txt
     #   google-api-core

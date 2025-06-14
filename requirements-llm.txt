@@ -450,7 +450,7 @@ python-slugify==8.0.4
     # via
     #   -r ./requirements.txt
     #   py-nessus-pro
-pytz==2025.1
+pytz==2025.2
     # via
     #   datetime
     #   pandas

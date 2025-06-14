@@ -562,7 +562,7 @@ stdlibs==2024.12.3
     # via garak
 svgwrite==1.4.3
     # via wavedrom
-sympy==1.13.1
+sympy==1.14.0
     # via torch
 tenacity==9.0.0
     # via langchain-core

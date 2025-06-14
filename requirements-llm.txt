@@ -349,7 +349,7 @@ openai==1.65.4
     # via
     #   garak
     #   litellm
-orjson==3.10.15
+orjson==3.10.18
     # via langsmith
 packaging==24.2
     # via

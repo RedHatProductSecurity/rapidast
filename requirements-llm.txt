@@ -602,7 +602,7 @@ typer==0.15.1
     # via
     #   -r ./requirements.txt
     #   py-nessus-pro
-types-python-dateutil==2.9.0.20241206
+types-python-dateutil==2.9.0.20250516
     # via
     #   -r ./requirements.txt
     #   arrow

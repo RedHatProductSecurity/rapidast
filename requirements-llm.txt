@@ -596,7 +596,7 @@ tqdm==4.67.1
     #   transformers
 transformers==4.49.0
     # via garak
-triton==3.2.0
+triton==3.3.1
     # via torch
 typer==0.15.1
     # via

@@ -85,7 +85,7 @@ colorama==0.4.6
     # via garak
 dacite==1.9.2
     # via -r ./requirements.txt
-datasets==2.16.1
+datasets==2.21.0
     # via garak
 datetime==5.5
     # via avidtools

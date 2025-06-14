@@ -139,7 +139,7 @@ pendulum==3.1.0
     # via
     #   -r ./requirements.txt
     #   cel-python
-platformdirs==4.3.6
+platformdirs==4.3.8
     # via
     #   black
     #   virtualenv

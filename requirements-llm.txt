@@ -673,7 +673,7 @@ xdg-base-dirs==6.0.2
     # via garak
 xxhash==3.5.0
     # via datasets
-yarl==1.18.3
+yarl==1.20.1
     # via aiohttp
 zalgolib==0.2.2
     # via garak

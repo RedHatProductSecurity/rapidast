@@ -91,7 +91,7 @@ datetime==5.5
     # via avidtools
 deepl==1.17.0
     # via garak
-dill==0.3.7
+dill==0.4.0
     # via
     #   datasets
     #   multiprocess

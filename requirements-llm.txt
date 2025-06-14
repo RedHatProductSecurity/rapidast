@@ -478,7 +478,7 @@ regex==2024.11.6
     #   nltk
     #   tiktoken
     #   transformers
-replicate==1.0.4
+replicate==1.0.7
     # via garak
 requests==2.32.3
     # via

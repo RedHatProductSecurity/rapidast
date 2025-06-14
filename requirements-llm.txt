@@ -8,7 +8,7 @@ accelerate==1.4.0
     # via garak
 aiohappyeyeballs==2.5.0
     # via aiohttp
-aiohttp==3.11.13
+aiohttp==3.12.13
     # via
     #   cohere
     #   datasets

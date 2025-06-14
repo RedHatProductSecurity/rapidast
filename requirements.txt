@@ -24,7 +24,7 @@ dacite==1.9.2
     # via rapidast (pyproject.toml)
 fqdn==1.5.1
     # via jsonschema
-google-api-core==2.24.1
+google-api-core==2.25.1
     # via
     #   google-cloud-core
     #   google-cloud-storage

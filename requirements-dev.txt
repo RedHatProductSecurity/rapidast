@@ -105,7 +105,7 @@ jsonschema-specifications==2024.10.1
     #   jsonschema
 kubernetes==32.0.0
     # via -r requirements-dev.in
-lark==0.12.0
+lark==1.2.2
     # via
     #   -r ./requirements.txt
     #   cel-python

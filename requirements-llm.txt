@@ -251,7 +251,7 @@ langsmith==0.3.12
     # via
     #   langchain
     #   langchain-core
-lark==0.12.0
+lark==1.2.2
     # via
     #   -r ./requirements.txt
     #   cel-python

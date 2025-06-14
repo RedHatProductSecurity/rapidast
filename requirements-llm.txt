@@ -201,7 +201,7 @@ idna==3.10
     #   jsonschema
     #   requests
     #   yarl
-importlib-metadata==6.11.0
+importlib-metadata==8.7.0
     # via
     #   cohere
     #   litellm

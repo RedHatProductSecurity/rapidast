@@ -55,7 +55,7 @@ jsonpointer==3.0.0
     # via jsonschema
 jsonschema[format]==4.23.0
     # via rapidast (pyproject.toml)
-jsonschema-specifications==2024.10.1
+jsonschema-specifications==2025.4.1
     # via jsonschema
 lark==0.12.0
     # via cel-python

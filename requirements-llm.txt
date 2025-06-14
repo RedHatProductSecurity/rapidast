@@ -235,7 +235,7 @@ jsonschema[format]==4.23.0
     # via
     #   -r ./requirements.txt
     #   litellm
-jsonschema-specifications==2024.10.1
+jsonschema-specifications==2025.4.1
     # via
     #   -r ./requirements.txt
     #   jsonschema

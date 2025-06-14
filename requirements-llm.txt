@@ -581,7 +581,7 @@ tokenizers==0.21.0
     #   transformers
 tomli==2.2.1
     # via wn
-torch==2.6.0
+torch==2.7.1
     # via
     #   accelerate
     #   garak

@@ -61,7 +61,7 @@ google-auth==2.38.0
     #   google-cloud-core
     #   google-cloud-storage
     #   kubernetes
-google-cloud-core==2.4.1
+google-cloud-core==2.4.3
     # via
     #   -r ./requirements.txt
     #   google-cloud-storage

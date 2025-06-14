@@ -87,7 +87,7 @@ idna==3.10
     #   -r ./requirements.txt
     #   jsonschema
     #   requests
-iniconfig==2.0.0
+iniconfig==2.1.0
     # via pytest
 isoduration==20.11.0
     # via

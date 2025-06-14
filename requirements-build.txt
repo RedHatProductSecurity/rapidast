@@ -57,7 +57,7 @@ pdm-backend==2.4.3
     # via
     #   typer
     #   webcolors
-pluggy==1.5.0
+pluggy==1.6.0
     # via hatchling
 poetry-core==2.1.1
     # via

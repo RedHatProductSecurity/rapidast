@@ -466,7 +466,7 @@ pyyaml==6.0.2
     #   octoai-sdk
     #   transformers
     #   wavedrom
-rapidfuzz==3.12.2
+rapidfuzz==3.13.0
     # via garak
 referencing==0.36.2
     # via

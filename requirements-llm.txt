@@ -667,7 +667,7 @@ webcolors==24.11.1
     # via
     #   -r ./requirements.txt
     #   jsonschema
-wn==0.9.5
+wn==0.13.0
     # via garak
 xdg-base-dirs==6.0.2
     # via garak

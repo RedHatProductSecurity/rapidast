@@ -69,7 +69,7 @@ pendulum==3.1.0
     # via cel-python
 proto-plus==1.26.0
     # via google-api-core
-protobuf==5.29.3
+protobuf==6.31.1
     # via
     #   google-api-core
     #   googleapis-common-protos

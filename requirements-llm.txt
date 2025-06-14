@@ -69,7 +69,7 @@ charset-normalizer==3.4.1
     #   requests
 chevron==0.14.0
     # via octoai-sdk
-click==8.1.8
+click==8.2.1
     # via
     #   -r ./requirements.txt
     #   litellm

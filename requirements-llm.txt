@@ -103,7 +103,7 @@ fastapi==0.115.11
     # via
     #   fschat
     #   octoai-sdk
-fastavro==1.10.0
+fastavro==1.11.1
     # via cohere
 filelock==3.17.0
     # via

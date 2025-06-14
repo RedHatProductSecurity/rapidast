@@ -370,7 +370,7 @@ pillow==10.4.0
     # via octoai-sdk
 ply==3.11
     # via jsonpath-ng
-prompt-toolkit==3.0.50
+prompt-toolkit==3.0.51
     # via fschat
 propcache==0.3.0
     # via

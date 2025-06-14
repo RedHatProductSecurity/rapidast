@@ -54,7 +54,7 @@ google-api-core==2.24.1
     #   -r ./requirements.txt
     #   google-cloud-core
     #   google-cloud-storage
-google-auth==2.38.0
+google-auth==2.40.3
     # via
     #   -r ./requirements.txt
     #   google-api-core

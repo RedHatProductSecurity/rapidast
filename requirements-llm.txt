@@ -136,7 +136,7 @@ google-api-core==2.24.1
     #   google-cloud-storage
 google-api-python-client==2.163.0
     # via garak
-google-auth==2.38.0
+google-auth==2.40.3
     # via
     #   -r ./requirements.txt
     #   google-api-core

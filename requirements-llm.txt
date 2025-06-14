@@ -611,7 +611,7 @@ types-pyyaml==6.0.12.20250516
     #   -r ./requirements.txt
     #   cel-python
     #   octoai-sdk
-types-requests==2.32.0.20250306
+types-requests==2.32.4.20250611
     # via octoai-sdk
 typing==3.7.4.3
     # via

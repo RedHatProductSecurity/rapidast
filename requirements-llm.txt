@@ -392,7 +392,7 @@ py-nessus-pro @ git+https://github.com/sfowl/py-nessus-pro.git@41abc315c0e7e1320
     # via -r ./requirements.txt
 pyarrow==19.0.1
     # via datasets
-pyarrow-hotfix==0.6
+pyarrow-hotfix==0.7
     # via datasets
 pyasn1==0.6.1
     # via

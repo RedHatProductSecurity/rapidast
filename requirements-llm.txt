@@ -480,7 +480,7 @@ regex==2024.11.6
     #   transformers
 replicate==1.0.4
     # via garak
-requests==2.32.3
+requests==2.32.4
     # via
     #   -r ./requirements.txt
     #   cohere

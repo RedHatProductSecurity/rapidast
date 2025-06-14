@@ -89,7 +89,7 @@ datasets==2.16.1
     # via garak
 datetime==5.5
     # via avidtools
-deepl==1.17.0
+deepl==1.22.0
     # via garak
 dill==0.3.7
     # via

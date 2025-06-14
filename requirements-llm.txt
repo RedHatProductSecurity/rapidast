@@ -220,7 +220,7 @@ jmespath==1.0.1
     # via
     #   boto3
     #   botocore
-joblib==1.4.2
+joblib==1.5.1
     # via nltk
 jsonpatch==1.33
     # via langchain-core

@@ -147,7 +147,7 @@ pluggy==1.5.0
     # via pytest
 pre-commit==4.2.0
     # via -r requirements-dev.in
-proto-plus==1.26.0
+proto-plus==1.26.1
     # via
     #   -r ./requirements.txt
     #   google-api-core

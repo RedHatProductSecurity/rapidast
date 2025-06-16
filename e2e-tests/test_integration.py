@@ -35,6 +35,15 @@ class TestRapiDAST(TestBase):
         with open(logfile, "r", encoding="utf-8") as f:
             logs = f.read()
 
+        # Verify that URLs listed for exclusion in subsequent tests are present in the report.
+        # This list should be kept in sync with the configuration scanners.zap.urls.excludes in
+        # manifests/rapidast-vapi-configmap-urls-exclusions.yaml
+        excluded_urls = ["http://vapi:5000/api/pets/id/.*", "http://vapi:3000/_next/static/css/.*.css"]
+
+        excluded = verify_zap_report_urls_exclusions(data, excluded_urls)
+
+        assert all(info["found"] for info in excluded.values())
+
         # Verify that the spiderAjax job is functioning correctly
         # @TODO: Consider implementing this using ZAP's built-in monitor test framework
         #        https://www.zaproxy.org/docs/desktop/addons/automation-framework/test-monitor/
@@ -43,6 +52,22 @@ class TestRapiDAST(TestBase):
         assert match is not None, f"{logfile} does not contain a line matching 'Job spiderAjax found X URLs'"
         url_count = int(match.group(1))
         assert url_count > 1, f"{logfile} indicates only {url_count} URL(s) found, expected more than 1"
+
+        # Verify that ZAP report does not contain alerts for URLs excluded in the scan configuration
+        self.replace_from_yaml(f"{self.tempdir}/rapidast-vapi-configmap-urls-exclusions.yaml")
+        self.replace_from_yaml(f"{self.tempdir}/rapidast-vapi-pod.yaml")
+        assert is_pod_with_field_selector_successfully_completed(
+            field_selector="metadata.name=rapidast-vapi", timeout=360  # llm-based image takes really long to download
+        )
+
+        results = os.path.join(self.tempdir, "rapidast-vapi-excluded-urls-results.json")
+        tee_log("rapidast-vapi", results, container="results")
+        with open(results, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        excluded = verify_zap_report_urls_exclusions(data, excluded_urls)
+
+        assert all(not info["found"] for info in excluded.values())
 
     def test_trivy(self):
         self.create_from_yaml(f"{self.tempdir}/rapidast-trivy-configmap.yaml")
@@ -77,3 +102,38 @@ class TestRapiDAST(TestBase):
         with open(logfile, "r", encoding="utf-8") as f:
             logs = f.read()
             assert expected_line in logs, f"{logfile} does not contain expected line: {expected_line}"
+
+
+def verify_zap_report_urls_exclusions(report_data: dict, excluded_urls: list[str]) -> dict:
+    """
+    Checks if any alert instance URIs from a ZAP report contain any of the specified
+    excluded URL patterns
+    """
+
+    def _get_all_instance_uris(report_data: dict) -> list[str]:
+        """
+        Helper function to extract all unique URIs from alert instances in the ZAP report
+        """
+        uris = set()
+        if "site" not in report_data or not isinstance(report_data.get("site"), list):
+            assert False, "'site' key not found in the ZAP report. No alerts to check"
+
+        for site in report_data["site"]:  # pylint: disable=R1702 too-many-nested-blocks
+            if "alerts" in site and isinstance(site.get("alerts"), list):
+                for alert in site["alerts"]:
+                    if "instances" in alert and isinstance(alert.get("instances"), list):
+                        for instance in alert["instances"]:
+                            if "uri" in instance:
+                                uris.add(instance["uri"])
+        return list(uris)
+
+    compiled_patterns = [(re.compile(pattern), pattern) for pattern in excluded_urls]
+    results = {pattern: {"found": False} for pattern in excluded_urls}
+
+    all_report_uris = _get_all_instance_uris(report_data)
+
+    for uri in all_report_uris:
+        for compiled_regex, original_pattern_str in compiled_patterns:
+            if compiled_regex.search(uri):
+                results[original_pattern_str]["found"] = True
+    return results

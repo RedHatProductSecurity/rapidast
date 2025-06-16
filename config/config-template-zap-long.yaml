@@ -193,7 +193,10 @@ scanners:
     urls:
       # Optional, `includes` and `excludes` take a list of regexps.
       # includes: A URL matching that regexp will be in the scope of scanning, in addition to application.url which is already in scope
-      # excludes: A URL matching that regexp will NOT be in the scope of scanning
+      # excludes: A URL matching that regexp will NOT be in the scope of scanning.
+      #           ZAP might still contact those URLs in some cases, for example, when importing OpenAPI specs,
+      #           it requests all endpoints to build the site map and to discover the endpoints, even if those URLs are excluded from scanning.
+      #           So, while excluded URLs won’t be included in the final site map for scanning, they may still receive an initial connection
       # Note: The regular expressions MUST match the whole URL.
       #       e.g.: 'http://example.com/do-not-descend-here/' will actually descend
 

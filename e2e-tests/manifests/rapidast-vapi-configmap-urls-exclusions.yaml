@@ -11,7 +11,6 @@ data:
 
     scanners:
       zap:
-      # define a scan through the ZAP scanner
         apiScan:
           apis:
             apiUrl: "http://vapi:5000/docs/openapi.json"
@@ -23,23 +22,13 @@ data:
         activeScan:
           policy: API-scan-minimal
 
-        container:
-          parameters:
-            executable: "zap.sh"
-
         spiderAjax:
           maxDuration: 1
           url: "http://vapi:3000"
           maxCrawlDepth: 1
 
         miscOptions:
-          # enableUI (default: false), requires a compatible runtime (e.g.: flatpak or no containment)
-          #enableUI: True
-          # Defaults to False, set True to force auto update of ZAP plugins
           updateAddons: False
-          # additionalAddons: ascanrulesBeta
-          # If set to True and authentication is oauth2_rtoken and api.apiUrl is set, download the API outside of ZAP
-          oauth2OpenapiManualDownload: False
 
         urls:
           excludes:

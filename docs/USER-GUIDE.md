@@ -3,9 +3,9 @@
 ## Deprecation Notice
 
 **Podman Mode Deprecation**
-The `podman` execution environment is deprecated and will be removed in version **2.12**
+The `podman` execution environment is deprecated and will be removed in a future version
 
-If you are using `podman` fpr the `container.type` option, please migrate to `none` before updating to version 2.12.
+If you are using `podman` fpr the `container.type` option, please migrate to `none`.
 
 ## Quickstart
 
@@ -426,7 +426,7 @@ Set `general.container.type` to select an environment (default: `none`)
   - Run a RapiDAST scan with scanners that are installed on the same host OR run RapiDAST in a container (scanners are to be installed in the same container image)
   - __Warning__: without a container layer, RapiDAST may have to modify the host's file system, such as the tools configuration to fit its needs. For example: the ZAP plugin has to copy the policy file used in ZAP's user config directory (`~/.ZAP`)
 
-- `podman` (this mode is deprecated and will be **removed** in version **2.12**):
+- `podman` (this mode is deprecated and will be **removed** in a future version):
   - Run scanners as separate containers using `podman`
   - RapiDAST must not run inside a container
   - Select the image to load from `scanner.<name>.container.image` (sensible default are provided for each scanner)

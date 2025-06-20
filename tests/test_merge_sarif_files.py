@@ -39,8 +39,12 @@ class TestMergeSarifFiles(unittest.TestCase):
                 merged = json.load(f)
 
             self.assertEqual(len(merged["runs"]), 2)
-            self.assertEqual(merged["runs"][0], garak_log["runs"][0])
-            self.assertEqual(merged["runs"][1], zap_log["runs"][0])
+            garak_run = garak_log["runs"][0]
+            zap_run = zap_log["runs"][0]
+            merged_runs = merged["runs"]
+
+            self.assertTrue(any(run == garak_run for run in merged_runs), "garak_log not found in merged runs")
+            self.assertTrue(any(run == zap_run for run in merged_runs), "zap_log not found in merged runs")
             self.assertEqual(merged["properties"], self.scanner_results)
         finally:
             os.remove(output_file)

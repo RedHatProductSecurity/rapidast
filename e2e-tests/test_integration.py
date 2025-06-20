@@ -40,7 +40,7 @@ class TestRapiDAST(TestBase):
         # manifests/rapidast-vapi-configmap-urls-exclusions.yaml
         excluded_urls = ["http://vapi:5000/api/pets/id/.*", "http://vapi:3000/_next/static/css/.*.css"]
 
-        excluded = verify_zap_report_urls_exclusions(data, excluded_urls)
+        excluded = verify_zap_report_urls(data, excluded_urls)
 
         assert all(info["found"] for info in excluded.values())
 
@@ -52,6 +52,23 @@ class TestRapiDAST(TestBase):
         assert match is not None, f"{logfile} does not contain a line matching 'Job spiderAjax found X URLs'"
         url_count = int(match.group(1))
         assert url_count > 1, f"{logfile} indicates only {url_count} URL(s) found, expected more than 1"
+
+        # Check that the correct ZAP active scan policy was applied
+        match = "Job activeScan set policy = API-scan-minimal" in logs
+        assert match, f"{logfile} does not contain a line matching 'Job activeScan set policy = API-scan-minimal'"
+        # Verify expected ZAP alert references from the scan policy are included in the report
+        alert_refs_to_check = ["40018"]
+        results = check_zap_alert_refs(data, alert_refs_to_check)
+        assert not results[
+            "not_found"
+        ], f"The following expected alertRefs were NOT found in the report: {results['not_found']}"
+
+        # Verify that the form handler correctly submitted and logged expected URLs
+        expected_form_urls = ["http://vapi:5000/api/pets/name/pet_aaaa"]
+        form_url_check = verify_zap_report_urls(data, expected_form_urls)
+        assert all(
+            result["found"] for result in form_url_check.values()
+        ), "One or more expected form submission URLs were not found in the ZAP report"
 
         # Verify that ZAP report does not contain alerts for URLs excluded in the scan configuration
         self.replace_from_yaml(f"{self.tempdir}/rapidast-vapi-configmap-urls-exclusions.yaml")
@@ -65,7 +82,7 @@ class TestRapiDAST(TestBase):
         with open(results, "r", encoding="utf-8") as f:
             data = json.load(f)
 
-        excluded = verify_zap_report_urls_exclusions(data, excluded_urls)
+        excluded = verify_zap_report_urls(data, excluded_urls)
 
         assert all(not info["found"] for info in excluded.values())
 
@@ -104,10 +121,10 @@ class TestRapiDAST(TestBase):
             assert expected_line in logs, f"{logfile} does not contain expected line: {expected_line}"
 
 
-def verify_zap_report_urls_exclusions(report_data: dict, excluded_urls: list[str]) -> dict:
+def verify_zap_report_urls(report_data: dict, urls: list[str]) -> dict:
     """
     Checks if any alert instance URIs from a ZAP report contain any of the specified
-    excluded URL patterns
+    URL patterns
     """
 
     def _get_all_instance_uris(report_data: dict) -> list[str]:
@@ -127,8 +144,8 @@ def verify_zap_report_urls_exclusions(report_data: dict, excluded_urls: list[str
                                 uris.add(instance["uri"])
         return list(uris)
 
-    compiled_patterns = [(re.compile(pattern), pattern) for pattern in excluded_urls]
-    results = {pattern: {"found": False} for pattern in excluded_urls}
+    compiled_patterns = [(re.compile(pattern), pattern) for pattern in urls]
+    results = {pattern: {"found": False} for pattern in urls}
 
     all_report_uris = _get_all_instance_uris(report_data)
 
@@ -137,3 +154,31 @@ def verify_zap_report_urls_exclusions(report_data: dict, excluded_urls: list[str
             if compiled_regex.search(uri):
                 results[original_pattern_str]["found"] = True
     return results
+
+
+def check_zap_alert_refs(report_data: dict, target_alert_refs: list[str]) -> dict:
+    """
+    Checks if a list of specific ZAP alert IDs (pluginid) are present in a ZAP report
+
+    Returns:
+        A dictionary indicating which alertRefs were found and which were not.
+        Example: {'found': ['10020'], 'not_found': ['90001']}
+    """
+
+    if "site" not in report_data or not isinstance(report_data["site"], list):
+        return {"found": [], "not_found": target_alert_refs}
+
+    found_alert_refs = set()  # Use a set for efficient lookups and to avoid duplicates
+
+    for site in report_data["site"]:
+        if "alerts" not in site or not isinstance(site["alerts"], list):
+            continue
+
+        for alert in site["alerts"]:
+            plugin_id = alert.get("pluginid")
+            if plugin_id and plugin_id in target_alert_refs:
+                found_alert_refs.add(plugin_id)
+
+    not_found_alert_refs = [ref for ref in target_alert_refs if ref not in found_alert_refs]
+
+    return {"found": sorted(list(found_alert_refs)), "not_found": sorted(not_found_alert_refs)}

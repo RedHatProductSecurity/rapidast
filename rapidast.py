@@ -121,7 +121,7 @@ def run_scanner(name, config, args, dedo_exporter=None):
     typ = config.get(f"scanners.{name}.container.type", default="none")
 
     if typ == "podman":
-        logging.warning("Podman mode is deprecated and will be removed in version 2.12")
+        logging.warning("Podman mode is deprecated and will be removed in a future version")
 
     try:
         class_ = scanners.str_to_scanner(name, typ)

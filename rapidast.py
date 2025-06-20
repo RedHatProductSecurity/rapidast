@@ -557,6 +557,9 @@ def merge_sarif_files(directory: str, properties: dict, output_filename: str):
     merged_runs = []
     for filename in collect_sarif_files(directory):
         try:
+            if os.path.getsize(filename) == 0:
+                logging.info(f"SARIF file '{filename}' is empty. Skipping")
+                continue
             with open(filename, "r", encoding="utf8") as f:
                 data = json.load(f)
                 if "runs" in data and isinstance(data["runs"], list):

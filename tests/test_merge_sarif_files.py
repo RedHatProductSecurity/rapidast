@@ -2,7 +2,7 @@ import json
 import os
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, mock_open
 
 from rapidast import collect_sarif_files
 from rapidast import merge_sarif_files
@@ -25,21 +25,25 @@ class TestMergeSarifFiles(unittest.TestCase):
         with open(filepath, "r", encoding="utf8") as f:
             return json.load(f)
 
-    @patch("rapidast.collect_sarif_files")
-    @patch("json.dump")
-    def test_merge_sarif_files(self, mock_dump, mock_collect_sarif_files):
-        mock_collect_sarif_files.return_value = [
-            os.path.join(self.fixtures_dir, "zap-report.sarif.json"),
-            os.path.join(self.fixtures_dir, "garak-report.sarif"),
-        ]
+    def test_merge_sarif_files(self):
         zap_log = self._load_fixture_json("zap-report.sarif.json")
         garak_log = self._load_fixture_json("garak-report.sarif")
-        merge_sarif_files(self.fixtures_dir, self.scanner_results, self.output_file)
-        args, _ = mock_dump.call_args
-        self.assertEqual(len(args[0]["runs"]), 2)
-        self.assertEqual(args[0]["runs"][0], zap_log["runs"][0])
-        self.assertEqual(args[0]["runs"][1], garak_log["runs"][0])
-        self.assertEqual(args[0]["properties"], self.scanner_results)
+
+        with tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=".json") as tmp_file:
+            output_file = tmp_file.name
+
+        try:
+            merge_sarif_files(self.fixtures_dir, self.scanner_results, self.output_file)
+
+            with open(self.output_file, "r", encoding="utf8") as f:
+                merged = json.load(f)
+
+            self.assertEqual(len(merged["runs"]), 2)
+            self.assertEqual(merged["runs"][0], garak_log["runs"][0])
+            self.assertEqual(merged["runs"][1], zap_log["runs"][0])
+            self.assertEqual(merged["properties"], self.scanner_results)
+        finally:
+            os.remove(output_file)
 
     @patch("rapidast.collect_sarif_files")
     @patch("json.dump")
@@ -52,7 +56,6 @@ class TestMergeSarifFiles(unittest.TestCase):
         self.assertEqual(len(args[0]["runs"]), 0)
         self.assertEqual(args[0]["version"], "2.1.0")
         mock_log_error.assert_called_once()
-
 
 class TestCollectSarifFiles(unittest.TestCase):
     def test_collect_sarif_files(self):

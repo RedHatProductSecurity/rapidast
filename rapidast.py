@@ -561,12 +561,15 @@ def merge_sarif_files(directory: str, properties: dict, output_filename: str):
                 logging.info(f"SARIF file '{filename}' is empty. Skipping")
                 continue
             with open(filename, "r", encoding="utf8") as f:
-                data = json.load(f)
+                content = f.read()
+                data = json.loads(content)
                 if "runs" in data and isinstance(data["runs"], list):
                     merged_runs.extend(data["runs"])
                 else:
                     logging.warning(f"SARIF file '{filename}' does not appear to have a top-level 'runs' array")
-
+        except json.JSONDecodeError as e:
+            logging.error(f"Failed to parse JSON in SARIF file '{filename}': {e}")
+            logging.error(f"File content:\n{content}")
         except Exception as e:  # pylint: disable=W0718
             logging.error(f"Error reading SARIF file '{filename}': {e}")
 

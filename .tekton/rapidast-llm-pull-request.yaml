@@ -31,6 +31,8 @@ spec:
     value: containerize/Containerfile.garak
   - name: skip-checks
     value: "true"
+  - name: rebuild
+    value: "true"
   - name: build-args
     value:
     - PREFETCH=false
@@ -44,6 +46,8 @@ spec:
               memory: 512Mi
             limits:
               memory: 4Gi
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-rapidast-llm
   workspaces:
   - name: git-auth
     secret:

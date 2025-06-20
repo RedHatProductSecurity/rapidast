@@ -11,15 +11,18 @@ from base64 import urlsafe_b64encode
 from collections import namedtuple
 from pathlib import Path
 
+import dacite
 import yaml
 
+from configmodel import deep_traverse_and_replace_with_var_content
+from configmodel.models.scanners.zap import ImportUrlsFromFileType
+from configmodel.models.scanners.zap import ZapConfig
 from scanners import RapidastScanner
 from scanners.authentication_factory import generic_authentication_factory
 from scanners.downloaders import authenticated_download_with_rtoken
 from scanners.downloaders import oauth2_get_token_from_rtoken
 
 CLASSNAME = "Zap"
-
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -61,6 +64,22 @@ class Zap(RapidastScanner):
         # + scripts: where scripts are stored
         # + zaphomedir: a temporary location where policies and logs will be found
         self.path_map = None  # to be defined by the typed scanner
+
+        zap_config_section = config.subtree_to_dict(f"scanners.{ident}")
+        if zap_config_section is None:
+            raise ValueError(f"'scanners.{ident}' section not in config")
+
+        dacite_config = dacite.Config(
+            type_hooks={
+                # Dacite doesn't natively support enums, so we use `type_hooks` as a workaround
+                # to properly resolve enum values
+                # https://github.com/konradhalas/dacite/issues/61
+                ImportUrlsFromFileType: ImportUrlsFromFileType,
+            }
+        )
+
+        processed_data = deep_traverse_and_replace_with_var_content(zap_config_section)
+        self.cfg = dacite.from_dict(data_class=ZapConfig, data=processed_data, config=dacite_config)
 
     ###############################################################
     # PUBLIC METHODS                                              #
@@ -145,7 +164,15 @@ class Zap(RapidastScanner):
     def get_update_command(self):
         """Returns a list of all options required to update ZAP plugins"""
 
-        if not (self.my_conf("miscOptions.updateAddons") or self.my_conf("miscOptions.additionalAddons")):
+        misc_options = self.cfg.miscOptions
+
+        if misc_options is None:
+            return []
+
+        update_addons = getattr(misc_options, "updateAddons", False)
+        additional_addons = getattr(misc_options, "additionalAddons", False)
+
+        if not (update_addons or additional_addons):
             return []
 
         command = [
@@ -153,18 +180,16 @@ class Zap(RapidastScanner):
             *self._get_standard_options(),
             "-cmd",
         ]
-        if self.my_conf("miscOptions.updateAddons"):
+        if update_addons:
             command.append("-addonupdate")
 
-        addons = self.my_conf("miscOptions.additionalAddons", default=[])
-        if isinstance(addons, str):
-            addons = addons.split(",") if len(addons) else []
-        if not isinstance(addons, list):
-            logging.warning("miscOptions.additionalAddons MUST be either a list or a string of comma-separated values")
-            addons = []
+        if additional_addons:
+            addons = additional_addons
+            if isinstance(addons, str):
+                addons = addons.split(",") if len(addons) else []
 
-        for addon in addons:
-            command.extend(["-addoninstall", addon])
+            for addon in addons:
+                command.extend(["-addoninstall", addon])
 
         return command
 
@@ -393,17 +418,10 @@ class Zap(RapidastScanner):
             "parameters": {"fileName": f"{self.container_work_dir}/importUrls.txt"},
         }
 
-        types = ("har", "modsec2", "url", "zap_messages")
-
         source = ""  # Location of the import file on the host
 
         source = self.my_conf("importUrlsFromFile.fileName")
-        if not source:
-            raise ValueError("ZAP config error: importUrlsFromFile must have a `fileName` entry")
         job["parameters"]["type"] = self.my_conf("importUrlsFromFile.type", "url")
-
-        if not job["parameters"]["type"] in types:
-            raise ValueError(f"ZAP config error: importUrlsFromFile.type must be within {types}")
 
         self._include_file(source, job["parameters"]["fileName"])
         self.automation_config["jobs"].append(job)
@@ -481,8 +499,6 @@ class Zap(RapidastScanner):
             self._include_file(host_path=api_file, dest_in_container=container_openapi_file)
 
             openapi["parameters"]["apiFile"] = container_openapi_file
-        else:
-            raise ValueError("No apiUrl or apiFile is defined in the config, in apiScan.apis")
 
         # default target: main URL, or can be overridden in apiScan
         openapi["parameters"]["targetUrl"] = self._append_slash_to_url(
@@ -640,37 +656,16 @@ class Zap(RapidastScanner):
     def _setup_replacer(self):
         """Adds the replacer to the job list"""
 
-        def _validate_rule_boolean_values(rule):
-            if not isinstance(rule["matchRegex"], bool):
-                raise ValueError("The matchRegex in the replacer rule must be set to a Boolean value")
-
-            if "tokenProcessing" in rule and not isinstance(rule["tokenProcessing"], bool):
-                raise ValueError("The tokenProcessing in the replacer rule must be set to a Boolean value")
-
-        if not self.my_conf("replacer"):
+        if not self.cfg.replacer:
             return
 
-        rules = self.my_conf("replacer.rules")
-        if rules:
-            if not isinstance(rules, list):
-                raise ValueError("replacer.rules must be a list")
-
-            for item in rules:
-                _validate_rule_boolean_values(item)
-        else:
-            raise ValueError("replacer must have a rule at least")
-
-        delete_all_rules = self.my_conf("replacer.parameters.deleteAllRules", default=True)
-        if not isinstance(delete_all_rules, bool):
-            raise ValueError("replacer.parameters.deleteAllRules must be set to a Boolean value")
+        rules = self.cfg.replacer.to_rules_dict_list()
 
         # replacer schema
         replacer = {
             "name": "replacer",
             "type": "replacer",
-            "parameters": {
-                "deleteAllRules": delete_all_rules,
-            },
+            "parameters": {"deleteAllRules": self.cfg.replacer.parameters.deleteAllRules},
             "rules": rules,
         }
 

@@ -8,6 +8,7 @@ requires = [
 [project]
 name = "rapidast"
 dynamic = ["dependencies", "version"]
+requires-python = ">= 3.9"
 
 [tool.setuptools]
 packages = ["configmodel", "exports", "utils", "scanners"]
@@ -19,3 +20,13 @@ dependencies = { file = ["requirements.in"] }
 
 [tool.ruff]
 line-length = 120
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    # Ignore deprecation warnings from `lark` (a `cel-python` dependency).
+    # These stem from `lark` v0.12.x which uses deprecated `sre_constants` and `sre_parse` modules.
+    # `cel-python`'s main branch has an updated `lark` dependency that resolves this.
+    # This filter can be removed once a `cel-python` release with the updated `lark` is available.
+    "ignore:module 'sre_constants' is deprecated",
+    "ignore:module 'sre_parse' is deprecated",
+]

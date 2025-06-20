@@ -3,6 +3,7 @@ import argparse
 import json
 import logging
 import os
+import pkgutil
 import pprint
 import re
 import sys
@@ -14,6 +15,7 @@ from typing import Dict
 from typing import List
 from urllib import request
 
+import dacite
 import yaml
 from dotenv import load_dotenv
 from jsonschema import Draft202012Validator
@@ -23,9 +25,12 @@ from jsonschema import ValidationError
 
 import configmodel.converter
 import scanners
+from configmodel import deep_traverse_and_replace_with_var_content
+from configmodel.models.exclusions import Exclusions
 from exports.defect_dojo import DefectDojo
 from exports.google_cloud_storage import GoogleCloudStorage
 from utils import add_logging_level
+from utils.cel_exclusions import CELExclusions
 
 
 pp = pprint.PrettyPrinter(indent=4)
@@ -90,6 +95,10 @@ def load_config(config_file_location: str) -> Dict[str, Any]:
     return yaml.safe_load(load_config_file(config_file_location))
 
 
+def get_valid_scanners():
+    return [name for _, name, ispkg in pkgutil.iter_modules(scanners.__path__) if ispkg]
+
+
 # pylint: disable=R0911
 # too many return statements
 def run_scanner(name, config, args, dedo_exporter=None):
@@ -112,14 +121,20 @@ def run_scanner(name, config, args, dedo_exporter=None):
     typ = config.get(f"scanners.{name}.container.type", default="none")
 
     if typ == "podman":
-        logging.warning("Podman mode is deprecated and will be removed in version 2.12")
+        logging.warning("Podman mode is deprecated and will be removed in a future version")
 
     try:
         class_ = scanners.str_to_scanner(name, typ)
     except ModuleNotFoundError:
-        logging.error(f"Scanner `{name.split('_')[0]}` of type `{typ}` does not exist")
-        logging.error(f"Ignoring failed Scanner `name.split('_')[0]` of type `{typ}`")
-        logging.error(f"Please verify your configuration file: `scanners.{name}`")
+        base_name = name.split("_")[0]
+        valid_scanners = get_valid_scanners()
+        logging.error(f"Unknown scanner `{base_name}` of type `{typ}`")
+        logging.error(f"Skipping invalid scanner entry: `{name}`")
+        logging.error(
+            "Please check your configuration. Scanner names must follow the pattern "
+            "'<scanner>' or '<scanner>_<suffix>', where '<scanner>' is one of: "
+            f"{', '.join(valid_scanners)}"
+        )
         return 1
 
     # Part 1: create a instance based on configuration
@@ -248,40 +263,6 @@ def dump_rapidast_redacted_configs(main_config_file_location: str, destination_d
         if not dump_redacted_config(DEFAULT_CONFIG_FILE, destination_dir):
             logging.error("Failed to dump configuration. Exiting.")
             sys.exit(2)
-
-
-def deep_traverse_and_replace_with_var_content(d: dict) -> dict:  # pylint: disable=C0103
-    """
-    Recursively traverse a dictionary and replace key-value pairs where the key ends with `_from_var`
-    The value is replaced with the corresponding environment variable value if available.
-    """
-    suffix = "_from_var"
-    keys_to_replace = [key for key in d if isinstance(key, str) and key.endswith(suffix)]
-
-    for key in keys_to_replace:
-        new_key = key[: -len(suffix)]
-
-        try:
-            env_value = os.environ[d[key]]
-            d[new_key] = env_value
-            del d[key]
-        except KeyError:
-            logging.error(
-                f"""
-                Environment variable '{d[key]}' referenced by key '{key}' could not be found.
-                No configuration replacement will be made for this key. Please check your configuration and environment"
-                """
-            )
-
-    for key, value in d.items():
-        if isinstance(value, dict):
-            deep_traverse_and_replace_with_var_content(value)
-        elif isinstance(value, list):
-            for i, item in enumerate(value):
-                if isinstance(item, dict):
-                    value[i] = deep_traverse_and_replace_with_var_content(item)
-
-    return d
 
 
 def validate_config(config: dict, schema_path: Path) -> bool:
@@ -448,11 +429,34 @@ def run():
 
     sarif_properties = generate_sarif_properties(config, scanner_results, "commit_sha.txt")
 
+    report_filename = "rapidast-scan-results.sarif"
+    unfiltered_report_filename = "rapidast-scan-results-unfiltered.sarif"
+
+    report_path = os.path.join(full_result_dir_path, report_filename)
+    unfiltered_report_path = os.path.join(full_result_dir_path, unfiltered_report_filename)
+
     merge_sarif_files(
         directory=full_result_dir_path,
         properties=sarif_properties,
-        output_filename=f"{full_result_dir_path}/rapidast-scan-results.sarif",
+        output_filename=report_path,
     )
+
+    try:
+        exclusions_config_data = config.conf.get("config", {}).get("results", {}).get("exclusions")
+
+        if not exclusions_config_data:
+            logging.info("Configuration section 'exclusions' not found in config.results. Skipping SARIF filtering")
+
+        else:
+            filter_config = dacite.from_dict(data_class=Exclusions, data=exclusions_config_data)
+
+            filter_sarif_report(
+                report_path=report_path,
+                unfiltered_report_path=unfiltered_report_path,
+                exclusions_config=filter_config,
+            )
+    except Exception as e:  # pylint: disable=W0718
+        logging.error(f"An error occurred during SARIF report filtering: {e}")
 
     # Export all the scan results to GCS
     # Note: This is done after all scanners have run,
@@ -492,6 +496,52 @@ def collect_sarif_files(directory: str) -> List[str]:
         logging.warning(f"No SARIF files found in directory: {directory}")
 
     return sarif_files
+
+
+def filter_sarif_report(report_path: Path, unfiltered_report_path: Path, exclusions_config: Exclusions) -> None:
+    """
+    Applies exclusion rules to a SARIF report and writes the filtered results to a new file
+
+    Args:
+        report_path: Path to the SARIF report to be filtered. This file will be overwritten with the filtered results
+        unfiltered_report_path: Path where the original, unfiltered SARIF report will be saved
+        exclusions_config: Configuration object specifying the filtering rules to apply
+    """
+    if not exclusions_config.enabled:
+        logging.info("SARIF filtering is disabled in configuration. Skipping")
+        return
+
+    if not os.path.exists(report_path):
+        logging.error(f"Input SARIF report not found: {report_path}")
+        raise FileNotFoundError(f"Input SARIF report not found: {report_path}")
+
+    logging.info(f"Starting SARIF filtering from '{report_path}'")
+
+    try:
+        with open(report_path, "r", encoding="utf-8") as file_handle:
+            original_sarif_report_data = json.load(file_handle)
+    except json.JSONDecodeError as e:
+        logging.error(f"Failed to parse input SARIF file '{report_path}': {e}")
+        raise
+    except IOError as e:
+        logging.error(f"Error reading input SARIF file '{report_path}': {e}")
+        raise
+
+    cel_exclusions_engine = CELExclusions(exclusions_config)
+    filtered_sarif_report_data = cel_exclusions_engine.filter_sarif_results(original_sarif_report_data)
+
+    os.rename(report_path, unfiltered_report_path)
+    logging.info(f"Renamed input report from '{report_path}' to '{unfiltered_report_path}'")
+
+    try:
+        with open(report_path, "w", encoding="utf-8") as file_handle:
+            json.dump(filtered_sarif_report_data, file_handle, indent=2)
+        logging.info(f"Filtered SARIF report successfully saved to: '{report_path}'")
+    except IOError as e:
+        logging.error(f"Error writing filtered SARIF report to '{report_path}': {e}")
+        raise
+
+    logging.info("SARIF filtering process completed")
 
 
 def merge_sarif_files(directory: str, properties: dict, output_filename: str):

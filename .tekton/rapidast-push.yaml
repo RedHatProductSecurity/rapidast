@@ -25,6 +25,8 @@ spec:
     value: quay.io/redhatproductsecurity/rapidast:{{revision}}
   - name: dockerfile
     value: containerize/Containerfile
+  - name: rebuild
+    value: "true"
   - name: prefetch-input
     value:
     - {"type": "generic", "path": "."}
@@ -43,6 +45,8 @@ spec:
               memory: 512Mi
             limits:
               memory: 4Gi
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-rapidast
   workspaces:
   - name: git-auth
     secret:

@@ -30,6 +30,8 @@ spec:
     value: containerize/Containerfile
   - name: skip-checks
     value: "true"
+  - name: rebuild
+    value: "true"
   - name: prefetch-input
     value:
     - {"type": "generic", "path": "."}
@@ -48,6 +50,8 @@ spec:
               memory: 512Mi
             limits:
               memory: 4Gi
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-rapidast
   workspaces:
   - name: git-auth
     secret:

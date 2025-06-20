@@ -3,9 +3,9 @@
 ## Deprecation Notice
 
 **Podman Mode Deprecation**
-The `podman` execution environment is deprecated and will be removed in version **2.12**
+The `podman` execution environment is deprecated and will be removed in a future version
 
-If you are using `podman` fpr the `container.type` option, please migrate to `none` before updating to version 2.12.
+If you are using `podman` fpr the `container.type` option, please migrate to `none`.
 
 ## Quickstart
 
@@ -44,7 +44,7 @@ Install dependencies and run RapiDAST directly on a host machine. Unless using t
 
 **Prerequisites**:
 
-- `python` >= 3.6.8 (3.7 for MacOS/Darwin)
+- `python` >= 3.9
 - `podman` >= 3.0.1
   - required when you want to run scanners from their container images, rather than installing them to your host.
 - See `requirements.txt` for a list of required python libraries
@@ -191,6 +191,56 @@ This method uses firefox in the background to load a login page and fill in user
     - `verifyUrl`: a URL that "proves" the user is authenticated (either the full URL, or relative to the `application.url` value). This URL must return a success if the user is correctly authenticated, and an error otherwise.
     - `loggedInRegex`: Regex pattern used to identify Logged in messages (default: `\\Q 200 OK\\`)
     - `loggedOutRegex`: Regex pattern used to identify Logged Out messages (default: `\\Q 403 Forbidden\\`)
+
+### Exclusions
+
+This feature enables you to refine your RapiDAST consolidated report (`rapidast-scan-results.sarif`) by automatically filtering out unwanted SARIF findings (e.g.: filtering out false positives). This is achieved using Common Expression Language (CEL) rules.
+
+#### How it Works:
+
+CEL is a powerful expression language. You define conditions using CEL expressions that, when evaluated as `true` for a specific SARIF finding, will cause that finding will be excluded from the final report (`rapidast-filtered-scan-results.sarif`).
+
+Each filtering rule you define will operate on a single SARIF `result` (i.e., a single finding). If any of your defined cel_expression rules evaluates to `true` for a given finding, that finding will be filtered out. In essence, the rules are evaluated with an OR logic.
+
+#### Available Data for Expressions
+Inside your CEL expressions, you can access various properties of a SARIF `result` object (which represents a single finding). While the specific properties available can vary depending on the scanner used, the following are commonly utilized properties, particularly those found when using ZAP:
+
+- `.result.ruleId`: The ID of the rule that generated the finding (e.g., "DAST-1234-KnownFP")
+- `.result.message.text`: The text content of the finding's message
+- `.result.locations[0].physicalLocation.artifactLocation.uri`: The URI of the file where the finding was located
+- `.result.level`: The severity level of the finding (e.g., "error", "warning", "note")
+- `.result.webResponse`: Information about the web response associated with the finding. This typically includes:
+  - `.result.webResponse.protocol`: The protocol used for the response
+  - `.result.webResponse.statusCode`: The HTTP status code of the response (e.g., 200, 404, 500)
+  - `.result.webResponse.headers`: A collection of response headers
+  - `.result.webResponse.body.text`: The body of the response
+
+#### Basic Syntax
+- Equality: `.result.ruleId == "DAST-1234-KnownFP"`
+- String Matching: `.result.message.text.contains('sensitive data')`
+- Logical AND/OR: `.result.ruleId == 'DAST-1234-KnownFP' && .result.level == 'warning'`
+- List Membership: `.result.ruleId in ["DAST-1234-KnownFP", "DAST-5678-KnownF"]`
+
+For more details, refer to the official [documentation](https://github.com/google/cel-spec/blob/master/doc/langdef.md).
+
+Here's an example of how you might define a rule in your configuration file:
+
+```
+config:
+  results:
+    exclusions:
+      enabled: True # Set to 'False' to temporarily disable all filtering rules, while keeping your defined rules for future use
+      rules:
+        - name: "Exclude findings on admin paths"
+          description: "This rule filters out any findings located on URLs that start with 'https://admin.example.com'"
+          cel_expression: '.result.locations.exists(loc, loc.physicalLocation.artifactLocation.uri.startsWith("https://admin.example.com"))'
+        - name: "Exclude a specific known false positive rule ID"
+          description: "Filters out findings with the exact rule ID 'DAST-1234-KnownFP'. This is ideal for specific findings that your security team has already reviewed and confirmed as not exploitable or irrelevant"
+          cel_expression: '.result.ruleId == "DAST-1234-KnownFP"'
+        - name: "Exclude rule ID 10112 with specific unauthorized response"
+          description: "Filters out findings with rule ID '10112' only when their associated web response is 401. This helps narrow down false positives for this particular rule"
+          cel_expression: '.result.ruleId == "10112" && .result.webResponse.statusCode == 401'
+```
 
 ### MacOS
 
@@ -376,7 +426,7 @@ Set `general.container.type` to select an environment (default: `none`)
   - Run a RapiDAST scan with scanners that are installed on the same host OR run RapiDAST in a container (scanners are to be installed in the same container image)
   - __Warning__: without a container layer, RapiDAST may have to modify the host's file system, such as the tools configuration to fit its needs. For example: the ZAP plugin has to copy the policy file used in ZAP's user config directory (`~/.ZAP`)
 
-- `podman` (this mode is deprecated and will be **removed** in version **2.12**):
+- `podman` (this mode is deprecated and will be **removed** in a future version):
   - Run scanners as separate containers using `podman`
   - RapiDAST must not run inside a container
   - Select the image to load from `scanner.<name>.container.image` (sensible default are provided for each scanner)

@@ -1,13 +1,11 @@
 import os
 from pathlib import Path
-from unittest.mock import MagicMock
 from unittest.mock import patch
 
+import dacite
 import pytest
 import requests
 
-import configmodel.converter
-import scanners
 from scanners.zap.zap import find_context
 from scanners.zap.zap import MODULE_DIR
 from scanners.zap.zap_none import ZapNone
@@ -15,12 +13,6 @@ from scanners.zap.zap_none import ZapNone
 # from pytest_mock import mocker
 
 CONFIG_TEMPLATE_LONG = "config/config-template-long.yaml"
-
-
-@pytest.fixture(scope="function")
-def test_config():
-    return configmodel.RapidastConfigModel({"application": {"url": "http://example.com"}})
-
 
 ## Basic test
 
@@ -49,10 +41,9 @@ def test_setup_openapi(test_config):
 def test_setup_no_api_config(test_config):
     # test ValueError is raised when neither apiUrl nor apiFile exists
     test_config.set("scanners.zap.apiScan", "target")
-    test_zap = ZapNone(config=test_config)
 
-    with pytest.raises(ValueError):
-        test_zap.setup()
+    with pytest.raises(dacite.exceptions.WrongTypeError):
+        _ = ZapNone(config=test_config)
 
     # the following must not raise error as apiUrl has been now defined
     test_config.set("scanners.zap.apiScan.apis.apiUrl", "http://random.com")
@@ -73,6 +64,11 @@ def test_setup_no_api_config(test_config):
 
     for item in test_zap.automation_config["jobs"]:
         assert item["type"] != "openapi"
+
+    # Test that either 'apiUrl' or 'apiFile' are provided
+    test_config.set("scanners.zap.apiScan.apis", {})
+    with pytest.raises(ValueError):
+        _ = ZapNone(config=test_config)
 
 
 ## Testing Authentication methods ##
@@ -271,9 +267,15 @@ def test_setup_import_urls(test_config):
 
     # 3- Test that importUrlsFromFile fails if the type is incorrect
     test_config.set("scanners.zap.importUrlsFromFile", {"type": "doesntexist", "fileName": __file__})
-    test_zap = ZapNone(config=test_config)
+
     with pytest.raises(ValueError) as exc:
-        test_zap.setup()
+        test_zap = ZapNone(config=test_config)
+
+    # 4- Test that importUrlsFromFile fails if the filename is missing
+    test_config.set("scanners.zap.importUrlsFromFile", {"type": "har"})
+
+    with pytest.raises(dacite.exceptions.MissingValueError) as exc:
+        test_zap = ZapNone(config=test_config)
 
 
 def test_setup_exclude_urls(test_config):
@@ -296,15 +298,6 @@ def test_setup_include_urls(test_config):
 
     assert "abc" in find_context(test_zap.automation_config)["includePaths"]
     assert "def" in find_context(test_zap.automation_config)["includePaths"]
-
-
-def test_setup_replacer_no_rule(test_config):
-    test_config.set("scanners.zap.replacer.parameters.deleteAllRules", False)
-    test_zap = ZapNone(config=test_config)
-
-    # test: not having a rule raises ValueError
-    with pytest.raises(ValueError):
-        test_zap.setup()
 
 
 def test_setup_replacer_parameter(test_config):
@@ -340,9 +333,8 @@ def test_setup_replacer_parameter(test_config):
 
     # test: when deleteAllRules parameter is not Boolean type
     test_config.set("scanners.zap.replacer.parameters.deleteAllRules", "non-boolean")
-    test_zap = ZapNone(config=test_config)
-    with pytest.raises(ValueError):
-        test_zap.setup()
+    with pytest.raises(dacite.exceptions.WrongTypeError):
+        test_zap = ZapNone(config=test_config)
 
 
 def test_setup_replacer_rules(test_config):
@@ -371,11 +363,11 @@ def test_setup_replacer_rules(test_config):
 
     for item in test_zap.automation_config["jobs"]:
         if item["type"] == "replacer":
-            assert item["rules"][0] is test_rule1
+            assert item["rules"][0] == test_rule1
             assert isinstance(item["rules"][0]["matchRegex"], bool)
             assert isinstance(item["rules"][0]["tokenProcessing"], bool)
 
-            assert item["rules"][1] is test_rule2
+            assert item["rules"][1] == test_rule2
             assert isinstance(item["rules"][1]["matchRegex"], bool)
 
 
@@ -553,10 +545,9 @@ def test_setup_override_cfg(test_config):
 
 def test_setup_override_non_list_format(test_config):
     test_config.set("scanners.zap.miscOptions.overrideConfigs", "non-list-item")
-    test_zap = ZapNone(config=test_config)
 
-    with pytest.raises(ValueError):
-        test_zap.setup()
+    with pytest.raises(dacite.exceptions.WrongTypeError):
+        _ = ZapNone(config=test_config)
 
 
 def test_get_update_command(test_config):

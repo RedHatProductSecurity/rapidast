@@ -1,16 +1,7 @@
 import os
-from unittest.mock import MagicMock
 from unittest.mock import patch
 
-import pytest
-
-import configmodel
 from scanners.zap.zap_none import ZapNone
-
-
-@pytest.fixture(scope="function")
-def test_config():
-    return configmodel.RapidastConfigModel({"application": {"url": "http://example.com"}})
 
 
 @patch("os.path.exists")

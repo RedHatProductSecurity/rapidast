@@ -9,7 +9,8 @@ FROM registry.access.redhat.com/ubi9-minimal AS deps
 # They must be located at /cachi2/output/deps
 ARG PREFETCH=false
 
-# These versions should be consistent with the listed in the artifacts.lock.yaml file
+# IMPORTANT: Ensure these versions are synchronized with 'artifacts.lock.yaml'
+# Refer to the docs/DEVELOPER_GUIDE.md, "Updating Static Dependency Versions" for details
 ARG ZAP_VERSION=2.16.1
 ARG FF_VERSION=128.6.0esr
 ARG K8S_VERSION=1.32.1
@@ -56,6 +57,23 @@ RUN mkdir -p /tmp/redocly/node_modules && if [ "$PREFETCH" == "true" ]; then \
   else \
     npm install --prefix /tmp/redocly; \
   fi
+
+### Validate installed dependency versions. This is crucial when dependencies are prefetched using Cachi2
+RUN echo "Validating ZAP version..." && \
+    /opt/zap/zap.sh -cmd -nostdout -silent -version | grep "${ZAP_VERSION}" || (echo "ZAP version mismatch!" && exit 1) && \
+    echo "ZAP version validated: ${ZAP_VERSION}"
+
+RUN echo "Validating Firefox version..." && \
+    /opt/firefox/firefox -version | grep "${FF_VERSION}" || (echo "Firefox version mismatch!" && exit 1) && \
+    echo "Firefox version validated: ${FF_VERSION}"
+
+RUN echo "Validating kubectl version..." && \
+    /usr/local/bin/kubectl version --client | grep "${K8S_VERSION}" || (echo "kubectl version mismatch!" && exit 1) && \
+    echo "kubectl version validated: ${K8S_VERSION}"
+
+RUN echo "Validating Trivy version..." && \
+    /tmp/trivy/trivy version | grep "${TRIVY_VERSION}" || (echo "Trivy version mismatch!" && exit 1) && \
+    echo "Trivy version validated: ${TRIVY_VERSION}"
 
 # Copy artifacts from deps to build RapiDAST
 FROM registry.access.redhat.com/ubi9-minimal

@@ -51,15 +51,48 @@ class TestMergeSarifFiles(unittest.TestCase):
 
     @patch("rapidast.collect_sarif_files")
     @patch("json.dump")
+    @patch("logging.warning")
+    def test_error_reading_invalid_sarif_file(self, mock_log_warning, mock_dump, mock_collect_sarif_files):
+        invalid_path = os.path.join(self.fixtures_dir, "invalid.sarif.json")
+        self.assertTrue(os.path.isfile(invalid_path), f"Fixture missing: {invalid_path}")
+
+        mock_collect_sarif_files.return_value = [invalid_path]
+        merge_sarif_files(self.fixtures_dir, self.scanner_results, self.output_file)
+        args, _ = mock_dump.call_args
+        self.assertEqual(len(args[0]["runs"]), 0)
+        self.assertTrue(mock_log_warning.called)
+
+    @patch("rapidast.collect_sarif_files")
+    @patch("json.dump")
+    @patch("json.load")
+    def test_error_reading_empty_sarif_file(self, mock_json_load, mock_dump, mock_collect_sarif_files):
+        empty_path = os.path.join(self.fixtures_dir, "empty.sarif.json")
+        self.assertTrue(os.path.isfile(empty_path), f"Fixture missing: {empty_path}")
+
+        mock_collect_sarif_files.return_value = [empty_path]
+        merge_sarif_files(self.fixtures_dir, self.scanner_results, self.output_file)
+        args, _ = mock_dump.call_args
+        self.assertEqual(len(args[0]["runs"]), 0)
+        self.assertFalse(mock_json_load.called)
+
+    @patch("json.load")
+    @patch("rapidast.collect_sarif_files")
+    @patch("json.dump")
     @patch("logging.error")
-    def test_error_reading_sarif_file(self, mock_log_error, mock_dump, mock_collect_sarif_files):
-        mock_collect_sarif_files.return_value = ["bad_report.sarif"]
+    def test_error_reading_nonexistent_sarif_file(
+        self, mock_log_error, mock_dump, mock_collect_sarif_files, mock_json_load
+    ):
+        nonexistent_path = os.path.join(self.fixtures_dir, "nonexistent.sarif.json")
+        self.assertFalse(os.path.isfile(nonexistent_path), f"Fixture missing: {nonexistent_path}")
+
+        mock_collect_sarif_files.return_value = [nonexistent_path]
         merge_sarif_files(self.fixtures_dir, self.scanner_results, self.output_file)
         args, _ = mock_dump.call_args
         self.assertEqual(args[0]["properties"], self.scanner_results)
         self.assertEqual(len(args[0]["runs"]), 0)
         self.assertEqual(args[0]["version"], "2.1.0")
         mock_log_error.assert_called_once()
+        self.assertFalse(mock_json_load.called)
 
 
 class TestCollectSarifFiles(unittest.TestCase):

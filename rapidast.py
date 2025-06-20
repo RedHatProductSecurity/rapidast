@@ -568,8 +568,8 @@ def merge_sarif_files(directory: str, properties: dict, output_filename: str):
                 else:
                     logging.warning(f"SARIF file '{filename}' does not appear to have a top-level 'runs' array")
         except json.JSONDecodeError as e:
-            logging.error(f"Failed to parse JSON in SARIF file '{filename}': {e}")
-            logging.error(f"File content:\n{content}")
+            logging.warning(f"Failed to parse JSON in SARIF file '{filename}': {e}")
+            logging.warning(f"File content:\n{content}")
         except Exception as e:  # pylint: disable=W0718
             logging.error(f"Error reading SARIF file '{filename}': {e}")
 

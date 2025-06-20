@@ -2,7 +2,7 @@ import json
 import os
 import tempfile
 import unittest
-from unittest.mock import patch, mock_open
+from unittest.mock import patch
 
 from rapidast import collect_sarif_files
 from rapidast import merge_sarif_files
@@ -56,6 +56,7 @@ class TestMergeSarifFiles(unittest.TestCase):
         self.assertEqual(len(args[0]["runs"]), 0)
         self.assertEqual(args[0]["version"], "2.1.0")
         mock_log_error.assert_called_once()
+
 
 class TestCollectSarifFiles(unittest.TestCase):
     def test_collect_sarif_files(self):

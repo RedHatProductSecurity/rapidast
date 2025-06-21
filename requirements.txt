@@ -14,7 +14,7 @@ cachetools==5.5.1
     # via google-auth
 cel-python==0.3.0
     # via rapidast (pyproject.toml)
-certifi==2025.1.31
+certifi==2025.6.15
     # via requests
 charset-normalizer==3.4.1
     # via requests

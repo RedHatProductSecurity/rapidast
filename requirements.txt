@@ -142,7 +142,7 @@ tzdata==2025.2
     # via pendulum
 uri-template==1.3.0
     # via jsonschema
-urllib3==2.3.0
+urllib3==2.5.0
     # via requests
 webcolors==24.11.1
     # via jsonschema

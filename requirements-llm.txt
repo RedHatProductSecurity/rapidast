@@ -556,7 +556,7 @@ soundfile==0.13.1
     # via octoai-sdk
 sqlalchemy==2.0.38
     # via langchain
-starlette==0.46.0
+starlette==0.47.1
     # via fastapi
 stdlibs==2024.12.3
     # via garak

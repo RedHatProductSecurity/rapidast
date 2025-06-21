@@ -295,7 +295,7 @@ nh3==0.2.21
     # via fschat
 nltk==3.9.1
     # via garak
-numpy==1.26.4
+numpy==2.3.1
     # via
     #   accelerate
     #   datasets

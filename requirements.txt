@@ -35,7 +35,7 @@ google-auth==2.38.0
     #   google-cloud-storage
 google-cloud-core==2.4.1
     # via google-cloud-storage
-google-cloud-storage==3.0.0
+google-cloud-storage==3.1.1
     # via rapidast (pyproject.toml)
 google-crc32c==1.6.0
     # via

@@ -45,7 +45,7 @@ maturin==1.8.2
     # via rpds-py
 mypy-extensions==1.0.0
     # via mypy
-mypy==1.14.0
+mypy==1.16.1
     # via charset-normalizer
 packaging==24.2
     # via

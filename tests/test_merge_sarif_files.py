@@ -25,33 +25,74 @@ class TestMergeSarifFiles(unittest.TestCase):
         with open(filepath, "r", encoding="utf8") as f:
             return json.load(f)
 
-    @patch("rapidast.collect_sarif_files")
-    @patch("json.dump")
-    def test_merge_sarif_files(self, mock_dump, mock_collect_sarif_files):
-        mock_collect_sarif_files.return_value = [
-            os.path.join(self.fixtures_dir, "zap-report.sarif.json"),
-            os.path.join(self.fixtures_dir, "garak-report.sarif"),
-        ]
+    def test_merge_sarif_files(self):
         zap_log = self._load_fixture_json("zap-report.sarif.json")
         garak_log = self._load_fixture_json("garak-report.sarif")
-        merge_sarif_files(self.fixtures_dir, self.scanner_results, self.output_file)
-        args, _ = mock_dump.call_args
-        self.assertEqual(len(args[0]["runs"]), 2)
-        self.assertEqual(args[0]["runs"][0], zap_log["runs"][0])
-        self.assertEqual(args[0]["runs"][1], garak_log["runs"][0])
-        self.assertEqual(args[0]["properties"], self.scanner_results)
+
+        with tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=".json") as tmp_file:
+            output_file = tmp_file.name
+
+        try:
+            merge_sarif_files(self.fixtures_dir, self.scanner_results, self.output_file)
+
+            with open(self.output_file, "r", encoding="utf8") as f:
+                merged = json.load(f)
+
+            self.assertEqual(len(merged["runs"]), 2)
+            garak_run = garak_log["runs"][0]
+            zap_run = zap_log["runs"][0]
+            merged_runs = merged["runs"]
+
+            self.assertTrue(any(run == garak_run for run in merged_runs), "garak_log not found in merged runs")
+            self.assertTrue(any(run == zap_run for run in merged_runs), "zap_log not found in merged runs")
+            self.assertEqual(merged["properties"], self.scanner_results)
+        finally:
+            os.remove(output_file)
 
     @patch("rapidast.collect_sarif_files")
     @patch("json.dump")
+    @patch("logging.warning")
+    def test_error_reading_invalid_sarif_file(self, mock_log_warning, mock_dump, mock_collect_sarif_files):
+        invalid_path = os.path.join(self.fixtures_dir, "invalid.sarif.json")
+        self.assertTrue(os.path.isfile(invalid_path), f"Fixture missing: {invalid_path}")
+
+        mock_collect_sarif_files.return_value = [invalid_path]
+        merge_sarif_files(self.fixtures_dir, self.scanner_results, self.output_file)
+        args, _ = mock_dump.call_args
+        self.assertEqual(len(args[0]["runs"]), 0)
+        self.assertTrue(mock_log_warning.called)
+
+    @patch("rapidast.collect_sarif_files")
+    @patch("json.dump")
+    @patch("json.load")
+    def test_error_reading_empty_sarif_file(self, mock_json_load, mock_dump, mock_collect_sarif_files):
+        empty_path = os.path.join(self.fixtures_dir, "empty.sarif.json")
+        self.assertTrue(os.path.isfile(empty_path), f"Fixture missing: {empty_path}")
+
+        mock_collect_sarif_files.return_value = [empty_path]
+        merge_sarif_files(self.fixtures_dir, self.scanner_results, self.output_file)
+        args, _ = mock_dump.call_args
+        self.assertEqual(len(args[0]["runs"]), 0)
+        self.assertFalse(mock_json_load.called)
+
+    @patch("json.load")
+    @patch("rapidast.collect_sarif_files")
+    @patch("json.dump")
     @patch("logging.error")
-    def test_error_reading_sarif_file(self, mock_log_error, mock_dump, mock_collect_sarif_files):
-        mock_collect_sarif_files.return_value = ["bad_report.sarif"]
+    def test_error_reading_nonexistent_sarif_file(
+        self, mock_log_error, mock_dump, mock_collect_sarif_files, mock_json_load
+    ):
+        nonexistent_path = os.path.join(self.fixtures_dir, "nonexistent.sarif.json")
+        self.assertFalse(os.path.isfile(nonexistent_path), f"Fixture missing: {nonexistent_path}")
+
+        mock_collect_sarif_files.return_value = [nonexistent_path]
         merge_sarif_files(self.fixtures_dir, self.scanner_results, self.output_file)
         args, _ = mock_dump.call_args
         self.assertEqual(args[0]["properties"], self.scanner_results)
         self.assertEqual(len(args[0]["runs"]), 0)
         self.assertEqual(args[0]["version"], "2.1.0")
         mock_log_error.assert_called_once()
+        self.assertFalse(mock_json_load.called)
 
 
 class TestCollectSarifFiles(unittest.TestCase):

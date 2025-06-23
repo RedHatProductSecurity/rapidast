@@ -1,9 +1,9 @@
 metadata:
   version: "1.0"
 artifacts:
-  - download_url: https://github.com/zaproxy/zaproxy/releases/download/v2.15.0/ZAP_2.15.0_Linux.tar.gz
+  - download_url: https://github.com/zaproxy/zaproxy/releases/download/v2.16.1/ZAP_2.16.1_Linux.tar.gz
     filename: ZAP.tar.gz
-    checksum: "sha256:6410e196baab458a9204e29aafb5745fca003a2a6c0386f2c6e5c04b67621fa7"
+    checksum: "sha256:5b2eb8319b085121a6e8ad50d69d67dbef8c867166f71a937bfc888d247a2ac1"
   - download_url: https://releases.mozilla.org/pub/firefox/releases/128.6.0esr/linux-x86_64/en-US/firefox-128.6.0esr.tar.bz2
     filename: firefox.tar.bz2
     checksum: "sha256:ab46e298a92276736e1a0b2f2fe232f4b1e9f49c84bdb6fc2565d83013bc8732"

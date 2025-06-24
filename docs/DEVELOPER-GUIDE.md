@@ -194,6 +194,46 @@ RapiDAST, when loading the configuration from file, will update the schema, vers
 
 Note: it is possible for a converter function to warn the user, if necessary. As a last resort, if there is no conversion possible, it is also possible to output an error **BUT** the error should clearly express a methodology to manually update the configuration to the newest version
 
+## Updating Static Dependency Versions
+
+When updating a static dependency (like ZAP, Firefox, kubectl, or Trivy) used in RapiDAST, you need to update the version numbers in both the `Containerfile` and `Containerfile.garak`, as well as in the `artifacts.lock.yaml` file.
+
+**Steps to Update a Dependency:**
+
+1.  **Identify the New Version**: Determine the desired new version for the dependency you wish to update (e.g., ZAP `2.16.1`, Firefox `129.0esr`)
+
+2.  **Update the `Containerfile(s)`**:
+    * Open `Containerfile` and `Containerfile.garak`
+    * Locate the `ARG` declarations for the specific dependency you are updating. For example:
+        ```dockerfile
+        ARG ZAP_VERSION=2.15.0
+        ```
+    * Change the version number to the new desired version:
+        ```dockerfile
+        ARG ZAP_VERSION=2.16.1
+        ```
+    * Save the changes
+
+3.  **Update `artifacts.lock.yaml`**:
+    * Open `artifacts.lock.yaml`.
+    * Find the entry for the dependency you are updating
+    * **Update the `download_url`**: Modify the URL to reflect the new version number. For example, if updating ZAP, change:
+        ```yaml
+        download_url: https://github.com/zaproxy/zaproxy/releases/download/v2.15.0/ZAP_2.15.0_Linux.tar.gz
+        ```
+        to:
+        ```yaml
+        download_url: https://github.com/zaproxy/zaproxy/releases/download/v2.16.1/ZAP_2.16.1_Linux.tar.gz
+        ```
+    * **Update the `checksum` hash**:
+        * **How to get the SHA256**: Check the following pages:
+             1. For ZAP: https://github.com/zaproxy/zaproxy/releases/tag/v${ZAP_VERSION}
+             2. For firefox: https://releases.mozilla.org/pub/firefox/releases/${FF_VERSION}$/SHA256SUMS
+             3. For kubectl: https://dl.k8s.io/release/${K8S_VERSION}/bin/linux/amd64/kubectl.sha256
+             4. For trivy: https://github.com/zaproxy/zaproxy/releases/tag/v${TRIVY_VERSION}
+
+    * Save the changes to `artifacts.lock.yaml`
+
 ## Python Requirements Management
 
 This project uses `pip-compile` from `pip-tools` to manage dependencies.

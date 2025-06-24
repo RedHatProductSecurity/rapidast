@@ -41,6 +41,13 @@ data:
           # If set to True and authentication is oauth2_rtoken and api.apiUrl is set, download the API outside of ZAP
           oauth2OpenapiManualDownload: False
 
+          # Configure the form handler to manage and submit forms
+          overrideConfigs:
+            - formhandler.fields.field(0).fieldId=pet_id
+            - formhandler.fields.field(0).value=55
+            - formhandler.fields.field(0).fieldId=pet_name
+            - formhandler.fields.field(0).value=pet_aaaa
+
 kind: ConfigMap
 metadata:
   name: rapidast-vapi

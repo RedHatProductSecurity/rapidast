@@ -1,6 +1,8 @@
 import json
 import os
 import re
+from typing import Optional
+from typing import Union
 
 from conftest import is_pod_with_field_selector_successfully_completed  # pylint: disable=E0611
 from conftest import tee_log  # pylint: disable=E0611
@@ -22,23 +24,18 @@ class TestRapiDAST(TestBase):
         )
 
         # two containers run in this pod, one for running rapidast and one for printing json results
-        logfile = os.path.join(self.tempdir, "rapidast-vapi.log")
-        results = os.path.join(self.tempdir, "rapidast-vapi-results.json")
-        tee_log("rapidast-vapi", logfile, container="rapidast")
-        tee_log("rapidast-vapi", results, container="results")
-
-        with open(results, "r", encoding="utf-8") as f:
-            data = json.load(f)
+        logs = get_log_from_pod(self.tempdir, "rapidast-vapi", container="rapidast", log_format="text")
+        data = get_log_from_pod(
+            self.tempdir, "rapidast-vapi", filename_suffix="results", container="results", log_format="json"
+        )
 
         assert len(data["site"][0]["alerts"]) == 3
-
-        with open(logfile, "r", encoding="utf-8") as f:
-            logs = f.read()
 
         # Verify that URLs listed for exclusion in subsequent tests are present in the report.
         # This list should be kept in sync with the configuration scanners.zap.urls.excludes in
         # manifests/rapidast-vapi-configmap-urls-exclusions.yaml
         excluded_urls = ["http://vapi:5000/api/pets/id/.*", "http://vapi:3000/_next/static/css/.*.css"]
+        passive_scan_alertrefs = ["10021", "10036"]
 
         excluded = verify_zap_report_urls(data, excluded_urls)
 
@@ -49,19 +46,21 @@ class TestRapiDAST(TestBase):
         #        https://www.zaproxy.org/docs/desktop/addons/automation-framework/test-monitor/
         #        This will require refining how parameters are passed within the automation framework
         match = re.search(r"Job spiderAjax found (\d+) URLs", logs)
-        assert match is not None, f"{logfile} does not contain a line matching 'Job spiderAjax found X URLs'"
+        assert match is not None, "Zap's logs do not contain a line matching 'Job spiderAjax found X URLs'"
         url_count = int(match.group(1))
-        assert url_count > 1, f"{logfile} indicates only {url_count} URL(s) found, expected more than 1"
+        assert url_count > 1, f"Zap's logs indicate only {url_count} URL(s) found, expected more than 1"
 
         # Check that the correct ZAP active scan policy was applied
         match = "Job activeScan set policy = API-scan-minimal" in logs
-        assert match, f"{logfile} does not contain a line matching 'Job activeScan set policy = API-scan-minimal'"
+        assert match, "Zap's logs do not contain a line matching 'Job activeScan set policy = API-scan-minimal'"
         # Verify expected ZAP alert references from the scan policy are included in the report
         alert_refs_to_check = ["40018"]
         results = check_zap_alert_refs(data, alert_refs_to_check)
-        assert not results[
-            "not_found"
-        ], f"The following expected alertRefs were NOT found in the report: {results['not_found']}"
+        assert not results["not_found"], f"Missing expected alert references from scan policy: {results['not_found']}"
+
+        # Verify expected ZAP alert references from the passive scan are included in the report
+        results = check_zap_alert_refs(data, passive_scan_alertrefs)
+        assert not results["not_found"], f"Missing expected alert references from passive scan: {results['not_found']}"
 
         # Verify that the form handler correctly submitted and logged expected URLs
         expected_form_urls = ["http://vapi:5000/api/pets/name/pet_aaaa"]
@@ -77,14 +76,31 @@ class TestRapiDAST(TestBase):
             field_selector="metadata.name=rapidast-vapi", timeout=360  # llm-based image takes really long to download
         )
 
-        results = os.path.join(self.tempdir, "rapidast-vapi-excluded-urls-results.json")
-        tee_log("rapidast-vapi", results, container="results")
-        with open(results, "r", encoding="utf-8") as f:
-            data = json.load(f)
+        data = get_log_from_pod(
+            self.tempdir,
+            "rapidast-vapi",
+            filename_suffix="excluded-urls-results",
+            container="results",
+            log_format="json",
+        )
 
         excluded = verify_zap_report_urls(data, excluded_urls)
 
         assert all(not info["found"] for info in excluded.values())
+
+        # Ensure passiveScan can be successfully disabled
+        self.replace_from_yaml(f"{self.tempdir}/rapidast-vapi-configmap-no-passivescan.yaml")
+        self.replace_from_yaml(f"{self.tempdir}/rapidast-vapi-pod.yaml")
+        assert is_pod_with_field_selector_successfully_completed(
+            field_selector="metadata.name=rapidast-vapi", timeout=360  # llm-based image takes really long to download
+        )
+
+        data = get_log_from_pod(
+            self.tempdir, "rapidast-vapi", filename_suffix="no-passivescan", container="results", log_format="json"
+        )
+
+        results = check_zap_alert_refs(data, passive_scan_alertrefs)
+        assert not results["found"], f"Unexpected passive scan alert references found: {results['found']}"
 
     def test_trivy(self):
         self.create_from_yaml(f"{self.tempdir}/rapidast-trivy-configmap.yaml")
@@ -93,13 +109,9 @@ class TestRapiDAST(TestBase):
             field_selector="metadata.name=rapidast-trivy", timeout=360  # llm-based image takes really long to download
         )
 
-        logfile = os.path.join(self.tempdir, "rapidast-trivy.log")
-        tee_log("rapidast-trivy", logfile)
-
         expected_line = "INFO:scanner: 'generic_trivy' completed successfully"
-        with open(logfile, "r", encoding="utf-8") as f:
-            logs = f.read()
-            assert expected_line in logs, f"{logfile} does not contain expected line: {expected_line}"
+        logs = get_log_from_pod(self.tempdir, "rapidast-trivy", log_format="text")
+        assert expected_line in logs, f"Trivy's logs do not contain expected line: {expected_line}"
 
     def test_oobtkube(self, _setup_teardown_for_oobkube):
         self.create_from_yaml(f"{self.tempdir}/cm-controller-deployment.yaml")
@@ -112,13 +124,9 @@ class TestRapiDAST(TestBase):
             timeout=360,  # llm-based image takes really long to download
         )
 
-        logfile = os.path.join(self.tempdir, "rapidast-oobtkube.log")
-        tee_log("rapidast-oobtkube", logfile)
-
         expected_line = "RESULT: OOB REQUEST DETECTED"
-        with open(logfile, "r", encoding="utf-8") as f:
-            logs = f.read()
-            assert expected_line in logs, f"{logfile} does not contain expected line: {expected_line}"
+        logs = get_log_from_pod(self.tempdir, "rapidast-oobtkube", log_format="text")
+        assert expected_line in logs, f"OOBKube's logs do not contain expected line: {expected_line}"
 
 
 def verify_zap_report_urls(report_data: dict, urls: list[str]) -> dict:
@@ -182,3 +190,45 @@ def check_zap_alert_refs(report_data: dict, target_alert_refs: list[str]) -> dic
     not_found_alert_refs = [ref for ref in target_alert_refs if ref not in found_alert_refs]
 
     return {"found": sorted(list(found_alert_refs)), "not_found": sorted(not_found_alert_refs)}
+
+
+def get_log_from_pod(
+    tempdir: str,
+    pod_name: str,
+    filename_suffix: Optional[str] = None,
+    container: Optional[str] = None,
+    log_format: str = "text",
+) -> Union[str, dict]:
+    """
+    Fetches and returns a log file from a specific container in a pod
+
+    Args:
+        tempdir: Directory to store the log file
+        pod_name: Name of the pod (e.g., 'rapidast-vapi')
+        filename_suffix: Filename suffix, e.g. 'results' or 'log'
+        container: Name of the container in the pod
+        log_format: Format of the log ('json' or 'text')
+
+    Returns:
+        dict | str: Parsed JSON if log_format='json', raw string if 'text'
+
+    Raises:
+        ValueError: If `log_format` is unsupported or JSON parsing fails
+    """
+    extension = "json" if log_format == "json" else "log"
+    filename = f"{pod_name}.{extension}" if not filename_suffix else f"{pod_name}-{filename_suffix}.{extension}"
+    path = os.path.join(tempdir, filename)
+    tee_log(pod_name, path, container=container)
+
+    with open(path, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    if log_format == "json":
+        try:
+            return json.loads(content)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Failed to parse JSON log from {path}: {e}") from e
+    elif log_format == "text":
+        return content
+    else:
+        raise ValueError(f"Unsupported log format: {log_format}")

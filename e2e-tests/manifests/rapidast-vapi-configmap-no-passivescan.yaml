@@ -1,0 +1,26 @@
+apiVersion: v1
+data:
+  config.yaml: |+
+    config:
+      configVersion: 5
+
+    # `application` contains data related to the application, not to the scans.
+    application:
+      shortName: "v5-none-release-test"
+      url: "http://vapi:5000"
+
+    scanners:
+      zap:
+        apiScan:
+          apis:
+            apiUrl: "http://vapi:5000/docs/openapi.json"
+
+        activeScan:
+          policy: API-scan-minimal
+
+        miscOptions:
+          updateAddons: False
+
+kind: ConfigMap
+metadata:
+  name: rapidast-vapi

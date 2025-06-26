@@ -294,7 +294,7 @@
                                                         "type": "string"
                                                     },
                                                     "loginPageWait": {
-                                                        "type": "string"
+                                                        "type": "integer"
                                                     },
                                                     "verifyUrl": {
                                                         "type": "string"

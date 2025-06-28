@@ -88,7 +88,7 @@ python-dateutil==2.9.0.post0
     # via
     #   arrow
     #   pendulum
-python-dotenv==1.0.1
+python-dotenv==1.1.1
     # via rapidast (pyproject.toml)
 python-slugify==8.0.4
     # via py-nessus-pro

@@ -438,7 +438,7 @@ python-dateutil==2.9.0.post0
     #   octoai-sdk
     #   pandas
     #   pendulum
-python-dotenv==1.0.1
+python-dotenv==1.1.1
     # via
     #   -r ./requirements.txt
     #   litellm

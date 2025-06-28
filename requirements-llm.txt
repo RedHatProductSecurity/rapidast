@@ -575,7 +575,7 @@ tiktoken==0.9.0
     #   fschat
     #   garak
     #   litellm
-tokenizers==0.21.0
+tokenizers==0.21.2
     # via
     #   litellm
     #   transformers

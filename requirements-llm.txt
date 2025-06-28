@@ -49,7 +49,7 @@ botocore==1.37.8
     # via
     #   boto3
     #   s3transfer
-cachetools==5.5.2
+cachetools==6.1.0
     # via
     #   -r ./requirements.txt
     #   google-auth

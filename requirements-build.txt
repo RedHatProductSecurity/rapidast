@@ -41,7 +41,7 @@ hatchling==1.27.0
     #   pygments
     #   referencing
     #   urllib3
-maturin==1.8.2
+maturin==1.9.0
     # via rpds-py
 mypy-extensions==1.0.0
     # via mypy

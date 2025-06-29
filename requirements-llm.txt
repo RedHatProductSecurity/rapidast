@@ -99,7 +99,7 @@ distro==1.9.0
     # via openai
 ecoji==0.1.1
     # via garak
-fastapi==0.115.11
+fastapi==0.115.14
     # via
     #   fschat
     #   octoai-sdk

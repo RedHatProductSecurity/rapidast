@@ -241,7 +241,7 @@ jsonschema-specifications==2024.10.1
     #   jsonschema
 langchain==0.3.20
     # via garak
-langchain-core==0.3.41
+langchain-core==0.3.68
     # via
     #   langchain
     #   langchain-text-splitters

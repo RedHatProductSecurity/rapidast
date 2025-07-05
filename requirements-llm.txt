@@ -45,7 +45,7 @@ base2048==0.1.3
     # via garak
 boto3==1.37.8
     # via octoai-sdk
-botocore==1.37.8
+botocore==1.39.3
     # via
     #   boto3
     #   s3transfer

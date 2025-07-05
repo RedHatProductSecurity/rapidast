@@ -257,7 +257,7 @@ lark==0.12.0
     #   cel-python
 latex2mathml==3.77.0
     # via markdown2
-litellm==1.63.2
+litellm==1.74.0
     # via garak
 loguru==0.7.3
     # via

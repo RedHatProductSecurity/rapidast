@@ -77,7 +77,7 @@ click==8.1.8
     #   octoai-sdk
     #   typer
     #   uvicorn
-cmd2==2.4.3
+cmd2==2.7.0
     # via garak
 cohere==4.57
     # via garak

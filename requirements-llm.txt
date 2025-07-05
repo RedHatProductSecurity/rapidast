@@ -281,7 +281,7 @@ mdurl==0.1.2
     #   markdown-it-py
 mpmath==1.3.0
     # via sympy
-multidict==6.1.0
+multidict==6.6.3
     # via
     #   aiohttp
     #   yarl

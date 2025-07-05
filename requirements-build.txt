@@ -53,7 +53,7 @@ packaging==24.2
     #   setuptools-scm
 pathspec==0.12.1
     # via hatchling
-pdm-backend==2.4.3
+pdm-backend==2.4.5
     # via
     #   typer
     #   webcolors

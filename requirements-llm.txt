@@ -366,7 +366,7 @@ pendulum==3.1.0
     # via
     #   -r ./requirements.txt
     #   cel-python
-pillow==10.4.0
+pillow==11.3.0
     # via octoai-sdk
 ply==3.11
     # via jsonpath-ng

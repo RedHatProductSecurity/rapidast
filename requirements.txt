@@ -33,7 +33,7 @@ google-auth==2.38.0
     #   google-api-core
     #   google-cloud-core
     #   google-cloud-storage
-google-cloud-core==2.4.1
+google-cloud-core==2.4.3
     # via google-cloud-storage
 google-cloud-storage==3.0.0
     # via rapidast (pyproject.toml)

@@ -10,7 +10,7 @@ import dacite
 import yaml
 from packaging import version
 
-from configmodel import RapidastConfigModel
+from configmodel import RapidastConfigModel, deep_traverse_and_replace_with_var_content
 from configmodel.models.scanners.garak import GarakConfig
 from scanners import RapidastScanner
 from scanners import State
@@ -63,7 +63,8 @@ class Garak(RapidastScanner):
             raise ValueError(f"'scanners.{ident}' section not in config")
 
         # XXX self.config is already a dict with raw config values
-        self.cfg = dacite.from_dict(data_class=GarakConfig, data=garak_config_section)
+        processed_data = deep_traverse_and_replace_with_var_content(garak_config_section)
+        self.cfg = dacite.from_dict(data_class=GarakConfig, data=processed_data)
 
         self.garak_cli = []
         self.automation_config = {}

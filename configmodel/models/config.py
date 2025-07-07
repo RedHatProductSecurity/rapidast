@@ -29,6 +29,7 @@ class DefectDojo:
     authorization: Optional[DefectDojoAuthorization]
     ssl: bool = True
 
+
 @dataclass
 class Config:
     configVersion: int

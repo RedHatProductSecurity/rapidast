@@ -10,7 +10,8 @@ import dacite
 import yaml
 from packaging import version
 
-from configmodel import RapidastConfigModel, deep_traverse_and_replace_with_var_content
+from configmodel import deep_traverse_and_replace_with_var_content
+from configmodel import RapidastConfigModel
 from configmodel.models.scanners.garak import GarakConfig
 from scanners import RapidastScanner
 from scanners import State

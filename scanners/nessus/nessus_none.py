@@ -9,6 +9,7 @@ import dacite
 import requests.exceptions
 from py_nessus_pro import PyNessusPro
 
+from configmodel import deep_traverse_and_replace_with_var_content
 from configmodel import RapidastConfigModel
 from configmodel.models.scanners.nessus import NessusConfig
 from scanners import RapidastScanner
@@ -38,7 +39,8 @@ class Nessus(RapidastScanner):
             raise ValueError(f"'scanners.{ident}' section not in config")
 
         # XXX self.config is already a dict with raw config values
-        self.cfg = dacite.from_dict(data_class=NessusConfig, data=nessus_config_section)
+        processed_data = deep_traverse_and_replace_with_var_content(nessus_config_section)
+        self.cfg = dacite.from_dict(data_class=NessusConfig, data=processed_data)
         self._sleep_interval: int = 10
 
         self.authenticated = self.authentication_factory()

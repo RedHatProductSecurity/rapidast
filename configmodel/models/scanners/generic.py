@@ -5,7 +5,7 @@ from dataclasses import field
 from typing import List
 from typing import Optional
 
-from ..general import ContainerType
+from configmodel.models.general import ContainerType
 
 
 @dataclass

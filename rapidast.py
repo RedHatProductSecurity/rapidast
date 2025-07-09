@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 from typing import Dict
 from typing import List
+from typing import Optional
 from urllib import request
 
 import dacite
@@ -27,6 +28,9 @@ import configmodel.converter
 import scanners
 from configmodel import deep_traverse_and_replace_with_var_content
 from configmodel.models.exclusions import Exclusions
+from configmodel.models.general import AuthenticationType
+from configmodel.models.general import ContainerType
+from configmodel.models.root import Root
 from exports.defect_dojo import DefectDojo
 from exports.google_cloud_storage import GoogleCloudStorage
 from utils import add_logging_level
@@ -294,7 +298,7 @@ def validate_config_schema(config_file) -> bool:
 
     try:
         config_version = str(config["config"]["configVersion"])
-    except KeyError:
+    except (KeyError, TypeError):
         logging.error("Missing 'configVersion' in configuration")
         return False
 
@@ -373,6 +377,12 @@ def run():
 
     # Do early: load the environment file if one is there
     load_environment(config)
+
+    root = parse_rapidast_config(config.conf)
+
+    if not root:
+        logging.error("RapiDAST config parsing failed")
+        sys.exit(1)
 
     # Check DefectDojo export configuration
     dedo_exporter = None
@@ -619,6 +629,31 @@ def generate_sarif_properties(
         "commit_sha": commit_sha,
     }
     return sarif_properties
+
+
+def parse_rapidast_config(config: dict) -> Optional[Root]:
+    root = None
+    processed_data = deep_traverse_and_replace_with_var_content(config)
+
+    dacite_config = dacite.Config(
+        # Set to False to ignore extra keys in the input data that don't match dataclass fields.
+        # This is enforced here for safety, since 'scanners' is not defined at the root level
+        # Each scanner handles its own configuration validation internally
+        strict=False,
+        type_hooks={
+            # Dacite doesn't natively support enums, so we use `type_hooks` as a workaround
+            # to properly resolve enum values
+            # https://github.com/konradhalas/dacite/issues/61
+            ContainerType: ContainerType,
+            AuthenticationType: AuthenticationType,
+        },
+    )
+    try:
+        root = dacite.from_dict(data_class=Root, data=processed_data, config=dacite_config)
+    except dacite.exceptions.DaciteError as e:
+        logging.error(f"Config parsing error: {e}")
+
+    return root
 
 
 if __name__ == "__main__":

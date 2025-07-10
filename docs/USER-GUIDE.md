@@ -18,25 +18,29 @@ Quickly setup RapiDAST to scan a target application. See [Workflow](#workflow) f
 
 Linux and MacOS are both supported, however running RapiDAST in a container is currently only supported on Linux. See [MacOS Configuration](#macos) section for more details.
 
-### Run in container (Linux only)
+### Run in container (recommended)
 
 Run the pre-built [rapidast container image](https://quay.io/repository/redhatproductsecurity/rapidast), which includes scanners like [ZAP]. Not compatible with config files using `general.container.type` set to `podman`.
 
 **Prerequisites**:
 
 - `docker` / `podman` (>= v3.0.1)
+- create a `config.yaml` file, based on the [examples](#configuration)
 
 **Run**:
 
 ```sh
-$ podman run -v ./config.yaml:/opt/rapidast/config/config.yaml:Z quay.io/redhatproductsecurity/rapidast:latest
+$ podman run \
+  -v ./config.yaml:/opt/rapidast/config/config.yaml:Z \
+  -v ./results:/opt/rapidast/results/:Z,U \
+  quay.io/redhatproductsecurity/rapidast:latest
 ```
 
 **Note**:
 
-- Sample config is very minimal and has no [Authentication](#authentication) enabled
+- Scan reports and other result files will be written to the `./results` directory
+- The `:U` option is necessary to make the `./results` directory writeable inside the container image
 - The `:Z` option is only necessary on RHEL/CentOS/Fedora systems with SELinux enabled
-- To retrieve scan results, add a volume mount like `-v ./results/:/opt/rapidast/results/:Z`. The permissions of the `./results/` directory may need to be modified first with a command like `chmod o+w ./results/` to be writeable by the rapidast user in the container.
 
 ### Run from source
 
@@ -95,6 +99,8 @@ This section summarize the basic workflow as follows:
     - First run with passive scanning only, which can save time at the initial scanning phase. There are various situations that can cause an issue, not only from scanning set up but also from your application or test environment. Active scanning takes a long time in general.
     - Once passive Scanning has run successfully, run another scan with active scanning enabled in the configuration file.
 
+### CI/CD Examples
+
 See [here](https://github.com/RedHatProductSecurity/rapidast/tree/development/examples) for examples on how to run RapiDAST in various CI/CD pipelines.
 
 ## Configuration
@@ -116,8 +122,6 @@ See templates in the [config](https://github.com/RedHatProductSecurity/rapidast/
 - `config-template-multi-scan.yaml` : describes how to combine multiple scanners in a single configuration
 - `config-template-generic-scan.yaml` : describes the use of the generic scanner
 - `config-template-garak.yaml` : describes the use of the Garak LLM AI scanner
-
-See [here](https://github.com/RedHatProductSecurity/rapidast/tree/development/examples/) for examples on how to run RapiDAST in various CI/CD pipelines.
 
 ### Basic Example
 

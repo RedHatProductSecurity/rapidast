@@ -240,7 +240,7 @@ This project uses `pip-compile` from `pip-tools` to manage dependencies.
 
 ### Requirements
 
-Make sure you have an environment that closely matches the environment in the container build. This means it should have the same operating system and the same Python `$major.$minor` version.
+Make sure you have an environment that closely matches the environment in the container build. This means it should have the same operating system and Python 3.12.
 
 - `pip-tools`: Used for managing Python dependencies and generating `requirements.txt`
 

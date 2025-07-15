@@ -48,7 +48,7 @@ Install dependencies and run RapiDAST directly on a host machine. Unless using t
 
 **Prerequisites**:
 
-- `python` >= 3.9
+- `python` >= 3.12
 - `podman` >= 3.0.1
   - required when you want to run scanners from their container images, rather than installing them to your host.
 - See `requirements.txt` for a list of required python libraries

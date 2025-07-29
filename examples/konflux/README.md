@@ -6,6 +6,10 @@ previously can be deployed and scanned.
 See the example [Pipeline](./integration-test.yaml), for an approach that uses [eaas-provision-space](https://github.com/konflux-ci/build-definitions/tree/main/task/eaas-provision-space/0.1) to obtain an environment for deploying components. This pipeline references as
 a separate, standalone [RapiDAST task](./rapidast-check.yaml), which may in the future be stored and published from a central location.
 
+The example pipeline in this repo was based on this earlier example:
+
+- <https://github.com/jenculltesting/rh-trex-test/blob/main/.tekton/rapidast-scan.yaml>
+
 ## Notes
 
 - This example is suitable for lower privileged components, that do not require cluster-admin to install. Higher privileged components, like cluster Operators

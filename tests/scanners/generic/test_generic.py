@@ -46,3 +46,13 @@ def test_generic_none_tool_dir(test_config):
     scanner = GenericNone(config=test_config)
     scanner.setup()
     assert scanner.tool_dir == "/tmp/tooldir"
+
+
+def test_generic_with_unexpected_config(test_config):
+    test_config.set("scanners.generic.inline", "tmp_cmd")
+    test_config.set("scanners.generic.unexpected_option", "should_be_ignored")
+    try:
+        scanner = GenericNone(config=test_config, ident="generic")
+        scanner.setup()
+    except Exception as e:
+        pytest.fail(f"Scanner initialization failed with unexpected config: {e}")

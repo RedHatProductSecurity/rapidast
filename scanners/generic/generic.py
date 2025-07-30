@@ -48,7 +48,6 @@ class Generic(RapidastScanner):
             raise ValueError(f"'scanners.{ident}' section not in config")
 
         dacite_config = dacite.Config(
-            strict=True,
             type_hooks={
                 # Dacite doesn't natively support enums, so we use `type_hooks` as a workaround
                 # to properly resolve enum values

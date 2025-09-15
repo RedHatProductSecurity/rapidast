@@ -13,8 +13,8 @@ class TestRapiDASTAuthentication(TestBase):
     def test_http_basic_authentication(self):
         """Test rapidast with HTTP Basic authentication configured"""
 
-        self.create_from_yaml(f"{self.tempdir}/vapi-deployment.yaml")
-        self.create_from_yaml(f"{self.tempdir}/vapi-service.yaml")
+        self.replace_from_yaml(f"{self.tempdir}/vapi-deployment.yaml")
+        self.replace_from_yaml(f"{self.tempdir}/vapi-service.yaml")
         assert wait_until_ready(label_selector="app=vapi")
 
         self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-configmap-http-basic.yaml")
@@ -50,8 +50,8 @@ class TestRapiDASTAuthentication(TestBase):
     def test_http_header_authentication(self):
         """Test rapidast with HTTP Header authentication configured"""
 
-        self.create_from_yaml(f"{self.tempdir}/vapi-deployment.yaml")
-        self.create_from_yaml(f"{self.tempdir}/vapi-service.yaml")
+        self.replace_from_yaml(f"{self.tempdir}/vapi-deployment.yaml")
+        self.replace_from_yaml(f"{self.tempdir}/vapi-service.yaml")
         assert wait_until_ready(label_selector="app=vapi")
 
         self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-configmap-http-header.yaml")

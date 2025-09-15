@@ -17,6 +17,7 @@ data:
         authentication:
           type: "http_basic"
           parameters:
+            # NOTE: These are dummy test credentials for e2e testing - not real secrets
             username: "user"
             password: "mypassw0rd"
 

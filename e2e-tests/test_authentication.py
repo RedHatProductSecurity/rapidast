@@ -41,6 +41,7 @@ class TestRapiDASTAuthentication(TestBase):
             "ZAP logs should indicate HTTP Basic authentication was configured"
 
         # Verify that the Authorization Basic header with correct credentials is present
+        # NOTE: "user:mypassw0rd" are dummy test credentials for e2e testing - not real secrets
         expected_credentials = base64.b64encode(b"user:mypassw0rd").decode("utf-8")
         basic_auth_header_found = verify_specific_auth_header_value(
             data, "Authorization", f"Basic {expected_credentials}"
@@ -78,6 +79,7 @@ class TestRapiDASTAuthentication(TestBase):
         assert "ZAP configured with Authentication using HTTP Header" in logs, \
             "ZAP logs should indicate HTTP Header authentication was configured"
 
+        # NOTE: "MySecretHeader" is a dummy test header value for e2e testing - not a real secret
         custom_header_found = verify_specific_auth_header_value(
             data, "Authorization", "MySecretHeader"
         )

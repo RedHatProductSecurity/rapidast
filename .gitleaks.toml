@@ -1,0 +1,20 @@
+# Gitleaks configuration to exclude dummy test secrets
+# https://github.com/gitleaks/gitleaks
+
+[allowlist]
+  description = "Allowlist for e2e test files with dummy authentication credentials"
+
+  # File paths to exclude from secret scanning
+  paths = [
+    "e2e-tests/manifests/rapidast-vapi-configmap-http-basic.yaml",
+    "e2e-tests/manifests/rapidast-vapi-configmap-http-header.yaml",
+    "e2e-tests/test_authentication.py"
+  ]
+
+  # Regex patterns for dummy test values to ignore
+  regexes = [
+    "user:mypassw0rd",                    # Dummy HTTP Basic auth credentials
+    "MySecretHeader",                     # Dummy Authorization header value
+    "dXNlcjpteXBhc3N3MHJk"               # Base64 of "user:mypassw0rd"
+  ]
+

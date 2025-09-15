@@ -18,6 +18,7 @@ data:
           type: "http_header"
           parameters:
             name: "Authorization"
+            # NOTE: This is a dummy test header value for e2e testing - not a real secret
             value: "MySecretHeader"
 
         passiveScan:

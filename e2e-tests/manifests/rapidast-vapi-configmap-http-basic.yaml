@@ -6,13 +6,13 @@ data:
 
     application:
       shortName: "http-basic-auth-test"
-      url: "http://vapi:5000"
+      url: "http://vapi-auth:5000"
 
     scanners:
       zap:
         apiScan:
           apis:
-            apiUrl: "http://vapi:5000/docs/openapi.json"
+            apiUrl: "http://vapi-auth:5000/docs/openapi.json"
 
         authentication:
           type: "http_basic"

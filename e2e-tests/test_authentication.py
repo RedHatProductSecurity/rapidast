@@ -10,12 +10,16 @@ from conftest import wait_until_ready  # pylint: disable=E0611
 
 
 class TestRapiDASTAuthentication(TestBase):
+    @classmethod
+    def setup_class(cls):
+        """Set up shared VAPI instance for all authentication tests"""
+        super().setup_class()
+        cls.create_from_yaml(cls, f"{cls.tempdir}/vapi-auth-deployment.yaml")
+        cls.create_from_yaml(cls, f"{cls.tempdir}/vapi-auth-service.yaml")
+        assert wait_until_ready(label_selector="app=vapi-auth")
+
     def test_http_basic_authentication(self):
         """Test rapidast with HTTP Basic authentication configured"""
-
-        self.replace_from_yaml(f"{self.tempdir}/vapi-deployment.yaml")
-        self.replace_from_yaml(f"{self.tempdir}/vapi-service.yaml")
-        assert wait_until_ready(label_selector="app=vapi")
 
         self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-configmap-http-basic.yaml")
         self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-pod-http-basic.yaml")
@@ -49,10 +53,6 @@ class TestRapiDASTAuthentication(TestBase):
 
     def test_http_header_authentication(self):
         """Test rapidast with HTTP Header authentication configured"""
-
-        self.replace_from_yaml(f"{self.tempdir}/vapi-deployment.yaml")
-        self.replace_from_yaml(f"{self.tempdir}/vapi-service.yaml")
-        assert wait_until_ready(label_selector="app=vapi")
 
         self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-configmap-http-header.yaml")
         self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-pod-http-header.yaml")

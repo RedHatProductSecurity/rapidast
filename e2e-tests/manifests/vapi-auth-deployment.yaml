@@ -18,30 +18,23 @@ spec:
     spec:
       containers:
       - command:
-        - /bin/sh
+        - bash
         - -c
-        - |
-          cd /app && python3 run.py
-        env:
-        - name: VAPI_HOST
-          value: 0.0.0.0
-        - name: VAPI_PORT
-          value: "5000"
-        - name: VAPI_FRONTEND_PORT
-          value: "3000"
-        image: quay.io/redhatproductsecurity/vapi:1.6.0
-        imagePullPolicy: IfNotPresent
-        name: vapi-auth
-        ports:
-        - containerPort: 5000
-          protocol: TCP
-        - containerPort: 3000
-          protocol: TCP
-        resources: {}
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
-      dnsPolicy: ClusterFirst
-      restartPolicy: Always
-      schedulerName: default-scheduler
-      securityContext: {}
-      terminationGracePeriodSeconds: 30
+        - . start.sh && sleep infinity
+        image: quay.io/sfowler/vapi:latest
+        imagePullPolicy: Always
+        name: vapi
+        # The pod should only be marked as "ready" once both
+        # the frontend and backend services are listening on their respective ports
+        lifecycle:
+          postStart:
+            exec:
+              command:
+              - /bin/bash
+              - -c
+              - |
+                echo "Checking services..."
+                echo "Waiting for ports 3000 and 5000..."
+                while ! (echo > /dev/tcp/localhost/3000) 2>/dev/null; do echo "Port 3000 not ready" && sleep 1; done
+                while ! (echo > /dev/tcp/localhost/5000) 2>/dev/null; do echo "Port 5000 not ready" && sleep 1; done
+                echo "All ports are ready"

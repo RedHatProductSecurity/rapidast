@@ -22,7 +22,7 @@ ARG FF_FILE=$DEPS_DIR/firefox.tar.bz2
 ARG TRIVY_FILE=$DEPS_DIR/trivy.tar.gz
 ARG KCTL_FILE=$DEPS_DIR/kubectl
 
-RUN microdnf install -y tar gzip bzip2 java-21-openjdk nodejs
+RUN microdnf install -y tar gzip bzip2 java-21-openjdk nodejs gtk3
 
 RUN mkdir "${DEPS_DIR}" /tmp/node_modules && if [ "$PREFETCH" == "true" ]; then \
     echo "PREFETCH is true: Copying dependencies from /cachi2/output/deps..." && \

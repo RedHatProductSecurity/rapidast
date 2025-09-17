@@ -1,0 +1,34 @@
+apiVersion: v1
+data:
+  config.yaml: |+
+    config:
+      configVersion: 5
+
+    application:
+      shortName: "http-basic-auth-test"
+      url: "http://vapi-auth:5000"
+
+    scanners:
+      zap:
+        apiScan:
+          apis:
+            apiUrl: "http://vapi-auth:5000/docs/openapi.json"
+
+        authentication:
+          type: "http_basic"
+          parameters:
+            # NOTE: These are dummy test credentials for e2e testing - not real secrets
+            username: "user"
+            password: "mypassw0rd"
+
+        passiveScan:
+          # Enable passive scanning to capture authentication headers
+          disabledRules: ""
+
+        container:
+          parameters:
+            executable: "zap.sh"
+
+kind: ConfigMap
+metadata:
+  name: rapidast-vapi-http-basic

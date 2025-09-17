@@ -7,5 +7,6 @@
   paths = [
     '''e2e-tests/manifests/rapidast-vapi-configmap-http-basic\.yaml''',
     '''e2e-tests/manifests/rapidast-vapi-configmap-http-header\.yaml''',
+    '''e2e-tests/manifests/rapidast-vapi-configmap-cookie\.yaml''',
     '''e2e-tests/test_authentication\.py'''
   ]

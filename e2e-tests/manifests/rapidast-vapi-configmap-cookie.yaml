@@ -1,0 +1,34 @@
+apiVersion: v1
+data:
+  config.yaml: |+
+    config:
+      configVersion: 5
+
+    application:
+      shortName: "cookie-auth-test"
+      url: "http://vapi-auth:5000"
+
+    scanners:
+      zap:
+        apiScan:
+          apis:
+            apiUrl: "http://vapi-auth:5000/docs/openapi.json"
+
+        authentication:
+          type: "cookie"
+          parameters:
+            # NOTE: These are dummy test cookie values for e2e testing - not real secrets
+            name: "session_id"
+            value: "abc123testcookie"
+
+        passiveScan:
+          # Enable passive scanning to capture authentication headers
+          disabledRules: ""
+
+        container:
+          parameters:
+            executable: "zap.sh"
+
+kind: ConfigMap
+metadata:
+  name: rapidast-vapi-cookie

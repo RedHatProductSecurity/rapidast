@@ -25,9 +25,6 @@ data:
           # Enable passive scanning to capture authentication headers
           disabledRules: ""
 
-        container:
-          parameters:
-            executable: "zap.sh"
 
 kind: ConfigMap
 metadata:

@@ -29,7 +29,7 @@ spec:
     volumeMounts:
     - name: results
       mountPath: /opt/rapidast/results
-  - command: ["bash", "-c", "cat /opt/rapidast/results/*/*/zap/zap-report.sarif.json"]
+  - command: ["bash", "-c", "cat /opt/rapidast/results/*/*/rapidast-scan-results.sarif; echo"]
     image: registry.redhat.io/ubi9/ubi-micro
     name: results-sarif
     volumeMounts:

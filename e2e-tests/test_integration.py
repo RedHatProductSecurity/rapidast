@@ -4,6 +4,9 @@ import re
 from typing import Optional
 from typing import Union
 
+from jsonschema import Draft7Validator
+from jsonschema import validate
+
 from conftest import is_pod_with_field_selector_successfully_completed  # pylint: disable=E0611
 from conftest import tee_log  # pylint: disable=E0611
 from conftest import TestBase  # pylint: disable=E0611
@@ -28,6 +31,12 @@ class TestRapiDAST(TestBase):
         data = get_log_from_pod(
             self.tempdir, "rapidast-vapi", filename_suffix="results", container="results", log_format="json"
         )
+        sarif_results = get_log_from_pod(
+            self.tempdir, "rapidast-vapi", filename_suffix="sarif", container="results-sarif", log_format="json"
+        )
+
+        # validate that the SARIF output is correct
+        assert validate_json_schema(sarif_results, os.path.dirname(__file__) + "/schemas/sarif-schema-2.1.0.json")
 
         assert len(data["site"][0]["alerts"]) == 3
 
@@ -232,3 +241,23 @@ def get_log_from_pod(
         return content
     else:
         raise ValueError(f"Unsupported log format: {log_format}")
+
+
+def validate_json_schema(data: dict, schema_path: str) -> bool:
+    """
+    Validate a configuration dictionary against a JSON schema file
+
+    If the schema validation fails, it will raise an exception:
+    - SchemaError: the schema_path file is not a valid schema
+    - ValidationError: the data dict doesn't match the schema
+    """
+    try:
+        with open(schema_path, mode="r", encoding="utf-8") as file:
+            schema = json.load(file)
+    except FileNotFoundError as e:
+        raise ValueError(f"Failed to open JSON schema {schema_path}: {e}") from e
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Failed to parse JSON schema {schema_path}: {e}") from e
+
+    validate(instance=data, schema=schema, format_checker=Draft7Validator.FORMAT_CHECKER)
+    return True

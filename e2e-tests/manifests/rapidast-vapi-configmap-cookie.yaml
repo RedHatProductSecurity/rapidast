@@ -5,7 +5,7 @@ data:
       configVersion: 5
 
     application:
-      shortName: "http-header-auth-test"
+      shortName: "cookie-auth-test"
       url: "http://vapi-auth:5000"
 
     scanners:
@@ -15,17 +15,16 @@ data:
             apiUrl: "http://vapi-auth:5000/docs/openapi.json"
 
         authentication:
-          type: "http_header"
+          type: "cookie"
           parameters:
-            name: "Authorization"
-            # NOTE: This is a dummy test header value for e2e testing - not a real secret
-            value: "MySecretHeader"
+            # NOTE: These are dummy test cookie values for e2e testing - not real secrets
+            name: "session_id"
+            value: "abc123testcookie"
 
         passiveScan:
           # Enable passive scanning to capture authentication headers
           disabledRules: ""
 
-
 kind: ConfigMap
 metadata:
-  name: rapidast-vapi-http-header
+  name: rapidast-vapi-cookie

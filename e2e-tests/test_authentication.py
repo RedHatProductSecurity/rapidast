@@ -2,6 +2,7 @@ import base64
 import logging
 from typing import Dict
 
+import pytest
 from test_integration import get_log_from_pod  # pylint: disable=E0611
 
 from conftest import is_pod_with_field_selector_successfully_completed  # pylint: disable=E0611
@@ -18,66 +19,52 @@ class TestRapiDASTAuthentication(TestBase):
         cls.create_from_yaml(cls, f"{cls.tempdir}/vapi-auth-service.yaml")
         assert wait_until_ready(label_selector="app=vapi-auth")
 
-    def test_http_basic_authentication(self):
-        """Test rapidast with HTTP Basic authentication configured"""
+    @pytest.mark.parametrize(
+        "auth_type,expected_log,header_name,header_value_func",
+        [
+            (
+                "http-basic",
+                "ZAP configured with HTTP Basic Authentication",
+                "Authorization",
+                lambda: f"Basic {base64.b64encode(b'user:mypassw0rd').decode('utf-8')}",
+            ),
+            (
+                "http-header",
+                "ZAP configured with Authentication using HTTP Header",
+                "Authorization",
+                lambda: "MySecretHeader",
+            ),
+            ("cookie", "ZAP configured with Cookie authentication", "Cookie", lambda: "session_id=abc123testcookie"),
+        ],
+    )
+    def test_authentication(self, auth_type, expected_log, header_name, header_value_func):
+        """Test rapidast with various authentication methods configured"""
 
-        self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-configmap-http-basic.yaml")
-        self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-pod-http-basic.yaml")
+        self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-configmap-{auth_type}.yaml")
+        self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-pod-{auth_type}.yaml")
+
         assert is_pod_with_field_selector_successfully_completed(
-            field_selector="metadata.name=rapidast-vapi-http-basic", timeout=360
+            field_selector=f"metadata.name=rapidast-vapi-{auth_type}", timeout=360
         )
 
-        logs = get_log_from_pod(self.tempdir, "rapidast-vapi-http-basic", container="rapidast", log_format="text")
+        logs = get_log_from_pod(self.tempdir, f"rapidast-vapi-{auth_type}", container="rapidast", log_format="text")
         data = get_log_from_pod(
             self.tempdir,
-            "rapidast-vapi-http-basic",
+            f"rapidast-vapi-{auth_type}",
             filename_suffix="results",
             container="results",
             log_format="json",
         )
 
-        # Verify that HTTP Basic authentication was configured correctly in logs
+        assert expected_log in logs, f"ZAP logs should indicate {auth_type} authentication was configured"
+
+        # Verify authentication header is present in scan results
+        # NOTE: All authentication values are dummy test credentials - not real secrets
+        expected_header_value = header_value_func()
+        auth_header_found = verify_specific_auth_header_value(data, header_name, expected_header_value)
         assert (
-            "ZAP configured with HTTP Basic Authentication" in logs
-        ), "ZAP logs should indicate HTTP Basic authentication was configured"
-
-        # Verify that the Authorization Basic header with correct credentials is present
-        # NOTE: "user:mypassw0rd" are dummy test credentials for e2e testing - not real secrets
-        expected_credentials = base64.b64encode(b"user:mypassw0rd").decode("utf-8")
-        basic_auth_header_found = verify_specific_auth_header_value(
-            data, "Authorization", f"Basic {expected_credentials}"
-        )
-        assert (
-            basic_auth_header_found
-        ), "Authorization header with correct Basic credentials should be found in scan results"
-
-    def test_http_header_authentication(self):
-        """Test rapidast with HTTP Header authentication configured"""
-
-        self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-configmap-http-header.yaml")
-        self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-pod-http-header.yaml")
-        assert is_pod_with_field_selector_successfully_completed(
-            field_selector="metadata.name=rapidast-vapi-http-header", timeout=360
-        )
-
-        logs = get_log_from_pod(self.tempdir, "rapidast-vapi-http-header", container="rapidast", log_format="text")
-        data = get_log_from_pod(
-            self.tempdir,
-            "rapidast-vapi-http-header",
-            filename_suffix="results",
-            container="results",
-            log_format="json",
-        )
-
-        assert (
-            "ZAP configured with Authentication using HTTP Header" in logs
-        ), "ZAP logs should indicate HTTP Header authentication was configured"
-
-        # NOTE: "MySecretHeader" is a dummy test header value for e2e testing - not a real secret
-        custom_header_found = verify_specific_auth_header_value(data, "Authorization", "MySecretHeader")
-        assert (
-            custom_header_found
-        ), "Authorization header with exact custom value 'MySecretHeader' should be found in scan results"
+            auth_header_found
+        ), f"{header_name} header with value '{expected_header_value}' should be found in scan results"
 
 
 def verify_specific_auth_header_value(report_data: Dict, header_name: str, expected_header_value: str) -> bool:

@@ -63,7 +63,7 @@ certifi==2025.1.31
     #   requests
 cffi==1.17.1
     # via soundfile
-charset-normalizer==3.4.3
+charset-normalizer==3.4.4
     # via
     #   -r ./requirements.txt
     #   requests

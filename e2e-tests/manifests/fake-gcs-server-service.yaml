@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fake-gcs-server
+  labels:
+    app: fake-gcs-server
+spec:
+  selector:
+    app: fake-gcs-server
+  ports:
+  - protocol: TCP
+    port: 4443
+    targetPort: 4443
+    name: http

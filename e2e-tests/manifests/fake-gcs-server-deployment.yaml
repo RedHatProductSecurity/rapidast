@@ -1,0 +1,37 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fake-gcs-server
+  labels:
+    app: fake-gcs-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fake-gcs-server
+  template:
+    metadata:
+      labels:
+        app: fake-gcs-server
+    spec:
+      containers:
+      - name: fake-gcs-server
+        image: fsouza/fake-gcs-server:latest
+        imagePullPolicy: Always
+        args:
+        - -scheme
+        - http
+        - -port
+        - "4443"
+        - -external-url
+        - http://fake-gcs-server:4443
+        ports:
+        - containerPort: 4443
+          name: http
+        readinessProbe:
+          httpGet:
+            path: /storage/v1/b
+            port: 4443
+          initialDelaySeconds: 5
+          periodSeconds: 5

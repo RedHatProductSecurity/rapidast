@@ -4,6 +4,8 @@ import re
 from typing import Optional
 from typing import Union
 
+from google.auth.credentials import AnonymousCredentials
+from google.cloud import storage
 from jsonschema import Draft7Validator
 from jsonschema import validate
 
@@ -16,6 +18,11 @@ from conftest import wait_until_ready  # pylint: disable=E0611
 class TestRapiDAST(TestBase):
     def test_vapi(self):
         """Test rapidast find expected number of findings in VAPI"""
+        # Deploy fake GCS server for export testing
+        self.create_from_yaml(f"{self.tempdir}/fake-gcs-server-deployment.yaml")
+        self.create_from_yaml(f"{self.tempdir}/fake-gcs-server-service.yaml")
+        assert wait_until_ready(label_selector="app=fake-gcs-server")
+
         self.create_from_yaml(f"{self.tempdir}/vapi-deployment.yaml")
         self.create_from_yaml(f"{self.tempdir}/vapi-service.yaml")
         assert wait_until_ready(label_selector="app=vapi")
@@ -260,4 +267,41 @@ def validate_json_schema(data: dict, schema_path: str) -> bool:
         raise ValueError(f"Failed to parse JSON schema {schema_path}: {e}") from e
 
     validate(instance=data, schema=schema, format_checker=Draft7Validator.FORMAT_CHECKER)
+    return True
+
+
+def verify_gcs_export_succeeded(bucket_name: str, directory: str) -> bool:
+    """
+    Verify that RapiDAST successfully exported scan results to GCS emulator
+
+    Args:
+        bucket_name: Name of the GCS bucket to check
+        directory: Directory prefix where files should be stored
+
+    Returns:
+        True if at least one file was uploaded to the bucket
+
+    Raises:
+        AssertionError: If no files were found in the expected location
+    """
+    # Connect to fake GCS server using emulator host
+    os.environ["STORAGE_EMULATOR_HOST"] = "http://fake-gcs-server:4443"
+
+    client = storage.Client(credentials=AnonymousCredentials(), project="test-project")
+
+    bucket = client.get_bucket(bucket_name)
+
+    # List all blobs in the directory
+    blobs = list(bucket.list_blobs(prefix=directory))
+
+    assert len(blobs) > 0, f"No files found in GCS bucket '{bucket_name}' under directory '{directory}'"
+
+    # Verify at least one blob is a tar.gz file
+    tar_files = [blob for blob in blobs if blob.name.endswith(".tgz") or blob.name.endswith(".tar.gz")]
+    assert len(tar_files) > 0, f"No tar.gz files found in GCS export. Found blobs: {[b.name for b in blobs]}"
+
+    print(f"GCS export verification succeeded. Found {len(blobs)} blob(s) in bucket '{bucket_name}/{directory}'")
+    for blob in blobs:
+        print(f"  - {blob.name} ({blob.size} bytes)")
+
     return True

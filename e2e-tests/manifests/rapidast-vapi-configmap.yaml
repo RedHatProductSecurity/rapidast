@@ -3,6 +3,9 @@ data:
   config.yaml: |+
     config:
       configVersion: 5
+      googleCloudStorage:
+        bucketName: "rapidast-test-bucket"
+        directory: "e2e-test-results"
 
     # `application` contains data related to the application, not to the scans.
     application:

@@ -5,10 +5,25 @@ metadata:
   name: rapidast-vapi
 spec:
   initContainers:
+    # Create GCS bucket in the emulator before running RapiDAST
+  - name: create-gcs-bucket
+    image: curlimages/curl:latest
+    command:
+    - sh
+    - -c
+    - |
+      echo "Creating GCS bucket 'rapidast-test-bucket' in emulator..."
+      curl -X POST http://fake-gcs-server:4443/storage/v1/b?project=test-project \
+        -H "Content-Type: application/json" \
+        -d '{"name":"rapidast-test-bucket"}' || true
+      echo "Bucket creation completed"
     # Run rapidast as initContainer, second container prints the results
   - image: ${IMAGE} # quay.io/redhatproductsecurity/rapidast:latest
     imagePullPolicy: Always
     name: rapidast
+    env:
+    - name: STORAGE_EMULATOR_HOST
+      value: "http://fake-gcs-server:4443"
     resources:
       limits:
         cpu: 1

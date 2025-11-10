@@ -33,5 +33,6 @@ spec:
           httpGet:
             path: /storage/v1/b
             port: 4443
+            scheme: HTTP
           initialDelaySeconds: 5
           periodSeconds: 5

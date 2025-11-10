@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: fake-gcs-server
-        image: fsouza/fake-gcs-server:latest
+        image: docker.io/fsouza/fake-gcs-server:latest
         imagePullPolicy: Always
         args:
         - -scheme

@@ -1,15 +1,20 @@
----
 apiVersion: v1
 kind: Service
 metadata:
-  name: fake-gcs-server
   labels:
     app: fake-gcs-server
+  name: fake-gcs-server
 spec:
-  selector:
-    app: fake-gcs-server
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
   ports:
   - protocol: TCP
     port: 4443
     targetPort: 4443
     name: http
+  selector:
+    app: fake-gcs-server
+  sessionAffinity: None
+  type: ClusterIP

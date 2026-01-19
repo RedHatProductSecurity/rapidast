@@ -3,9 +3,9 @@
 ## Deprecation Notice
 
 **Podman Mode Deprecation**
-The `podman` execution environment is deprecated and will be removed in a future version
+The `podman` execution environment is deprecated and will be removed in a future version.
 
-If you are using `podman` fpr the `container.type` option, please migrate to `none`.
+If you are using `podman` for the `container.type` option, please migrate to `none`.
 
 ## Quickstart
 
@@ -703,7 +703,7 @@ This happens only when using the host's ZAP (with the `*.container.type: none` o
 
 If you see a message such as `Missing mandatory plugins. Fixing`, or ZAP fails with an error containing the string `The mandatory add-on was not found:`, this is because ZAP deleted the application's plugin.
 See <https://github.com/zaproxy/zaproxy/issues/7703> for additional information.
-RapiDAST works around this bug, but with little inconvenients (slower because it has to fix itself and download all the plugins)
+RapiDAST works around this bug, but with little inconvenience (slower because it has to fix itself and download all the plugins)
 
 - Verify that the host installation directory is missing its plugins.
 e.g., in a MacOS installation, `/Applications/ZAP.app/Contents/Java/plugin/` will be mostly empty. In particular, no `callhome*.zap` and `network*.zap` file are present.
@@ -759,7 +759,7 @@ com.fasterxml.jackson.dataformat.yaml.JacksonYAMLParseException: The incoming YA
 Solutions:
 
 - If you are using a Swagger v2 definition, try converting it to v3 (OpenAPI)
-- Set a `maxYamlCodePoints` Java proprety with a big value, which can be passed using environment variables (via the `config.environ.envFile` config entry): `_JAVA_OPTIONS=-DmaxYamlCodePoints=99999999`
+- Set a `maxYamlCodePoints` Java property with a big value, which can be passed using environment variables (via the `config.environ.envFile` config entry): `_JAVA_OPTIONS=-DmaxYamlCodePoints=99999999`
 
 ### ZAP's Ajax Spider failing
 

@@ -32,6 +32,8 @@ spec:
     - {"type": "generic", "path": "."}
     - {"type": "npm", "path": "."}
     - {"type": "pip", "path": ".", "allow_binary": "true", "requirements_files": ["requirements-dev.txt"]}
+  - name: apply-tags
+    value: "true"
   - name: build-args
     value:
     - PREFETCH=true

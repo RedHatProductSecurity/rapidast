@@ -33,6 +33,8 @@ spec:
     value:
     - PREFETCH=false
     - COMMIT_SHA={{revision}}
+  - name: apply-tags
+    value: "true"
   taskRunSpecs:
     - pipelineTaskName: clair-scan
       stepSpecs:

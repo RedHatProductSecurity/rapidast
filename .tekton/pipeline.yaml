@@ -62,6 +62,10 @@ spec:
       description: Path to a file with build arguments for buildah, see https://www.mankier.com/1/buildah-build#--build-arg-file
       name: build-args-file
       type: string
+    - default: "false"
+      description: Whether to apply additional tags to the built image
+      name: apply-tags
+      type: string
   description: |
     This pipeline is ideal for building container images from a Containerfile while maintaining trust after pipeline customization.
 
@@ -505,6 +509,11 @@ spec:
     params:
       - name: TARGET_BRANCH
         value: "{{target_branch}}"
+    when:
+    - input: $(params.apply-tags)
+      operator: in
+      values:
+      - "true"
     taskSpec:
       params:
         - name: TARGET_BRANCH
@@ -535,6 +544,11 @@ spec:
       value: $(tasks.select-tags.results.TAGS)
     runAfter:
     - select-tags
+    when:
+    - input: $(params.apply-tags)
+      operator: in
+      values:
+      - "true"
     taskRef:
       params:
       - name: name

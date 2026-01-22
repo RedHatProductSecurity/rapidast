@@ -87,7 +87,7 @@ Then calling the `authentication_factory()` function will automatically redirect
 
 Because scanners may need to handle path from the "host" view and the "container" view, and translate from one to another, we have created a `path_translator` module to facilitate this.
 
-In practice, this helps to copy files in and out of the container section, or calculate paths inside the container, indepently from the "container" technology. The scanner first needs to setup the mapping correctly, and the rest of the code can work according to the mapping. The mapping usually corresponds to mountpoints, or important directory where the code will need to store/retrieve data.
+In practice, this helps to copy files in and out of the container section, or calculate paths inside the container, independently from the "container" technology. The scanner first needs to setup the mapping correctly, and the rest of the code can work according to the mapping. The mapping usually corresponds to mountpoints, or important directory where the code will need to store/retrieve data.
 
 Example :
 
@@ -111,7 +111,7 @@ __NOTES__
 
 ### Podman wrapper
 
-A podman scanner can instanciate a `PodmanWrapper` object. This provides functions to prepare the podman command, such as adding volumes, etc.
+A podman scanner can instantiate a `PodmanWrapper` object. This provides functions to prepare the podman command, such as adding volumes, etc.
 
 Example:
 
@@ -229,8 +229,8 @@ When updating a static dependency (like ZAP, Firefox, kubectl, or Trivy) used in
         * **How to get the SHA256**: Check the following pages:
              1. For ZAP: https://github.com/zaproxy/zaproxy/releases/tag/v${ZAP_VERSION}
              2. For firefox: https://releases.mozilla.org/pub/firefox/releases/${FF_VERSION}$/SHA256SUMS
-             3. For kubectl: https://dl.k8s.io/release/${K8S_VERSION}/bin/linux/amd64/kubectl.sha256
-             4. For trivy: https://github.com/zaproxy/zaproxy/releases/tag/v${TRIVY_VERSION}
+             3. For kubectl: https://dl.k8s.io/release/v${K8S_VERSION}/bin/linux/amd64/kubectl.sha256
+             4. For trivy: https://github.com/aquasecurity/trivy/releases/tag/v${TRIVY_VERSION}
 
     * Save the changes to `artifacts.lock.yaml`
 

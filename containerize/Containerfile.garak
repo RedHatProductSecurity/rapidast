@@ -22,7 +22,7 @@ ARG FF_FILE=$DEPS_DIR/firefox.tar.bz2
 ARG TRIVY_FILE=$DEPS_DIR/trivy.tar.gz
 ARG KCTL_FILE=$DEPS_DIR/kubectl
 
-RUN microdnf install -y tar gzip bzip2 java-21-openjdk nodejs gtk3
+RUN microdnf install -y --nodocs tar gzip bzip2 java-21-openjdk nodejs gtk3
 
 RUN mkdir "${DEPS_DIR}" /tmp/node_modules && if [ "$PREFETCH" == "true" ]; then \
     echo "PREFETCH is true: Copying dependencies from /cachi2/output/deps..." && \
@@ -92,6 +92,7 @@ ENV PATH $PATH:/opt/zap/:/opt/rapidast/:/opt/firefox/
 ## RapiDAST
 RUN mkdir /opt/rapidast && \
   echo "$COMMIT_SHA" > /opt/rapidast/commit_sha.txt
+
 COPY ./rapidast.py ./requirements-llm.txt /opt/rapidast/
 COPY ./scanners/ /opt/rapidast/scanners/
 COPY ./tools/ /opt/rapidast/tools/
@@ -110,8 +111,8 @@ COPY ./containerize/container_default_config.yaml /opt/rapidast/rapidast-default
 COPY ./containerize/path_rapidast.sh /etc/profile.d/rapidast.sh
 
 ### Install RapiDAST requirements, globally, so that it's available to any user
-RUN microdnf install -y --setopt=install_weak_deps=0 python3.12 java-21-openjdk shadow-utils dbus-glib procps git nodejs npm && \
-  microdnf install -y gtk3 && \
+RUN microdnf install -y --setopt=install_weak_deps=0 --nodocs python3.12 java-21-openjdk shadow-utils dbus-glib procps git-core nodejs npm && \
+  microdnf install -y --nodocs gtk3 && \
   python3.12 -m ensurepip --upgrade && \
   python3.12 -m pip install --no-cache-dir -r /opt/rapidast/requirements-llm.txt && \
   microdnf clean all -y && rm -rf /var/cache/dnf /tmp/*  && \

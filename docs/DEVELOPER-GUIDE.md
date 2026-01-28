@@ -3,7 +3,8 @@
 ## Install project requirements for development
 
 Install dependencies using the `requirements-dev.txt` file.
-```
+
+```bash
 $ pip install -r requirements-dev.txt
 ```
 
@@ -15,7 +16,7 @@ The current checks are found in the `.pre-commit-config.yaml` file.
 
 Once pre-commit is installed in the following way, code will be checked automatically when a commit is made.
 
-```
+```bash
 $ pre-commit install
 ```
 
@@ -25,8 +26,42 @@ Add test cases under tests/ when adding a new feature or function if possible. C
 
 Make sure every test case passes whenever any commit is to be made, with the following command:
 
-```
+```bash
 $ pytest
+```
+
+### End-to-End (e2e) tests
+
+These tests run on every pull request, but can also be run outside CI if an OpenShift cluster is available.
+
+**Prerequisites**:
+
+- An OpenShift cluster (k8s may work, but has not been tested)
+- Logged in to the cluster with an account that can deploy resources like pods, configmaps etc
+- Installed the python development dependencies
+
+Run e2e tests:
+
+```bash
+$ pytest e2e-tests/test-integration.py --json-report
+```
+
+There are more tests defined in the [e2e-tests/](../e2e-tests/) directory for different scanners, like garak, nessus etc.
+
+By default the tests will run with the `development` rapidast image, `quay.io/redhatproductsecurity/rapidast:development`. This can be changed using the RAPIDAST image env variable, e.g.
+
+```bash
+$ RAPIDAST_IMAGE=quay.io/other/rapidast:other pytest e2e-tests/test-integration.py --json-report
+```
+
+When trying to debugging a failed test run from a PR, it can be useful to re-use the same image built from that PR, e.g. `quay.io/redhatproductsecurity/rapidast:rapidast-on-pull-request-9mshp-build-container`.
+
+There are other variables that can be used to customized test runs, including disable cleanup of resources in the [e2e-tests/conftest.py](../e2e-tests/conftest.py) file. This can be useful to inspect pod logs, or launch debug pods from failed pods (e.g. `oc debug pod/rapidast-trivy`)
+
+To run single e2e test, use a command like:
+
+```bash
+$ pytest e2e-tests/test_integration.py::TestRapiDAST::test_trivy --json-report
 ```
 
 ## Structure

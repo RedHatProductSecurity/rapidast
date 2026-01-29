@@ -11,10 +11,10 @@ ARG PREFETCH=false
 
 # IMPORTANT: Ensure these versions are synchronized with 'artifacts.lock.yaml'
 # Refer to the docs/DEVELOPER_GUIDE.md, "Updating Static Dependency Versions" for details
-ARG ZAP_VERSION=2.16.1
+ARG ZAP_VERSION=2.17.0
 ARG FF_VERSION=128.6.0esr
-ARG K8S_VERSION=1.32.1
-ARG TRIVY_VERSION=0.59.0
+ARG K8S_VERSION=1.35.0
+ARG TRIVY_VERSION=0.68.2
 
 ARG DEPS_DIR=/tmp/deps
 ARG ZAP_FILE=$DEPS_DIR/ZAP.tar.gz

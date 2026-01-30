@@ -269,6 +269,8 @@ When updating a static dependency (like ZAP, Firefox, kubectl, or Trivy) used in
 
     * Save the changes to `artifacts.lock.yaml`
 
+Script `hack/update-bundled-scanners.sh` can be used to automate checking for new versions and updating `Containerfile` and `artifacts.lock.yaml`.
+
 ## Python Requirements Management
 
 This project uses `pip-compile` from `pip-tools` to manage dependencies.

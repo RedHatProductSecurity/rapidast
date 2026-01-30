@@ -51,3 +51,5 @@ data:
 kind: ConfigMap
 metadata:
   name: rapidast-vapi
+  labels:
+    app: rapidast

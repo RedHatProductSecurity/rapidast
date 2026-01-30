@@ -23,4 +23,6 @@ data:
 
 kind: ConfigMap
 metadata:
-  name: rapidast-vapi
+  name: rapidast-vapi-no-passivescan
+  labels:
+    app: rapidast

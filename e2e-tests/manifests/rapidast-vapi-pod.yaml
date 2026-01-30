@@ -2,7 +2,9 @@ apiVersion: v1
 kind: Pod
 metadata:
   annotations:
-  name: rapidast-vapi
+  generateName: rapidast-vapi-
+  labels:
+    app: rapidast
 spec:
   initContainers:
     # Run rapidast as initContainer, second container prints the results

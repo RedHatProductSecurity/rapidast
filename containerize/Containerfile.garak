@@ -11,18 +11,18 @@ ARG PREFETCH=false
 
 # IMPORTANT: Ensure these versions are synchronized with 'artifacts.lock.yaml'
 # Refer to the docs/DEVELOPER_GUIDE.md, "Updating Static Dependency Versions" for details
-ARG ZAP_VERSION=2.16.1
-ARG FF_VERSION=128.6.0esr
-ARG K8S_VERSION=1.32.1
-ARG TRIVY_VERSION=0.59.0
+ARG ZAP_VERSION=2.17.0
+ARG FF_VERSION=140.7.0esr
+ARG K8S_VERSION=1.35.0
+ARG TRIVY_VERSION=0.69.0
 
 ARG DEPS_DIR=/tmp/deps
 ARG ZAP_FILE=$DEPS_DIR/ZAP.tar.gz
-ARG FF_FILE=$DEPS_DIR/firefox.tar.bz2
+ARG FF_FILE=$DEPS_DIR/firefox.tar.xz
 ARG TRIVY_FILE=$DEPS_DIR/trivy.tar.gz
 ARG KCTL_FILE=$DEPS_DIR/kubectl
 
-RUN microdnf install -y --nodocs tar gzip bzip2 java-21-openjdk nodejs gtk3
+RUN microdnf install -y --nodocs tar gzip xz java-21-openjdk nodejs gtk3
 
 RUN mkdir "${DEPS_DIR}" /tmp/node_modules && if [ "$PREFETCH" == "true" ]; then \
     echo "PREFETCH is true: Copying dependencies from /cachi2/output/deps..." && \
@@ -30,7 +30,7 @@ RUN mkdir "${DEPS_DIR}" /tmp/node_modules && if [ "$PREFETCH" == "true" ]; then 
   else \
     echo "PREFETCH is false: Downloading dependencies from remote sources..." && \
     curl -sfL "https://github.com/zaproxy/zaproxy/releases/download/v${ZAP_VERSION}/ZAP_${ZAP_VERSION}_Linux.tar.gz" -o "$ZAP_FILE"; \
-    curl -sfL "https://releases.mozilla.org/pub/firefox/releases/${FF_VERSION}/linux-x86_64/en-US/firefox-${FF_VERSION}.tar.bz2" -o "$FF_FILE"; \
+    curl -sfL "https://releases.mozilla.org/pub/firefox/releases/${FF_VERSION}/linux-x86_64/en-US/firefox-${FF_VERSION}.tar.xz" -o "$FF_FILE"; \
     curl -sfL "https://dl.k8s.io/release/v${K8S_VERSION}/bin/linux/amd64/kubectl" -o "$KCTL_FILE"; \
     curl -sfL "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" -o "$TRIVY_FILE"; \
   fi
@@ -40,7 +40,7 @@ RUN mkdir /opt/zap && \
 
 ## Firefox, for Ajax
 RUN mkdir -p /opt/firefox && \
-  tar xjvf "$FF_FILE" --strip-components=1 -C /opt/firefox
+  tar xavf "$FF_FILE" --strip-components=1 -C /opt/firefox
 
 ## kubectl
 RUN install -o root -g root -m 0755 "$KCTL_FILE" /usr/local/bin/kubectl

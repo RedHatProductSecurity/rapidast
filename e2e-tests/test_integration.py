@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 from typing import Optional
@@ -14,25 +15,43 @@ from conftest import wait_until_ready  # pylint: disable=E0611
 
 
 class TestRapiDAST(TestBase):
-    def test_vapi(self):
-        """Test rapidast find expected number of findings in VAPI"""
-        self.create_from_yaml(f"{self.tempdir}/vapi-deployment.yaml")
-        self.create_from_yaml(f"{self.tempdir}/vapi-service.yaml")
-        assert wait_until_ready(label_selector="app=vapi")
+    vapi_instance_created = False
+    # This list should be kept in sync with the configuration scanners.zap.urls.excludes in
+    # manifests/rapidast-vapi-configmap-urls-exclusions.yaml
+    excluded_urls = ["http://vapi:5000/api/pets/id/.*", "http://vapi:3000/_next/static/css/.*.css"]
+    passive_scan_alertrefs = ["10021", "10036"]
 
-        self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-configmap.yaml")
-        self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-pod.yaml")
+    def _ensure_vapi_instance(self):
+        """Create vapi instance if it hasn't been created already."""
+        if not self.__class__.vapi_instance_created:
+            self.create_from_yaml(f"{self.tempdir}/vapi-deployment.yaml")
+            self.create_from_yaml(f"{self.tempdir}/vapi-service.yaml")
+            assert wait_until_ready(label_selector="app=vapi")
+            self.__class__.vapi_instance_created = True
+
+    def test_vapi_basic_scan(self):
+        """Test rapidast basic scan completion and alert count"""
+        self._ensure_vapi_instance()
+
+        cm = self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-configmap.yaml")
+        volumes = [
+            {"name": "config-volume", "configMap": {"name": cm.metadata.name}},
+            {"name": "results", "emptyDir": {}},
+        ]
+        overrides = {"spec": {"volumes": volumes}}
+        p = self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-pod.yaml", overrides)
         assert is_pod_with_field_selector_successfully_completed(
-            field_selector="metadata.name=rapidast-vapi", timeout=360  # llm-based image takes really long to download
+            field_selector=f"metadata.name={p.metadata.name}",
+            timeout=360,  # llm-based image takes really long to download
         )
 
         # two containers run in this pod, one for running rapidast and one for printing json results
-        logs = get_log_from_pod(self.tempdir, "rapidast-vapi", container="rapidast", log_format="text")
-        data = get_log_from_pod(
-            self.tempdir, "rapidast-vapi", filename_suffix="results", container="results", log_format="json"
+        logs: str = get_log_from_pod(self.tempdir, p.metadata.name, container="rapidast", log_format="text")
+        data: dict = get_log_from_pod(
+            self.tempdir, p.metadata.name, filename_suffix="results", container="results", log_format="json"
         )
         sarif_results = get_log_from_pod(
-            self.tempdir, "rapidast-vapi", filename_suffix="sarif", container="results-sarif", log_format="json"
+            self.tempdir, p.metadata.name, filename_suffix="sarif", container="results-sarif", log_format="json"
         )
 
         # validate that the SARIF output is correct
@@ -40,14 +59,8 @@ class TestRapiDAST(TestBase):
 
         assert len(data["site"][0]["alerts"]) == 3
 
-        # Verify that URLs listed for exclusion in subsequent tests are present in the report.
-        # This list should be kept in sync with the configuration scanners.zap.urls.excludes in
-        # manifests/rapidast-vapi-configmap-urls-exclusions.yaml
-        excluded_urls = ["http://vapi:5000/api/pets/id/.*", "http://vapi:3000/_next/static/css/.*.css"]
-        passive_scan_alertrefs = ["10021", "10036"]
-
-        excluded = verify_zap_report_urls(data, excluded_urls)
-
+        # Verify that URLs listed for exclusion in tests are present in the report.
+        excluded = verify_zap_report_urls(data, self.excluded_urls)
         assert all(info["found"] for info in excluded.values())
 
         # Verify that the spiderAjax job is functioning correctly
@@ -68,7 +81,7 @@ class TestRapiDAST(TestBase):
         assert not results["not_found"], f"Missing expected alert references from scan policy: {results['not_found']}"
 
         # Verify expected ZAP alert references from the passive scan are included in the report
-        results = check_zap_alert_refs(data, passive_scan_alertrefs)
+        results = check_zap_alert_refs(data, self.passive_scan_alertrefs)
         assert not results["not_found"], f"Missing expected alert references from passive scan: {results['not_found']}"
 
         # Verify that the form handler correctly submitted and logged expected URLs
@@ -78,44 +91,65 @@ class TestRapiDAST(TestBase):
             result["found"] for result in form_url_check.values()
         ), "One or more expected form submission URLs were not found in the ZAP report"
 
-        # Verify that ZAP report does not contain alerts for URLs excluded in the scan configuration
-        self.replace_from_yaml(f"{self.tempdir}/rapidast-vapi-configmap-urls-exclusions.yaml")
-        self.replace_from_yaml(f"{self.tempdir}/rapidast-vapi-pod.yaml")
+    def test_vapi_url_exclusions(self):
+        """Test URL exclusions"""
+        self._ensure_vapi_instance()
+
+        # # Verify that ZAP report does not contain alerts for URLs excluded in the scan configuration
+        cm = self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-configmap-urls-exclusions.yaml")
+        volumes = [
+            {"name": "config-volume", "configMap": {"name": cm.metadata.name}},
+            {"name": "results", "emptyDir": {}},
+        ]
+        overrides = {"spec": {"volumes": volumes}}
+        p = self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-pod.yaml", overrides)
         assert is_pod_with_field_selector_successfully_completed(
-            field_selector="metadata.name=rapidast-vapi", timeout=360  # llm-based image takes really long to download
+            field_selector=f"metadata.name={p.metadata.name}",
+            timeout=360,  # llm-based image takes really long to download
         )
 
         data = get_log_from_pod(
             self.tempdir,
-            "rapidast-vapi",
+            p.metadata.name,
             filename_suffix="excluded-urls-results",
             container="results",
             log_format="json",
         )
 
-        excluded = verify_zap_report_urls(data, excluded_urls)
+        excluded = verify_zap_report_urls(data, self.excluded_urls)
 
         assert all(not info["found"] for info in excluded.values())
 
+    def test_vapi_passive_scan_disabled(self):
+        """Test that passive scan can be successfully disabled"""
+        self._ensure_vapi_instance()
+
         # Ensure passiveScan can be successfully disabled
-        self.replace_from_yaml(f"{self.tempdir}/rapidast-vapi-configmap-no-passivescan.yaml")
-        self.replace_from_yaml(f"{self.tempdir}/rapidast-vapi-pod.yaml")
+        cm = self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-configmap-no-passivescan.yaml")
+        volumes = [
+            {"name": "config-volume", "configMap": {"name": cm.metadata.name}},
+            {"name": "results", "emptyDir": {}},
+        ]
+        overrides = {"spec": {"volumes": volumes}}
+        p = self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-pod.yaml", overrides)
         assert is_pod_with_field_selector_successfully_completed(
-            field_selector="metadata.name=rapidast-vapi", timeout=360  # llm-based image takes really long to download
+            field_selector=f"metadata.name={p.metadata.name}",
+            timeout=360,  # llm-based image takes really long to download
         )
 
         data = get_log_from_pod(
-            self.tempdir, "rapidast-vapi", filename_suffix="no-passivescan", container="results", log_format="json"
+            self.tempdir, p.metadata.name, filename_suffix="no-passivescan", container="results", log_format="json"
         )
 
-        results = check_zap_alert_refs(data, passive_scan_alertrefs)
+        results = check_zap_alert_refs(data, self.passive_scan_alertrefs)
         assert not results["found"], f"Unexpected passive scan alert references found: {results['found']}"
 
     def test_trivy(self):
         self.create_from_yaml(f"{self.tempdir}/rapidast-trivy-configmap.yaml")
         self.create_from_yaml(f"{self.tempdir}/rapidast-trivy-pod.yaml")
         assert is_pod_with_field_selector_successfully_completed(
-            field_selector="metadata.name=rapidast-trivy", timeout=360  # llm-based image takes really long to download
+            field_selector="metadata.name=rapidast-trivy",
+            timeout=360,  # llm-based image takes really long to download
         )
 
         expected_line = "INFO:scanner: 'generic_trivy' completed successfully"
@@ -165,6 +199,7 @@ def verify_zap_report_urls(report_data: dict, urls: list[str]) -> dict:
     results = {pattern: {"found": False} for pattern in urls}
 
     all_report_uris = _get_all_instance_uris(report_data)
+    logging.debug(all_report_uris)
 
     for uri in all_report_uris:
         for compiled_regex, original_pattern_str in compiled_patterns:

@@ -9,6 +9,7 @@ from typing import Optional
 
 import certifi
 import pytest
+import yaml
 from kubernetes import client
 from kubernetes import config
 from kubernetes import utils
@@ -217,11 +218,23 @@ class TestBase:
                 logging.debug(f"calling {func}")
                 func()
 
-    def create_from_yaml(self, path: str):
+    def create_from_yaml(self, path: str, override: Optional[dict] = None):
+        with open(path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+
+        if override:
+            data = deep_merge(data, **override)
+
         # delete resources in teardown method later
-        self._teardowns.append(partial(os.system, f"kubectl delete -f {path} -n {NAMESPACE} --ignore-not-found"))
-        o = utils.create_from_yaml(self.kclient, path, namespace=NAMESPACE, verbose=True)
-        logging.debug(o)
+        resp = utils.create_from_dict(self.kclient, data, namespace=NAMESPACE, verbose=True)
+        # XXX assumes single object
+        obj = resp[0]
+        self._teardowns.append(
+            partial(os.system, f"kubectl delete {obj.kind}/{obj.metadata.name} -n {NAMESPACE} --ignore-not-found")
+        )
+        logging.debug(obj)
+
+        return obj
 
     def replace_from_yaml(self, path: str):
         self._teardowns.append(partial(os.system, f"kubectl delete -f {path} -n {NAMESPACE} --ignore-not-found"))
@@ -229,6 +242,17 @@ class TestBase:
         # because some resources, like pods, cannot be updated in place in Openshift due to SCC
         os.system(f"kubectl delete -f {path} -n {NAMESPACE} --ignore-not-found")
         os.system(f"kubectl apply -f {path} -n {NAMESPACE}")
+
+
+def deep_merge(target, **overrides):
+    for key, value in overrides.items():
+        # Only recurse if the target has the key AND both are dicts
+        if key in target and isinstance(target.get(key), dict) and isinstance(value, dict):
+            deep_merge(target[key], **value)
+        else:
+            # Overwrite for lists (volumes, containers), strings, or new keys
+            target[key] = value
+    return target
 
 
 @pytest.fixture

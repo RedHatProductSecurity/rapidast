@@ -94,6 +94,7 @@ RUN mkdir /opt/rapidast && \
   echo "$COMMIT_SHA" > /opt/rapidast/commit_sha.txt
 
 COPY ./rapidast.py ./requirements.txt /opt/rapidast/
+RUN sed -i '1s|#!/usr/bin/env python3|#!/usr/bin/python3.12|' /opt/rapidast/rapidast.py
 COPY ./scanners/ /opt/rapidast/scanners/
 COPY ./tools/ /opt/rapidast/tools/
 COPY ./exports/ /opt/rapidast/exports/
@@ -135,4 +136,4 @@ RUN command -v zap.sh && \
 WORKDIR /opt/rapidast
 ENV HOME /opt/rapidast
 ENV PYTHON_VERSION python3.12
-ENTRYPOINT ["python3.12", "rapidast.py"]
+ENTRYPOINT ["./rapidast.py"]

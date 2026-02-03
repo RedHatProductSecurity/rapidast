@@ -76,7 +76,7 @@ general:
     #  password: "mypassw0rd"
     #  loginPageUrl: "https://myapp/login"
     #  verifyUrl: "https://myapp/user/info"
-    #  loginPageWait: 2,
+    #  loginPageWait: 2
     #  loggedInRegex: "\\Q 200 OK\\E"
     #  loggedOutRegex: "\\Q 403 Forbidden\\E"
 

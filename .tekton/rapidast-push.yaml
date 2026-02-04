@@ -5,6 +5,7 @@ metadata:
     build.appstudio.openshift.io/repo: https://github.com/RedHatProductSecurity/rapidast?rev={{revision}}
     build.appstudio.redhat.com/commit_sha: '{{revision}}'
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/cancel-in-progress: "true"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-cel-expression: event == "push" && (target_branch == "development" || target_branch == "main")
   labels:
@@ -32,12 +33,12 @@ spec:
     - {"type": "generic", "path": "."}
     - {"type": "npm", "path": "."}
     - {"type": "pip", "path": ".", "allow_binary": "true", "requirements_files": ["requirements-dev.txt"]}
-  - name: apply-tags
-    value: "true"
   - name: build-args
     value:
     - PREFETCH=true
     - COMMIT_SHA={{revision}}
+  - name: apply-tags
+    value: "true"
   taskRunSpecs:
     - pipelineTaskName: ecosystem-cert-preflight-checks
       stepSpecs:

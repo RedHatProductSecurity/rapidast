@@ -273,7 +273,7 @@ markdown-it-py==3.0.0
     #   rich
 markdown2[all]==2.5.3
     # via fschat
-markupsafe==3.0.2
+markupsafe==3.0.3
     # via jinja2
 mdurl==0.1.2
     # via

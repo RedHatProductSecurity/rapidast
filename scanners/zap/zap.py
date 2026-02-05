@@ -437,9 +437,8 @@ class Zap(RapidastScanner):
                 "type": "standalone",
                 "name": "export-site-tree-filename-global-var",
                 "engine": "ECMAScript : Graal.js",
-                "inline": f"""
-                org.zaproxy.zap.extension.script.ScriptVars.setGlobalVar('siteTreeFileName','{self.SITE_TREE_FILENAME}')
-                """,
+                # pylint: disable=line-too-long
+                "inline": f"org.zaproxy.zap.extension.script.ScriptVars.setGlobalVar('siteTreeFileName','{self.SITE_TREE_FILENAME}')",
             },
         }
         self.automation_config["jobs"].append(site_tree_file_name_add)

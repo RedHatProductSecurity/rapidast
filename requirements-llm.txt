@@ -271,7 +271,7 @@ markdown-it-py==3.0.0
     # via
     #   -r ./requirements.txt
     #   rich
-markdown2[all]==2.5.3
+markdown2[all]==2.5.4
     # via fschat
 markupsafe==3.0.3
     # via jinja2

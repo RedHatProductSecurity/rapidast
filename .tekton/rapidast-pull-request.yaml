@@ -8,7 +8,10 @@ metadata:
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
     pipelinesascode.tekton.dev/cancel-in-progress: "true"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
-    pipelinesascode.tekton.dev/on-cel-expression: event == "pull_request" && (target_branch == "development" || target_branch == "main")
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "pull_request" && (target_branch == "development" || target_branch == "main")
+      && !files.all.all(x, x.matches("^(docs/|examples/|helm/|\\.github/)") || x.matches("\\.gitignore$")
+      || x.matches("^(renovate\\.json|\\.pre-commit-config\\.yaml|\\.gitleaks\\.toml|CODEOWNERS|LICENSE)$"))
   labels:
     appstudio.openshift.io/application: rapidast
     appstudio.openshift.io/component: rapidast

@@ -35,6 +35,7 @@ from exports.defect_dojo import DefectDojo
 from exports.google_cloud_storage import GoogleCloudStorage
 from utils import add_logging_level
 from utils.cel_exclusions import CELExclusions
+from utils.file_utils import sanitize_filename
 
 
 pp = pprint.PrettyPrinter(indent=4)
@@ -82,8 +83,8 @@ def get_full_result_dir_path(rapidast_config):
     app_name = rapidast_config.get("application.shortName", default="scannedApp")
     results_dir_path = os.path.join(
         rapidast_config.get("config.base_results_dir", default="./results"),
-        app_name,
-        f"DAST-{scan_datetime_str}-RapiDAST-{app_name}",
+        sanitize_filename(app_name),
+        f"DAST-{scan_datetime_str}-RapiDAST-{sanitize_filename(app_name)}",
     )
     return results_dir_path
 

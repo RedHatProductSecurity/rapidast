@@ -293,7 +293,7 @@ networkx==3.4.2
     # via torch
 nh3==0.2.21
     # via fschat
-nltk==3.9.1
+nltk==3.9.2
     # via garak
 numpy==1.26.4
     # via

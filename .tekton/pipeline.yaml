@@ -507,8 +507,10 @@ spec:
           tee < $(results.TAGS.path)
   - name: apply-tags
     params:
-    - name: IMAGE
+    - name: IMAGE_URL
       value: $(tasks.build-image-index.results.IMAGE_URL)
+    - name: IMAGE_DIGEST
+      value: $(tasks.build-image-index.results.IMAGE_DIGEST)
     - name: ADDITIONAL_TAGS
       value: $(tasks.select-tags.results.TAGS)
     runAfter:

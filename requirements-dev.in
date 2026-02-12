@@ -5,7 +5,7 @@ pyyaml
 pytest >= 7.2.1
 black
 requests
-pre-commit == 3.7.1
+pre-commit
 kubernetes
 pytest-json-report
 pytest-mock

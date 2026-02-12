@@ -74,7 +74,7 @@ protobuf==5.29.3
     #   google-api-core
     #   googleapis-common-protos
     #   proto-plus
-py-nessus-pro @ git+https://github.com/sfowl/py-nessus-pro.git@41abc315c0e7e1320bb60732830eaf8e8ed3ba84
+py-nessus-pro @ git+https://github.com/sfowl/py-nessus-pro.git@bce7f027eab36da822f190afadf1f2dda7ba5f4f
     # via rapidast (pyproject.toml)
 pyasn1==0.6.1
     # via
@@ -132,8 +132,6 @@ types-python-dateutil==2.9.0.20241206
     # via arrow
 types-pyyaml==6.0.12.20250516
     # via cel-python
-typing==3.7.4.3
-    # via py-nessus-pro
 typing-extensions==4.12.2
     # via
     #   referencing

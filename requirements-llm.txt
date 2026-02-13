@@ -388,7 +388,7 @@ protobuf==5.29.3
     #   proto-plus
 psutil==7.0.0
     # via accelerate
-py-nessus-pro @ git+https://github.com/sfowl/py-nessus-pro.git@41abc315c0e7e1320bb60732830eaf8e8ed3ba84
+py-nessus-pro @ git+https://github.com/sfowl/py-nessus-pro.git@bce7f027eab36da822f190afadf1f2dda7ba5f4f
     # via -r ./requirements.txt
 pyarrow==19.0.1
     # via datasets
@@ -613,10 +613,6 @@ types-pyyaml==6.0.12.20250516
     #   octoai-sdk
 types-requests==2.32.0.20250306
     # via octoai-sdk
-typing==3.7.4.3
-    # via
-    #   -r ./requirements.txt
-    #   py-nessus-pro
 typing-extensions==4.12.2
     # via
     #   -r ./requirements.txt

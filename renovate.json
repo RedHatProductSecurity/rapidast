@@ -6,7 +6,6 @@
       "description": "Automerge non-major updates in .tekton folder and pre-commit-config to development branch",
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "matchFileNames": [".tekton/**", ".pre-commit-config.yaml"],
-      "matchBaseBranches": "development",
       "automerge": true
     }
   ]

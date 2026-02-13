@@ -92,7 +92,7 @@ python-dotenv==1.0.1
     # via rapidast (pyproject.toml)
 python-slugify==8.0.4
     # via py-nessus-pro
-pyyaml==6.0.2
+pyyaml==6.0.3
     # via
     #   cel-python
     #   rapidast (pyproject.toml)

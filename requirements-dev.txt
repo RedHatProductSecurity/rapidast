@@ -198,7 +198,7 @@ python-slugify==8.0.4
     # via
     #   -r ./requirements.txt
     #   py-nessus-pro
-pyyaml==6.0.2
+pyyaml==6.0.3
     # via
     #   -r ./requirements.txt
     #   -r requirements-dev.in

@@ -72,7 +72,7 @@ google-crc32c==1.6.0
     #   -r ./requirements.txt
     #   google-cloud-storage
     #   google-resumable-media
-google-resumable-media==2.7.2
+google-resumable-media==2.8.0
     # via
     #   -r ./requirements.txt
     #   google-cloud-storage

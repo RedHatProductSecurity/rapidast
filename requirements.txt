@@ -116,7 +116,7 @@ rpds-py==0.22.3
     # via
     #   jsonschema
     #   referencing
-rsa==4.9
+rsa==4.9.1
     # via google-auth
 shellingham==1.5.4
     # via typer

@@ -76,7 +76,7 @@ protobuf==5.29.6
     #   proto-plus
 py-nessus-pro @ git+https://github.com/sfowl/py-nessus-pro.git@bce7f027eab36da822f190afadf1f2dda7ba5f4f
     # via -r requirements.in
-pyasn1==0.6.1
+pyasn1==0.6.2
     # via
     #   pyasn1-modules
     #   rsa

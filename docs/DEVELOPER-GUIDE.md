@@ -291,7 +291,7 @@ To add a new dependency, follow these steps:
 
    ```sh
    pip-compile requirements.in
-   pip-compile --output-file=requirements-llm.txt requirements-llm.in
+   pip-compile requirements-llm.in
    ```
 
    This will regenerate `requirements.txt` and `requirements-llm.txt` with the newly added dependency and its pinned versions.

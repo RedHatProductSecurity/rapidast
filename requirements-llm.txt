@@ -585,7 +585,7 @@ torch==2.6.0
     # via
     #   accelerate
     #   garak
-tqdm==4.67.1
+tqdm==4.67.3
     # via
     #   datasets
     #   garak

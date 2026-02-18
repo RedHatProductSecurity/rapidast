@@ -37,7 +37,7 @@ google-cloud-core==2.4.3
     # via google-cloud-storage
 google-cloud-storage==3.0.0
     # via -r requirements.in
-google-crc32c==1.6.0
+google-crc32c==1.8.0
     # via
     #   google-cloud-storage
     #   google-resumable-media

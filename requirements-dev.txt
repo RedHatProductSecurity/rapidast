@@ -39,7 +39,7 @@ click==8.1.8
     #   typer
 dacite==1.9.2
     # via -r requirements.txt
-distlib==0.3.9
+distlib==0.4.0
     # via virtualenv
 durationpy==0.9
     # via kubernetes

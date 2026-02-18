@@ -43,7 +43,6 @@ spec:
         - name: get-vulnerabilities
           computeResources:
             requests:
-              cpu: '2'
               memory: 8Gi
             limits:
               memory: 16Gi

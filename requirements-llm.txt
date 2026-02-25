@@ -55,7 +55,7 @@ cachetools==5.5.2
     #   google-auth
 cel-python==0.3.0
     # via -r requirements.txt
-certifi==2026.1.4
+certifi==2026.2.25
     # via
     #   -r requirements.txt
     #   httpcore

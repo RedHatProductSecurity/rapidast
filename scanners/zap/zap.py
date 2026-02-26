@@ -396,6 +396,7 @@ class Zap(RapidastScanner):
         self._setup_report()
         self._setup_summary()
         self._setup_export_site_tree()
+        self._setup_delay()
 
         # The AF should now be setup and ready to be written
         self._save_automation_file()
@@ -768,6 +769,23 @@ class Zap(RapidastScanner):
             },
         }
         self.automation_config["jobs"].append(job)
+
+    def _setup_delay(self):
+        """Adds a delay job if browser authentication and spiderAjax are both enabled.
+        This is meant to be added at the end of the run as a temporary workaround for
+        ZAP sometimes hanging at the end of the scan in such configurations.
+        """
+        # Check if browser authentication is configured
+        context_ = find_context(self.automation_config)
+        auth_method = context_.get("authentication", {}).get("method")
+
+        # Check if spiderAjax is enabled
+        spiderajax_params = self.config.subtree_to_dict(self.absolute_conf_path("spiderAjax"))
+
+        if auth_method == "browser" and spiderajax_params is not None:
+            logging.debug("Adding delay job for configuration with browser authentication and spiderAjax")
+            delay_job = {"type": "delay", "parameters": {"time": 60}}
+            self.automation_config["jobs"].append(delay_job)
 
     def _save_automation_file(self):
         """Save the Automation dictionary as YAML in the container"""

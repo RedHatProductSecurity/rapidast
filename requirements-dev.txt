@@ -86,7 +86,7 @@ googleapis-common-protos==1.72.0
     #   google-api-core
 identify==2.6.16
     # via pre-commit
-idna==3.10
+idna==3.11
     # via
     #   -r requirements.txt
     #   jsonschema

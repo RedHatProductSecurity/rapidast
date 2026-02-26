@@ -206,6 +206,8 @@ python-slugify==8.0.4
     # via
     #   -r requirements.txt
     #   py-nessus-pro
+pytokens==0.4.1
+    # via black
 pyyaml==6.0.3
     # via
     #   -r requirements-dev.in

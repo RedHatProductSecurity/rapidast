@@ -13,7 +13,7 @@ attrs==25.4.0
     #   -r requirements.txt
     #   jsonschema
     #   referencing
-black==25.1.0
+black==25.12.0
     # via -r requirements-dev.in
 cel-python==0.3.0
     # via -r requirements.txt

@@ -13,7 +13,7 @@ attrs==25.4.0
     #   -r requirements.txt
     #   jsonschema
     #   referencing
-black==25.1.0
+black==25.12.0
     # via -r requirements-dev.in
 cel-python==0.3.0
     # via -r requirements.txt
@@ -206,6 +206,8 @@ python-slugify==8.0.4
     # via
     #   -r requirements.txt
     #   py-nessus-pro
+pytokens==0.4.1
+    # via black
 pyyaml==6.0.3
     # via
     #   -r requirements-dev.in

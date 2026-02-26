@@ -47,7 +47,7 @@ google-resumable-media==2.8.0
     # via google-cloud-storage
 googleapis-common-protos==1.72.0
     # via google-api-core
-idna==3.10
+idna==3.11
     # via
     #   jsonschema
     #   requests

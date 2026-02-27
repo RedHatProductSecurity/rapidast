@@ -1,0 +1,28 @@
+name: Check Python 3.9 compatibility
+
+on:
+  pull_request:
+    branches: [ "main", "development" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    container:
+      image: "registry.access.redhat.com/ubi9:latest"
+
+    steps:
+      - name: Install git in the container
+        run: dnf install -y --nodocs git-core
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create Python venv
+        run: python3.9 -m venv .venv
+
+      - name: Try installing requirements
+        run: |
+          . .venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt

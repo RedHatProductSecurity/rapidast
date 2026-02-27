@@ -18,7 +18,7 @@ cffi==2.0.0
     # via cryptography
 charset-normalizer==3.4.4
     # via requests
-click==8.3.1
+click==8.1.8
     # via typer
 cryptography==46.0.5
     # via google-auth
@@ -84,7 +84,7 @@ pyasn1==0.6.2
     #   rsa
 pyasn1-modules==0.4.2
     # via google-auth
-pycparser==3.0
+pycparser==2.23
     # via cffi
 pygments==2.19.2
     # via rich
@@ -134,7 +134,7 @@ typer==0.15.1
     # via py-nessus-pro
 types-pyyaml==6.0.12.20250915
     # via cel-python
-typing-extensions==4.12.2
+typing-extensions==4.15.0
     # via
     #   referencing
     #   typer

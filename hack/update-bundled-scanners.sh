@@ -90,7 +90,7 @@ update_trivy() {
 update_kubectl() {
 	varname="K8S_VERSION"
 
-	new_version=`curl -sS https://cdn.dl.k8s.io/release/stable.txt`
+	new_version=`curl -sS https://dl.k8s.io/release/stable.txt`
 	new_version="${new_version#v}"	# strip leading "v"
 
 	if [ -z "$new_version" ]; then

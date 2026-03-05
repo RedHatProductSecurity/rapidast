@@ -242,15 +242,15 @@ jsonschema-specifications==2024.10.1
     # via
     #   -r requirements.txt
     #   jsonschema
-langchain==0.3.25
+langchain==0.3.27
     # via garak
-langchain-core==0.3.63
+langchain-core==0.3.83
     # via
     #   langchain
     #   langchain-text-splitters
-langchain-text-splitters==0.3.8
+langchain-text-splitters==0.3.11
     # via langchain
-langsmith==0.3.12
+langsmith==0.3.45
     # via
     #   langchain
     #   langchain-core
@@ -651,6 +651,8 @@ urllib3==2.6.3
     #   nemollm
     #   requests
     #   types-requests
+uuid-utils==0.14.1
+    # via langchain-core
 uvicorn==0.34.0
     # via
     #   fschat

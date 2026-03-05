@@ -473,7 +473,7 @@ pyyaml==6.0.3
     #   wavedrom
 rapidfuzz==3.12.2
     # via garak
-referencing==0.36.2
+referencing==0.37.0
     # via
     #   -r requirements.txt
     #   jsonschema

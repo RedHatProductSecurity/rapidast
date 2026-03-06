@@ -31,7 +31,7 @@ hatch-vcs==0.5.0
     #   jsonschema-specifications
     #   referencing
     #   urllib3
-hatchling==1.27.0
+hatchling==1.29.0
     # via
     #   attrs
     #   hatch-fancy-pypi-readme

@@ -32,7 +32,7 @@ charset-normalizer==3.4.4
     # via
     #   -r requirements.txt
     #   requests
-click==8.3.1
+click==8.1.8
     # via
     #   -r requirements.txt
     #   black
@@ -172,7 +172,7 @@ pyasn1-modules==0.4.2
     # via
     #   -r requirements.txt
     #   google-auth
-pycparser==3.0
+pycparser==2.23
     # via
     #   -r requirements.txt
     #   cffi
@@ -274,7 +274,7 @@ types-pyyaml==6.0.12.20250915
     # via
     #   -r requirements.txt
     #   cel-python
-typing-extensions==4.12.2
+typing-extensions==4.15.0
     # via
     #   -r requirements.txt
     #   referencing

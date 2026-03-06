@@ -68,7 +68,7 @@ charset-normalizer==3.4.4
     #   requests
 chevron==0.14.0
     # via octoai-sdk
-click==8.3.1
+click==8.1.8
     # via
     #   -r requirements.txt
     #   litellm
@@ -406,7 +406,7 @@ pyasn1-modules==0.4.2
     # via
     #   -r requirements.txt
     #   google-auth
-pycparser==3.0
+pycparser==2.23
     # via
     #   -r requirements.txt
     #   cffi
@@ -614,7 +614,7 @@ types-pyyaml==6.0.12.20250915
     #   octoai-sdk
 types-requests==2.32.0.20250306
     # via octoai-sdk
-typing-extensions==4.12.2
+typing-extensions==4.15.0
     # via
     #   -r requirements.txt
     #   anyio

@@ -28,7 +28,7 @@ cffi==2.0.0
     #   cryptography
 cfgv==3.5.0
     # via pre-commit
-charset-normalizer==3.4.4
+charset-normalizer==3.4.5
     # via
     #   -r requirements.txt
     #   requests

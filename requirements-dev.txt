@@ -190,7 +190,7 @@ pytest-json-report==1.5.0
     # via -r requirements-dev.in
 pytest-metadata==3.1.1
     # via pytest-json-report
-pytest-mock==3.14.1
+pytest-mock==3.15.1
     # via -r requirements-dev.in
 python-dateutil==2.9.0.post0
     # via

@@ -180,7 +180,7 @@ pygments==2.19.2
     # via
     #   -r requirements.txt
     #   rich
-pytest==8.3.4
+pytest==8.4.2
     # via
     #   -r requirements-dev.in
     #   pytest-json-report

@@ -23,23 +23,24 @@ ARG TRIVY_FILE=$DEPS_DIR/trivy.tar.gz
 ARG KCTL_FILE=$DEPS_DIR/kubectl
 
 RUN microdnf -y module enable nodejs:24 && \
-  microdnf install -y --nodocs tar gzip xz java-21-openjdk nodejs gtk3
+  microdnf install -y --nodocs tar gzip xz java-21-openjdk nodejs gtk3 python3 python3-pyyaml
 
-RUN mkdir "${DEPS_DIR}" /tmp/node_modules && if [ "$PREFETCH" == "true" ]; then \
+COPY hack/download-artifacts.py artifacts.lock.yaml /tmp/
+
+RUN mkdir "${DEPS_DIR}" /tmp/node_modules && \
+  if [ "$PREFETCH" == "true" ]; then \
     echo "PREFETCH is true: Copying dependencies from /cachi2/output/deps..." && \
     cp -r /cachi2/output/deps/generic/* "$DEPS_DIR"; \
   else \
     echo "PREFETCH is false: Downloading dependencies from remote sources..." && \
-    curl -sfL "https://github.com/zaproxy/zaproxy/releases/download/v${ZAP_VERSION}/ZAP_${ZAP_VERSION}_Linux.tar.gz" -o "$ZAP_FILE"; \
-    curl -sfL "https://releases.mozilla.org/pub/firefox/releases/${FF_VERSION}/linux-x86_64/en-US/firefox-${FF_VERSION}.tar.xz" -o "$FF_FILE"; \
-    curl -sfL "https://dl.k8s.io/release/v${K8S_VERSION}/bin/linux/amd64/kubectl" -o "$KCTL_FILE"; \
-    curl -sfL "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" -o "$TRIVY_FILE"; \
+    python3 /tmp/download-artifacts.py -a /tmp/artifacts.lock.yaml -d "$DEPS_DIR"; \
   fi
+
 ## ZAP, build and install scanners in advance (more scanners will be added)
 RUN mkdir /opt/zap && \
   tar zxvf "$ZAP_FILE" --strip-components=1 -C /opt/zap
 
-## Firefox, for Ajax
+## Firefox, for ZAP's SpiderAjax
 RUN mkdir -p /opt/firefox && \
   tar xavf "$FF_FILE" --strip-components=1 -C /opt/firefox
 
@@ -53,7 +54,8 @@ RUN mkdir /tmp/trivy && \
 
 ## redocly (https://github.com/Redocly/redocly-cli)
 COPY package.json package-lock.json /tmp/redocly/
-RUN mkdir -p /tmp/redocly/node_modules && if [ "$PREFETCH" == "true" ]; then \
+RUN mkdir -p /tmp/redocly/node_modules && \
+  if [ "$PREFETCH" == "true" ]; then \
     npm install --offline --prefix /tmp/redocly; \
   else \
     npm install --prefix /tmp/redocly; \

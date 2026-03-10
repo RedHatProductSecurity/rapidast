@@ -69,7 +69,7 @@ setuptools-rust==1.10.2
     # via maturin
 setuptools-scm==7.1.0
     # via python-dateutil
-setuptools-scm==8.2.0
+setuptools-scm==8.3.1
     # via
     #   charset-normalizer
     #   hatch-vcs

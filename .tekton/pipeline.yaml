@@ -497,8 +497,10 @@ spec:
         script: |
           #!/bin/bash -ex
 
+          # The "development" tag is updated after every merge to the
+          # development branch, the "latest" tag is updated after new version
+          # is tagged in git, see .github/workflows/tag-image.yml
           case $(params.TARGET_BRANCH) in
-            "main") echo '["latest"]' > $(results.TAGS.path) ;;
             "development") echo '["development"]' > $(results.TAGS.path) ;;
             *) echo '[]' >  $(results.TAGS.path) ;;
           esac

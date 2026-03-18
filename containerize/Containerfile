@@ -36,7 +36,7 @@ RUN mkdir "${DEPS_DIR}" /tmp/node_modules && \
     python3 /tmp/download-artifacts.py -a /tmp/artifacts.lock.yaml -d "$DEPS_DIR"; \
   fi
 
-## ZAP, build and install scanners in advance (more scanners will be added)
+## ZAP
 RUN mkdir /opt/zap && \
   tar zxvf "$ZAP_FILE" --strip-components=1 -C /opt/zap
 

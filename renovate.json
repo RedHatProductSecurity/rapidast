@@ -1,13 +1,28 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "prConcurrentLimit": 3,
+  "prConcurrentLimit": 10,
   "packageRules": [
     {
       "description": "Automerge non-major updates in .tekton folder and pre-commit-config to development branch",
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "matchFileNames": [".tekton/**", ".pre-commit-config.yaml"],
-      "matchBaseBranches": "development",
       "automerge": true
+    },
+    {
+      "matchManagers": ["tekton"],
+      "prPriority": 10
+    },
+    {
+      "matchFileNames": ["requirements*"],
+      "prPriority": 5
+    },
+    {
+      "matchFileNames": ["requirements-llm*"],
+      "prPriority": 4
+    },
+    {
+      "matchFileNames": [".pre-commit-config.yaml"],
+      "prPriority": 1
     }
   ]
 }

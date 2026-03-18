@@ -36,8 +36,8 @@ spec:
             - |
               #!/bin/bash
 
-              # curl -ks https://0.0.0.0:8834/server/status | python3 -c 'import sys, json; json.load(sys.stdin)["code"] == 200 or sys.exit(1)'
-              curl -ks https://0.0.0.0:8834/server/status | python3 -c 'import sys, json; json.load(sys.stdin)["detailed_status"]["login_status"] == "allow" or sys.exit(1)'
+              # curl -ks https://0.0.0.0:8834/server/status | python3.12 -c 'import sys, json; json.load(sys.stdin)["code"] == 200 or sys.exit(1)'
+              curl -ks https://0.0.0.0:8834/server/status | python3.12 -c 'import sys, json; json.load(sys.stdin)["detailed_status"]["login_status"] == "allow" or sys.exit(1)'
           initialDelaySeconds: 20
           periodSeconds: 10
           failureThreshold: 32

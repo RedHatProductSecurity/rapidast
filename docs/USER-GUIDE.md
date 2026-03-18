@@ -3,9 +3,9 @@
 ## Deprecation Notice
 
 **Podman Mode Deprecation**
-The `podman` execution environment is deprecated and will be removed in a future version
+The `podman` execution environment is deprecated and will be removed in a future version.
 
-If you are using `podman` fpr the `container.type` option, please migrate to `none`.
+If you are using `podman` for the `container.type` option, please migrate to `none`.
 
 ## Quickstart
 
@@ -18,25 +18,29 @@ Quickly setup RapiDAST to scan a target application. See [Workflow](#workflow) f
 
 Linux and MacOS are both supported, however running RapiDAST in a container is currently only supported on Linux. See [MacOS Configuration](#macos) section for more details.
 
-### Run in container (Linux only)
+### Run in container (recommended)
 
 Run the pre-built [rapidast container image](https://quay.io/repository/redhatproductsecurity/rapidast), which includes scanners like [ZAP]. Not compatible with config files using `general.container.type` set to `podman`.
 
 **Prerequisites**:
 
 - `docker` / `podman` (>= v3.0.1)
+- create a `config.yaml` file, based on the [examples](#configuration)
 
 **Run**:
 
 ```sh
-$ podman run -v ./config.yaml:/opt/rapidast/config/config.yaml:Z quay.io/redhatproductsecurity/rapidast:latest
+$ podman run \
+  -v ./config.yaml:/opt/rapidast/config/config.yaml:Z \
+  -v ./results:/opt/rapidast/results/:Z,U \
+  quay.io/redhatproductsecurity/rapidast:latest
 ```
 
 **Note**:
 
-- Sample config is very minimal and has no [Authentication](#authentication) enabled
+- Scan reports and other result files will be written to the `./results` directory
+- The `:U` option is necessary to make the `./results` directory writeable inside the container image
 - The `:Z` option is only necessary on RHEL/CentOS/Fedora systems with SELinux enabled
-- To retrieve scan results, add a volume mount like `-v ./results/:/opt/rapidast/results/:Z`. The permissions of the `./results/` directory may need to be modified first with a command like `chmod o+w ./results/` to be writeable by the rapidast user in the container.
 
 ### Run from source
 
@@ -44,7 +48,7 @@ Install dependencies and run RapiDAST directly on a host machine. Unless using t
 
 **Prerequisites**:
 
-- `python` >= 3.9
+- `python` >= 3.12
 - `podman` >= 3.0.1
   - required when you want to run scanners from their container images, rather than installing them to your host.
 - See `requirements.txt` for a list of required python libraries
@@ -95,6 +99,8 @@ This section summarize the basic workflow as follows:
     - First run with passive scanning only, which can save time at the initial scanning phase. There are various situations that can cause an issue, not only from scanning set up but also from your application or test environment. Active scanning takes a long time in general.
     - Once passive Scanning has run successfully, run another scan with active scanning enabled in the configuration file.
 
+### CI/CD Examples
+
 See [here](https://github.com/RedHatProductSecurity/rapidast/tree/development/examples) for examples on how to run RapiDAST in various CI/CD pipelines.
 
 ## Configuration
@@ -116,8 +122,6 @@ See templates in the [config](https://github.com/RedHatProductSecurity/rapidast/
 - `config-template-multi-scan.yaml` : describes how to combine multiple scanners in a single configuration
 - `config-template-generic-scan.yaml` : describes the use of the generic scanner
 - `config-template-garak.yaml` : describes the use of the Garak LLM AI scanner
-
-See [here](https://github.com/RedHatProductSecurity/rapidast/tree/development/examples/) for examples on how to run RapiDAST in various CI/CD pipelines.
 
 ### Basic Example
 
@@ -699,7 +703,7 @@ This happens only when using the host's ZAP (with the `*.container.type: none` o
 
 If you see a message such as `Missing mandatory plugins. Fixing`, or ZAP fails with an error containing the string `The mandatory add-on was not found:`, this is because ZAP deleted the application's plugin.
 See <https://github.com/zaproxy/zaproxy/issues/7703> for additional information.
-RapiDAST works around this bug, but with little inconvenients (slower because it has to fix itself and download all the plugins)
+RapiDAST works around this bug, but with little inconvenience (slower because it has to fix itself and download all the plugins)
 
 - Verify that the host installation directory is missing its plugins.
 e.g., in a MacOS installation, `/Applications/ZAP.app/Contents/Java/plugin/` will be mostly empty. In particular, no `callhome*.zap` and `network*.zap` file are present.
@@ -755,7 +759,7 @@ com.fasterxml.jackson.dataformat.yaml.JacksonYAMLParseException: The incoming YA
 Solutions:
 
 - If you are using a Swagger v2 definition, try converting it to v3 (OpenAPI)
-- Set a `maxYamlCodePoints` Java proprety with a big value, which can be passed using environment variables (via the `config.environ.envFile` config entry): `_JAVA_OPTIONS=-DmaxYamlCodePoints=99999999`
+- Set a `maxYamlCodePoints` Java property with a big value, which can be passed using environment variables (via the `config.environ.envFile` config entry): `_JAVA_OPTIONS=-DmaxYamlCodePoints=99999999`
 
 ### ZAP's Ajax Spider failing
 

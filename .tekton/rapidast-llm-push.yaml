@@ -5,10 +5,12 @@ metadata:
     build.appstudio.openshift.io/repo: https://github.com/RedHatProductSecurity/rapidast?rev={{revision}}
     build.appstudio.redhat.com/commit_sha: '{{revision}}'
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
-    pipelinesascode.tekton.dev/cancel-in-progress: "false"
+    pipelinesascode.tekton.dev/cancel-in-progress: "true"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
-    pipelinesascode.tekton.dev/on-cel-expression: event == "push" && (target_branch == "development" || target_branch == "main")
-  creationTimestamp: null
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "push" && (target_branch == "development" || target_branch == "main")
+      && !files.all.all(x, x.matches("^(docs/|examples/|helm/|\\.github/)") || x.matches("\\.gitignore$")
+      || x.matches("^(renovate\\.json|\\.pre-commit-config\\.yaml|\\.gitleaks\\.toml|CODEOWNERS|LICENSE)$"))
   labels:
     appstudio.openshift.io/application: rapidast
     appstudio.openshift.io/component: rapidast-llm
@@ -33,13 +35,14 @@ spec:
     value:
     - PREFETCH=false
     - COMMIT_SHA={{revision}}
+  - name: apply-tags
+    value: "true"
   taskRunSpecs:
     - pipelineTaskName: clair-scan
       stepSpecs:
         - name: get-vulnerabilities
           computeResources:
             requests:
-              cpu: '2'
               memory: 8Gi
             limits:
               memory: 16Gi

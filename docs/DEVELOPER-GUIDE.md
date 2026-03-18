@@ -3,7 +3,8 @@
 ## Install project requirements for development
 
 Install dependencies using the `requirements-dev.txt` file.
-```
+
+```bash
 $ pip install -r requirements-dev.txt
 ```
 
@@ -15,7 +16,7 @@ The current checks are found in the `.pre-commit-config.yaml` file.
 
 Once pre-commit is installed in the following way, code will be checked automatically when a commit is made.
 
-```
+```bash
 $ pre-commit install
 ```
 
@@ -25,8 +26,42 @@ Add test cases under tests/ when adding a new feature or function if possible. C
 
 Make sure every test case passes whenever any commit is to be made, with the following command:
 
-```
+```bash
 $ pytest
+```
+
+### End-to-End (e2e) tests
+
+These tests run on every pull request, but can also be run outside CI if an OpenShift cluster is available.
+
+**Prerequisites**:
+
+- An OpenShift cluster (k8s may work, but has not been tested)
+- Logged in to the cluster with an account that can deploy resources like pods, configmaps etc
+- Installed the python development dependencies
+
+Run e2e tests:
+
+```bash
+$ pytest e2e-tests/test_integration.py --json-report
+```
+
+There are more tests defined in the [e2e-tests/](../e2e-tests/) directory for different scanners, like garak, nessus etc.
+
+By default the tests will run with the `development` rapidast image, `quay.io/redhatproductsecurity/rapidast:development`. This can be changed using the RAPIDAST_IMAGE environment variable, e.g.
+
+```bash
+$ RAPIDAST_IMAGE=quay.io/other/rapidast:other pytest e2e-tests/test_integration.py --json-report
+```
+
+When trying to debug a failed test run from a PR, it can be useful to re-use the same image built from that PR, e.g. `quay.io/redhatproductsecurity/rapidast:rapidast-on-pull-request-9mshp-build-container`.
+
+There are other variables that can be used to customize test runs, including disable cleanup of resources in the [e2e-tests/conftest.py](../e2e-tests/conftest.py) file. This can be useful to inspect pod logs, or launch debug pods from failed pods (e.g. `oc debug pod/rapidast-trivy`)
+
+To run single e2e test, use a command like:
+
+```bash
+$ pytest e2e-tests/test_integration.py::TestRapiDAST::test_trivy --json-report
 ```
 
 ## Structure
@@ -87,7 +122,7 @@ Then calling the `authentication_factory()` function will automatically redirect
 
 Because scanners may need to handle path from the "host" view and the "container" view, and translate from one to another, we have created a `path_translator` module to facilitate this.
 
-In practice, this helps to copy files in and out of the container section, or calculate paths inside the container, indepently from the "container" technology. The scanner first needs to setup the mapping correctly, and the rest of the code can work according to the mapping. The mapping usually corresponds to mountpoints, or important directory where the code will need to store/retrieve data.
+In practice, this helps to copy files in and out of the container section, or calculate paths inside the container, independently from the "container" technology. The scanner first needs to setup the mapping correctly, and the rest of the code can work according to the mapping. The mapping usually corresponds to mountpoints, or important directory where the code will need to store/retrieve data.
 
 Example :
 
@@ -111,7 +146,7 @@ __NOTES__
 
 ### Podman wrapper
 
-A podman scanner can instanciate a `PodmanWrapper` object. This provides functions to prepare the podman command, such as adding volumes, etc.
+A podman scanner can instantiate a `PodmanWrapper` object. This provides functions to prepare the podman command, such as adding volumes, etc.
 
 Example:
 
@@ -229,10 +264,12 @@ When updating a static dependency (like ZAP, Firefox, kubectl, or Trivy) used in
         * **How to get the SHA256**: Check the following pages:
              1. For ZAP: https://github.com/zaproxy/zaproxy/releases/tag/v${ZAP_VERSION}
              2. For firefox: https://releases.mozilla.org/pub/firefox/releases/${FF_VERSION}$/SHA256SUMS
-             3. For kubectl: https://dl.k8s.io/release/${K8S_VERSION}/bin/linux/amd64/kubectl.sha256
-             4. For trivy: https://github.com/zaproxy/zaproxy/releases/tag/v${TRIVY_VERSION}
+             3. For kubectl: https://dl.k8s.io/release/v${K8S_VERSION}/bin/linux/amd64/kubectl.sha256
+             4. For trivy: https://github.com/aquasecurity/trivy/releases/tag/v${TRIVY_VERSION}
 
     * Save the changes to `artifacts.lock.yaml`
+
+Script `hack/update-bundled-scanners.sh` can be used to automate checking for new versions and updating `Containerfile` and `artifacts.lock.yaml`.
 
 ## Python Requirements Management
 
@@ -240,7 +277,7 @@ This project uses `pip-compile` from `pip-tools` to manage dependencies.
 
 ### Requirements
 
-Make sure you have an environment that closely matches the environment in the container build. This means it should have the same operating system and the same Python `$major.$minor` version.
+Make sure you have an environment that closely matches the environment in the container build. This means it should have the same operating system and the same Python 3.12 version.
 
 - `pip-tools`: Used for managing Python dependencies and generating `requirements.txt`
 
@@ -254,7 +291,7 @@ To add a new dependency, follow these steps:
 
    ```sh
    pip-compile requirements.in
-   pip-compile --output-file=requirements-llm.txt requirements-llm.in
+   pip-compile requirements-llm.in
    ```
 
    This will regenerate `requirements.txt` and `requirements-llm.txt` with the newly added dependency and its pinned versions.

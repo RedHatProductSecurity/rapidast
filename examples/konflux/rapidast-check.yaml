@@ -1,0 +1,174 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  labels:
+    app.kubernetes.io/version: "0.1"
+  annotations:
+    tekton.dev/pipelines.minVersion: "0.12.1"
+    tekton.dev/tags: "konflux"
+  name: rapidast-check
+spec:
+  description: >-
+    This task uses RapiDAST to scan a running application. Intended for use in an Integration Test, not a build pipeline. This task requires a KUBECONFIG_SECRET for an existing cluster/namespace
+    where the target application is running. To make this application reachable by RapiDAST from outside this environment, `oc port-forward` is used.
+  results:
+    - name: TEST_OUTPUT
+      description: Tekton task test output.
+    - name: SCAN_OUTPUT
+      description: RapiDAST scan result.
+  params:
+    - name: KUBECONFIG_SECRET
+      description: The name of a kubeconfig used to to access the test environment.
+      type: string
+    - name: RAPIDAST_CONFIG_VALUE
+      description: The contents of a rapidast config file. Target URLs for scanning should point to localhost and match PORT_FORWARD_TARGETS.
+      type: string
+    - name: PORT_FORWARD_TARGETS
+      description: Scan targets in test environment and arguments for `oc port-forward` commands. Each host:port in RAPIDAST_CONFIG_VALUE requires a respective port-forward target. Multiple values can be separated with a comma.
+      default: pod/my-pod 5000:5000
+      type: string
+      # TODO add a dotenv file argument, so users can pass in .env file with secrets etc used for scanning
+  volumes:
+    - name: shared
+      emptyDir: {}
+  sidecars:
+    - name: port-forward
+      image: quay.io/konflux-ci/konflux-test:latest
+      volumeMounts:
+        - name: shared
+          mountPath: /shared
+      env:
+        - name: KUBECONFIG
+          value: /shared/kubeconfig.yml
+        - name: KUBECONFIG_VALUE
+          valueFrom:
+            secretKeyRef:
+              name: "$(params.KUBECONFIG_SECRET)"
+              key: kubeconfig
+        - name: PORT_FORWARD_TARGETS
+          value: "$(params.PORT_FORWARD_TARGETS)"
+      script: |
+        #!/bin/bash
+        set -ex
+
+        # to share with rapidast image
+        cp utils.sh /shared
+
+        cat <<< "$KUBECONFIG_VALUE" > "$KUBECONFIG"
+        echo "Wrote kubeconfig for new environment to $KUBECONFIG"
+
+        echo "${PORT_FORWARD_TARGETS}"
+
+        check_pid_listening_port() {
+            local pid=$1
+            # checks that PID has at least one local port open
+            if ss -tlnp | grep -q "pid=${pid},"; then
+                return 0
+            fi
+            return 1
+        }
+        export -f check_pid_listening_port
+
+        # split on ",", then parse as json to handle whitespace
+        IFS="," read -ra TARGETS_ARRAY <<< "${PORT_FORWARD_TARGETS}"
+
+        for t in "${TARGETS_ARRAY[@]}"; do
+          oc port-forward --address 0.0.0.0 ${t} &
+          PID=$!
+          timeout 30s bash -c "set -x; until check_pid_listening_port ${PID}; do sleep 2s; done" || {
+            echo "oc port-foward failed to open local port"
+            exit 1
+          }
+        done
+
+        touch /shared/port-forward-ready # signal to rapidast container
+        sleep infinity
+
+  steps:
+    # perform rapidast scan
+    - name: rapidast-check
+      image: quay.io/redhatproductsecurity/rapidast
+      # TODO add a dotenv file argument, so users can pass in .env file with secrets etc used for scanning
+      env:
+        # this can be used by some rapidast generic scanners, like trivy
+        - name: KUBECONFIG
+          value: /shared/kubeconfig.yml
+      volumeMounts:
+        - name: shared
+          mountPath: /shared
+      script: |
+        #!/bin/bash
+        set -ex
+
+        # wait til sidecar container signals all port-fowarding is ready
+        timeout 5m bash -c 'until [ -f /shared/port-forward-ready ]; do sleep 2; done' || {
+          echo "[ERROR] oc port-forward commands in sidecar container not ready in time. Exiting"
+          exit 1
+        }
+
+        # helper code from konflux-test image, includes handle_error and make_result_json
+        source /shared/utils.sh
+        trap 'handle_error $(results.TEST_OUTPUT.path)' EXIT
+
+        cat > /shared/rapidast-config.yaml << EOF
+        $(params.RAPIDAST_CONFIG_VALUE)
+        EOF
+
+        rapidast.py --config /shared/rapidast-config.yaml
+
+        orig_sarif_file=$(find results -name rapidast-scan-results.sarif)
+        cp "${orig_sarif_file}" /shared/rapidast-scan-results.sarif
+
+    - name: post-process
+      image: quay.io/konflux-ci/konflux-test
+      volumeMounts:
+        - name: shared
+          mountPath: /shared
+      script: |
+        #!/bin/bash
+        set -ex
+
+        # helper code from konflux-test image, includes handle_error and make_result_json
+        source /utils.sh
+        trap 'handle_error $(results.TEST_OUTPUT.path)' EXIT
+
+        sarif_file=/shared/rapidast-scan-results.sarif
+
+        # Process SCAN_OUTPUT similar to clair scan, but don't use optional 'unpatched_vulnerabilities' field
+        scan_result='{"vulnerabilities":{"critical":0, "high":0, "medium":0, "low":0, "unknown":0}}'
+
+        if [ ! -s "$sarif_file" ]; then
+          echo "No RapiDAST SARIF file found or it's empty."
+          note="Task $(context.task.name) failed: No RapiDAST SARIF file found or it's empty. For details, check Tekton task log."
+          TEST_OUTPUT=$(make_result_json -r "ERROR" -t "$note")
+          echo "${TEST_OUTPUT}" | tee "$(results.TEST_OUTPUT.path)"
+          exit 0
+        fi
+
+        # SARIF level mapping: 'error' -> critical, 'warning' -> high, 'note' -> medium.
+        result=$(jq -rce \
+            '{
+                vulnerabilities:{
+                  critical: ([.runs[0].results[]? | select(.level == "error")] | length // 0),
+                  high: ([.runs[0].results[]? | select(.level == "warning")] | length // 0),
+                  medium: ([.runs[0].results[]? | select(.level == "note")] | length // 0),
+                  low: ([.runs[0].results[]? | select(.level == "none")] | length // 0),
+                  unknown: ([.runs[0].results[]? | select(.level == "unknown")] | length // 0)
+                }
+            }' "$sarif_file")
+
+        scan_result=$(jq -s -rce \
+              '.[0].vulnerabilities.critical += .[1].vulnerabilities.critical |
+              .[0].vulnerabilities.high += .[1].vulnerabilities.high |
+              .[0].vulnerabilities.medium += .[1].vulnerabilities.medium |
+              .[0].vulnerabilities.low += .[1].vulnerabilities.low |
+              .[0].vulnerabilities.unknown += .[1].vulnerabilities.unknown |
+              .[0]' <<<"$scan_result $result")
+
+        echo "$scan_result" | tee "$(results.SCAN_OUTPUT.path)"
+
+        note="Task $(context.task.name) completed: Refer to Tekton task result SCAN_OUTPUT for vulnerabilities scanned by RapiDAST."
+        TEST_OUTPUT=$(make_result_json -r "SUCCESS" -t "$note")
+        echo "${TEST_OUTPUT}" | tee "$(results.TEST_OUTPUT.path)"
+
+        # TODO push SARIF result file to quay.io with oras, much like sast tasks

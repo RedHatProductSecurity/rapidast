@@ -294,7 +294,7 @@
                                                         "type": "string"
                                                     },
                                                     "loginPageWait": {
-                                                        "type": "string"
+                                                        "type": "integer"
                                                     },
                                                     "verifyUrl": {
                                                         "type": "string"
@@ -352,7 +352,7 @@
                                                 "volumes": {
                                                     "type": "array",
                                                     "items": {
-                                                        "type": "integer"
+                                                        "type": "string"
                                                     }
                                                 }
                                             },

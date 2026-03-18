@@ -1,0 +1,31 @@
+apiVersion: v1
+data:
+  config.yaml: |+
+    config:
+      configVersion: 5
+
+    application:
+      shortName: "http-header-auth-test"
+      url: "http://vapi-auth:5000"
+
+    scanners:
+      zap:
+        apiScan:
+          apis:
+            apiUrl: "http://vapi-auth:5000/docs/openapi.json"
+
+        authentication:
+          type: "http_header"
+          parameters:
+            name: "Authorization"
+            # NOTE: This is a dummy test header value for e2e testing - not a real secret
+            value: "MySecretHeader"
+
+        passiveScan:
+          # Enable passive scanning to capture authentication headers
+          disabledRules: ""
+
+
+kind: ConfigMap
+metadata:
+  name: rapidast-vapi-http-header

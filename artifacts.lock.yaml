@@ -1,15 +1,15 @@
 metadata:
   version: "1.0"
 artifacts:
-  - download_url: https://github.com/zaproxy/zaproxy/releases/download/v2.16.1/ZAP_2.16.1_Linux.tar.gz
+  - download_url: https://github.com/zaproxy/zaproxy/releases/download/v2.17.0/ZAP_2.17.0_Linux.tar.gz
     filename: ZAP.tar.gz
-    checksum: "sha256:5b2eb8319b085121a6e8ad50d69d67dbef8c867166f71a937bfc888d247a2ac1"
-  - download_url: https://releases.mozilla.org/pub/firefox/releases/128.6.0esr/linux-x86_64/en-US/firefox-128.6.0esr.tar.bz2
-    filename: firefox.tar.bz2
-    checksum: "sha256:ab46e298a92276736e1a0b2f2fe232f4b1e9f49c84bdb6fc2565d83013bc8732"
-  - download_url: https://dl.k8s.io/release/v1.32.1/bin/linux/amd64/kubectl
+    checksum: "sha256:efe799aaa3627db683b43f00c9c210aea0b75c00cc8f0a0f0434d12bb3ddde5a"
+  - download_url: https://releases.mozilla.org/pub/firefox/releases/140.8.0esr/linux-x86_64/en-US/firefox-140.8.0esr.tar.xz
+    filename: firefox.tar.xz
+    checksum: "sha256:aac63c496d14c4569ca7c64d5c8972d59f1217fd21e2548832a202e19c6e5534"
+  - download_url: https://dl.k8s.io/release/v1.35.2/bin/linux/amd64/kubectl
     filename: kubectl
-    checksum: "sha256:e16c80f1a9f94db31063477eb9e61a2e24c1a4eee09ba776b029048f5369db0c"
-  - download_url: https://github.com/aquasecurity/trivy/releases/download/v0.59.0/trivy_0.59.0_Linux-64bit.tar.gz
+    checksum: "sha256:924eb50779153f20cb668117d141440b95df2f325a64452d78dff9469145e277"
+  - download_url: https://github.com/aquasecurity/trivy/releases/download/v0.69.3/trivy_0.69.3_Linux-64bit.tar.gz
     filename: trivy.tar.gz
-    checksum: "sha256:f9a7829aabfd116e79d3b05fa6ec30e2f1d767da6f7fed184905fa7d9125954b"
+    checksum: "sha256:1816b632dfe529869c740c0913e36bd1629cb7688bd5634f4a858c1d57c88b75"

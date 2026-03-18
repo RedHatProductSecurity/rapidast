@@ -1,0 +1,153 @@
+# An example Pipeline to use in an IntegrationTest, this is for a component named "test-component"
+# which would be built an a separate build pipeline
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: rapidast-integration-test
+spec:
+  params:
+    # this SNAPSHOT should be produced by the build pipeline and contain the containerImage we want to test with rapidast
+    - name: SNAPSHOT
+      type: string
+  tasks:
+    # we need an clean environment where we have permission to deploy k8s resources
+    # this env will only provide namespace-admin, not cluster-admin. For components
+    # that require a cluster-admin, an ephemeral EaaS cluster is needed
+    - name: provision-env
+      taskRef:
+        params:
+          - name: name
+            value: eaas-provision-space
+          - name: bundle
+            value: quay.io/konflux-ci/tekton-catalog/task-eaas-provision-space:0.1@sha256:8a344ed61dfeabf741f3f08892414f223ade1849f995da0db172e79c4afc21a3
+          - name: kind
+            value: task
+        resolver: bundles
+      params:
+        - name: ownerName
+          value: $(context.pipelineRun.name)
+        - name: ownerUid
+          value: $(context.pipelineRun.uid)
+
+    # use image from snapshot in new deployment in fresh environment
+    - name: deploy-app
+      params:
+        - name: SNAPSHOT
+          value: "$(params.SNAPSHOT)"
+      runAfter:
+      - provision-env
+      taskSpec:
+        params:
+          - name: SNAPSHOT
+            type: string
+        volumes:
+          - name: credentials
+            emptyDir: {}
+        steps:
+          # write the kubeconfig to a volume we can use in subsequent steps
+          # and emptyDir volume will be exist for the lifetime of a single taskRun
+          - name: get-kubeconfig
+            image: quay.io/konflux-ci/konflux-test:latest
+            env:
+              - name: KUBECONFIG
+                value: /credentials/kubeconfig.yml
+              - name: KUBECONFIG_VALUE
+                valueFrom:
+                  secretKeyRef:
+                    name: "$(tasks.provision-env.results.secretRef)"
+                    key: kubeconfig
+            volumeMounts:
+              - name: credentials
+                mountPath: /credentials
+            script: |
+              #!/bin/bash
+              set -euxo pipefail
+
+              cat <<< "$KUBECONFIG_VALUE" > "$KUBECONFIG"
+              echo "Wrote kubeconfig for new environment to $KUBECONFIG"
+
+          # we need to copy the pull secret into our fresh test environment
+          # for the SNAPSHOT image stored in a private quay repo
+          - name: copy-pull-secret
+            image: quay.io/konflux-ci/konflux-test:latest
+            env:
+              - name: DEST_KUBECONFIG
+                value: /credentials/kubeconfig.yml
+              # used to pull SNAPSHOT image, should already exist in user namespace
+              - name: PULL_SECRET
+                value: test-component-image-pull
+            volumeMounts:
+              - name: credentials
+                mountPath: /credentials
+            script: |
+              #!/bin/bash
+              set -euxo pipefail
+
+              oc get secrets $PULL_SECRET -o json | jq 'del(.metadata.creationTimestamp,
+                .metadata.uid, .metadata.resourceVersion,
+                .metadata.annotations."kubectl.kubernetes.io/last-applied-configuration",
+                .metadata.namespace)' > /tmp/pull-secret.json
+              oc --kubeconfig=$DEST_KUBECONFIG apply -f /tmp/pull-secret.json
+              oc --kubeconfig=$DEST_KUBECONFIG secret link --for=pull default $PULL_SECRET
+
+          # deploy an instance of our app using the snapshot image in our test env
+          - name: deploy-app
+            image: quay.io/konflux-ci/konflux-test:latest
+            env:
+              - name: SNAPSHOT
+                value: "$(params.SNAPSHOT)"
+              - name: KUBECONFIG
+                value: /credentials/kubeconfig.yml
+            volumeMounts:
+              - name: credentials
+                mountPath: /credentials
+            script: |
+              #!/bin/bash
+              set -euxo pipefail
+
+              IMAGE=$(echo "$SNAPSHOT" | jq -r '.components[0].containerImage')
+              echo "Extracted image: $IMAGE"
+
+              oc create deployment test-component --image=$IMAGE
+              oc wait --for=condition=Available=true deployment/test-component --timeout=120s
+
+    - name: rapidast-check
+      runAfter:
+      - deploy-app
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/redhatproductsecurity/rapidast
+            # TODO change revision after merge
+          - name: revision
+            value: konflux-example
+          - name: pathInRepo
+            value: examples/konflux/rapidast-check.yaml
+      params:
+        - name: KUBECONFIG_SECRET
+          value: "$(tasks.provision-env.results.secretRef)"
+        # this is necessary to make the target app in the remote env accessible to rapidast
+        - name: PORT_FORWARD_TARGETS
+          value: "deployment/test-component 5000:5000"
+        # all target URLs in rapidast config should be localhost, and port-forwarded
+        - name: RAPIDAST_CONFIG_VALUE
+          value: |
+            config:
+              configVersion: 6
+              results:
+                exclusions:
+                  rules:
+                    - name: "Exclude findings below a severity level of Important"
+                      cel_expression: ".result.level != 'error' && .result.level != 'warning'"
+
+            application:
+              shortName: "test-component-1.0"
+              url: "http://127.0.0.1:5000" # root URL of the application, should always point to localhost
+
+            scanners:
+              zap:
+                spider: {}
+                passiveScan: {}
+                activeScan:
+                  policy: API-scan-minimal

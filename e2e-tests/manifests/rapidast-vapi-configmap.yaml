@@ -47,7 +47,10 @@ data:
             - formhandler.fields.field(0).value=55
             - formhandler.fields.field(0).fieldId=pet_name
             - formhandler.fields.field(0).value=pet_aaaa
+            - alert.systemicLimit=10
 
 kind: ConfigMap
 metadata:
   name: rapidast-vapi
+  labels:
+    app: rapidast

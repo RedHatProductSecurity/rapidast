@@ -2,7 +2,9 @@ apiVersion: v1
 kind: Pod
 metadata:
   annotations:
-  name: rapidast-vapi
+  generateName: rapidast-vapi-
+  labels:
+    app: rapidast
 spec:
   initContainers:
     # Run rapidast as initContainer, second container prints the results
@@ -26,6 +28,12 @@ spec:
   - command: ["bash", "-c", "cat /opt/rapidast/results/*/*/zap/zap-report.json"]
     image: registry.redhat.io/ubi9/ubi-micro
     name: results
+    volumeMounts:
+    - name: results
+      mountPath: /opt/rapidast/results
+  - command: ["bash", "-c", "cat /opt/rapidast/results/*/*/rapidast-scan-results.sarif; echo"]
+    image: registry.redhat.io/ubi9/ubi-micro
+    name: results-sarif
     volumeMounts:
     - name: results
       mountPath: /opt/rapidast/results

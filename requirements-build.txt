@@ -6,9 +6,9 @@
 #
 calver==2022.6.26
     # via trove-classifiers
-cython==3.0.12
+cython==3.2.4
     # via pyyaml
-flit-core==3.11.0
+flit-core==3.12.0
     # via
     #   arrow
     #   click
@@ -24,14 +24,14 @@ hatch-fancy-pypi-readme==24.1.0
     # via
     #   attrs
     #   jsonschema
-hatch-vcs==0.4.0
+hatch-vcs==0.5.0
     # via
     #   attrs
     #   jsonschema
     #   jsonschema-specifications
     #   referencing
     #   urllib3
-hatchling==1.27.0
+hatchling==1.29.0
     # via
     #   attrs
     #   hatch-fancy-pypi-readme
@@ -41,11 +41,11 @@ hatchling==1.27.0
     #   pygments
     #   referencing
     #   urllib3
-maturin==1.8.2
+maturin==1.12.6
     # via rpds-py
-mypy-extensions==1.0.0
+mypy-extensions==1.1.0
     # via mypy
-mypy==1.14.0
+mypy==1.19.1
     # via charset-normalizer
 packaging==24.2
     # via
@@ -53,23 +53,23 @@ packaging==24.2
     #   setuptools-scm
 pathspec==0.12.1
     # via hatchling
-pdm-backend==2.4.3
+pdm-backend==2.4.7
     # via
     #   typer
     #   webcolors
-pluggy==1.5.0
+pluggy==1.6.0
     # via hatchling
-poetry-core==2.1.1
+poetry-core==2.3.1
     # via
     #   rich
     #   rsa
 semantic-version==2.10.0
     # via setuptools-rust
-setuptools-rust==1.10.2
+setuptools-rust==1.12.0
     # via maturin
 setuptools-scm==7.1.0
     # via python-dateutil
-setuptools-scm==8.2.0
+setuptools-scm==8.3.1
     # via
     #   charset-normalizer
     #   hatch-vcs
@@ -82,7 +82,7 @@ types-psutil==7.0.0.20250218
     # via mypy
 types-setuptools==75.8.2.20250305
     # via mypy
-typing-extensions==4.12.2
+typing-extensions==4.15.0
     # via
     #   mypy
     #   setuptools-scm
@@ -96,7 +96,7 @@ wheel==0.45.1
     #   shellingham
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==75.8.2
+setuptools==75.9.1
     # via
     #   cachetools
     #   calver

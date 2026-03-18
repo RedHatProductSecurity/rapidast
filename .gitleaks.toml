@@ -1,0 +1,12 @@
+# Gitleaks configuration to exclude dummy test secrets
+# https://github.com/gitleaks/gitleaks
+
+# Exclude specific files containing dummy authentication credentials
+[[allowlist]]
+  description = "E2E test files with dummy authentication credentials"
+  paths = [
+    '''e2e-tests/manifests/rapidast-vapi-configmap-http-basic\.yaml''',
+    '''e2e-tests/manifests/rapidast-vapi-configmap-http-header\.yaml''',
+    '''e2e-tests/manifests/rapidast-vapi-configmap-cookie\.yaml''',
+    '''e2e-tests/test_authentication\.py'''
+  ]

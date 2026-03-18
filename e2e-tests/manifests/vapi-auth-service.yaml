@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: vapi-auth
+  name: vapi-auth
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - port: 5000
+    protocol: TCP
+    targetPort: 5000
+    name: backend
+  - port: 3000
+    protocol: TCP
+    targetPort: 3000
+    name: frontend
+  selector:
+    app: vapi-auth
+  sessionAffinity: None
+  type: ClusterIP

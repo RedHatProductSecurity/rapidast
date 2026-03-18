@@ -10,6 +10,8 @@ from io import BytesIO
 
 from google.cloud import storage
 
+from utils.file_utils import sanitize_filename
+
 
 class GoogleCloudStorage:
     """
@@ -27,7 +29,7 @@ class GoogleCloudStorage:
             logging.error(f"Failed to get the bucket: {e}")
             raise
 
-        self.directory = directory or f"RapiDAST-{app_name}"
+        self.directory = directory or f"RapiDAST-{sanitize_filename(app_name)}"
         self.app_name = app_name
 
     def create_metadata(self, data):
@@ -68,7 +70,7 @@ class GoogleCloudStorage:
         # generate the blob filename
         unique_id = "{}-RapiDAST-{}-{}.tgz".format(  # pylint: disable=C0209
             datetime.datetime.now(tz=datetime.timezone.utc).isoformat(),
-            self.app_name,
+            sanitize_filename(self.app_name),
             "".join(random.choices(string.ascii_letters + string.ascii_uppercase + string.digits, k=6)),
         )
         blob_name = self.directory + "/" + unique_id
@@ -77,3 +79,5 @@ class GoogleCloudStorage:
         blob = self.bucket.blob(blob_name)
         with blob.open(mode="wb") as dest:
             dest.write(tar_stream.getbuffer())
+
+        logging.info(f"GoogleCloudStorage: scan results stored to: gs://{blob.bucket.name}/{blob.name}")

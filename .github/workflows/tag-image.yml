@@ -16,6 +16,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Checkout repository code
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+
+    - name: Check if tag is applied to the tip of the main branch
+      id: check_main_tip
+      run: |
+        # Get the latest commit on the main branch
+        MAIN_SHA=$(git rev-parse origin/main)
+
+        echo "Tag name: ${{ github.ref_name }}"
+        echo "Tag SHA: ${{ github.sha }}"
+        echo "Main SHA: $MAIN_SHA"
+
+        if [ "${{ github.sha }}" == "$MAIN_SHA" ]; then
+          echo "Tag ${{ github.ref_name }} was applied to the main branch tip."
+          echo "main_tip_tagged=true" >> $GITHUB_OUTPUT
+        else
+          echo "Tag ${{ github.ref_name }} was NOT applied to the main branch tip."
+          echo "main_tip_tagged=false" >> $GITHUB_OUTPUT
+        fi
+
     # https://github.com/redhat-actions/podman-login
     - name: Log in to quay.io
       uses: redhat-actions/podman-login@v1
@@ -33,6 +56,12 @@ jobs:
           DST=${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
           skopeo copy docker://${SRC} docker://${DST}
 
+          # also update the "latest" container tag for main branch tip tags
+          if [ "${{ steps.check_main_tip.outputs.main_tip_tagged }}" == "true" ]; then
+            DST=${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            skopeo copy docker://${SRC} docker://${DST}
+          fi
+
     - name: Tag rapidast-llm image
       env:
         IMAGE_NAME: "rapidast-llm"
@@ -41,3 +70,9 @@ jobs:
           SRC=${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           DST=${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
           skopeo copy docker://${SRC} docker://${DST}
+
+          # also update the "latest" container tag for main branch tip tags
+          if [ "${{ steps.check_main_tip.outputs.main_tip_tagged }}" == "true" ]; then
+            DST=${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            skopeo copy docker://${SRC} docker://${DST}
+          fi

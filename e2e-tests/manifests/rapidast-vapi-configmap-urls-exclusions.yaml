@@ -37,4 +37,6 @@ data:
 
 kind: ConfigMap
 metadata:
-  name: rapidast-vapi
+  name: rapidast-vapi-url-exclusions
+  labels:
+    app: rapidast

@@ -1,14 +1,19 @@
+import fnmatch
 import json
 import logging
 import os
 import re
+import secrets
 from typing import Optional
 from typing import Union
 
+from google.api_core import exceptions as gcp_exceptions
+from google.cloud import storage
 from jsonschema import Draft7Validator
 from jsonschema import validate
 
 from conftest import is_pod_with_field_selector_successfully_completed  # pylint: disable=E0611
+from conftest import RAPIDAST_GCP_BUCKET  # pylint: disable=E0611
 from conftest import tee_log  # pylint: disable=E0611
 from conftest import TestBase  # pylint: disable=E0611
 from conftest import wait_until_ready  # pylint: disable=E0611
@@ -95,7 +100,7 @@ class TestRapiDAST(TestBase):
         """Test URL exclusions"""
         self._ensure_vapi_instance()
 
-        # # Verify that ZAP report does not contain alerts for URLs excluded in the scan configuration
+        # Verify that ZAP report does not contain alerts for URLs excluded in the scan configuration
         cm = self.create_from_yaml(f"{self.tempdir}/rapidast-vapi-configmap-urls-exclusions.yaml")
         volumes = [
             {"name": "config-volume", "configMap": {"name": cm.metadata.name}},
@@ -143,6 +148,57 @@ class TestRapiDAST(TestBase):
 
         results = check_zap_alert_refs(data, self.passive_scan_alertrefs)
         assert not results["found"], f"Unexpected passive scan alert references found: {results['found']}"
+
+    def test_gcp_export(self):
+        """Test GCP export"""
+        # NOTE: the test itself does not necessarily succeed. Only the successful export matters
+        # Generate a random application name for unique identification
+        random_suffix = secrets.token_hex(8)
+        app_name = f"gcp-test-{random_suffix}"
+
+        # Create the ConfigMap
+        cm = self.create_from_yaml(f"{self.tempdir}/rapidast-gcp-export-configmap.yaml")
+
+        # Replace APP_SHORT_NAME placeholder in the pod manifest
+        # BUCKET_NAME is already replaced by render_manifests in conftest.py
+        pod_path = f"{self.tempdir}/rapidast-gcp-export-pod.yaml"
+        with open(pod_path, "r", encoding="utf-8") as f:
+            pod_content = f.read()
+        pod_content = pod_content.replace("${APP_SHORT_NAME}", app_name)
+        with open(pod_path, "w", encoding="utf-8") as f:
+            f.write(pod_content)
+
+        # Create the pod with only volumes override
+        volumes = [
+            {"name": "config-volume", "configMap": {"name": cm.metadata.name}},
+            {"name": "results", "emptyDir": {}},
+            {
+                "name": "gcs-credentials",
+                "secret": {
+                    "secretName": "gcs-credentials",
+                    "items": [{"key": "gcs-credentials.json", "path": "gcs-credentials.json"}],
+                },
+            },
+        ]
+        pod_overrides = {"spec": {"volumes": volumes}}
+
+        p = self.create_from_yaml(pod_path, pod_overrides)
+        # Wait for the pod to complete (may succeed or fail). We don't assert here because
+        # the scan is expected to fail (scanning a non-existent app), but the GCP export
+        # should still succeed. We verify the export success below.
+        is_pod_with_field_selector_successfully_completed(
+            field_selector=f"metadata.name={p.metadata.name}",
+            timeout=360,
+        )
+
+        # Verify that RapiDAST successfully exported scan results to GCS with the expected filename
+        directory = "e2e-test-gcp-export"
+        # Actual upload pattern: {directory}/{timestamp}-RapiDAST-{app_name}-{random}.tgz
+        expected_pattern = f"*-RapiDAST-{app_name}-*.tgz"
+
+        verify_gcs_export_with_pattern(
+            bucket_name=RAPIDAST_GCP_BUCKET, directory=directory, app_name=app_name, expected_pattern=expected_pattern
+        )
 
     def test_trivy(self):
         self.create_from_yaml(f"{self.tempdir}/rapidast-trivy-configmap.yaml")
@@ -295,4 +351,73 @@ def validate_json_schema(data: dict, schema_path: str) -> bool:
         raise ValueError(f"Failed to parse JSON schema {schema_path}: {e}") from e
 
     validate(instance=data, schema=schema, format_checker=Draft7Validator.FORMAT_CHECKER)
+    return True
+
+
+def verify_gcs_export_with_pattern(bucket_name: str, directory: str, app_name: str, expected_pattern: str) -> bool:
+    """
+    Verify that RapiDAST successfully exported scan results to GCS with a specific filename pattern
+
+    Args:
+        bucket_name: Name of the GCS bucket to check
+        directory: Directory prefix where files should be stored
+        app_name: The application shortName used in the scan
+        expected_pattern: Expected filename pattern (e.g., "*-RapiDAST-{app_name}-*.tgz")
+
+    Returns:
+        True if the expected file matching the pattern was found and deleted
+
+    Raises:
+        AssertionError: If no files were found matching the expected pattern
+    """
+    # Use credentials from GOOGLE_APPLICATION_CREDENTIALS environment variable
+    client = storage.Client()
+
+    try:
+        bucket = client.get_bucket(bucket_name)
+    except Exception as e:
+        raise AssertionError(f"Failed to access GCS bucket '{bucket_name}': {e}") from e
+
+    # Construct the expected prefix based on the directory
+    # Actual upload pattern: {directory}/{timestamp}-RapiDAST-{app_name}-{random}.tgz
+    expected_prefix = f"{directory}/"
+    logging.info(f"Looking for files with prefix: {expected_prefix}")
+
+    # List all blobs with the expected prefix
+    blobs = list(bucket.list_blobs(prefix=expected_prefix))
+
+    logging.info(f"Found {len(blobs)} blob(s) with prefix '{expected_prefix}'")
+    for blob in blobs:
+        logging.info(f"  - {blob.name} ({blob.size} bytes)")
+
+    # Filter to files matching the pattern: *-RapiDAST-{app_name}-*.tgz
+    tgz_pattern = f"*-RapiDAST-{app_name}-*.tgz"
+    matching_files = [blob for blob in blobs if fnmatch.fnmatch(os.path.basename(blob.name), tgz_pattern)]
+
+    assert len(matching_files) > 0, (
+        f"No files matching pattern '{tgz_pattern}' found in GCS bucket '{bucket_name}' "
+        f"with prefix '{expected_prefix}'. Expected to find files matching pattern: {expected_pattern}. "
+        f"Found {len(blobs)} blob(s) total: {[b.name for b in blobs]}"
+    )
+
+    assert len(matching_files) > 0, (
+        f"No files matching pattern '{tgz_pattern}' found in GCS export. " f"Found blobs: {[b.name for b in blobs]}"
+    )
+
+    logging.info(
+        f"GCS export verification succeeded. Found {len(matching_files)} file(s) matching pattern '{tgz_pattern}' "
+        f"in bucket '{bucket_name}/{expected_prefix}'"
+    )
+    for blob in matching_files:
+        logging.info(f"  - {blob.name} ({blob.size} bytes)")
+
+    # Clean up: delete only the files matching this test run
+    logging.info(f"Cleaning up: deleting {len(matching_files)} file(s) from GCS bucket...")
+    for blob in matching_files:
+        try:
+            blob.delete()
+            logging.info(f"  - Deleted: {blob.name}")
+        except (gcp_exceptions.NotFound, gcp_exceptions.Forbidden) as e:
+            logging.warning(f"  - Failed to delete {blob.name}: {e}")
+
     return True

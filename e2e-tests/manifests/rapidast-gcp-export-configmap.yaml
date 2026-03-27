@@ -1,0 +1,41 @@
+apiVersion: v1
+data:
+  config.yaml: |+
+    config:
+      configVersion: 6
+      googleCloudStorage:
+        bucketName_from_var: "GCS_BUCKET_NAME"
+        directory: "e2e-test-gcp-export"
+
+    # `application` contains data related to the application, not to the scans.
+    application:
+      shortName_from_var: "APP_SHORT_NAME"
+      url: "http://localhost:8080"
+
+    scanners:
+      zap:
+      # Simple API scan against localhost
+        apiScan:
+          apis:
+            apiUrl: "http://localhost:8080/api/swagger.json"
+
+        passiveScan:
+          # Disable passive scan to speed up the test
+          disabledRules: "all"
+
+        activeScan:
+          # Use minimal policy for faster execution
+          policy: API-scan-minimal
+
+        container:
+          parameters:
+            executable: "zap.sh"
+
+        miscOptions:
+          updateAddons: False
+
+kind: ConfigMap
+metadata:
+  name: rapidast-gcp-export
+  labels:
+    app: rapidast

@@ -64,6 +64,22 @@ To run single e2e test, use a command like:
 $ pytest e2e-tests/test_integration.py::TestRapiDAST::test_trivy --json-report
 ```
 
+#### GCP export test
+
+The `test_gcp_export` test requires access to a Google Cloud Storage bucket and valid GCP credentials in the cluster. It runs by default and must be explicitly excluded if GCP access is unavailable.
+
+To skip it, use pytest's `-k` flag:
+
+```bash
+$ pytest e2e-tests/test_integration.py -k "not test_gcp_export" --json-report
+```
+
+To run only the GCP export test, with a specific bucket:
+
+```bash
+$ RAPIDAST_GCP_BUCKET=my-bucket pytest e2e-tests/test_integration.py::TestRapiDAST::test_gcp_export --json-report
+```
+
 ## Structure
 
 Its structure is as follow:

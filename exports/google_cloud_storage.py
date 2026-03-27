@@ -3,6 +3,7 @@ import datetime
 import logging
 import os
 import random
+import re
 import string
 import tarfile
 import uuid
@@ -61,10 +62,18 @@ class GoogleCloudStorage:
 
         logging.info(f"GoogleCloudStorage: sending the contents of the directory: {result_dir_name}")
 
+        # exclude certain files form being included in the archive uploaded to GCS
+        def _gcs_archive_excludes(tarinfo):
+            # ZAP's session database
+            if re.search(r"/zap(_[^/]*)?/session.tar.gz", tarinfo.name) is not None:
+                return None
+            else:
+                return tarinfo
+
         # create a tar containing the directory and its contents
         tar_stream = BytesIO()
         with tarfile.open(fileobj=tar_stream, mode="w:gz") as tar:
-            tar.add(name=result_dir_name, arcname=f"{os.path.basename(result_dir_name)}")
+            tar.add(name=result_dir_name, arcname=f"{os.path.basename(result_dir_name)}", filter=_gcs_archive_excludes)
         tar_stream.seek(0)
 
         # generate the blob filename

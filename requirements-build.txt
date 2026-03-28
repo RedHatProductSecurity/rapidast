@@ -76,7 +76,7 @@ setuptools-scm==8.3.1
     #   pluggy
     #   setuptools-rust
     #   uri-template
-trove-classifiers==2025.3.3.18
+trove-classifiers==2025.12.1.14
     # via hatchling
 types-psutil==7.2.2.20260130
     # via mypy

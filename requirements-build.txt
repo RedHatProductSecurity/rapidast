@@ -4,8 +4,10 @@
 #
 #    pybuild-deps compile --output-file=requirements-build.txt
 #
-calver==2022.6.26
+calver==2025.10.20
     # via trove-classifiers
+cffi==2.0.0
+    # via cryptography
 cython==3.2.4
     # via pyyaml
 flit-core==3.12.0
@@ -20,7 +22,7 @@ flit-core==3.12.0
     #   pathspec
     #   typing-extensions
     #   wheel
-hatch-fancy-pypi-readme==24.1.0
+hatch-fancy-pypi-readme==25.1.0
     # via
     #   attrs
     #   jsonschema
@@ -42,78 +44,86 @@ hatchling==1.29.0
     #   referencing
     #   urllib3
 maturin==1.12.6
-    # via rpds-py
-mypy-extensions==1.1.0
-    # via mypy
-mypy==1.19.1
-    # via charset-normalizer
-packaging==24.2
+    # via
+    #   cryptography
+    #   pendulum
+    #   rpds-py
+packaging==26.0
     # via
     #   hatchling
     #   setuptools-scm
-pathspec==0.12.1
+    #   vcs-versioning
+    #   wheel
+pathspec==1.0.4
     # via hatchling
 pdm-backend==2.4.7
     # via
+    #   annotated-doc
     #   typer
     #   webcolors
 pluggy==1.6.0
     # via hatchling
-poetry-core==2.3.1
+poetry-core==2.3.2
     # via
+    #   cel-python
     #   rich
-    #   rsa
+pycparser==2.23
+    # via cffi
 semantic-version==2.10.0
     # via setuptools-rust
-setuptools-rust==1.12.0
+setuptools-rust==1.12.1
     # via maturin
-setuptools-scm==7.1.0
-    # via python-dateutil
-setuptools-scm==8.3.1
+setuptools-scm==10.0.5
     # via
-    #   charset-normalizer
     #   hatch-vcs
     #   pluggy
     #   setuptools-rust
     #   uri-template
-trove-classifiers==2025.12.1.14
+setuptools-scm==7.1.0
+    # via python-dateutil
+setuptools-scm==9.2.2
+    # via
+    #   hatch-vcs
+    #   urllib3
+trove-classifiers==2026.1.14.14
     # via hatchling
-types-psutil==7.2.2.20260130
-    # via mypy
-types-setuptools==75.8.2.20250305
-    # via mypy
 typing-extensions==4.15.0
+    # via setuptools-scm
+vcs-versioning==1.1.1
+    # via setuptools-scm
+wheel==0.46.3
     # via
-    #   mypy
-    #   setuptools-scm
-wheel==0.45.1
-    # via
-    #   cachetools
     #   google-crc32c
-    #   maturin
     #   python-dateutil
-    #   pyyaml
     #   shellingham
+    #   tzdata
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==75.9.1
+setuptools==82.0.0
+    # via charset-normalizer
+setuptools==82.0.1
     # via
-    #   cachetools
     #   calver
-    #   charset-normalizer
+    #   certifi
+    #   cffi
+    #   cryptography
     #   google-api-core
     #   google-crc32c
+    #   googleapis-common-protos
     #   maturin
-    #   mypy
     #   pathspec
     #   pluggy
     #   proto-plus
     #   pyasn1
     #   pyasn1-modules
     #   python-dateutil
+    #   python-dotenv
     #   pyyaml
     #   setuptools-rust
     #   setuptools-scm
     #   shellingham
     #   trove-classifiers
+    #   types-pyyaml
+    #   tzdata
     #   uri-template
+    #   vcs-versioning

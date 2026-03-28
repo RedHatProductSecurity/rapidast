@@ -15,7 +15,7 @@ attrs==25.4.0
     #   referencing
 black==25.12.0
     # via -r requirements-dev.in
-cel-python==0.3.0
+cel-python==0.5.0
     # via -r requirements.txt
 certifi==2026.2.25
     # via

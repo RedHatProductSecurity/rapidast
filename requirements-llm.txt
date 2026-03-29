@@ -397,7 +397,7 @@ pyarrow==19.0.1
     # via datasets
 pyarrow-hotfix==0.6
     # via datasets
-pyasn1==0.6.2
+pyasn1==0.6.3
     # via
     #   -r requirements.txt
     #   pyasn1-modules

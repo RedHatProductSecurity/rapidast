@@ -299,5 +299,5 @@ webcolors==24.11.1
     # via
     #   -r requirements.txt
     #   jsonschema
-websocket-client==1.8.0
+websocket-client==1.9.0
     # via kubernetes

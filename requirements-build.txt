@@ -59,7 +59,7 @@ pdm-backend==2.4.7
     #   webcolors
 pluggy==1.6.0
     # via hatchling
-poetry-core==2.3.1
+poetry-core==2.3.2
     # via
     #   rich
     #   rsa

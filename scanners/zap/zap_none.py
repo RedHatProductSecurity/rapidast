@@ -119,9 +119,10 @@ class ZapNone(Zap):
             logging.info(f"The addon state file {statefile} was not created")
 
         # Now the real run
-        logging.info(f"Running ZAP with the following command:\n{self.zap_cli}")
-
         cli = ["sh", "-c", self._zap_cli_list_to_str_for_sh(self.zap_cli)]
+
+        logging.info(f"Running ZAP with the following command: {cli}")
+
         result = subprocess.run(cli, check=False)
         logging.debug(f"ZAP returned the following:\n=====\n{pp.pformat(result)}\n=====")
 
@@ -258,7 +259,7 @@ class ZapNone(Zap):
         command.extend(["-dir", self.container_home_dir])
         shell = ["sh", "-c", self._zap_cli_list_to_str_for_sh(command)]
 
-        logging.debug(f"Addons setup command: {shell}")
+        logging.info(f"Running ZAP addons setup command: {shell}")
         result = subprocess.run(shell, check=False)
         if result.returncode != 0:
             logging.warning(

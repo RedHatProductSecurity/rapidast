@@ -126,7 +126,7 @@ class ZapPodman(Zap):
         cli = self.podman.get_complete_cli(cli)
 
         # DO STUFF
-        logging.info(f"Running ZAP with the following command:\n{cli}")
+        logging.info(f"Running ZAP with the following command: {self._zap_cli_list_to_str_for_sh(cli)}")
         result = subprocess.run(cli, check=False)
         logging.debug(f"ZAP returned the following:\n=====\n{pp.pformat(result)}\n=====")
 

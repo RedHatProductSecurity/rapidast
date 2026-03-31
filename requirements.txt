@@ -128,7 +128,7 @@ six==1.17.0
     #   rfc3339-validator
 text-unidecode==1.3
     # via python-slugify
-typer==0.23.1
+typer==0.24.1
     # via py-nessus-pro
 types-pyyaml==6.0.12.20250915
     # via cel-python

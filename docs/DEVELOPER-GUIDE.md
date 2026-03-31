@@ -140,6 +140,7 @@ print(f"myfile on host: {path_map.container_2_host(myfile)}")
 ```
 
 __NOTES__
+
 + Important note: there is currently no support for submount : if a mapping is set to `/my/first/mount`, there can not be another map to `/my/first/mount/my/other/mount`
 + The path are immutable: they must be chosen during creation (in the `__init__()` function), and must not be modified afterwards. The parent scanner (e.g.: `Zap`) should define the mount points, and each runtime (e.g.: `ZapPodman`) should fill each map *once*
 + For `type = None` (the scanner will run on the host), then the map must be the same (e.g.: `PathMap("/path/to/dir", "/path/to/dir")`)
@@ -191,13 +192,14 @@ The "RapidastConfigModel" object is used to load and merge YAML configuration fi
 - Similarly `config.set("scanners.zap.apis.apiUrl", "http://example.com/")` will create the path if needed, without raising an exception.
 
 To merge a dictionary into a configuration, use `config.merge(merge: dict, preserve: bool, root: path)`:
-    + from `config[<root>]` onwards, the configuration will copy values from `merge`, descending on keys of the same name
-    + in case of collision (2 keys with same name, but at most only 1 value is a dictionary), the original configuration will be preserved only if `preserve=True` was set
+
++ from `config[<root>]` onwards, the configuration will copy values from `merge`, descending on keys of the same name
++ in case of collision (2 keys with same name, but at most only 1 value is a dictionary), the original configuration will be preserved only if `preserve=True` was set
 
 Developers are encouraged to use this configuration model, although the configuration can be directly accessed via the underlying `config.config` dict
 
 
- _WARNINGS and LIMITATIONS_:
+_WARNINGS and LIMITATIONS_:
 - Currently, the model does not support lists ( e.g.: `-` or `[]` in YAML), i.e.: `config.get("path.to.list[0]")` does not work. Avoid those if possible, otherwise get a reference to the list (i.e.: `config.get("path.to.list")`) , and manipulate it in python directly.
 
 ### Default value
@@ -215,13 +217,13 @@ There may be time during which development requires incompatible changes in the 
 RapiDAST works around the issue in the following way.
 Every time there is an incompatible change:
 1) In `configmodel/converter.py` :
-    a) increase `CURR_CONFIG_VERSION` by 1 (in the following text, the old number is referred to as `$X`, and, respectively the updated version number as `${X+1}` )
-    b) write a converter function, decorated with `@convert_configmodel.register(${X})`
-       This function must take a configuration schema version ${X}, and must return a copy, updated to ${X+1}
+    - increase `CURR_CONFIG_VERSION` by 1 (in the following text, the old number is referred to as `$X`, and, respectively the updated version number as `${X+1}`)
+    - write a converter function, decorated with `@convert_configmodel.register(${X})`.
+      This function must take a configuration schema version `${X}`, and must return a copy, updated to `${X+1}`.
 2) Keep a copy of `config-template-long.yaml`, named `config/older-schemas/v${X}.yaml`. This is just for safekeeping, so that we don't need to go through git history to retrieve previous schemas.
 3) Make the changes in the `config/config-template*.yaml` files. Including:
-    a) `config.configVersion` must be set to ${X+1}
-    b) all the changes are applied (`config-template-long.yaml` should contain all changes, and `config-template.yaml` only the user-friendly ones
+    - `config.configVersion` must be set to ${X+1}
+    - all the changes are applied (`config-template-long.yaml` should contain all changes, and `config-template.yaml` only the user-friendly ones
 4) Provide explanation in the corresponding commit
 5) Create a new configuration schema in the appropriate file: config/schemas/$(X+1)/rapidast_schema.json
 
@@ -263,7 +265,7 @@ When updating a static dependency (like ZAP, Firefox, kubectl, or Trivy) used in
     * **Update the `checksum` hash**:
         * **How to get the SHA256**: Check the following pages:
              1. For ZAP: https://github.com/zaproxy/zaproxy/releases/tag/v${ZAP_VERSION}
-             2. For firefox: https://releases.mozilla.org/pub/firefox/releases/${FF_VERSION}$/SHA256SUMS
+             2. For firefox: https://releases.mozilla.org/pub/firefox/releases/${FF_VERSION}/SHA256SUMS
              3. For kubectl: https://dl.k8s.io/release/v${K8S_VERSION}/bin/linux/amd64/kubectl.sha256
              4. For trivy: https://github.com/aquasecurity/trivy/releases/tag/v${TRIVY_VERSION}
 
@@ -303,6 +305,7 @@ To add a new dependency, follow these steps:
    ```sh
    pip-compile requirements-dev.in
    ```
+
 ### Installing a new development only dependency
 
 To add a new dependency, follow these steps:

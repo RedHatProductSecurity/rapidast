@@ -149,10 +149,10 @@ Authentication is configured in the `general` entry, as it can be applied to mul
 Supported options:
 
 - No authentication:
-The scanners will communicate anonymously with the application
+  The scanners will communicate anonymously with the application
 
 - OAuth2 using a Refresh Token:
-This method describes required parameters needed to retrieve an access token, using a refresh token as a secret.
+  This method describes required parameters needed to retrieve an access token, using a refresh token as a secret.
 
   - authentication type : `oauth2_rtoken`
   - parameters :
@@ -162,7 +162,7 @@ This method describes required parameters needed to retrieve an access token, us
     - `preauth`: Pre-generate a token and force ZAP to use it throughout the session (the session token will not be refreshed after it's expired). Default: False. This is only useful for scans sufficiently short that it will be finished before the token expires
 
 - HTTP Basic:
-This method describes the HTTP Basic Authorization Header. The username and password must be provided in plaintext and will be encoded by the scanners
+  This method describes the HTTP Basic Authorization Header. The username and password must be provided in plaintext and will be encoded by the scanners
 
   - authentication type: `http_basic`
   - parameters:
@@ -170,22 +170,22 @@ This method describes the HTTP Basic Authorization Header. The username and pass
     - `password`
 
 - HTTP Header:
-This method describes the HTTP generic header. The name and value must be provided in plaintext.
+  This method describes the HTTP generic header. The name and value must be provided in plaintext.
   - authentication type: `http_header`
   - parameters:
     - `name`: the header name added to every request. By default is `Authorization`
     - `value` or `value_from_var` (the environment variable with the secret)
 
 - Cookie Authentication:
-This method describes authentication via Cookie header. The cookie name and value must be provided in plaintext.
+  This method describes authentication via Cookie header. The cookie name and value must be provided in plaintext.
 
   - authentication type: `cookie`
   - parameters:
     - `name`
     - `value`
 
-- Browser authentication method
-This method uses firefox in the background to load a login page and fill in username/password, and will retrieve and set the session cookies accordingly.
+- Browser authentication method:
+  This method uses firefox in the background to load a login page and fill in username/password, and will retrieve and set the session cookies accordingly.
   - authentication type: `browser`
   - parameters:
     - `username`
@@ -250,7 +250,7 @@ config:
 
 RapiDAST supports executing scanners like [ZAP] on the MacOS host directly only.
 
-To run RapiDAST on MacOS(See the Configuration section below for more details on configuration):
+To run RapiDAST on MacOS (See the Configuration section below for more details on configuration):
 
 - Set `general.container.type: "none"` or `scanners.zap.container.type: "none"` in the configuration.
 - Configure `scanners.zap.container.parameters.executable` to the installation path of the `zap.sh` command, because it is not available in the PATH. Usually, its path is `/Applications/ZAP.app/Contents/Java/zap.sh` on MacOS.
@@ -320,7 +320,7 @@ Once this is set, scan results will be exported to the bucket automatically. The
 
 #### Exporting to DefectDojo
 
-RapiDAST supports integration with OWASP DefectDojo which is an open source vulnerability management tool. Note that currently, only ZAP scan results and generic plugin results(via SARIF format) are supported.
+RapiDAST supports integration with OWASP DefectDojo which is an open source vulnerability management tool. Note that currently, only ZAP scan results and generic plugin results (via SARIF format) are supported.
 
 ##### Preamble: creating DefectDojo user
 
@@ -461,6 +461,8 @@ ZAP (Zed Attack Proxy) is an open-source DAST tool. It can be used for scanning 
 
 See <https://www.zaproxy.org/> for more information.
 
+[ZAP]: https://www.zaproxy.org/
+
 #### Methodology
 
 ZAP needs to be pointed to a list of endpoints to the tested application. Those can be:
@@ -469,14 +471,14 @@ ZAP needs to be pointed to a list of endpoints to the tested application. Those 
 - A REST endpoint
 - A GraphQL interface
 
-The GraphQL interface can be provided to RapiDAST via the `graphql` configuration entry. It requires the URL of the GraphQL interface and the GraphQL schema(if available), in order to be scanned. Additional options are available. See the `config-template-zap-long.yaml` configuration template file for a list of options.
+The GraphQL interface can be provided to RapiDAST via the `graphql` configuration entry. It requires the URL of the GraphQL interface and the GraphQL schema (if available), in order to be scanned. Additional options are available. See the `config-template-zap-long.yaml` configuration template file for a list of options.
 
 The other endpoints can be provided via several methods, discussed in the chapters below.
 
-##### an OpenAPI schema
+##### An OpenAPI schema
 
 This is the prefered method, to be used whenever possible.
-RapiDAST accepts OpenAPI v2(formerly known as Swagger) and v3 schemas. These schemas will describe a list of endpoints, and for each of them, a list of parameters accepted by the application.
+RapiDAST accepts OpenAPI v2 (formerly known as Swagger) and v3 schemas. These schemas will describe a list of endpoints, and for each of them, a list of parameters accepted by the application.
 
 ##### Build the endpoint list using a spider/crawler
 
@@ -584,6 +586,7 @@ scanners:
 Garak is an LLM AI scanner developed by NVIDIA. See https://github.com/NVIDIA/garak for more information.
 
 The following is an example to launch a scan:
+
 ```yaml
 scanners:
   garak:
@@ -806,7 +809,7 @@ Solutions:
 If you see one of those errors:
 
 ```sh
-Error: copying system image from manifest list: writing blob: adding layer with blob "sha256:82aabceedc2fbf89030cbb4ff98215b70d9ae35c780ade6c784d9b447b1109ed": processing tar file(potentially insufficient UIDs or GIDs available in user namespace (requested 0:42 for /etc/gshadow): Check /etc/subuid and /etc/subgid if configured locally and run "podman system migrate": lchown /etc/gshadow: invalid argument): exit status 1
+Error: copying system image from manifest list: writing blob: adding layer with blob "sha256:82aabceedc2fbf89030cbb4ff98215b70d9ae35c780ade6c784d9b447b1109ed": processing tar file (potentially insufficient UIDs or GIDs available in user namespace (requested 0:42 for /etc/gshadow): Check /etc/subuid and /etc/subgid if configured locally and run "podman system migrate": lchown /etc/gshadow: invalid argument): exit status 1
 ```
 
  -or-

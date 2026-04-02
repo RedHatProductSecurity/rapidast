@@ -157,7 +157,7 @@ class TestRapiDAST(TestBase):
         app_name = f"gcp-test-{random_suffix}"
 
         # Create the ConfigMap
-        cm = self.create_from_yaml(f"{self.tempdir}/rapidast-gcp-export-configmap.yaml")
+        self.create_from_yaml(f"{self.tempdir}/rapidast-gcp-export-configmap.yaml")
 
         # Replace APP_SHORT_NAME placeholder in the pod manifest
         # BUCKET_NAME is already replaced by render_manifests in conftest.py
@@ -168,28 +168,17 @@ class TestRapiDAST(TestBase):
         with open(pod_path, "w", encoding="utf-8") as f:
             f.write(pod_content)
 
-        # Create the pod with only volumes override
-        volumes = [
-            {"name": "config-volume", "configMap": {"name": cm.metadata.name}},
-            {"name": "results", "emptyDir": {}},
-            {
-                "name": "gcs-credentials",
-                "secret": {
-                    "secretName": "gcs-credentials",
-                    "items": [{"key": "gcs-credentials.json", "path": "gcs-credentials.json"}],
-                },
-            },
-        ]
-        pod_overrides = {"spec": {"volumes": volumes}}
-
-        p = self.create_from_yaml(pod_path, pod_overrides)
+        p = self.create_from_yaml(pod_path)
         # Wait for the pod to complete (may succeed or fail). We don't assert here because
-        # the scan is expected to fail (scanning a non-existent app), but the GCP export
-        # should still succeed. We verify the export success below.
+        # No assert: the scan is expected to fail (scanning a non-existent app).
+        # We only care that the GCP export succeeded, verified below.
         is_pod_with_field_selector_successfully_completed(
             field_selector=f"metadata.name={p.metadata.name}",
             timeout=360,
         )
+
+        logs = get_log_from_pod(self.tempdir, p.metadata.name, container="rapidast", log_format="text")
+        assert "Export to Google Cloud Storage completed successfully" in logs
 
         # Verify that RapiDAST successfully exported scan results to GCS with the expected filename
         directory = "e2e-test-gcp-export"

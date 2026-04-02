@@ -48,6 +48,6 @@ spec:
     secret:
       secretName: gcs-credentials
       items:
-      - key: credentials
+      - key: gcs-credentials.json
         path: gcs-credentials.json
   restartPolicy: Never

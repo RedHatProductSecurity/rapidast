@@ -56,7 +56,7 @@ packaging==26.0
     #   wheel
 pathspec==1.0.4
     # via hatchling
-pdm-backend==2.4.7
+pdm-backend==2.4.8
     # via
     #   annotated-doc
     #   typer

@@ -428,7 +428,7 @@ pydantic==2.10.6
     #   replicate
 pydantic-core==2.27.2
     # via pydantic
-pygments==2.19.2
+pygments==2.20.0
     # via
     #   -r requirements.txt
     #   markdown2

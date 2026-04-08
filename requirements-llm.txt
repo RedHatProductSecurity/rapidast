@@ -86,7 +86,7 @@ cohere==4.57
     # via garak
 colorama==0.4.6
     # via garak
-cryptography==46.0.6
+cryptography==46.0.7
     # via
     #   -r requirements.txt
     #   google-auth

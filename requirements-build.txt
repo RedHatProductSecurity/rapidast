@@ -43,7 +43,7 @@ hatchling==1.29.0
     #   pygments
     #   referencing
     #   urllib3
-maturin==1.12.6
+maturin==1.13.1
     # via
     #   cryptography
     #   pendulum

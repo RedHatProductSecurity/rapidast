@@ -176,7 +176,7 @@ pycparser==2.23
     # via
     #   -r requirements.txt
     #   cffi
-pygments==2.19.2
+pygments==2.20.0
     # via
     #   -r requirements.txt
     #   pytest

@@ -383,7 +383,7 @@ propcache==0.3.0
     # via
     #   aiohttp
     #   yarl
-proto-plus==1.27.1
+proto-plus==1.27.2
     # via
     #   -r requirements.txt
     #   google-api-core

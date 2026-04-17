@@ -28,7 +28,7 @@ dacite==1.9.2
     # via -r requirements.in
 fqdn==1.5.1
     # via jsonschema
-google-api-core==2.30.0
+google-api-core==2.30.3
     # via
     #   google-cloud-core
     #   google-cloud-storage

@@ -3,7 +3,6 @@ import json
 import logging
 import os
 import re
-import secrets
 from typing import Optional
 from typing import Union
 
@@ -12,6 +11,7 @@ from google.cloud import storage
 from jsonschema import Draft7Validator
 from jsonschema import validate
 
+from conftest import GCP_RANDOM_APP_NAME  # pylint: disable=E0611
 from conftest import is_pod_with_field_selector_successfully_completed  # pylint: disable=E0611
 from conftest import RAPIDAST_GCP_BUCKET  # pylint: disable=E0611
 from conftest import tee_log  # pylint: disable=E0611
@@ -152,23 +152,13 @@ class TestRapiDAST(TestBase):
     def test_gcp_export(self):
         """Test GCP export"""
         # NOTE: the test itself does not necessarily succeed. Only the successful export matters
-        # Generate a random application name for unique identification
-        random_suffix = secrets.token_hex(8)
-        app_name = f"gcp-test-{random_suffix}"
+        # APP_SHORT_NAME and BUCKET_NAME are replaced by render_manifests in conftest.py
+        app_name = GCP_RANDOM_APP_NAME
 
         # Create the ConfigMap
         self.create_from_yaml(f"{self.tempdir}/rapidast-gcp-export-configmap.yaml")
 
-        # Replace APP_SHORT_NAME placeholder in the pod manifest
-        # BUCKET_NAME is already replaced by render_manifests in conftest.py
-        pod_path = f"{self.tempdir}/rapidast-gcp-export-pod.yaml"
-        with open(pod_path, "r", encoding="utf-8") as f:
-            pod_content = f.read()
-        pod_content = pod_content.replace("${APP_SHORT_NAME}", app_name)
-        with open(pod_path, "w", encoding="utf-8") as f:
-            f.write(pod_content)
-
-        p = self.create_from_yaml(pod_path)
+        p = self.create_from_yaml(f"{self.tempdir}/rapidast-gcp-export-pod.yaml")
         # Wait for the pod to complete (may succeed or fail). We don't assert here because
         # No assert: the scan is expected to fail (scanning a non-existent app).
         # We only care that the GCP export succeeded, verified below.

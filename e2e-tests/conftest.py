@@ -1,5 +1,6 @@
 import logging
 import os
+import secrets
 import shutil
 import tempfile
 import time
@@ -21,6 +22,8 @@ SERVICEACCOUNT = os.getenv("RAPIDAST_SERVICEACCOUNT", "pipeline")  # name of Ser
 RAPIDAST_IMAGE = os.getenv("RAPIDAST_IMAGE", "quay.io/redhatproductsecurity/rapidast:development")
 RAPIDAST_LLM_IMAGE = os.getenv("RAPIDAST_IMAGE", "quay.io/redhatproductsecurity/rapidast-llm:development")
 RAPIDAST_GCP_BUCKET = os.getenv("RAPIDAST_GCP_BUCKET", "rapidast-e2e-test-bucket")  # GCS bucket for export tests
+# Randomized by default so each session uses a unique GCS path; override with RAPIDAST_GCP_APP_NAME
+GCP_RANDOM_APP_NAME = os.getenv("RAPIDAST_GCP_APP_NAME", f"gcp-test-{secrets.token_hex(8)}")
 # delete resources created by tests
 RAPIDAST_CLEANUP = os.getenv("RAPIDAST_CLEANUP", "True").lower() in ("true", "1", "t", "y", "yes")
 
@@ -124,6 +127,7 @@ def render_manifests(input_dir, output_dir):
         contents = contents.replace("${SERVICEACCOUNT}", SERVICEACCOUNT)
         if RAPIDAST_GCP_BUCKET:
             contents = contents.replace("${BUCKET_NAME}", RAPIDAST_GCP_BUCKET)
+        contents = contents.replace("${APP_SHORT_NAME}", GCP_RANDOM_APP_NAME)
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(contents)
 

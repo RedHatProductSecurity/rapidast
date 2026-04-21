@@ -108,6 +108,35 @@ spec:
         - name: ownerUid
           value: $(context.pipelineRun.uid)
 
+    - name: copy-gcs-secret
+      runAfter:
+       - provision-eaas-space
+      taskSpec:
+        steps:
+          - name: copy-gcs-secret
+            image: registry.redhat.io/openshift4/ose-cli:latest
+            env:
+            - name: KUBECONFIG
+              value: /tmp/kubeconfig
+            - name: EAAS_KUBECONFIG_VALUE
+              valueFrom:
+                secretKeyRef:
+                  name: $(tasks.provision-eaas-space.results.secretRef)
+                  key: kubeconfig
+            workingDir: /workspace
+            script: |
+              #!/bin/bash -ex
+
+              # initial request will default to in-cluster k8s config
+              oc whoami
+              oc get secret gcs-credentials -o yaml > /tmp/gcs-credentials.yaml
+              sed '/namespace:/d' /tmp/gcs-credentials.yaml > /tmp/new-secret.yaml
+
+              # second request should use newly provisioned eaas creds + namespace
+              echo "$EAAS_KUBECONFIG_VALUE" > "$KUBECONFIG"
+              oc whoami
+              oc apply -f /tmp/new-secret.yaml
+
     - name: prefetch-get-refs
       onError: continue
       taskRef:
@@ -131,7 +160,7 @@ spec:
     # so need to repeat them inline, rather than define in a separate file
     - name: run-e2e-tests
       runAfter:
-        - provision-eaas-space
+        - copy-gcs-secret
         - prefetch-get-refs
       taskSpec:
         stepTemplate:
@@ -203,6 +232,11 @@ spec:
 
               echo "$KUBECONFIG_VALUE" > "$KUBECONFIG"
               oc whoami
+
+              # Extract GCS credentials from the secret and set up authentication
+              export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcs-credentials.json
+              oc get secret gcs-credentials -o jsonpath='{.data.gcs-credentials\.json}' | base64 -d > "$GOOGLE_APPLICATION_CREDENTIALS"
+              echo "GCS credentials extracted to $GOOGLE_APPLICATION_CREDENTIALS"
 
               yum install -y python3.12 git
               python3.12 -m ensurepip

@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+  generateName: rapidast-gcp-export-
+  labels:
+    app: rapidast
+spec:
+  initContainers:
+    # Run rapidast as initContainer
+  - image: ${IMAGE} # quay.io/redhatproductsecurity/rapidast:latest
+    imagePullPolicy: Always
+    name: rapidast
+    env:
+    - name: GOOGLE_APPLICATION_CREDENTIALS
+      value: /var/secrets/google/gcs-credentials.json
+    - name: GCS_BUCKET_NAME
+      value: ${BUCKET_NAME}
+    - name: APP_SHORT_NAME
+      value: ${APP_SHORT_NAME}
+    resources:
+      limits:
+        cpu: 1
+        memory: 2Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+    volumeMounts:
+    - name: config-volume
+      mountPath: /opt/rapidast/config
+    - name: results
+      mountPath: /opt/rapidast/results
+    - name: gcs-credentials
+      mountPath: /var/secrets/google
+      readOnly: true
+  containers:
+    # Simple container that just completes successfully
+  - command: ["bash", "-c", "echo 'RapiDAST GCP export test completed'"]
+    image: registry.redhat.io/ubi9/ubi-micro
+    name: completion-marker
+  volumes:
+  - name: config-volume
+    configMap:
+      name: rapidast-gcp-export
+  - name: results
+    emptyDir: {}
+  - name: gcs-credentials
+    secret:
+      secretName: gcs-credentials
+      items:
+      - key: gcs-credentials.json
+        path: gcs-credentials.json
+  restartPolicy: Never

@@ -115,8 +115,19 @@ COPY ./containerize/path_rapidast.sh /etc/profile.d/rapidast.sh
 
 ### Install RapiDAST requirements, globally, so that it's available to any user
 RUN microdnf -y module enable nodejs:24 && \
-  microdnf install -y --setopt=install_weak_deps=0 --nodocs python3.12 java-21-openjdk shadow-utils dbus-glib procps git-core nodejs npm && \
-  microdnf install -y --nodocs gtk3 && \
+  microdnf install -y --setopt=install_weak_deps=0 --nodocs \
+      shadow-utils procps \
+      # RapiDAST
+      python3.12 \
+      # ZAP
+      java-21-openjdk \
+      # Firefox
+      gtk3 libX11-xcb \
+      # Redocly
+      nodejs npm \
+      # user convenience
+      git-core \
+      && \
   python3.12 -m ensurepip --upgrade && \
   python3.12 -m pip install --no-cache-dir -r /opt/rapidast/requirements-llm.txt && \
   microdnf clean all -y && rm -rf /var/cache/dnf /tmp/* && \

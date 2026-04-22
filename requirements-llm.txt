@@ -55,7 +55,7 @@ botocore==1.37.8
     #   s3transfer
 cel-python==0.3.0
     # via -r requirements.txt
-certifi==2026.2.25
+certifi==2026.4.22
     # via
     #   -r requirements.txt
     #   httpcore

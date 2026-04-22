@@ -14,7 +14,7 @@ attrs==26.1.0
     #   referencing
 cel-python==0.3.0
     # via -r requirements.in
-certifi==2026.2.25
+certifi==2026.4.22
     # via requests
 cffi==2.0.0
     # via cryptography

@@ -606,7 +606,7 @@ typer==0.23.1
     # via
     #   -r requirements.txt
     #   py-nessus-pro
-types-pyyaml==6.0.12.20250915
+types-pyyaml==6.0.12.20260408
     # via
     #   -r requirements.txt
     #   cel-python

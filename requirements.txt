@@ -39,7 +39,7 @@ google-auth==2.49.2
     #   google-cloud-storage
 google-cloud-core==2.5.1
     # via google-cloud-storage
-google-cloud-storage==3.9.0
+google-cloud-storage==3.10.1
     # via -r requirements.in
 google-crc32c==1.8.0
     # via

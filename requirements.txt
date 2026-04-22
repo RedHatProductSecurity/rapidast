@@ -130,7 +130,7 @@ text-unidecode==1.3
     # via python-slugify
 typer==0.23.1
     # via py-nessus-pro
-types-pyyaml==6.0.12.20250915
+types-pyyaml==6.0.12.20260408
     # via cel-python
 typing-extensions==4.15.0
     # via referencing

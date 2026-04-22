@@ -274,7 +274,7 @@ lorem==0.1.1
     # via garak
 markdown==3.7
     # via garak
-markdown-it-py==3.0.0
+markdown-it-py==4.0.0
     # via
     #   -r requirements.txt
     #   rich

@@ -221,7 +221,7 @@ referencing==0.36.2
     #   -r requirements.txt
     #   jsonschema
     #   jsonschema-specifications
-requests==2.32.5
+requests==2.33.1
     # via
     #   -r requirements-dev.in
     #   -r requirements.txt

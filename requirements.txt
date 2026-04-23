@@ -12,7 +12,7 @@ attrs==26.1.0
     # via
     #   jsonschema
     #   referencing
-cel-python==0.3.0
+cel-python==0.5.0
     # via -r requirements.in
 certifi==2026.2.25
     # via requests

@@ -55,7 +55,7 @@ idna==3.11
     #   requests
 isoduration==20.11.0
     # via jsonschema
-jsonpointer==3.0.0
+jsonpointer==3.1.1
     # via jsonschema
 jsonschema[format]==4.26.0
     # via -r requirements.in

@@ -65,7 +65,7 @@ lark==0.12.0
     # via cel-python
 loguru==0.7.3
     # via py-nessus-pro
-markdown-it-py==3.0.0
+markdown-it-py==4.0.0
     # via rich
 mdurl==0.1.2
     # via markdown-it-py

@@ -487,7 +487,7 @@ referencing==0.36.2
     #   -r requirements.txt
     #   jsonschema
     #   jsonschema-specifications
-regex==2024.11.6
+regex==2026.4.4
     # via
     #   nltk
     #   tiktoken

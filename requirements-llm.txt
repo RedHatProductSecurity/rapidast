@@ -94,7 +94,7 @@ dacite==1.9.2
     # via -r requirements.txt
 datasets==2.16.1
     # via garak
-datetime==5.5
+datetime==6.0
     # via avidtools
 deepl==1.17.0
     # via garak

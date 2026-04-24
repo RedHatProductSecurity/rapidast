@@ -568,7 +568,7 @@ sqlalchemy==2.0.46
     # via langchain
 starlette==0.46.0
     # via fastapi
-stdlibs==2024.12.3
+stdlibs==2026.2.26
     # via garak
 svgwrite==1.4.3
     # via wavedrom

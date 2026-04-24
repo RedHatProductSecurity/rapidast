@@ -439,7 +439,7 @@ pygments==2.20.0
     #   -r requirements.txt
     #   markdown2
     #   rich
-pyparsing==3.2.1
+pyparsing==3.3.2
     # via httplib2
 pyperclip==1.9.0
     # via cmd2

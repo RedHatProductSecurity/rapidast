@@ -82,7 +82,7 @@ click==8.3.2
     #   uvicorn
 cmd2==2.4.3
     # via garak
-cohere==4.57
+cohere==6.1.0
     # via garak
 colorama==0.4.6
     # via garak

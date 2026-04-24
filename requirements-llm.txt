@@ -589,7 +589,7 @@ tokenizers==0.21.0
     # via
     #   litellm
     #   transformers
-tomli==2.2.1
+tomli==2.4.1
     # via wn
 torch==2.6.0
     # via

@@ -237,7 +237,7 @@ joblib==1.4.2
     # via nltk
 jsonpatch==1.33
     # via langchain-core
-jsonpath-ng==1.7.0
+jsonpath-ng==1.8.0
     # via garak
 jsonpointer==3.1.1
     # via

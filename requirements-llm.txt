@@ -682,7 +682,7 @@ zipp==3.21.0
     # via importlib-metadata
 zope-interface==7.2
     # via datetime
-zstandard==0.23.0
+zstandard==0.25.0
     # via langsmith
 
 # The following packages are considered to be unsafe in a requirements file:

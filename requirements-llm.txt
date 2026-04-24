@@ -654,7 +654,7 @@ urllib3==2.6.3
     #   types-requests
 uuid-utils==0.14.1
     # via langchain-core
-uvicorn==0.34.0
+uvicorn==0.46.0
     # via
     #   fschat
     #   octoai-sdk

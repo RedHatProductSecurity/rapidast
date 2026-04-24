@@ -252,7 +252,7 @@ jsonschema-specifications==2025.9.1
     # via
     #   -r requirements.txt
     #   jsonschema
-langchain==0.3.27
+langchain==1.2.15
     # via garak
 langchain-core==0.3.83
     # via

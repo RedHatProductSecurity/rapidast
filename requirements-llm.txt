@@ -278,7 +278,7 @@ loguru==0.7.3
     #   py-nessus-pro
 lorem==0.1.1
     # via garak
-markdown==3.7
+markdown==3.10.2
     # via garak
 markdown-it-py==4.0.0
     # via

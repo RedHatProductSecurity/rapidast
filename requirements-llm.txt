@@ -92,7 +92,7 @@ cryptography==46.0.7
     #   google-auth
 dacite==1.9.2
     # via -r requirements.txt
-datasets==2.16.1
+datasets==2.21.0
     # via garak
 datetime==5.5
     # via avidtools

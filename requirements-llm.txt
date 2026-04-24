@@ -403,7 +403,7 @@ psutil==7.0.0
     # via accelerate
 py-nessus-pro @ git+https://github.com/sfowl/py-nessus-pro.git@bce7f027eab36da822f190afadf1f2dda7ba5f4f
     # via -r requirements.txt
-pyarrow==19.0.1
+pyarrow==24.0.0
     # via datasets
 pyarrow-hotfix==0.6
     # via datasets

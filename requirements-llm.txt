@@ -441,7 +441,7 @@ pygments==2.20.0
     #   rich
 pyparsing==3.2.1
     # via httplib2
-pyperclip==1.9.0
+pyperclip==1.11.0
     # via cmd2
 python-dateutil==2.9.0.post0
     # via

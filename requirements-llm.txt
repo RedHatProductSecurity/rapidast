@@ -39,7 +39,7 @@ attrs==26.1.0
     #   cmd2
     #   jsonschema
     #   referencing
-avidtools==0.1.2
+avidtools==0.3.2
     # via garak
 backoff==2.2.1
     # via

@@ -304,7 +304,7 @@ nemollm==0.3.5
     # via garak
 networkx==3.4.2
     # via torch
-nh3==0.2.21
+nh3==0.3.5
     # via fschat
 nltk==3.9.3
     # via garak

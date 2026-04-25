@@ -79,9 +79,9 @@ setuptools-scm==10.0.5
     #   pluggy
     #   setuptools-rust
     #   uri-template
-setuptools-scm==7.1.0
+setuptools-scm==10.0.5
     # via python-dateutil
-setuptools-scm==9.2.2
+setuptools-scm==10.0.5
     # via
     #   hatch-vcs
     #   urllib3

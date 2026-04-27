@@ -144,7 +144,7 @@ nodeenv==1.10.0
     # via pre-commit
 oauthlib==3.3.1
     # via requests-oauthlib
-packaging==24.2
+packaging==26.2
     # via
     #   black
     #   pytest

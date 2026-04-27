@@ -52,7 +52,9 @@ distlib==0.4.0
 durationpy==0.10
     # via kubernetes
 filelock==3.25.2
-    # via virtualenv
+    # via
+    #   python-discovery
+    #   virtualenv
 fqdn==1.5.1
     # via
     #   -r requirements.txt
@@ -155,6 +157,7 @@ pendulum==3.2.0
 platformdirs==4.9.6
     # via
     #   black
+    #   python-discovery
     #   virtualenv
 pluggy==1.6.0
     # via pytest
@@ -207,6 +210,8 @@ python-dateutil==2.9.0.post0
     #   arrow
     #   kubernetes
     #   pendulum
+python-discovery==1.2.2
+    # via virtualenv
 python-dotenv==1.2.2
     # via
     #   -r requirements-dev.in

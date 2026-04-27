@@ -664,7 +664,7 @@ wcwidth==0.2.13
     # via
     #   cmd2
     #   prompt-toolkit
-webcolors==24.11.1
+webcolors==25.10.0
     # via
     #   -r requirements.txt
     #   jsonschema

@@ -300,7 +300,7 @@ urllib3==2.6.3
     #   requests
 virtualenv==21.2.4
     # via pre-commit
-webcolors==24.11.1
+webcolors==25.10.0
     # via
     #   -r requirements.txt
     #   jsonschema

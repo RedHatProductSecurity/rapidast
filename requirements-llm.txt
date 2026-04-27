@@ -112,7 +112,7 @@ fastapi==0.115.11
     #   octoai-sdk
 fastavro==1.10.0
     # via cohere
-filelock==3.17.0
+filelock==3.29.0
     # via
     #   datasets
     #   huggingface-hub

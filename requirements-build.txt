@@ -85,7 +85,7 @@ setuptools-scm==10.0.5
     # via
     #   hatch-vcs
     #   urllib3
-trove-classifiers==2026.1.14.14
+trove-classifiers==2026.4.28.13
     # via hatchling
 typing-extensions==4.15.0
     # via setuptools-scm

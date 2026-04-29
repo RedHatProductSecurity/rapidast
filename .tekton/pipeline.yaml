@@ -142,6 +142,8 @@ spec:
       value: $(params.image-expires-after)
     - name: enable-package-registry-proxy
       value: $(params.enable-package-registry-proxy)
+    - name: mode
+      value: $(params.prefetch-mode)
     runAfter:
     - clone-repository
     taskRef:

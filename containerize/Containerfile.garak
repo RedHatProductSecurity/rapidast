@@ -114,7 +114,7 @@ COPY ./containerize/container_default_config.yaml /opt/rapidast/rapidast-default
 COPY ./containerize/path_rapidast.sh /etc/profile.d/rapidast.sh
 
 ### Install RapiDAST requirements, globally, so that it's available to any user
-RUN microdnf -y module enable nodejs:24 && \
+RUN set -x && microdnf -y module enable nodejs:24 && \
   microdnf install -y --setopt=install_weak_deps=0 --nodocs \
       shadow-utils procps \
       # RapiDAST
@@ -128,8 +128,11 @@ RUN microdnf -y module enable nodejs:24 && \
       # user convenience
       git-core \
       && \
+  cat /cachi2/cachi2.env && \
+  ls -R /cachi2/output/deps/pip && \
   python3.12 -m ensurepip --upgrade && \
-  python3.12 -m pip install --no-cache-dir -r /opt/rapidast/requirements-llm.txt && \
+  python3.12 -m pip install --no-cache-dir -f /usr/share/python3.12-wheels/ \
+    -r /opt/rapidast/requirements-llm.txt && \
   microdnf clean all -y && rm -rf /var/cache/dnf /tmp/* && \
   ln -s /usr/bin/python3.12 /usr/local/bin/python3 && \
   ln -s /opt/redocly/node_modules/@redocly/cli/bin/cli.js /usr/local/bin/redocly

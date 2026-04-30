@@ -538,7 +538,7 @@ rpds-py==0.27.1
     #   -r requirements.txt
     #   jsonschema
     #   referencing
-s3transfer==0.11.4
+s3transfer==0.17.0
     # via boto3
 safetensors==0.5.3
     # via

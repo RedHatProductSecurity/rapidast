@@ -632,7 +632,7 @@ typing-extensions==4.15.0
     #   replicate
     #   sqlalchemy
     #   torch
-tzdata==2025.3
+tzdata==2026.2
     # via
     #   -r requirements.txt
     #   arrow

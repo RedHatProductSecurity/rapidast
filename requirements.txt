@@ -136,7 +136,7 @@ typer==0.23.1
     # via py-nessus-pro
 typing-extensions==4.15.0
     # via referencing
-tzdata==2025.3
+tzdata==2026.2
     # via
     #   arrow
     #   pendulum

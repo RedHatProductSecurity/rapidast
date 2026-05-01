@@ -284,7 +284,7 @@ typing-extensions==4.15.0
     # via
     #   -r requirements.txt
     #   referencing
-tzdata==2025.3
+tzdata==2026.2
     # via
     #   -r requirements.txt
     #   arrow

@@ -133,7 +133,7 @@ fsspec[http]==2023.10.0
     #   datasets
     #   huggingface-hub
     #   torch
-garak==0.10.3.1
+garak==0.15.0
     # via -r requirements-llm.in
 google-api-core==2.30.3
     # via

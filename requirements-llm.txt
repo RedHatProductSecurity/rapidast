@@ -4,7 +4,7 @@
 #
 #    pip-compile requirements-llm.in
 #
-accelerate==1.4.0
+accelerate==1.13.0
     # via garak
 aiohappyeyeballs==2.5.0
     # via aiohttp

@@ -306,7 +306,7 @@ networkx==3.4.2
     # via torch
 nh3==0.2.21
     # via fschat
-nltk==3.9.3
+nltk==3.9.4
     # via garak
 numpy==1.26.4
     # via

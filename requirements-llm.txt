@@ -660,7 +660,7 @@ uvicorn==0.34.0
     #   octoai-sdk
 wavedrom==2.0.3.post3
     # via markdown2
-wcwidth==0.2.13
+wcwidth==0.7.0
     # via
     #   cmd2
     #   prompt-toolkit

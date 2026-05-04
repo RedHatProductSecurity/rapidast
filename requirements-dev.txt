@@ -148,7 +148,7 @@ packaging==24.2
     # via
     #   black
     #   pytest
-pathspec==1.0.4
+pathspec==1.1.1
     # via black
 pendulum==3.2.0
     # via

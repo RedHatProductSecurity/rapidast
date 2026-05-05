@@ -298,7 +298,7 @@ urllib3==2.6.3
     #   -r requirements.txt
     #   kubernetes
     #   requests
-virtualenv==21.2.4
+virtualenv==21.3.1
     # via pre-commit
 webcolors==25.10.0
     # via

@@ -604,7 +604,7 @@ tqdm==4.67.3
     #   nltk
     #   openai
     #   transformers
-transformers==4.49.0
+transformers==5.8.0
     # via garak
 triton==3.2.0
     # via torch

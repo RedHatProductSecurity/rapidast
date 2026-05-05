@@ -8,11 +8,8 @@ accelerate==1.13.0
     # via garak
 aiohappyeyeballs==2.6.1
     # via aiohttp
-aiohttp==3.13.5
+aiohttp==3.13.3
     # via
-    #   cohere
-    #   datasets
-    #   fschat
     #   fsspec
     #   litellm
 aiosignal==1.4.0
@@ -27,7 +24,6 @@ anyio==4.13.0
     # via
     #   httpx
     #   openai
-    #   starlette
 arrow==1.4.0
     # via
     #   -r requirements.txt
@@ -42,14 +38,10 @@ attrs==26.1.0
 avidtools==0.1.2
     # via garak
 backoff==2.2.1
-    # via
-    #   cohere
-    #   garak
-base2048==0.1.3
     # via garak
-boto3==1.37.8
-    # via octoai-sdk
-botocore==1.37.8
+boto3==1.43.3
+    # via garak
+botocore==1.43.3
     # via
     #   boto3
     #   s3transfer
@@ -65,24 +57,19 @@ cffi==2.0.0
     # via
     #   -r requirements.txt
     #   cryptography
-    #   soundfile
 charset-normalizer==3.4.7
     # via
     #   -r requirements.txt
     #   requests
-chevron==0.14.0
-    # via octoai-sdk
-click==8.3.3
+click==8.1.8
     # via
     #   -r requirements.txt
     #   litellm
     #   nltk
-    #   octoai-sdk
     #   typer
-    #   uvicorn
 cmd2==2.4.3
     # via garak
-cohere==4.57
+cohere==6.1.0
     # via garak
 colorama==0.4.6
     # via garak
@@ -90,15 +77,21 @@ cryptography==47.0.0
     # via
     #   -r requirements.txt
     #   google-auth
+cuda-bindings==13.2.0
+    # via torch
+cuda-pathfinder==1.5.4
+    # via cuda-bindings
+cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.2
+    # via torch
 dacite==1.9.2
     # via -r requirements.txt
-datasets==2.16.1
+datasets==3.6.0
     # via garak
-datetime==5.5
+datetime==6.0
     # via avidtools
 deepl==1.17.0
     # via garak
-dill==0.3.7
+dill==0.3.8
     # via
     #   datasets
     #   multiprocess
@@ -106,42 +99,42 @@ distro==1.9.0
     # via openai
 ecoji==0.1.1
     # via garak
-fastapi==0.115.11
-    # via
-    #   fschat
-    #   octoai-sdk
-fastavro==1.10.0
+eval-type-backport==0.3.1
+    # via mistralai
+fastavro==1.12.2
     # via cohere
-filelock==3.17.0
+fastuuid==0.14.0
+    # via litellm
+filelock==3.29.0
     # via
     #   datasets
     #   huggingface-hub
     #   torch
-    #   transformers
 fqdn==1.5.1
     # via
     #   -r requirements.txt
     #   jsonschema
-frozenlist==1.5.0
+frozenlist==1.8.0
     # via
     #   aiohttp
     #   aiosignal
-fschat==0.2.36
-    # via garak
-fsspec[http]==2023.10.0
+fsspec[http]==2025.3.0
     # via
     #   datasets
     #   huggingface-hub
     #   torch
-garak==0.10.3.1
+ftfy==6.3.1
+    # via garak
+garak==0.15.0
     # via -r requirements-llm.in
-google-api-core==2.30.3
+google-api-core[grpc]==2.30.3
     # via
     #   -r requirements.txt
     #   google-api-python-client
     #   google-cloud-core
     #   google-cloud-storage
-google-api-python-client==2.163.0
+    #   google-cloud-translate
+google-api-python-client==2.195.0
     # via garak
 google-auth==2.49.2
     # via
@@ -151,14 +144,18 @@ google-auth==2.49.2
     #   google-auth-httplib2
     #   google-cloud-core
     #   google-cloud-storage
-google-auth-httplib2==0.2.0
+    #   google-cloud-translate
+google-auth-httplib2==0.3.1
     # via google-api-python-client
 google-cloud-core==2.5.1
     # via
     #   -r requirements.txt
     #   google-cloud-storage
+    #   google-cloud-translate
 google-cloud-storage==3.10.1
     # via -r requirements.txt
+google-cloud-translate==3.26.0
+    # via garak
 google-crc32c==1.8.0
     # via
     #   -r requirements.txt
@@ -172,32 +169,50 @@ google-resumable-media==2.8.2
     # via
     #   -r requirements.txt
     #   google-cloud-storage
-googleapis-common-protos==1.74.0
+googleapis-common-protos[grpc]==1.74.0
     # via
     #   -r requirements.txt
     #   google-api-core
-greenlet==3.1.1
-    # via sqlalchemy
-h11==0.16.0
+    #   grpc-google-iam-v1
+    #   grpcio-status
+grpc-google-iam-v1==0.14.4
+    # via google-cloud-translate
+grpcio==1.80.0
     # via
-    #   httpcore
-    #   uvicorn
+    #   google-api-core
+    #   google-cloud-translate
+    #   googleapis-common-protos
+    #   grpc-google-iam-v1
+    #   grpcio-status
+    #   grpcio-tools
+grpcio-status==1.80.0
+    # via google-api-core
+grpcio-tools==1.80.0
+    # via
+    #   garak
+    #   nvidia-riva-client
+h11==0.16.0
+    # via httpcore
+hf-xet==1.4.3
+    # via huggingface-hub
 httpcore==1.0.9
     # via httpx
-httplib2==0.22.0
+httplib2==0.31.2
     # via
     #   google-api-python-client
     #   google-auth-httplib2
 httpx==0.28.1
     # via
-    #   fschat
+    #   cohere
+    #   huggingface-hub
+    #   langgraph-sdk
     #   langsmith
     #   litellm
-    #   octoai-sdk
+    #   mistralai
     #   ollama
     #   openai
     #   replicate
-huggingface-hub==0.29.2
+huggingface-hub==1.13.0
     # via
     #   accelerate
     #   datasets
@@ -212,20 +227,17 @@ idna==3.13
     #   jsonschema
     #   requests
     #   yarl
-importlib-metadata==6.11.0
-    # via
-    #   cohere
-    #   litellm
+importlib-metadata==8.5.0
+    # via litellm
 isoduration==20.11.0
     # via
     #   -r requirements.txt
     #   jsonschema
 jinja2==3.1.6
     # via
-    #   garak
     #   litellm
     #   torch
-jiter==0.8.2
+jiter==0.14.0
     # via openai
 jmespath==1.1.0
     # via
@@ -233,18 +245,20 @@ jmespath==1.1.0
     #   boto3
     #   botocore
     #   cel-python
-joblib==1.4.2
+joblib==1.5.3
     # via nltk
 jsonpatch==1.33
     # via langchain-core
-jsonpath-ng==1.7.0
+jsonpath-ng==1.8.0
     # via garak
+jsonpath-python==1.1.5
+    # via mistralai
 jsonpointer==3.1.1
     # via
     #   -r requirements.txt
     #   jsonpatch
     #   jsonschema
-jsonschema[format]==4.26.0
+jsonschema[format]==4.23.0
     # via
     #   -r requirements.txt
     #   litellm
@@ -252,25 +266,35 @@ jsonschema-specifications==2025.9.1
     # via
     #   -r requirements.txt
     #   jsonschema
-langchain==0.3.28
+langchain==1.2.17
     # via garak
-langchain-core==0.3.84
+langchain-core==1.3.2
     # via
     #   langchain
-    #   langchain-text-splitters
-langchain-text-splitters==0.3.11
+    #   langgraph
+    #   langgraph-checkpoint
+    #   langgraph-prebuilt
+langchain-protocol==0.0.15
+    # via langchain-core
+langdetect==1.0.9
+    # via garak
+langgraph==1.1.10
     # via langchain
-langsmith==0.3.45
+langgraph-checkpoint==4.0.3
     # via
-    #   langchain
-    #   langchain-core
+    #   langgraph
+    #   langgraph-prebuilt
+langgraph-prebuilt==1.0.13
+    # via langgraph
+langgraph-sdk==0.3.13
+    # via langgraph
+langsmith==0.8.0
+    # via langchain-core
 lark==1.3.1
     # via
     #   -r requirements.txt
     #   cel-python
-latex2mathml==3.77.0
-    # via markdown2
-litellm==1.63.2
+litellm==1.83.13
     # via garak
 loguru==0.7.3
     # via
@@ -278,93 +302,99 @@ loguru==0.7.3
     #   py-nessus-pro
 lorem==0.1.1
     # via garak
-markdown==3.7
+markdown==3.10.2
     # via garak
 markdown-it-py==4.0.0
     # via
     #   -r requirements.txt
     #   rich
-markdown2[all]==2.5.5
-    # via fschat
 markupsafe==3.0.3
     # via jinja2
 mdurl==0.1.2
     # via
     #   -r requirements.txt
     #   markdown-it-py
+mikeshardmind-base2048==1.0.3
+    # via garak
+mistralai==1.5.2
+    # via garak
 mpmath==1.3.0
     # via sympy
-multidict==6.1.0
+multidict==6.7.1
     # via
     #   aiohttp
     #   yarl
-multiprocess==0.70.15
+multiprocess==0.70.16
     # via datasets
-nemollm==0.3.5
-    # via garak
-networkx==3.4.2
+mypy-extensions==1.1.0
+    # via typing-inspect
+networkx==3.6.1
     # via torch
-nh3==0.2.21
-    # via fschat
 nltk==3.9.4
     # via garak
-numpy==1.26.4
+numpy==2.4.4
     # via
     #   accelerate
     #   datasets
-    #   fschat
     #   garak
-    #   octoai-sdk
     #   pandas
-    #   soundfile
     #   transformers
-nvdlib==0.7.9
+nvdlib==0.8.3
     # via avidtools
-nvidia-cublas-cu12==12.4.5.8
+nvidia-cublas==13.1.0.3
     # via
-    #   nvidia-cudnn-cu12
-    #   nvidia-cusolver-cu12
-    #   torch
-nvidia-cuda-cupti-cu12==12.4.127
+    #   cuda-toolkit
+    #   nvidia-cudnn-cu13
+    #   nvidia-cusolver
+nvidia-cuda-cupti==13.0.85
+    # via cuda-toolkit
+nvidia-cuda-nvrtc==13.0.88
+    # via cuda-toolkit
+nvidia-cuda-runtime==13.0.96
+    # via cuda-toolkit
+nvidia-cudnn-cu13==9.19.0.56
     # via torch
-nvidia-cuda-nvrtc-cu12==12.4.127
-    # via torch
-nvidia-cuda-runtime-cu12==12.4.127
-    # via torch
-nvidia-cudnn-cu12==9.1.0.70
-    # via torch
-nvidia-cufft-cu12==11.2.1.3
-    # via torch
-nvidia-curand-cu12==10.3.5.147
-    # via torch
-nvidia-cusolver-cu12==11.6.1.9
-    # via torch
-nvidia-cusparse-cu12==12.3.1.170
+nvidia-cufft==12.0.0.61
+    # via cuda-toolkit
+nvidia-cufile==1.15.1.6
+    # via cuda-toolkit
+nvidia-curand==10.4.0.35
+    # via cuda-toolkit
+nvidia-cusolver==12.0.4.66
+    # via cuda-toolkit
+nvidia-cusparse==12.6.3.3
     # via
-    #   nvidia-cusolver-cu12
-    #   torch
-nvidia-cusparselt-cu12==0.6.2
+    #   cuda-toolkit
+    #   nvidia-cusolver
+nvidia-cusparselt-cu13==0.8.0
     # via torch
-nvidia-nccl-cu12==2.21.5
+nvidia-nccl-cu13==2.28.9
     # via torch
-nvidia-nvjitlink-cu12==12.4.127
+nvidia-nvjitlink==13.0.88
     # via
-    #   nvidia-cusolver-cu12
-    #   nvidia-cusparse-cu12
-    #   torch
-nvidia-nvtx-cu12==12.4.127
+    #   cuda-toolkit
+    #   nvidia-cufft
+    #   nvidia-cusolver
+    #   nvidia-cusparse
+nvidia-nvshmem-cu13==3.4.5
     # via torch
-octoai-sdk==0.10.1
+nvidia-nvtx==13.0.85
+    # via cuda-toolkit
+nvidia-riva-client==2.16.0
     # via garak
-ollama==0.4.7
+ollama==0.6.2
     # via garak
-openai==1.65.4
+openai==2.24.0
     # via
     #   garak
     #   litellm
-orjson==3.10.15
-    # via langsmith
-packaging==24.2
+orjson==3.11.8
+    # via
+    #   langgraph-sdk
+    #   langsmith
+ormsgpack==1.12.2
+    # via langgraph-checkpoint
+packaging==26.2
     # via
     #   accelerate
     #   datasets
@@ -373,19 +403,15 @@ packaging==24.2
     #   langsmith
     #   replicate
     #   transformers
-pandas==2.2.3
+pandas==3.0.2
     # via datasets
 pendulum==3.2.0
     # via
     #   -r requirements.txt
     #   cel-python
-pillow==10.4.0
-    # via octoai-sdk
-ply==3.11
-    # via jsonpath-ng
-prompt-toolkit==3.0.52
-    # via fschat
-propcache==0.3.0
+pillow==12.2.0
+    # via garak
+propcache==0.4.1
     # via
     #   aiohttp
     #   yarl
@@ -393,19 +419,24 @@ proto-plus==1.27.2
     # via
     #   -r requirements.txt
     #   google-api-core
-protobuf==7.34.1
+    #   google-cloud-translate
+protobuf==6.33.6
     # via
     #   -r requirements.txt
     #   google-api-core
+    #   google-cloud-translate
     #   googleapis-common-protos
+    #   grpc-google-iam-v1
+    #   grpcio-status
+    #   grpcio-tools
     #   proto-plus
-psutil==7.0.0
+psutil==7.2.2
     # via accelerate
+py-markdown-table==1.3.0
+    # via garak
 py-nessus-pro @ git+https://github.com/sfowl/py-nessus-pro.git@bce7f027eab36da822f190afadf1f2dda7ba5f4f
     # via -r requirements.txt
-pyarrow==19.0.1
-    # via datasets
-pyarrow-hotfix==0.6
+pyarrow==24.0.0
     # via datasets
 pyasn1==0.6.3
     # via
@@ -419,55 +450,51 @@ pycparser==3.0
     # via
     #   -r requirements.txt
     #   cffi
-pydantic==2.10.6
+pydantic==2.12.5
     # via
     #   avidtools
-    #   fastapi
-    #   fschat
+    #   cohere
     #   langchain
     #   langchain-core
+    #   langgraph
     #   langsmith
     #   litellm
-    #   octoai-sdk
+    #   mistralai
     #   ollama
     #   openai
     #   replicate
-pydantic-core==2.27.2
-    # via pydantic
+pydantic-core==2.41.5
+    # via
+    #   cohere
+    #   pydantic
 pygments==2.20.0
     # via
     #   -r requirements.txt
-    #   markdown2
     #   rich
-pyparsing==3.2.1
+pyparsing==3.3.2
     # via httplib2
-pyperclip==1.9.0
+pyperclip==1.11.0
     # via cmd2
 python-dateutil==2.9.0.post0
     # via
     #   -r requirements.txt
     #   arrow
     #   botocore
-    #   nemollm
-    #   octoai-sdk
+    #   mistralai
     #   pandas
     #   pendulum
-python-dotenv==1.2.2
+python-dotenv==1.0.1
     # via
     #   -r requirements.txt
     #   litellm
 python-magic==0.4.27
     # via garak
-python-multipart==0.0.27
-    # via octoai-sdk
 python-slugify==8.0.4
     # via
     #   -r requirements.txt
     #   py-nessus-pro
-pytz==2025.1
-    # via
-    #   datetime
-    #   pandas
+pytz==2026.2
+    # via datetime
 pyyaml==6.0.3
     # via
     #   -r requirements.txt
@@ -475,19 +502,14 @@ pyyaml==6.0.3
     #   cel-python
     #   datasets
     #   huggingface-hub
-    #   langchain
     #   langchain-core
-    #   octoai-sdk
     #   transformers
-    #   wavedrom
-rapidfuzz==3.12.2
-    # via garak
 referencing==0.36.2
     # via
     #   -r requirements.txt
     #   jsonschema
     #   jsonschema-specifications
-regex==2024.11.6
+regex==2026.4.4
     # via
     #   nltk
     #   tiktoken
@@ -500,26 +522,16 @@ requests==2.33.1
     #   cohere
     #   datasets
     #   deepl
-    #   fschat
-    #   fsspec
     #   google-api-core
     #   google-cloud-storage
-    #   huggingface-hub
-    #   langchain
     #   langsmith
     #   nvdlib
     #   py-nessus-pro
-    #   requests-futures
     #   requests-toolbelt
     #   tiktoken
-    #   transformers
     #   wn
-requests-futures==1.0.2
-    # via nemollm
 requests-toolbelt==1.0.0
-    # via
-    #   langsmith
-    #   nemollm
+    # via langsmith
 rfc3339-validator==0.1.4
     # via
     #   -r requirements.txt
@@ -531,16 +543,15 @@ rfc3987==1.3.8
 rich==15.0.0
     # via
     #   -r requirements.txt
-    #   fschat
     #   typer
 rpds-py==0.27.1
     # via
     #   -r requirements.txt
     #   jsonschema
     #   referencing
-s3transfer==0.11.4
+s3transfer==0.17.0
     # via boto3
-safetensors==0.5.3
+safetensors==0.7.0
     # via
     #   accelerate
     #   transformers
@@ -550,48 +561,36 @@ shellingham==1.5.4
     # via
     #   -r requirements.txt
     #   typer
-shortuuid==1.0.13
-    # via fschat
 six==1.17.0
     # via
     #   -r requirements.txt
+    #   langdetect
     #   python-dateutil
     #   rfc3339-validator
-    #   wavedrom
 sniffio==1.3.1
-    # via
-    #   anyio
-    #   openai
-soundfile==0.13.1
-    # via octoai-sdk
-sqlalchemy==2.0.49
-    # via langchain
-starlette==0.46.0
-    # via fastapi
-stdlibs==2024.12.3
+    # via openai
+stdlibs==2026.2.26
     # via garak
-svgwrite==1.4.3
-    # via wavedrom
-sympy==1.13.1
+sympy==1.14.0
     # via torch
-tenacity==9.0.0
+tenacity==9.1.4
     # via langchain-core
 text-unidecode==1.3
     # via
     #   -r requirements.txt
     #   python-slugify
-tiktoken==0.9.0
+tiktoken==0.12.0
     # via
-    #   fschat
     #   garak
     #   litellm
-tokenizers==0.21.0
+tokenizers==0.22.2
     # via
+    #   cohere
     #   litellm
     #   transformers
-tomli==2.2.1
+tomli==2.4.1
     # via wn
-torch==2.6.0
+torch==2.11.0
     # via
     #   accelerate
     #   garak
@@ -600,89 +599,93 @@ tqdm==4.67.3
     #   datasets
     #   garak
     #   huggingface-hub
-    #   nemollm
     #   nltk
     #   openai
     #   transformers
-transformers==4.49.0
+transformers==5.7.0
     # via garak
-triton==3.2.0
+triton==3.6.0
     # via torch
 typer==0.23.1
     # via
     #   -r requirements.txt
+    #   huggingface-hub
     #   py-nessus-pro
-types-pyyaml==6.0.12.20260408
-    # via octoai-sdk
-types-requests==2.32.0.20250306
-    # via octoai-sdk
+    #   transformers
+types-requests==2.33.0.20260503
+    # via cohere
 typing-extensions==4.15.0
     # via
     #   -r requirements.txt
+    #   aiosignal
     #   anyio
     #   avidtools
-    #   fastapi
+    #   cohere
+    #   grpcio
     #   huggingface-hub
     #   langchain-core
-    #   nemollm
+    #   langchain-protocol
     #   openai
     #   pydantic
     #   pydantic-core
     #   referencing
     #   replicate
-    #   sqlalchemy
     #   torch
+    #   typing-inspect
+    #   typing-inspection
+typing-inspect==0.9.0
+    # via mistralai
+typing-inspection==0.4.2
+    # via pydantic
 tzdata==2026.2
     # via
     #   -r requirements.txt
     #   arrow
-    #   pandas
     #   pendulum
 uri-template==1.3.0
     # via
     #   -r requirements.txt
     #   jsonschema
-uritemplate==4.1.1
+uritemplate==4.2.0
     # via google-api-python-client
 urllib3==2.6.3
     # via
     #   -r requirements.txt
     #   botocore
-    #   cohere
-    #   nemollm
     #   requests
     #   types-requests
 uuid-utils==0.14.1
-    # via langchain-core
-uvicorn==0.34.0
     # via
-    #   fschat
-    #   octoai-sdk
-wavedrom==2.0.3.post3
-    # via markdown2
-wcwidth==0.2.13
+    #   langchain-core
+    #   langsmith
+wcwidth==0.7.0
     # via
     #   cmd2
-    #   prompt-toolkit
+    #   ftfy
 webcolors==25.10.0
     # via
     #   -r requirements.txt
     #   jsonschema
+websockets==16.0
+    # via garak
 wn==0.9.5
     # via garak
 xdg-base-dirs==6.0.2
     # via garak
-xxhash==3.5.0
-    # via datasets
-yarl==1.18.3
+xxhash==3.7.0
+    # via
+    #   datasets
+    #   langgraph
+    #   langsmith
+yarl==1.23.0
     # via aiohttp
 zalgolib==0.2.2
     # via garak
-zipp==3.21.0
+zipp==3.23.1
     # via importlib-metadata
-zope-interface==7.2
+zope-interface==8.4
     # via datetime
-zstandard==0.23.0
+zstandard==0.25.0
     # via langsmith
 
 # The following packages are considered to be unsafe in a requirements file:

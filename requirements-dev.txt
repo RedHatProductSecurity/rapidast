@@ -36,7 +36,7 @@ charset-normalizer==3.4.7
     # via
     #   -r requirements.txt
     #   requests
-click==8.3.3
+click==8.1.8
     # via
     #   -r requirements.txt
     #   black
@@ -114,7 +114,7 @@ jsonpointer==3.1.1
     # via
     #   -r requirements.txt
     #   jsonschema
-jsonschema[format]==4.26.0
+jsonschema[format]==4.23.0
     # via -r requirements.txt
 jsonschema-specifications==2025.9.1
     # via
@@ -167,7 +167,7 @@ proto-plus==1.27.2
     # via
     #   -r requirements.txt
     #   google-api-core
-protobuf==7.34.1
+protobuf==6.33.6
     # via
     #   -r requirements.txt
     #   google-api-core
@@ -212,7 +212,7 @@ python-dateutil==2.9.0.post0
     #   pendulum
 python-discovery==1.2.2
     # via virtualenv
-python-dotenv==1.2.2
+python-dotenv==1.0.1
     # via
     #   -r requirements-dev.in
     #   -r requirements.txt

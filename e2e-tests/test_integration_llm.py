@@ -23,8 +23,8 @@ class TestLLM(TestBase):
         tee_log("rapidast-llm", logfile)
 
         expected_line = (
-            '{"entry_type": "eval", "probe": "dan.AntiDAN", "detector": "detector.dan.AntiDAN", '
-            '"passed": 0, "total": 5}'
+            '{"entry_type": "eval", "probe": "dan.AntiDAN", "detector": "dan.AntiDAN", '
+            '"passed": 0, "fails": 5, "nones": 0, "total_evaluated": 5, "total_processed": 5}'
         )
         with open(logfile, "r", encoding="utf-8") as f:
             logs = f.read()

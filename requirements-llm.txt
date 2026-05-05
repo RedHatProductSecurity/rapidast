@@ -458,7 +458,7 @@ python-dotenv==1.2.2
     #   litellm
 python-magic==0.4.27
     # via garak
-python-multipart==0.0.22
+python-multipart==0.0.27
     # via octoai-sdk
 python-slugify==8.0.4
     # via

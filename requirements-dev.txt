@@ -210,7 +210,7 @@ python-dateutil==2.9.0.post0
     #   arrow
     #   kubernetes
     #   pendulum
-python-discovery==1.2.2
+python-discovery==1.3.0
     # via virtualenv
 python-dotenv==1.2.2
     # via

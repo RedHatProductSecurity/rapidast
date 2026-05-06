@@ -419,7 +419,7 @@ pycparser==3.0
     # via
     #   -r requirements.txt
     #   cffi
-pydantic==2.10.6
+pydantic==2.13.4
     # via
     #   avidtools
     #   fastapi

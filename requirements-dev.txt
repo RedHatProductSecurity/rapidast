@@ -130,7 +130,7 @@ loguru==0.7.3
     # via
     #   -r requirements.txt
     #   py-nessus-pro
-markdown-it-py==4.0.0
+markdown-it-py==4.1.0
     # via
     #   -r requirements.txt
     #   rich

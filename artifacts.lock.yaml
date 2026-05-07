@@ -4,9 +4,9 @@ artifacts:
   - download_url: https://github.com/zaproxy/zaproxy/releases/download/v2.17.0/ZAP_2.17.0_Linux.tar.gz
     filename: ZAP.tar.gz
     checksum: "sha256:efe799aaa3627db683b43f00c9c210aea0b75c00cc8f0a0f0434d12bb3ddde5a"
-  - download_url: https://releases.mozilla.org/pub/firefox/releases/140.8.0esr/linux-x86_64/en-US/firefox-140.8.0esr.tar.xz
+  - download_url: https://releases.mozilla.org/pub/firefox/releases/140.10.2esr/linux-x86_64/en-US/firefox-140.10.2esr.tar.xz
     filename: firefox.tar.xz
-    checksum: "sha256:aac63c496d14c4569ca7c64d5c8972d59f1217fd21e2548832a202e19c6e5534"
+    checksum: "sha256:69a83b1b188e34a0f0a936430ceac916be01a449c57eede4e95eeac2efdd8cc8"
   - download_url: https://dl.k8s.io/release/v1.35.2/bin/linux/amd64/kubectl
     filename: kubectl
     checksum: "sha256:924eb50779153f20cb668117d141440b95df2f325a64452d78dff9469145e277"

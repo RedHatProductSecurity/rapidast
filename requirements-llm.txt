@@ -260,7 +260,7 @@ langchain-core==0.3.84
     #   langchain-text-splitters
 langchain-text-splitters==0.3.11
     # via langchain
-langsmith==0.3.45
+langsmith==0.8.2
     # via
     #   langchain
     #   langchain-core

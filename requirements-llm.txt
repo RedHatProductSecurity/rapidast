@@ -612,7 +612,7 @@ typer==0.23.1
     #   huggingface-hub
     #   py-nessus-pro
     #   transformers
-types-requests==2.33.0.20260503
+types-requests==2.33.0.20260508
     # via cohere
 typing-extensions==4.15.0
     # via

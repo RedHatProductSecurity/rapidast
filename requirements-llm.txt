@@ -668,7 +668,7 @@ webcolors==25.10.0
     #   jsonschema
 websockets==16.0
     # via garak
-wn==0.9.5
+wn==0.14.0
     # via garak
 xdg-base-dirs==6.0.2
     # via garak

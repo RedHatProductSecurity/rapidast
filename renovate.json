@@ -3,6 +3,11 @@
   "prConcurrentLimit": 10,
   "packageRules": [
     {
+      "description": "Group boto3 and botocore updates into a single PR",
+      "matchPackageNames": ["boto3", "botocore"],
+      "groupName": "boto"
+    },
+    {
       "description": "Automerge non-major updates in .tekton folder and pre-commit-config to development branch",
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "matchFileNames": [".tekton/**", ".pre-commit-config.yaml"],

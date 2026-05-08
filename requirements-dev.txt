@@ -51,7 +51,7 @@ distlib==0.4.0
     # via virtualenv
 durationpy==0.10
     # via kubernetes
-filelock==3.25.2
+filelock==3.29.0
     # via
     #   python-discovery
     #   virtualenv

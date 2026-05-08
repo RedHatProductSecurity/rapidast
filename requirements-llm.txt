@@ -134,7 +134,7 @@ google-api-core[grpc]==2.30.3
     #   google-cloud-core
     #   google-cloud-storage
     #   google-cloud-translate
-google-api-python-client==2.195.0
+google-api-python-client==2.196.0
     # via garak
 google-auth==2.49.2
     # via

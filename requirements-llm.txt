@@ -41,7 +41,7 @@ backoff==2.2.1
     # via garak
 boto3==1.43.3
     # via garak
-botocore==1.43.3
+botocore==1.43.6
     # via
     #   boto3
     #   s3transfer

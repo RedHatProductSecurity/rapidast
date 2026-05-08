@@ -366,7 +366,7 @@ nvidia-cusparse==12.6.3.3
     # via
     #   cuda-toolkit
     #   nvidia-cusolver
-nvidia-cusparselt-cu13==0.8.0
+nvidia-cusparselt-cu13==0.9.1
     # via torch
 nvidia-nccl-cu13==2.28.9
     # via torch

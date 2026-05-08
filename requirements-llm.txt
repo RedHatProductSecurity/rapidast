@@ -227,7 +227,7 @@ idna==3.13
     #   jsonschema
     #   requests
     #   yarl
-importlib-metadata==8.5.0
+importlib-metadata==8.9.0
     # via litellm
 isoduration==20.11.0
     # via

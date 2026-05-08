@@ -388,7 +388,7 @@ openai==2.24.0
     # via
     #   garak
     #   litellm
-orjson==3.11.8
+orjson==3.11.9
     # via
     #   langgraph-sdk
     #   langsmith

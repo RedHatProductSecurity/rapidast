@@ -36,7 +36,7 @@ def convert_json_to_sarif(json_data):
         "version": "2.1.0",
         "runs": [
             {
-                "tool": {"driver": {"name": "Trivy-k8s", "version": "0.49.1", "rules": []}},
+                "tool": {"driver": {"name": "Trivy-k8s", "version": "0.70.0", "rules": []}},
                 "results": [],
             }
         ],

@@ -411,7 +411,7 @@ pendulum==3.2.0
     #   cel-python
 pillow==12.2.0
     # via garak
-propcache==0.4.1
+propcache==0.5.2
     # via
     #   aiohttp
     #   yarl

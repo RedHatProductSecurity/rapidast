@@ -40,10 +40,22 @@ spec:
     value:
     - {"type": "generic", "path": "."}
     - {"type": "npm", "path": "."}
-    - {"type": "pip", "path": ".", "allow_binary": "true", "requirements_files": ["requirements-dev.txt"]}
+    - {
+        "type": "pip",
+        "path": ".",
+        "requirements_files": ["requirements.txt", "requirements-dev.txt"],
+        "requirements_build_files": ["requirements-build.txt"],
+        "binary": {
+          "py_version": 312,
+          "platform": "^(any|manylinux.*_x86_64)$"
+        }
+      }
+  - name: prefetch-mode
+    value: "strict"
   - name: build-args
     value:
     - PREFETCH=true
+    - HERMETIC=true
     - COMMIT_SHA={{revision}}
   taskRunSpecs:
     - pipelineTaskName: ecosystem-cert-preflight-checks

@@ -36,9 +36,25 @@ spec:
     value: "true"
   - name: rebuild
     value: "true"
+  - name: prefetch-input
+    value:
+    - {"type": "generic", "path": "."}
+    - {"type": "npm", "path": "."}
+    - {
+        "type": "pip",
+        "path": ".",
+        "requirements_files": ["requirements-llm.txt", "requirements-dev.txt"],
+        "requirements_build_files": ["requirements-build.txt"],
+        "binary": {
+          "py_version": 312,
+          "platform": "^(any|manylinux.*_x86_64)$"
+        }
+      }
+  - name: prefetch-mode
+    value: "permissive"
   - name: build-args
     value:
-    - PREFETCH=false
+    - PREFETCH=true
     - COMMIT_SHA={{revision}}
   taskRunSpecs:
     - pipelineTaskName: ecosystem-cert-preflight-checks

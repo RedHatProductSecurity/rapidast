@@ -97,6 +97,7 @@ COPY --from=deps /opt/zap /opt/zap
 COPY --from=deps /opt/firefox /opt/firefox
 COPY --from=deps /usr/local/bin/kubectl /usr/local/bin/kubectl
 COPY --from=deps /tmp/trivy/trivy /usr/local/bin/trivy
+COPY --from=deps /tmp/trivy/contrib /usr/local/share/trivy/templates
 COPY --from=deps /tmp/redocly/node_modules /opt/redocly/node_modules
 
 ENV PATH $PATH:/opt/zap/:/opt/rapidast/:/opt/firefox/

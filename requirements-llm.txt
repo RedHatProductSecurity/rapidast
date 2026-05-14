@@ -251,7 +251,7 @@ jsonpatch==1.33
     # via langchain-core
 jsonpath-ng==1.8.0
     # via garak
-jsonpath-python==1.1.5
+jsonpath-python==1.1.6
     # via mistralai
 jsonpointer==3.1.1
     # via

@@ -648,7 +648,7 @@ uri-template==1.3.0
     #   jsonschema
 uritemplate==4.2.0
     # via google-api-python-client
-urllib3==2.6.3
+urllib3==2.7.0
     # via
     #   -r requirements.txt
     #   botocore

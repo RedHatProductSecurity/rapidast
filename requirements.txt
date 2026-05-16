@@ -75,7 +75,7 @@ mdurl==0.1.2
     # via markdown-it-py
 pendulum==3.2.0
     # via cel-python
-proto-plus==1.27.2
+proto-plus==1.28.0
     # via google-api-core
 protobuf==6.33.6
     # via

@@ -165,7 +165,7 @@ google-re2==1.1.20251105
     # via
     #   -r requirements.txt
     #   cel-python
-google-resumable-media==2.8.2
+google-resumable-media==2.9.0
     # via
     #   -r requirements.txt
     #   google-cloud-storage

@@ -4,30 +4,30 @@ artifacts:
   - download_url: https://github.com/zaproxy/zaproxy/releases/download/v2.17.0/ZAP_2.17.0_Linux.tar.gz
     filename: ZAP.tar.gz
     checksum: "sha256:efe799aaa3627db683b43f00c9c210aea0b75c00cc8f0a0f0434d12bb3ddde5a"
-  - download_url: https://releases.mozilla.org/pub/firefox/releases/140.10.2esr/linux-x86_64/en-US/firefox-140.10.2esr.tar.xz
+  - download_url: https://releases.mozilla.org/pub/firefox/releases/140.11.0esr/linux-x86_64/en-US/firefox-140.11.0esr.tar.xz
     filename: firefox.tar.xz
-    checksum: "sha256:69a83b1b188e34a0f0a936430ceac916be01a449c57eede4e95eeac2efdd8cc8"
+    checksum: "sha256:2c1de25ad00a9d6e23c66d271b73bfec9acef18c3c049869e7d330eba44ec308"
   - download_url: https://dl.k8s.io/release/v1.35.2/bin/linux/amd64/kubectl
     filename: kubectl
     checksum: "sha256:924eb50779153f20cb668117d141440b95df2f325a64452d78dff9469145e277"
   - download_url: https://github.com/aquasecurity/trivy/releases/download/v0.70.0/trivy_0.70.0_Linux-64bit.tar.gz
     filename: trivy.tar.gz
     checksum: "sha256:8b4376d5d6befe5c24d503f10ff136d9e0c49f9127a4279fd110b727929a5aa9"
-  - filename: ascanrules-release-81.zap
-    download_url: https://github.com/zaproxy/zap-extensions/releases/download/ascanrules-v81/ascanrules-release-81.zap
-    checksum: "sha256:6ee3193086d04b8ff2735b3d9b1818702c9c194ecd3810150401435723585955"
-  - filename: authhelper-beta-0.38.0.zap
-    download_url: https://github.com/zaproxy/zap-extensions/releases/download/authhelper-v0.38.0/authhelper-beta-0.38.0.zap
-    checksum: "sha256:bc2b4f1f7cfb62c3a0c3e49fe269c7cccd5e02380e364770287d675fa9f0d90f"
-  - filename: automation-beta-0.59.0.zap
-    download_url: https://github.com/zaproxy/zap-extensions/releases/download/automation-v0.59.0/automation-beta-0.59.0.zap
-    checksum: "sha256:6cb28f527d1edfc5fcf7982c2632a91573d3b72fccb42a86ae200dd2b9bf3387"
+  - filename: ascanrules-release-82.zap
+    download_url: https://github.com/zaproxy/zap-extensions/releases/download/ascanrules-v82/ascanrules-release-82.zap
+    checksum: "sha256:170f98c204347dc473f1c4118e8240b36281966396c36377d7a0768e83948761"
+  - filename: authhelper-beta-0.39.0.zap
+    download_url: https://github.com/zaproxy/zap-extensions/releases/download/authhelper-v0.39.0/authhelper-beta-0.39.0.zap
+    checksum: "sha256:e5a860023886b30192ed153244327d25a16c8924cf4a0032ac6e7416a200368c"
+  - filename: automation-beta-0.60.0.zap
+    download_url: https://github.com/zaproxy/zap-extensions/releases/download/automation-v0.60.0/automation-beta-0.60.0.zap
+    checksum: "sha256:e02c90abea15cb5802be1aa1adb959e5f76c4c517494087388732d71345e4ea9"
   - filename: callhome-release-0.21.0.zap
     download_url: https://github.com/zaproxy/zap-extensions/releases/download/callhome-v0.21.0/callhome-release-0.21.0.zap
     checksum: "sha256:656b610e7a5e2688710dabdd0da859d92802eb0922b45c2cc3d1a0ab3ec916f1"
-  - filename: client-alpha-0.22.0.zap
-    download_url: https://github.com/zaproxy/zap-extensions/releases/download/client-v0.22.0/client-alpha-0.22.0.zap
-    checksum: "sha256:55b413fc2525aeef695b18b0f2b5b4c57a642fd216c51a9fa8844b41a0435dd3"
+  - filename: client-alpha-0.24.0.zap
+    download_url: https://github.com/zaproxy/zap-extensions/releases/download/client-v0.24.0/client-alpha-0.24.0.zap
+    checksum: "sha256:779510906f67fc62e5cd535e13663f3d374ef3270818c8333264fc81c13826a9"
   - filename: commonlib-release-1.41.0.zap
     download_url: https://github.com/zaproxy/zap-extensions/releases/download/commonlib-v1.41.0/commonlib-release-1.41.0.zap
     checksum: "sha256:0710af7f49df0a18763c8aa6c8bc6551fc69049ee9c17ce54530fa863fa0140d"
@@ -37,9 +37,9 @@ artifacts:
   - filename: encoder-release-1.9.0.zap
     download_url: https://github.com/zaproxy/zap-extensions/releases/download/encoder-v1.9.0/encoder-release-1.9.0.zap
     checksum: "sha256:5f826627a98cfa368b8b7e178850bebde73447f91eec852fa7f0af81ddd6a76c"
-  - filename: exim-beta-0.19.0.zap
-    download_url: https://github.com/zaproxy/zap-extensions/releases/download/exim-v0.19.0/exim-beta-0.19.0.zap
-    checksum: "sha256:a7df97fa19363b029caabd12e0cf57f2d331e7bc77dcc9e5ad52fed2fe40fb4e"
+  - filename: exim-beta-0.20.0.zap
+    download_url: https://github.com/zaproxy/zap-extensions/releases/download/exim-v0.20.0/exim-beta-0.20.0.zap
+    checksum: "sha256:05f8235fc8e335062306de22dc933d952d4014dfd5c5f4459c31ebd9dcd1a796"
   - filename: graaljs-alpha-0.14.0.zap
     download_url: https://github.com/zaproxy/zap-extensions/releases/download/graaljs-v0.14.0/graaljs-alpha-0.14.0.zap
     checksum: "sha256:1e196453fe9f660eb92e8debd6d0e07993741b52123a920c619c3bc5013c5020"
@@ -49,30 +49,30 @@ artifacts:
   - filename: insights-alpha-0.4.0.zap
     download_url: https://github.com/zaproxy/zap-extensions/releases/download/insights-v0.4.0/insights-alpha-0.4.0.zap
     checksum: "sha256:895aebcc28974c1b7590c67de4683e25963683f78ae1f82a6f73c66990d30752"
-  - filename: network-beta-0.26.0.zap
-    download_url: https://github.com/zaproxy/zap-extensions/releases/download/network-v0.26.0/network-beta-0.26.0.zap
-    checksum: "sha256:0cbf12aa5597c4b80e0cdff6d956c834da343aa64e08c25b00903eab1cd20523"
-  - filename: openapi-beta-55.zap
-    download_url: https://github.com/zaproxy/zap-extensions/releases/download/openapi-v55/openapi-beta-55.zap
-    checksum: "sha256:17bc5d84bfea78c7e28cd654dea6b10cfc366213c9220c97c4cefa3bb6223521"
+  - filename: network-beta-0.27.0.zap
+    download_url: https://github.com/zaproxy/zap-extensions/releases/download/network-v0.27.0/network-beta-0.27.0.zap
+    checksum: "sha256:1ee957c473eca42865417115a126927790dbc972771cc86354d0f7f0cc7edbb9"
+  - filename: openapi-beta-56.zap
+    download_url: https://github.com/zaproxy/zap-extensions/releases/download/openapi-v56/openapi-beta-56.zap
+    checksum: "sha256:12bdc14392a270ff003b9875701232802fa788ef78b5eceacf1462e498d140ff"
   - filename: pscanrules-release-73.zap
     download_url: https://github.com/zaproxy/zap-extensions/releases/download/pscanrules-v73/pscanrules-release-73.zap
     checksum: "sha256:f20515978794f49558d83fde0b910270c86c4cfa7351914bda05e9eebbb83ef5"
-  - filename: quickstart-release-55.zap
-    download_url: https://github.com/zaproxy/zap-extensions/releases/download/quickstart-v55/quickstart-release-55.zap
-    checksum: "sha256:1c618c5381fe85cc63e89ab64e2881c4f376a687e82f35ee08078b79e312bc92"
+  - filename: quickstart-release-56.zap
+    download_url: https://github.com/zaproxy/zap-extensions/releases/download/quickstart-v56/quickstart-release-56.zap
+    checksum: "sha256:b8b77e38e69792a28466f28f9e0d13baf784316ccfe495ce1f7ddb918bfba859"
   - filename: replacer-release-22.zap
     download_url: https://github.com/zaproxy/zap-extensions/releases/download/replacer-v22/replacer-release-22.zap
     checksum: "sha256:e2cc4478f69fb0ea3fd65f21449e09664ae128df7b3903f1a1aa3ec026ed5b51"
-  - filename: reports-release-0.44.0.zap
-    download_url: https://github.com/zaproxy/zap-extensions/releases/download/reports-v0.44.0/reports-release-0.44.0.zap
-    checksum: "sha256:f9bba543d522bdaf57c6db9b2fe3b47cadc0eca1de84ccd6304df628ea63ba64"
+  - filename: reports-release-0.45.0.zap
+    download_url: https://github.com/zaproxy/zap-extensions/releases/download/reports-v0.45.0/reports-release-0.45.0.zap
+    checksum: "sha256:04d3a774a3a719ada6e338d9d2faba9ea1162900957ff0ddc01e7c855a2bc7b5"
   - filename: requester-beta-7.10.0.zap
     download_url: https://github.com/zaproxy/zap-extensions/releases/download/requester-v7.10.0/requester-beta-7.10.0.zap
     checksum: "sha256:cca0589258a1c1c2a75dbffef5abf1ff46defa970800cf2748245f8e283aba3f"
-  - filename: retire-release-0.56.0.zap
-    download_url: https://github.com/zaproxy/zap-extensions/releases/download/retire-v0.56.0/retire-release-0.56.0.zap
-    checksum: "sha256:d5b3881326703bbad85ba27ba30c9e7a5d637f38ad82b36b0030857516e9e08b"
+  - filename: retire-release-0.58.0.zap
+    download_url: https://github.com/zaproxy/zap-extensions/releases/download/retire-v0.58.0/retire-release-0.58.0.zap
+    checksum: "sha256:9b8893e0acda4d303d6c93f94ff797f217f6acc1f408342256f291c1a2c7666b"
   - filename: scanpolicies-alpha-0.8.0.zap
     download_url: https://github.com/zaproxy/zap-extensions/releases/download/scanpolicies-v0.8.0/scanpolicies-alpha-0.8.0.zap
     checksum: "sha256:bb1e2e0ce2d9febd41a9fab5a73aa536e1e88002e60e41065d2d9d492e7e7d1d"
@@ -91,12 +91,12 @@ artifacts:
   - filename: spiderAjax-release-23.30.0.zap
     download_url: https://github.com/zaproxy/zap-extensions/releases/download/spiderAjax-v23.30.0/spiderAjax-release-23.30.0.zap
     checksum: "sha256:c165905a2532e0ff728b10c33cf3853dabe779c9147080a1ec3a1e0bb048d822"
-  - filename: webdriverlinux-release-193.zap
-    download_url: https://github.com/zaproxy/zap-extensions/releases/download/webdriverlinux-v193/webdriverlinux-release-193.zap
-    checksum: "sha256:9a840889eea9507a3afd1da925d4f9c22ac861a0e08c92776ada67fd2bec95cb"
-  - filename: websocket-release-36.zap
-    download_url: https://github.com/zaproxy/zap-extensions/releases/download/websocket-v36/websocket-release-36.zap
-    checksum: "sha256:511082258f3ba9a203182f3be933a39426bcaf352cc75f7955db7b8642d63f4f"
+  - filename: webdriverlinux-release-197.zap
+    download_url: https://github.com/zaproxy/zap-extensions/releases/download/webdriverlinux-v197/webdriverlinux-release-197.zap
+    checksum: "sha256:54f3e8134289cc5b0f3f113eefb1a93a4185524451e1fbbbe1a7a59939aa5c97"
+  - filename: websocket-release-37.zap
+    download_url: https://github.com/zaproxy/zap-extensions/releases/download/websocket-v37/websocket-release-37.zap
+    checksum: "sha256:f2c3035976531130494b5b9dfc02ca0ebd7e0388f740f68b6d4e775098be9fc6"
   - filename: zest-beta-48.13.0.zap
     download_url: https://github.com/zaproxy/zap-extensions/releases/download/zest-v48.13.0/zest-beta-48.13.0.zap
     checksum: "sha256:54ea8b26a42a2eca5b526e63c81270243e6ac3db0235dcea9cac1bd1c00257ec"

@@ -12,7 +12,7 @@ ARG PREFETCH=false
 # IMPORTANT: Ensure these versions are synchronized with 'artifacts.lock.yaml'
 # Refer to the docs/DEVELOPER_GUIDE.md, "Updating Static Dependency Versions" for details
 ARG ZAP_VERSION=2.17.0
-ARG FF_VERSION=140.10.2esr
+ARG FF_VERSION=140.11.0esr
 ARG K8S_VERSION=1.35.2
 ARG TRIVY_VERSION=0.70.0
 

@@ -67,7 +67,7 @@ click==8.1.8
     #   litellm
     #   nltk
     #   typer
-cmd2==2.4.3
+cmd2==2.7.0
     # via garak
 cohere==6.1.0
     # via garak

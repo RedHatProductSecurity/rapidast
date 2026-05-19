@@ -219,7 +219,7 @@ huggingface-hub==1.13.0
     #   garak
     #   tokenizers
     #   transformers
-idna==3.14
+idna==3.15
     # via
     #   -r requirements.txt
     #   anyio

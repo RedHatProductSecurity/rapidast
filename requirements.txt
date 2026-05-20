@@ -108,7 +108,7 @@ referencing==0.36.2
     # via
     #   jsonschema
     #   jsonschema-specifications
-requests==2.34.0
+requests==2.34.1
     # via
     #   -r requirements.in
     #   google-api-core

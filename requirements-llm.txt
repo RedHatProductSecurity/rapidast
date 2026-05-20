@@ -516,7 +516,7 @@ regex==2026.4.4
     #   transformers
 replicate==1.0.7
     # via garak
-requests==2.34.0
+requests==2.34.1
     # via
     #   -r requirements.txt
     #   cohere

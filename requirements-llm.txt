@@ -39,9 +39,9 @@ avidtools==0.1.2
     # via garak
 backoff==2.2.1
     # via garak
-boto3==1.43.6
+boto3==1.43.7
     # via garak
-botocore==1.43.6
+botocore==1.43.7
     # via
     #   boto3
     #   s3transfer

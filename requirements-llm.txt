@@ -544,7 +544,7 @@ rich==15.0.0
     # via
     #   -r requirements.txt
     #   typer
-rpds-py==0.27.1
+rpds-py==0.30.0
     # via
     #   -r requirements.txt
     #   jsonschema

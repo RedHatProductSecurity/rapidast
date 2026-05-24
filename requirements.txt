@@ -20,7 +20,7 @@ cffi==2.0.0
     # via cryptography
 charset-normalizer==3.4.7
     # via requests
-click==8.1.8
+click==8.4.0
     # via typer
 cryptography==48.0.0
     # via google-auth

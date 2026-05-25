@@ -681,7 +681,7 @@ yarl==1.23.0
     # via aiohttp
 zalgolib==0.2.2
     # via garak
-zipp==3.23.1
+zipp==4.1.0
     # via importlib-metadata
 zope-interface==8.4
     # via datetime

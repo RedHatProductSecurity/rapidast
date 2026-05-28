@@ -212,7 +212,7 @@ httpx==0.28.1
     #   ollama
     #   openai
     #   replicate
-huggingface-hub==1.13.0
+huggingface-hub==1.16.1
     # via
     #   accelerate
     #   datasets

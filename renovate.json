@@ -10,6 +10,11 @@
       "groupName": "boto"
     },
     {
+      "description": "Group langchain and langchain-core updates into a single PR",
+      "matchPackageNames": ["langchain", "langchain-core"],
+      "groupName": "langchain"
+    },
+    {
       "description": "Automerge non-major updates in .tekton folder and pre-commit-config to development branch",
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "matchFileNames": [".tekton/**", ".pre-commit-config.yaml"],

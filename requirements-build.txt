@@ -63,7 +63,7 @@ pdm-backend==2.4.8
     #   webcolors
 pluggy==1.6.0
     # via hatchling
-poetry-core==2.4.0
+poetry-core==2.4.1
     # via
     #   cel-python
     #   rich

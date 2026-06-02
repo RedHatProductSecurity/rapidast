@@ -348,7 +348,7 @@ nvidia-cublas==13.1.0.3
     #   nvidia-cusolver
 nvidia-cuda-cupti==13.0.85
     # via cuda-toolkit
-nvidia-cuda-nvrtc==13.0.88
+nvidia-cuda-nvrtc==13.3.33
     # via cuda-toolkit
 nvidia-cuda-runtime==13.0.96
     # via cuda-toolkit

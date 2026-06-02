@@ -370,7 +370,7 @@ nvidia-cusparselt-cu13==0.8.0
     # via torch
 nvidia-nccl-cu13==2.28.9
     # via torch
-nvidia-nvjitlink==13.0.88
+nvidia-nvjitlink==13.3.33
     # via
     #   cuda-toolkit
     #   nvidia-cufft

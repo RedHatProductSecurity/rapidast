@@ -314,7 +314,7 @@ mdurl==0.1.2
     # via
     #   -r requirements.txt
     #   markdown-it-py
-mikeshardmind-base2048==1.0.3
+mikeshardmind-base2048==1.0.4
     # via garak
 mistralai==1.5.2
     # via garak

@@ -8,7 +8,7 @@ calver==2025.10.20
     # via trove-classifiers
 cffi==2.0.0
     # via cryptography
-cython==3.2.4
+cython==3.2.5
     # via pyyaml
 flit-core==3.12.0
     # via

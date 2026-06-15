@@ -47,7 +47,7 @@ cryptography==48.0.0
     #   google-auth
 dacite==1.9.2
     # via -r requirements.txt
-distlib==0.4.0
+distlib==0.4.2
     # via virtualenv
 durationpy==0.10
     # via kubernetes

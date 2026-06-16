@@ -99,7 +99,7 @@ distro==1.9.0
     # via openai
 ecoji==0.1.1
     # via garak
-eval-type-backport==0.3.1
+eval-type-backport==0.4.0
     # via mistralai
 fastavro==1.12.2
     # via cohere

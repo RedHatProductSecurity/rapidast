@@ -39,9 +39,9 @@ avidtools==0.1.2
     # via garak
 backoff==2.2.1
     # via garak
-boto3==1.43.14
+boto3==1.43.25
     # via garak
-botocore==1.43.14
+botocore==1.43.25
     # via
     #   boto3
     #   s3transfer
@@ -549,7 +549,7 @@ rpds-py==0.30.0
     #   -r requirements.txt
     #   jsonschema
     #   referencing
-s3transfer==0.17.0
+s3transfer==0.18.0
     # via boto3
 safetensors==0.7.0
     # via

@@ -154,7 +154,7 @@ google-cloud-core==2.6.0
     #   google-cloud-translate
 google-cloud-storage==3.12.0
     # via -r requirements.txt
-google-cloud-translate==3.26.0
+google-cloud-translate==3.27.0
     # via garak
 google-crc32c==1.8.0
     # via

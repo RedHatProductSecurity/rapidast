@@ -21,7 +21,7 @@ black==26.5.1
     # via -r requirements-dev.in
 cel-python==0.5.0
     # via -r requirements.txt
-certifi==2026.5.20
+certifi==2026.6.17
     # via
     #   -r requirements.txt
     #   kubernetes

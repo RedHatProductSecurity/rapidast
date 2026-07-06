@@ -360,7 +360,7 @@ nvidia-cufile==1.15.1.6
     # via cuda-toolkit
 nvidia-curand==10.4.0.35
     # via cuda-toolkit
-nvidia-cusolver==12.0.4.66
+nvidia-cusolver==12.2.6.9
     # via cuda-toolkit
 nvidia-cusparse==12.6.3.3
     # via

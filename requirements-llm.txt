@@ -362,7 +362,7 @@ nvidia-curand==10.4.0.35
     # via cuda-toolkit
 nvidia-cusolver==12.0.4.66
     # via cuda-toolkit
-nvidia-cusparse==12.6.3.3
+nvidia-cusparse==12.8.2.51
     # via
     #   cuda-toolkit
     #   nvidia-cusolver

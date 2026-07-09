@@ -87,7 +87,7 @@ setuptools-scm==10.0.5
     #   urllib3
 trove-classifiers==2026.5.22.10
     # via hatchling
-typing-extensions==4.15.0
+typing-extensions==4.16.0
     # via setuptools-scm
 vcs-versioning==1.1.1
     # via setuptools-scm

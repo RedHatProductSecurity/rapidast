@@ -280,7 +280,7 @@ typer==0.26.7
     # via
     #   -r requirements.txt
     #   py-nessus-pro
-typing-extensions==4.15.0
+typing-extensions==4.16.0
     # via
     #   -r requirements.txt
     #   referencing

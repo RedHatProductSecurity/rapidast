@@ -614,7 +614,7 @@ typer==0.26.7
     #   transformers
 types-requests==2.33.0.20260513
     # via cohere
-typing-extensions==4.15.0
+typing-extensions==4.16.0
     # via
     #   -r requirements.txt
     #   aiosignal

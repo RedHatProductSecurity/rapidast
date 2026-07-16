@@ -654,7 +654,7 @@ urllib3==2.7.0
     #   botocore
     #   requests
     #   types-requests
-uuid-utils==0.14.1
+uuid-utils==0.17.0
     # via
     #   langchain-core
     #   langsmith

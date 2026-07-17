@@ -637,7 +637,7 @@ typing-inspect==0.9.0
     # via mistralai
 typing-inspection==0.4.2
     # via pydantic
-tzdata==2026.2
+tzdata==2026.3
     # via
     #   -r requirements.txt
     #   arrow

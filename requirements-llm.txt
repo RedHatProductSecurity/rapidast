@@ -555,7 +555,7 @@ safetensors==0.7.0
     # via
     #   accelerate
     #   transformers
-sentencepiece==0.2.1
+sentencepiece==0.2.2
     # via garak
 shellingham==1.5.4
     # via

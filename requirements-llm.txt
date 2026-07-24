@@ -376,7 +376,7 @@ nvidia-nvjitlink==13.0.88
     #   nvidia-cufft
     #   nvidia-cusolver
     #   nvidia-cusparse
-nvidia-nvshmem-cu13==3.4.5
+nvidia-nvshmem-cu13==3.7.2
     # via torch
 nvidia-nvtx==13.0.85
     # via cuda-toolkit

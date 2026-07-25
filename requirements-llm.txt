@@ -666,7 +666,7 @@ webcolors==25.10.0
     # via
     #   -r requirements.txt
     #   jsonschema
-websockets==16.0
+websockets==16.1.1
     # via garak
 wn==0.9.5
     # via garak

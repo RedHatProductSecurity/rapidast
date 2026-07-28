@@ -73,15 +73,15 @@ semantic-version==2.10.0
     # via setuptools-rust
 setuptools-rust==1.12.1
     # via maturin
-setuptools-scm==10.0.5
+setuptools-scm==10.2.1
     # via
     #   hatch-vcs
     #   pluggy
     #   setuptools-rust
     #   uri-template
-setuptools-scm==10.0.5
+setuptools-scm==10.2.1
     # via python-dateutil
-setuptools-scm==10.0.5
+setuptools-scm==10.2.1
     # via
     #   hatch-vcs
     #   urllib3

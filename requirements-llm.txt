@@ -403,7 +403,7 @@ packaging==26.2
     #   langsmith
     #   replicate
     #   transformers
-pandas==3.0.3
+pandas==3.0.5
     # via datasets
 pendulum==3.2.0
     # via

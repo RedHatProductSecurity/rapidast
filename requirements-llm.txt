@@ -8,7 +8,7 @@ accelerate==1.13.0
     # via garak
 aiohappyeyeballs==2.6.2
     # via aiohttp
-aiohttp==3.13.4
+aiohttp==3.14.3
     # via
     #   fsspec
     #   litellm

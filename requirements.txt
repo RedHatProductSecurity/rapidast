@@ -4,7 +4,7 @@
 #
 #    pip-compile requirements.in
 #
-annotated-doc==0.0.4
+annotated-doc==0.0.5
     # via typer
 arrow==1.4.0
     # via isoduration

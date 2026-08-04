@@ -14,7 +14,7 @@ aiohttp==3.13.4
     #   litellm
 aiosignal==1.4.0
     # via aiohttp
-annotated-doc==0.0.4
+annotated-doc==0.0.5
     # via
     #   -r requirements.txt
     #   typer

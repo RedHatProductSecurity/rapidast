@@ -341,7 +341,7 @@ numpy==2.4.4
     #   transformers
 nvdlib==0.8.3
     # via avidtools
-nvidia-cublas==13.1.0.3
+nvidia-cublas==13.6.1.10
     # via
     #   cuda-toolkit
     #   nvidia-cudnn-cu13

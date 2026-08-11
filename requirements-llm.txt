@@ -193,7 +193,7 @@ grpcio-tools==1.80.0
     #   nvidia-riva-client
 h11==0.16.0
     # via httpcore
-hf-xet==1.5.0
+hf-xet==1.6.0
     # via huggingface-hub
 httpcore==1.0.9
     # via httpx

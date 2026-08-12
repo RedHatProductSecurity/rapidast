@@ -394,7 +394,7 @@ orjson==3.11.9
     #   langsmith
 ormsgpack==1.12.2
     # via langgraph-checkpoint
-packaging==26.2
+packaging==26.3
     # via
     #   accelerate
     #   datasets

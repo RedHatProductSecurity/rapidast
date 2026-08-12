@@ -48,7 +48,7 @@ maturin==1.13.3
     #   cryptography
     #   pendulum
     #   rpds-py
-packaging==26.2
+packaging==26.3
     # via
     #   hatchling
     #   setuptools-scm

@@ -10,7 +10,7 @@ cffi==2.0.0
     # via cryptography
 cython==3.2.5
     # via pyyaml
-flit-core==3.12.0
+flit-core==4.0.2
     # via
     #   arrow
     #   click

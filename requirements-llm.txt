@@ -127,7 +127,7 @@ ftfy==6.3.1
     # via garak
 garak==0.15.0
     # via -r requirements-llm.in
-google-api-core[grpc]==2.31.0
+google-api-core[grpc]==2.34.0
     # via
     #   -r requirements.txt
     #   google-api-python-client

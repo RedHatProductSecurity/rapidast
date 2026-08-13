@@ -59,7 +59,7 @@ fqdn==1.5.1
     # via
     #   -r requirements.txt
     #   jsonschema
-google-api-core==2.31.0
+google-api-core==2.34.0
     # via
     #   -r requirements.txt
     #   google-cloud-core

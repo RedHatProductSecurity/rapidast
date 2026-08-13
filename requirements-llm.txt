@@ -152,7 +152,7 @@ google-cloud-core==2.6.0
     #   -r requirements.txt
     #   google-cloud-storage
     #   google-cloud-translate
-google-cloud-storage==3.12.0
+google-cloud-storage==3.13.1
     # via -r requirements.txt
 google-cloud-translate==3.26.0
     # via garak

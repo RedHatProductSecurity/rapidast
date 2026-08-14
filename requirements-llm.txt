@@ -463,7 +463,7 @@ pydantic==2.12.5
     #   ollama
     #   openai
     #   replicate
-pydantic-core==2.41.5
+pydantic-core==2.48.0
     # via
     #   cohere
     #   pydantic

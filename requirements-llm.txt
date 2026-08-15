@@ -280,7 +280,7 @@ langdetect==1.0.9
     # via garak
 langgraph==1.1.10
     # via langchain
-langgraph-checkpoint==4.0.3
+langgraph-checkpoint==4.2.0
     # via
     #   langgraph
     #   langgraph-prebuilt

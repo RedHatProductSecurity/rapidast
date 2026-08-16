@@ -99,9 +99,9 @@ wheel==0.47.0
     #   tzdata
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==82.0.0
+setuptools==84.0.0
     # via charset-normalizer
-setuptools==82.0.1
+setuptools==84.0.0
     # via
     #   calver
     #   certifi

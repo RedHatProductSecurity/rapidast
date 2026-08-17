@@ -332,7 +332,7 @@ networkx==3.6.1
     # via torch
 nltk==3.9.4
     # via garak
-numpy==2.4.4
+numpy==2.5.2
     # via
     #   accelerate
     #   datasets

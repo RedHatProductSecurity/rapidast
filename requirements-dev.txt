@@ -161,7 +161,7 @@ platformdirs==4.9.6
     #   virtualenv
 pluggy==1.6.0
     # via pytest
-pre-commit==4.6.0
+pre-commit==4.6.2
     # via -r requirements-dev.in
 proto-plus==1.28.0
     # via

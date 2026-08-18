@@ -436,7 +436,7 @@ py-markdown-table==1.3.0
     # via garak
 py-nessus-pro @ git+https://github.com/sfowl/py-nessus-pro.git@bce7f027eab36da822f190afadf1f2dda7ba5f4f
     # via -r requirements.txt
-pyarrow==24.0.0
+pyarrow==25.0.1
     # via datasets
 pyasn1==0.6.3
     # via

@@ -368,7 +368,7 @@ nvidia-cusparse==12.6.3.3
     #   nvidia-cusolver
 nvidia-cusparselt-cu13==0.8.0
     # via torch
-nvidia-nccl-cu13==2.28.9
+nvidia-nccl-cu13==2.31.2
     # via torch
 nvidia-nvjitlink==13.0.88
     # via

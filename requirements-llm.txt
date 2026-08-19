@@ -384,7 +384,7 @@ nvidia-riva-client==2.16.0
     # via garak
 ollama==0.6.2
     # via garak
-openai==2.24.0
+openai==2.54.0
     # via
     #   garak
     #   litellm

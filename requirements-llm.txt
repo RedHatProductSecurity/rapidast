@@ -635,7 +635,7 @@ typing-extensions==4.15.0
     #   typing-inspection
 typing-inspect==0.9.0
     # via mistralai
-typing-inspection==0.4.2
+typing-inspection==0.4.4
     # via pydantic
 tzdata==2026.2
     # via

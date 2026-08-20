@@ -330,7 +330,7 @@ mypy-extensions==1.1.0
     # via typing-inspect
 networkx==3.6.1
     # via torch
-nltk==3.9.4
+nltk==3.10.3
     # via garak
 numpy==2.4.4
     # via

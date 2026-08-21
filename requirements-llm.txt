@@ -380,7 +380,7 @@ nvidia-nvshmem-cu13==3.4.5
     # via torch
 nvidia-nvtx==13.0.85
     # via cuda-toolkit
-nvidia-riva-client==2.16.0
+nvidia-riva-client==2.27.0
     # via garak
 ollama==0.6.2
     # via garak

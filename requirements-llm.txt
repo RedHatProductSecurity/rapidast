@@ -467,7 +467,7 @@ pydantic-core==2.41.5
     # via
     #   cohere
     #   pydantic
-pygments==2.20.0
+pygments==2.21.0
     # via
     #   -r requirements.txt
     #   rich

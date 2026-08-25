@@ -672,7 +672,7 @@ wn==0.9.5
     # via garak
 xdg-base-dirs==6.0.2
     # via garak
-xxhash==3.7.0
+xxhash==4.0.1
     # via
     #   datasets
     #   langgraph

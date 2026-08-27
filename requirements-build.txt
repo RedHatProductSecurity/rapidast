@@ -89,7 +89,7 @@ trove-classifiers==2026.5.22.10
     # via hatchling
 typing-extensions==4.15.0
     # via setuptools-scm
-vcs-versioning==1.1.1
+vcs-versioning==2.3.1
     # via setuptools-scm
 wheel==0.47.0
     # via

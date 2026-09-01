@@ -70,7 +70,7 @@ google-auth==2.56.0
     #   google-api-core
     #   google-cloud-core
     #   google-cloud-storage
-google-cloud-core==2.6.0
+google-cloud-core==2.7.0
     # via
     #   -r requirements.txt
     #   google-cloud-storage

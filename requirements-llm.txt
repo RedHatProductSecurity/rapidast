@@ -136,7 +136,7 @@ google-api-core[grpc]==2.31.0
     #   google-cloud-translate
 google-api-python-client==2.196.0
     # via garak
-google-auth==2.56.0
+google-auth==2.57.0
     # via
     #   -r requirements.txt
     #   google-api-core

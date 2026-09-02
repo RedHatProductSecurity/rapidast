@@ -509,7 +509,7 @@ referencing==0.37.0
     #   -r requirements.txt
     #   jsonschema
     #   jsonschema-specifications
-regex==2026.4.4
+regex==2026.7.19
     # via
     #   nltk
     #   tiktoken

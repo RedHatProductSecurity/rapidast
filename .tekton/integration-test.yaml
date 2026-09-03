@@ -67,7 +67,7 @@ spec:
       taskSpec:
         steps:
           - name: copy-nessus-secret
-            image: registry.redhat.io/openshift4/ose-cli:latest
+            image: registry.redhat.io/openshift4/ose-cli-rhel9:latest
             env:
             - name: KUBECONFIG
               value: /tmp/kubeconfig
@@ -114,7 +114,7 @@ spec:
       taskSpec:
         steps:
           - name: copy-gcs-secret
-            image: registry.redhat.io/openshift4/ose-cli:latest
+            image: registry.redhat.io/openshift4/ose-cli-rhel9:latest
             env:
             - name: KUBECONFIG
               value: /tmp/kubeconfig
@@ -208,7 +208,7 @@ spec:
                 operator: notin
                 values: [""]
           - name: test
-            image: registry.redhat.io/openshift4/ose-cli:latest
+            image: registry.redhat.io/openshift4/ose-cli-rhel9:latest
             env:
             - name: KUBECONFIG
               value: /tmp/kubeconfig
@@ -238,7 +238,7 @@ spec:
               oc get secret gcs-credentials -o jsonpath='{.data.gcs-credentials\.json}' | base64 -d > "$GOOGLE_APPLICATION_CREDENTIALS"
               echo "GCS credentials extracted to $GOOGLE_APPLICATION_CREDENTIALS"
 
-              yum install -y python3.12 git
+              yum install -y python3.12 git-core
               python3.12 -m ensurepip
 
               source /workspace/.tekton/scripts/setup-cachi2-env.sh
@@ -300,7 +300,7 @@ spec:
 #                operator: notin
 #                values: [""]
 #          - name: test
-#            image: registry.redhat.io/openshift4/ose-cli:latest
+#            image: registry.redhat.io/openshift4/ose-cli-rhel9:latest
 #            env:
 #            - name: KUBECONFIG
 #              value: /tmp/kubeconfig
@@ -325,7 +325,7 @@ spec:
 #              echo "$KUBECONFIG_VALUE" > "$KUBECONFIG"
 #              oc whoami
 #
-#              yum install -y python3.12 git
+#              yum install -y python3.12 git-core
 #              python3.12 -m ensurepip
 #
 #              source /workspace/.tekton/scripts/setup-cachi2-env.sh

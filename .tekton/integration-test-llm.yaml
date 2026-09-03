@@ -89,7 +89,7 @@ spec:
               pushd /workspace
               git checkout "$(tasks.parse-metadata.results.source-git-revision)"
           - name: test
-            image: registry.redhat.io/openshift4/ose-cli:latest
+            image: registry.redhat.io/openshift4/ose-cli-rhel9:latest
             env:
             - name: KUBECONFIG
               value: /tmp/kubeconfig
@@ -114,7 +114,7 @@ spec:
               echo "$KUBECONFIG_VALUE" > "$KUBECONFIG"
               oc whoami
 
-              yum install -y python3.12 git
+              yum install -y python3.12 git-core
               python3.12 -m ensurepip
 
               python3.12 -m pip install -r requirements-dev.txt

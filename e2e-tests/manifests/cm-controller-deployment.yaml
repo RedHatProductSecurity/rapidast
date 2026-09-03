@@ -28,7 +28,7 @@ spec:
             sleep 1
             sh -c "$(oc get configmap/vulnerable -o=jsonpath='{.data.target}')"
           done
-        image: registry.redhat.io/openshift4/ose-cli:latest
+        image: registry.redhat.io/openshift4/ose-cli-rhel9:latest
         imagePullPolicy: Always
         name: cm-controller
       serviceAccountName: ${SERVICEACCOUNT} # required to read Tasks from API server

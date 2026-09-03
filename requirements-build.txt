@@ -6,7 +6,7 @@
 #
 calver==2025.10.20
     # via trove-classifiers
-cffi==2.0.0
+cffi==2.1.1
     # via cryptography
 cython==3.2.5
     # via pyyaml

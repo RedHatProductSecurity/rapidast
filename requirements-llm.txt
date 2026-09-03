@@ -69,7 +69,7 @@ click==8.1.8
     #   typer
 cmd2==2.4.3
     # via garak
-cohere==6.1.0
+cohere==7.1.0
     # via garak
 colorama==0.4.6
     # via garak

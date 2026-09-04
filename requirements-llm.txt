@@ -79,7 +79,7 @@ cryptography==48.0.1
     #   google-auth
 cuda-bindings==13.2.0
     # via torch
-cuda-pathfinder==1.5.4
+cuda-pathfinder==1.8.0
     # via cuda-bindings
 cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.2
     # via torch

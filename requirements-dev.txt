@@ -154,7 +154,7 @@ pendulum==3.2.0
     # via
     #   -r requirements.txt
     #   cel-python
-platformdirs==4.9.6
+platformdirs==4.11.5
     # via
     #   black
     #   python-discovery

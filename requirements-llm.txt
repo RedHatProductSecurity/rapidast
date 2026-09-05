@@ -606,7 +606,7 @@ transformers==5.7.0
     # via garak
 triton==3.6.0
     # via torch
-typer==0.26.7
+typer==0.27.2
     # via
     #   -r requirements.txt
     #   huggingface-hub

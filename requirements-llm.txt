@@ -352,7 +352,7 @@ nvidia-cuda-nvrtc==13.0.88
     # via cuda-toolkit
 nvidia-cuda-runtime==13.0.96
     # via cuda-toolkit
-nvidia-cudnn-cu13==9.19.0.56
+nvidia-cudnn-cu13==9.25.1.1
     # via torch
 nvidia-cufft==12.0.0.61
     # via cuda-toolkit

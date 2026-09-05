@@ -658,7 +658,7 @@ uuid-utils==0.14.1
     # via
     #   langchain-core
     #   langsmith
-wcwidth==0.7.0
+wcwidth==0.8.3
     # via
     #   cmd2
     #   ftfy

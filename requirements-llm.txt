@@ -177,7 +177,7 @@ googleapis-common-protos[grpc]==1.75.0
     #   grpcio-status
 grpc-google-iam-v1==0.14.4
     # via google-cloud-translate
-grpcio==1.80.0
+grpcio==1.83.1
     # via
     #   google-api-core
     #   google-cloud-translate

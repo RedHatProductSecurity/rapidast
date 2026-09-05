@@ -187,7 +187,7 @@ grpcio==1.80.0
     #   grpcio-tools
 grpcio-status==1.80.0
     # via google-api-core
-grpcio-tools==1.80.0
+grpcio-tools==1.83.1
     # via
     #   garak
     #   nvidia-riva-client

@@ -450,7 +450,7 @@ pycparser==3.0
     # via
     #   -r requirements.txt
     #   cffi
-pydantic==2.12.5
+pydantic==2.13.5
     # via
     #   avidtools
     #   cohere

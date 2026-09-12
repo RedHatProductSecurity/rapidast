@@ -15,4 +15,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
-      - uses: konflux-ci/renovate-config-validator-action@078d8d5e483879bcb260de0f717be30b59df010c  # main
+      - uses: konflux-ci/renovate-config-validator-action@772ce0f2d37cd13ad80408a4902c7a17f3191e3a  # main

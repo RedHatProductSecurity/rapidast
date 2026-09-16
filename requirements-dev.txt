@@ -216,7 +216,7 @@ python-dotenv==1.2.2
     # via
     #   -r requirements-dev.in
     #   -r requirements.txt
-python-slugify==8.0.4
+python-slugify==9.0.0
     # via
     #   -r requirements.txt
     #   py-nessus-pro

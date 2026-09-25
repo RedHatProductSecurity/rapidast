@@ -278,7 +278,7 @@ langchain-protocol==0.0.15
     # via langchain-core
 langdetect==1.0.9
     # via garak
-langgraph==1.1.10
+langgraph==1.2.11
     # via langchain
 langgraph-checkpoint==4.0.3
     # via

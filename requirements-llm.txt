@@ -489,7 +489,7 @@ python-dotenv==1.2.2
     #   litellm
 python-magic==0.4.27
     # via garak
-python-slugify==8.0.4
+python-slugify==9.1.0
     # via
     #   -r requirements.txt
     #   py-nessus-pro

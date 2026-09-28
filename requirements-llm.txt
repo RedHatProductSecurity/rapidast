@@ -471,7 +471,7 @@ pygments==2.20.0
     # via
     #   -r requirements.txt
     #   rich
-pyparsing==3.3.2
+pyparsing==3.3.3
     # via httplib2
 pyperclip==1.11.0
     # via cmd2

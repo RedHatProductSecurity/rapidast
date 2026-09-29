@@ -328,7 +328,7 @@ multiprocess==0.70.16
     # via datasets
 mypy-extensions==1.1.0
     # via typing-inspect
-networkx==3.6.1
+networkx==3.7
     # via torch
 nltk==3.9.4
     # via garak

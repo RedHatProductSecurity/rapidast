@@ -438,7 +438,7 @@ py-nessus-pro @ git+https://github.com/sfowl/py-nessus-pro.git@bce7f027eab36da82
     # via -r requirements.txt
 pyarrow==24.0.0
     # via datasets
-pyasn1==0.6.3
+pyasn1==0.6.4
     # via
     #   -r requirements.txt
     #   pyasn1-modules

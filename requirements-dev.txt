@@ -140,7 +140,7 @@ mdurl==0.1.2
     #   markdown-it-py
 mypy-extensions==1.1.0
     # via black
-nodeenv==1.10.0
+nodeenv==1.11.0
     # via pre-commit
 oauthlib==3.3.1
     # via requests-oauthlib

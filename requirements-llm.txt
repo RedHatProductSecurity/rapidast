@@ -339,7 +339,7 @@ numpy==2.4.4
     #   garak
     #   pandas
     #   transformers
-nvdlib==0.8.3
+nvdlib==0.9.0
     # via avidtools
 nvidia-cublas==13.1.0.3
     # via

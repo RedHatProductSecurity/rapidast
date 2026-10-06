@@ -382,7 +382,7 @@ nvidia-nvtx==13.0.85
     # via cuda-toolkit
 nvidia-riva-client==2.16.0
     # via garak
-ollama==0.6.2
+ollama==0.6.3
     # via garak
 openai==2.24.0
     # via

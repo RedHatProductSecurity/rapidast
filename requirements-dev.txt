@@ -55,7 +55,7 @@ filelock==3.29.0
     # via
     #   python-discovery
     #   virtualenv
-fqdn==1.5.1
+fqdn==1.6.0
     # via
     #   -r requirements.txt
     #   jsonschema

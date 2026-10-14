@@ -93,7 +93,7 @@ googleapis-common-protos==1.75.0
     # via
     #   -r requirements.txt
     #   google-api-core
-identify==2.6.19
+identify==2.6.20
     # via pre-commit
 idna==3.16
     # via

@@ -405,7 +405,7 @@ packaging==26.2
     #   transformers
 pandas==3.0.3
     # via datasets
-pendulum==3.2.0
+pendulum==3.3.0
     # via
     #   -r requirements.txt
     #   cel-python

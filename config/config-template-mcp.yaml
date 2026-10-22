@@ -1,0 +1,22 @@
+config:
+  configVersion: 6
+
+application:
+  shortName: mcp-target
+
+scanners:
+  mcp:
+    parameters:
+      url: http://127.0.0.1:9001/mcp
+      transport: http
+      format: json
+      timeout: 30
+      verbose: false
+      # only_health: true
+      # auth_type: bearer
+      # auth_token: "$TOKEN"
+      # For SSE transport example
+      # sse_endpoint: /sse
+      # transport: sse
+    # executable_path: mcp-scan
+

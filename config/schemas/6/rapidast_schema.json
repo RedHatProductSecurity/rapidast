@@ -680,6 +680,39 @@
                             "parameters"
                         ]
                     }
+                    ,
+                    {
+                        "type": "object",
+                        "description": "MCP Security Scanner",
+                        "properties": {
+                            "parameters": {
+                                "type": "object",
+                                "properties": {
+                                    "url": { "type": "string" },
+                                    "transport": { "type": "string", "enum": ["auto", "http", "sse"] },
+                                    "format": { "type": "string", "enum": ["text", "json"] },
+                                    "timeout": { "type": "integer" },
+                                    "verbose": { "type": "boolean" },
+                                    "only_health": { "type": "boolean" },
+                                    "session_id": { "type": "string" },
+                                    "sse_endpoint": { "type": "string" },
+                                    "auth_type": { "type": "string", "enum": ["bearer", "oauth2-client-credentials"] },
+                                    "auth_token": { "type": "string" },
+                                    "token_url": { "type": "string" },
+                                    "client_id": { "type": "string" },
+                                    "client_secret": { "type": "string" },
+                                    "scope": { "type": "string" },
+                                    "explain": { "type": "string" },
+                                    "output": { "type": "string" }
+                                },
+                                "required": ["url"]
+                            },
+                            "executable_path": {
+                                "type": "string"
+                            }
+                        },
+                        "required": ["parameters"]
+                    }
                 ]
             }
         }

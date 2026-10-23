@@ -61,7 +61,7 @@ pdm-backend==2.4.9
     #   annotated-doc
     #   typer
     #   webcolors
-pluggy==1.6.0
+pluggy==1.7.0
     # via hatchling
 poetry-core==2.4.1
     # via

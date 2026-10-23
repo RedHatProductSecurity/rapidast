@@ -392,7 +392,7 @@ orjson==3.11.9
     # via
     #   langgraph-sdk
     #   langsmith
-ormsgpack==1.12.2
+ormsgpack==1.13.0
     # via langgraph-checkpoint
 packaging==26.2
     # via

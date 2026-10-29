@@ -475,7 +475,7 @@ pyparsing==3.3.2
     # via httplib2
 pyperclip==1.11.0
     # via cmd2
-python-dateutil==2.9.0.post0
+python-dateutil==3.0.0
     # via
     #   -r requirements.txt
     #   arrow

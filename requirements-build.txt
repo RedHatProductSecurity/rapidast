@@ -67,7 +67,7 @@ poetry-core==2.4.1
     # via
     #   cel-python
     #   rich
-pycparser==3.0
+pycparser==3.12
     # via cffi
 semantic-version==2.10.0
     # via setuptools-rust

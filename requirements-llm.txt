@@ -326,7 +326,7 @@ multidict==6.7.1
     #   yarl
 multiprocess==0.70.16
     # via datasets
-mypy-extensions==1.1.0
+mypy-extensions==1.2.0
     # via typing-inspect
 networkx==3.6.1
     # via torch

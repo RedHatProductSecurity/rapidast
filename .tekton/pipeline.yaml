@@ -511,7 +511,7 @@ spec:
         default: []
       steps:
       - name: select-tags-based-on-branch
-        image: registry.access.redhat.com/ubi9/ubi-minimal:9.8-1790555810@sha256:beeada7dd17903dfb69fd5f6916c054720bf28a52daaa2f7a1910a1394244bd2
+        image: registry.access.redhat.com/ubi9/ubi-minimal:9.9-1794467051@sha256:baafce2d34783a28b4a472779f304e97e00f9d35c99553bc53b068b14344d9a9
         script: |
           #!/bin/bash -ex
 

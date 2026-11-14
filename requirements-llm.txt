@@ -85,7 +85,7 @@ cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink
     # via torch
 dacite==1.9.2
     # via -r requirements.txt
-datasets==3.6.0
+datasets==5.0.1
     # via garak
 datetime==6.0
     # via avidtools

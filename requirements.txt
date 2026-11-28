@@ -100,7 +100,7 @@ python-dotenv==1.2.2
     # via -r requirements.in
 python-slugify==8.0.4
     # via py-nessus-pro
-pyyaml==6.0.3
+pyyaml==6.0.4
     # via
     #   -r requirements.in
     #   cel-python
